@@ -18,7 +18,10 @@
  *
  */
 
-// const HDWalletProvider = require('@truffle/hdwallet-provider');
+const HDWalletProvider = require('@truffle/hdwallet-provider');
+
+
+require('dotenv').config();
 // const infuraKey = "fj4jll3k.....";
 //
 // const fs = require('fs');
@@ -48,6 +51,15 @@ module.exports = {
       network_id: '5777',
       gasPrice: 50000000000,
       gas: 6721975, // Any network (default: none)
+    },
+    kovan: {
+      provider: function () {
+        return new HDWalletProvider(
+          [process.env.WALLET_SECRET_KEY],
+          `https://kovan.infura.io/v3/${process.env.KOVAN_INFURA_PROJECT_ID}`
+        )
+      },
+      network_id: 42,
     },
     // Another network with more advanced options...
     // advanced: {
