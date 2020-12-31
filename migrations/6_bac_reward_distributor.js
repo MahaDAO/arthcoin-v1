@@ -1,18 +1,22 @@
 const { bacPools, INITIAL_BAC_FOR_POOLS } = require('./pools');
 
-// Pools
-// deployed first
 const Cash = artifacts.require('Cash')
 const InitialCashDistributor = artifacts.require('InitialCashDistributor');
 
-// ============ Main Migration ============
 
+/**
+ * Main migrations
+ */
 module.exports = async (deployer, network, accounts) => {
+  // Set the main account, you'll be using accross all the files for various
+  // important activities to your desired address in the .env file.
+  accounts[0] = process.env.WALLET_KEY;
+
   const unit = web3.utils.toBN(10 ** 18);
   const initialCashAmount = unit.muln(INITIAL_BAC_FOR_POOLS).toString();
 
   const cash = await Cash.deployed();
-  const pools = bacPools.map(({contractName}) => artifacts.require(contractName));
+  const pools = bacPools.map(({ contractName }) => artifacts.require(contractName));
 
   await deployer.deploy(
     InitialCashDistributor,

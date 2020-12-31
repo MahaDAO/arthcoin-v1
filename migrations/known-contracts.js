@@ -1,4 +1,6 @@
-// list known (already deployed and verified) contract addresses on here.
+/**
+ * List known (already deployed and verified) contract addresses on here.
+ */
 module.exports = {
   UniswapV2Factory: {
     // https://uniswap.org/docs/v2/smart-contracts/factory/#address

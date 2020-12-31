@@ -4,14 +4,18 @@ const {
   INITIAL_BAS_FOR_DAI_BAS,
 } = require('./pools');
 
-// Pools
-// deployed first
 const Share = artifacts.require('Share');
 const InitialShareDistributor = artifacts.require('InitialShareDistributor');
 
-// ============ Main Migration ============
 
+/**
+ * Main migrations
+ */
 async function migration(deployer, network, accounts) {
+  // Set the main account, you'll be using accross all the files for various
+  // important activities to your desired address in the .env file.
+  accounts[0] = process.env.WALLET_KEY;
+
   const unit = web3.utils.toBN(10 ** 18);
   const totalBalanceForDAIBAC = unit.muln(INITIAL_BAS_FOR_DAI_BAC)
   const totalBalanceForDAIBAS = unit.muln(INITIAL_BAS_FOR_DAI_BAS)
@@ -41,5 +45,6 @@ async function migration(deployer, network, accounts) {
 
   await distributor.distribute();
 }
+
 
 module.exports = migration;

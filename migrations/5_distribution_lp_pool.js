@@ -1,5 +1,3 @@
-const knownContracts = require('./known-contracts');
-const { POOL_START_DATE } = require('./pools');
 
 const Cash = artifacts.require('Cash');
 const Share = artifacts.require('Share');
@@ -11,10 +9,19 @@ const DAIBASLPToken_BASPool = artifacts.require('DAIBASLPTokenSharePool')
 
 const UniswapV2Factory = artifacts.require('UniswapV2Factory');
 
+const knownContracts = require('./known-contracts');
+const { POOL_START_DATE } = require('./pools');
+
+
 module.exports = async (deployer, network, accounts) => {
-  const uniswapFactory = ['dev'].includes(network)
-    ? await UniswapV2Factory.deployed()
-    : await UniswapV2Factory.at(knownContracts.UniswapV2Factory[network]);
+  // Set the main account, you'll be using accross all the files for various
+  // important activities to your desired address in the .env file.
+  accounts[0] = process.env.WALLET_KEY;
+
+  const uniswapFactory = network === 'mainnet'
+    ? await UniswapV2Factory.at(knownContracts.UniswapV2Factory[network])
+    : await UniswapV2Factory.deployed()
+
   const dai = network === 'mainnet'
     ? await IERC20.at(knownContracts.DAI[network])
     : await MockDai.deployed();

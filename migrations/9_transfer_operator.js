@@ -5,9 +5,18 @@ const Bond = artifacts.require('Bond');
 const Share = artifacts.require('Share');
 const Timelock = artifacts.require('Timelock');
 
+
 const DAY = 86400;
 
+
+/**
+ * Main migrations
+ */
 module.exports = async (deployer, network, accounts) => {
+  // Set the main account, you'll be using accross all the files for various
+  // important activities to your desired address in the .env file.
+  accounts[0] = process.env.WALLET_KEY;
+
   const cash = await Cash.deployed();
   const share = await Share.deployed();
   const bond = await Bond.deployed();
@@ -15,7 +24,7 @@ module.exports = async (deployer, network, accounts) => {
   const boardroom = await Boardroom.deployed();
   const timelock = await deployer.deploy(Timelock, accounts[0], 2 * DAY);
 
-  for await (const contract of [ cash, share, bond ]) {
+  for await (const contract of [cash, share, bond]) {
     await contract.transferOperator(treasury.address);
     await contract.transferOwnership(treasury.address);
   }
