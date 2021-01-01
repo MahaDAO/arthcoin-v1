@@ -4,7 +4,7 @@ import '@openzeppelin/contracts/math/SafeMath.sol';
 
 import '../interfaces/IOracle.sol';
 
-contract MockOracle is IOracle {
+contract MockSeigniorageOracle is IOracle {
     using SafeMath for uint256;
 
     uint256 public price;
