@@ -9,6 +9,7 @@ const SimpleERCFund = artifacts.require('SimpleERCFund');
 const Oracle = artifacts.require('Oracle');
 const Treasury = artifacts.require('Treasury');
 const Boardroom = artifacts.require('Boardroom');
+const SimpleOracle = artifacts.require('SimpleOracle.sol');
 const SeigniorageOracle = artifacts.require('SeigniorageOracle');
 
 const UniswapV2Factory = artifacts.require('UniswapV2Factory');
@@ -73,6 +74,7 @@ async function migration(deployer, network, accounts) {
 
   const cash = await Cash.deployed();
   const share = await Share.deployed();
+  const bond = await Bond.deployed();
 
   console.log('Approving Uniswap on tokens for liquidity');
   await Promise.all([
@@ -129,7 +131,7 @@ async function migration(deployer, network, accounts) {
   await deployer.deploy(
     Oracle,
     uniswap.address,
-    cash.address,
+    cash.address, // NOTE YA: I guess bond oracle is for dai - cash pool.
     dai.address,
     2 * HOUR, // In hours for dev deployment purpose.
     startTime
@@ -139,11 +141,16 @@ async function migration(deployer, network, accounts) {
   await deployer.deploy(
     SeigniorageOracle,
     uniswap.address,
-    cash.address,
+    share.address, // NOTE YA: I guess seigniorage oracle is for dai-share pool.
     dai.address,
     2 * HOUR, // In hours for dev deployment purpose.
     startTime
   );
+
+  // Deploy simple oracle.
+  await deployer.deploy(
+    SimpleOracle,
+  )
 
   await deployer.deploy(
     Treasury,
@@ -154,6 +161,7 @@ async function migration(deployer, network, accounts) {
     SeigniorageOracle.address,
     Boardroom.address,
     SimpleERCFund.address,
+    SimpleOracle.address,
     startTime,
   );
 }
