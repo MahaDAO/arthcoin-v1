@@ -47,6 +47,7 @@ contract Treasury is ContractGuard, Epoch {
     address public seigniorageOracle;
 
     // ========== PARAMS
+    uint256 public initialCashPriceOne;
     uint256 public cashPriceOne;
     uint256 public cashPriceCeiling;
     uint256 public bondDepletionFloor;
@@ -76,13 +77,14 @@ contract Treasury is ContractGuard, Epoch {
         fund = _fund;
 
         cashPriceOne = ISimpleOracle(simpleOracle).getPrice();
+        initialCashPriceOne = cashPriceOne;
 
-        // Set the ceiling price to be .05 above the fetched price.
+        // Set the ceiling price to be 5% above the inital price.
         cashPriceCeiling =
-            cashPriceOne +
-            uint256(5).mul(cashPriceOne).div(10**2);
+            initialCashPriceOne +
+            uint256(5).mul(initialCashPriceOne).div(10**2);
 
-        bondDepletionFloor = uint256(1000).mul(cashPriceOne);
+        bondDepletionFloor = uint256(1000).mul(initialCashPriceOne);
     }
 
     /* =================== Modifier =================== */
