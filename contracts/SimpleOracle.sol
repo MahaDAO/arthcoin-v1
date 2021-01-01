@@ -15,11 +15,11 @@ contract SimpleOracle is Ownable, ISimpleOracle {
         price = uint256(105).mul(1e18).div(100);
     }
 
-    function setPrice(uint256 _price) public onlyOwner {
+    function setPrice(uint256 _price) public override onlyOwner {
         price = _price;
     }
 
-    function getPrice() public view returns (uint256) {
+    function getPrice() public view override returns (uint256) {
         return price;
     }
 

@@ -15,6 +15,7 @@ import './lib/Safe112.sol';
 import './owner/Operator.sol';
 import './utils/Epoch.sol';
 import './utils/ContractGuard.sol';
+import './interfaces/ISimpleOracle.sol';
 
 /**
  * @title Basis Cash Treasury contract
@@ -40,6 +41,7 @@ contract Treasury is ContractGuard, Epoch {
     address public bond;
     address public share;
     address public boardroom;
+    address public simpleOracle;
 
     address public bondOracle;
     address public seigniorageOracle;
@@ -48,7 +50,7 @@ contract Treasury is ContractGuard, Epoch {
     uint256 public cashPriceOne;
     uint256 public cashPriceCeiling;
     uint256 public bondDepletionFloor;
-    uint256 private accumulatedSeigniorage = 0;
+    uint256 public accumulatedSeigniorage = 0;
     uint256 public fundAllocationRate = 2; // %
 
     /* ========== CONSTRUCTOR ========== */
@@ -61,6 +63,7 @@ contract Treasury is ContractGuard, Epoch {
         address _seigniorageOracle,
         address _boardroom,
         address _fund,
+        address _simpleOracle,
         uint256 _startTime
     ) public Epoch(1 days, _startTime, 0) {
         cash = _cash;
@@ -68,12 +71,16 @@ contract Treasury is ContractGuard, Epoch {
         share = _share;
         bondOracle = _bondOracle;
         seigniorageOracle = _seigniorageOracle;
-
+        simpleOracle = _simpleOracle;
         boardroom = _boardroom;
         fund = _fund;
 
-        cashPriceOne = 10**18;
-        cashPriceCeiling = uint256(105).mul(cashPriceOne).div(10**2);
+        cashPriceOne = ISimpleOracle(simpleOracle).getPrice();
+
+        // Set the ceiling price to be .05 above the fetched price.
+        cashPriceCeiling =
+            cashPriceOne +
+            uint256(5).mul(cashPriceOne).div(10**2);
 
         bondDepletionFloor = uint256(1000).mul(cashPriceOne);
     }
@@ -99,7 +106,6 @@ contract Treasury is ContractGuard, Epoch {
     }
 
     /* ========== VIEW FUNCTIONS ========== */
-
     // budget
     function getReserve() public view returns (uint256) {
         return accumulatedSeigniorage;
@@ -108,6 +114,10 @@ contract Treasury is ContractGuard, Epoch {
     // oracle
     function getBondOraclePrice() public view returns (uint256) {
         return _getCashPrice(bondOracle);
+    }
+
+    function getSimpleOraclePrice() public view returns (uint256) {
+        return ISimpleOracle(simpleOracle).getPrice();
     }
 
     function getSeigniorageOraclePrice() public view returns (uint256) {
@@ -172,8 +182,8 @@ contract Treasury is ContractGuard, Epoch {
     /* ========== MUTABLE FUNCTIONS ========== */
 
     function _updateCashPrice() internal {
-        try IOracle(bondOracle).update()  {} catch {}
-        try IOracle(seigniorageOracle).update()  {} catch {}
+        try IOracle(bondOracle).update() {} catch {}
+        try IOracle(seigniorageOracle).update() {} catch {}
     }
 
     function buyBonds(uint256 amount, uint256 targetPrice)
@@ -186,6 +196,9 @@ contract Treasury is ContractGuard, Epoch {
         require(amount > 0, 'Treasury: cannot purchase bonds with zero amount');
 
         uint256 cashPrice = _getCashPrice(bondOracle);
+
+        cashPriceOne = getSimpleOraclePrice();
+
         require(cashPrice == targetPrice, 'Treasury: cash price moved');
         require(
             cashPrice < cashPriceOne, // price < $1
@@ -247,9 +260,11 @@ contract Treasury is ContractGuard, Epoch {
         }
 
         // circulating supply
-        uint256 cashSupply = IERC20(cash).totalSupply().sub(
-            accumulatedSeigniorage
-        );
+        uint256 cashSupply =
+            IERC20(cash).totalSupply().sub(accumulatedSeigniorage);
+
+        cashPriceOne = getSimpleOraclePrice();
+
         uint256 percentage = cashPrice.sub(cashPriceOne);
         uint256 seigniorage = cashSupply.mul(percentage).div(1e18);
         IBasisAsset(cash).mint(address(this), seigniorage);
@@ -269,10 +284,12 @@ contract Treasury is ContractGuard, Epoch {
         seigniorage = seigniorage.sub(fundReserve);
 
         // ======================== BIP-4
-        uint256 treasuryReserve = Math.min(
-            seigniorage,
-            IERC20(bond).totalSupply().sub(accumulatedSeigniorage)
-        );
+        uint256 treasuryReserve =
+            Math.min(
+                seigniorage,
+                IERC20(bond).totalSupply().sub(accumulatedSeigniorage)
+            );
+
         if (treasuryReserve > 0) {
             accumulatedSeigniorage = accumulatedSeigniorage.add(
                 treasuryReserve
