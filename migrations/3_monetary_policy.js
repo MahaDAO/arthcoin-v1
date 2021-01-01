@@ -1,3 +1,4 @@
+
 const Cash = artifacts.require('Cash');
 const Bond = artifacts.require('Bond');
 const Share = artifacts.require('Share');
@@ -8,6 +9,7 @@ const SimpleERCFund = artifacts.require('SimpleERCFund');
 const Oracle = artifacts.require('Oracle');
 const Treasury = artifacts.require('Treasury');
 const Boardroom = artifacts.require('Boardroom');
+const SeigniorageOracle = artifacts.require('SeigniorageOracle');
 
 const UniswapV2Factory = artifacts.require('UniswapV2Factory');
 const UniswapV2Router02 = artifacts.require('UniswapV2Router02');
@@ -133,13 +135,23 @@ async function migration(deployer, network, accounts) {
     startTime
   );
 
+  // Deploy seigniorage oracle.
+  await deployer.deploy(
+    SeigniorageOracle,
+    uniswap.address,
+    cash.address,
+    dai.address,
+    2 * HOUR, // In hours for dev deployment purpose.
+    startTime
+  );
+
   await deployer.deploy(
     Treasury,
     cash.address,
     Bond.address,
     Share.address,
     Oracle.address,
-    Oracle.address, // TODO: Figure out what is the oracle here.
+    SeigniorageOracle.address,
     Boardroom.address,
     SimpleERCFund.address,
     startTime,

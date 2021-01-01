@@ -60,6 +60,8 @@ module.exports = {
         )
       },
       network_id: 42,
+      gasPrice: 50000000000,
+      gas: 6721975, // Any network (default: none)
     },
     // Another network with more advanced options...
     // advanced: {
