@@ -61,8 +61,9 @@ import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 // File: contracts/IRewardDistributionRecipient.sol
 
 import '../interfaces/IRewardDistributionRecipient.sol';
+import '../StakingTimelock.sol';
 
-contract DAIWrapper {
+contract DAIWrapper is StakingTimelock {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -80,12 +81,14 @@ contract DAIWrapper {
     }
 
     function stake(uint256 amount) public virtual {
+        addStakerDetails(amount);
+
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
         dai.safeTransferFrom(msg.sender, address(this), amount);
     }
 
-    function withdraw(uint256 amount) public virtual {
+    function withdraw(uint256 amount) public virtual checkLockDuration {
         _totalSupply = _totalSupply.sub(amount);
         _balances[msg.sender] = _balances[msg.sender].sub(amount);
         dai.safeTransfer(msg.sender, amount);

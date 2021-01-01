@@ -61,8 +61,9 @@ import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 // File: contracts/IRewardDistributionRecipient.sol
 
 import '../interfaces/IRewardDistributionRecipient.sol';
+import '../StakingTimelock.sol';
 
-contract yCRVWrapper {
+contract yCRVWrapper is StakingTimelock {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -71,21 +72,23 @@ contract yCRVWrapper {
     uint256 private _totalSupply;
     mapping(address => uint256) private _balances;
 
-    function totalSupply() public virtual view returns (uint256) {
+    function totalSupply() public view virtual returns (uint256) {
         return _totalSupply;
     }
 
-    function balanceOf(address account) public virtual view returns (uint256) {
+    function balanceOf(address account) public view virtual returns (uint256) {
         return _balances[account];
     }
 
     function stake(uint256 amount) public virtual {
+        addStakerDetails(amount);
+
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
         ycrv.safeTransferFrom(msg.sender, address(this), amount);
     }
 
-    function withdraw(uint256 amount) public virtual {
+    function withdraw(uint256 amount) public virtual checkLockDuration {
         _totalSupply = _totalSupply.sub(amount);
         _balances[msg.sender] = _balances[msg.sender].sub(amount);
         ycrv.safeTransfer(msg.sender, amount);

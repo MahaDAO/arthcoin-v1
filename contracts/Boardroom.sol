@@ -8,8 +8,9 @@ import './lib/Safe112.sol';
 import './owner/Operator.sol';
 import './utils/ContractGuard.sol';
 import './interfaces/IBasisAsset.sol';
+import './StakingTimelock.sol';
 
-contract ShareWrapper {
+contract ShareWrapper is StakingTimelock {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -27,12 +28,14 @@ contract ShareWrapper {
     }
 
     function stake(uint256 amount) public virtual {
+        addStakerDetails(amount);
+
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
         share.safeTransferFrom(msg.sender, address(this), amount);
     }
 
-    function withdraw(uint256 amount) public virtual {
+    function withdraw(uint256 amount) public virtual checkLockDuration {
         uint256 directorShare = _balances[msg.sender];
         require(
             directorShare >= amount,
@@ -76,11 +79,12 @@ contract Boardroom is ShareWrapper, ContractGuard, Operator {
         cash = _cash;
         share = _share;
 
-        BoardSnapshot memory genesisSnapshot = BoardSnapshot({
-            time: block.number,
-            rewardReceived: 0,
-            rewardPerShare: 0
-        });
+        BoardSnapshot memory genesisSnapshot =
+            BoardSnapshot({
+                time: block.number,
+                rewardReceived: 0,
+                rewardPerShare: 0
+            });
         boardHistory.push(genesisSnapshot);
     }
 
@@ -201,11 +205,12 @@ contract Boardroom is ShareWrapper, ContractGuard, Operator {
         uint256 prevRPS = getLatestSnapshot().rewardPerShare;
         uint256 nextRPS = prevRPS.add(amount.mul(1e18).div(totalSupply()));
 
-        BoardSnapshot memory newSnapshot = BoardSnapshot({
-            time: block.number,
-            rewardReceived: amount,
-            rewardPerShare: nextRPS
-        });
+        BoardSnapshot memory newSnapshot =
+            BoardSnapshot({
+                time: block.number,
+                rewardReceived: amount,
+                rewardPerShare: nextRPS
+            });
         boardHistory.push(newSnapshot);
 
         cash.safeTransferFrom(msg.sender, address(this), amount);

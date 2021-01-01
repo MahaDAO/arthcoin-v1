@@ -4,7 +4,9 @@ import '@openzeppelin/contracts/math/SafeMath.sol';
 import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
-contract LPTokenWrapper {
+import '../StakingTimelock.sol';
+
+contract LPTokenWrapper is StakingTimelock {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -22,12 +24,14 @@ contract LPTokenWrapper {
     }
 
     function stake(uint256 amount) public virtual {
+        addStakerDetails(amount);
+
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
         lpt.safeTransferFrom(msg.sender, address(this), amount);
     }
 
-    function withdraw(uint256 amount) public virtual {
+    function withdraw(uint256 amount) public virtual checkLockDuration {
         _totalSupply = _totalSupply.sub(amount);
         _balances[msg.sender] = _balances[msg.sender].sub(amount);
         lpt.safeTransfer(msg.sender, amount);
