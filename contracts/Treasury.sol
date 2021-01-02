@@ -315,23 +315,6 @@ contract Treasury is ContractGuard, Epoch {
         uint256 arthBoardroomReserve =
             boardroomReserve.mul(arthBoardroomAllocationRate).div(100);
 
-        // if (
-        //     mahaBoardroomAllocationRate.add(arthBoardroomAllocationRate) < 100
-        // ) {
-        // Useful if mahaBoardroomAllocationRate + arthBoardroomAllocationRate < 100
-        // uint256 otherBoardroomReserves =
-        //     boardroomReserve.sub(mahaBoardroomReserve).sub(
-        //         arthBoardroomReserve
-        //     );
-
-        // TODO: replace with other boardroom/contract, will need to change constructor as well.
-        // if (otherBoardroomReserves > 0) {
-        //     IERC20(cash).safeApprove(mahaBoardroom, mahaBoardroomReserve);
-        //     IBoardroom(mahaBoardroom).allocateSeigniorage(mahaBoardroomReserve);
-        //     emit BoardroomFunded(now, mahaBoardroomReserve);
-        // }
-        // }
-
         if (mahaBoardroomReserve > 0) {
             IERC20(cash).safeApprove(mahaBoardroom, mahaBoardroomReserve);
             IBoardroom(mahaBoardroom).allocateSeigniorage(mahaBoardroomReserve);
@@ -343,6 +326,11 @@ contract Treasury is ContractGuard, Epoch {
             IBoardroom(arthBoardroom).allocateSeigniorage(arthBoardroomReserve);
             emit BoardroomFunded(now, arthBoardroomReserve);
         }
+
+        // uint256 pendingReserve = boardroomReserve.sub(mahaBoardroomReserve).sub(arthBoardroomReserve);
+        // if (pendingReserve > 0) {
+        //     // send it to staking pool rewards
+        // }
     }
 
     // GOV
