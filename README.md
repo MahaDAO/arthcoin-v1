@@ -1,14 +1,14 @@
-# Basis ARTH
+# ARTH - The world's first valuecoin
 
 [![Twitter Follow](https://img.shields.io/twitter/follow/basiscash?label=Follow)](https://twitter.com/basiscash)
 [![License](https://img.shields.io/github/license/Basis-cash/basiscashprotocol)](https://github.com/Basis-ARTH/basiscash-protocol/blob/master/LICENSE)
 [![Coverage Status](https://coveralls.io/repos/github/Basis-ARTH/basiscash-protocol/badge.svg?branch=master)](https://coveralls.io/github/Basis-ARTH/basiscash-protocol?branch=master)
 
-Basis ARTH is a lightweight implementation of the [Basis Protocol](basis.io) on Ethereum.
+ARTH is a lightweight implementation of the [Basis Protocol](basis.io) on Ethereum.
 
 ## History of Basis
 
-Basis is an algorithmic stablecoin protocol where the money supply is dynamically adjusted to meet changes in money demand.
+ARTH is an algorithmic stablecoin protocol where the money supply is dynamically adjusted to meet changes in money demand.
 
 - When demand is rising, the blockchain will create more Basis ARTH. The expanded supply is designed to bring the Basis price back down.
 - When demand is falling, the blockchain will buy back Basis ARTH. The contracted supply is designed to restore Basis price.
