@@ -110,16 +110,6 @@ async function migration(deployer, network, accounts) {
     deadline(),
   );
 
-  // await uniswapRouter.addLiquidity(
-  //   mahaToken.address,
-  //   dai.address,
-  //   unit,
-  //   unit,
-  //   unit,
-  //   unit,
-  //   accounts[0],
-  //   deadline(),
-  // );
 
   console.log(`DAI-ARTH pair address: ${await uniswap.getPair(dai.address, cash.address)}`);
   console.log(`DAI-MAHA pair address: ${await uniswap.getPair(dai.address, mahaToken.address)}`);

@@ -39,7 +39,7 @@ contract Treasury is ContractGuard, Epoch {
     address public cash;
     address public bond;
     address public share;
-    address public simpleOracle;
+    address public gmuOracle;
 
     address public arthLiquidityBoardroom;
     address public arthBoardroom;
@@ -51,8 +51,8 @@ contract Treasury is ContractGuard, Epoch {
 
     // ========== PARAMS
     uint256 public initialCashPriceOne;
-    uint256 public cashPriceOne;
     uint256 public cashPriceCeiling;
+    uint256 public cashTargetPrice;
     uint256 public bondDepletionFloor;
     uint256 public accumulatedSeigniorage = 0;
 
@@ -73,7 +73,7 @@ contract Treasury is ContractGuard, Epoch {
         address _arthBoardroom,
         address _fund,
         address _burnbackFund,
-        address _simpleOracle,
+        address _gmuOracle,
         uint256 _startTime
     ) public Epoch(1 days, _startTime, 0) {
         cash = _cash;
@@ -81,14 +81,14 @@ contract Treasury is ContractGuard, Epoch {
         share = _share;
         bondOracle = _bondOracle;
         seigniorageOracle = _seigniorageOracle;
-        simpleOracle = _simpleOracle;
+        gmuOracle = _gmuOracle;
         arthLiquidityBoardroom = _arthLiquidityBoardroom;
         arthBoardroom = _arthBoardroom;
         developmentFund = _fund;
         burnbackFund = _burnbackFund;
 
-        cashPriceOne = ISimpleOracle(simpleOracle).getPrice();
-        initialCashPriceOne = cashPriceOne;
+        cashTargetPrice = ISimpleOracle(gmuOracle).getPrice();
+        initialCashPriceOne = cashTargetPrice;
 
         // Set the ceiling price to be 5% above the inital price.
         cashPriceCeiling =
@@ -130,8 +130,8 @@ contract Treasury is ContractGuard, Epoch {
         return _getCashPrice(bondOracle);
     }
 
-    function getSimpleOraclePrice() public view returns (uint256) {
-        return ISimpleOracle(simpleOracle).getPrice();
+    function getGMUOraclePrice() public view returns (uint256) {
+        return ISimpleOracle(gmuOracle).getPrice();
     }
 
     function getSeigniorageOraclePrice() public view returns (uint256) {
@@ -221,6 +221,15 @@ contract Treasury is ContractGuard, Epoch {
     function _updateCashPrice() internal {
         try IOracle(bondOracle).update() {} catch {}
         try IOracle(seigniorageOracle).update() {} catch {}
+
+        cashTargetPrice = ISimpleOracle(gmuOracle).getPrice();
+
+        // Set the ceiling price to be 5% above the target price.
+        cashPriceCeiling =
+            cashTargetPrice +
+            uint256(5).mul(cashTargetPrice).div(10**2);
+
+        bondDepletionFloor = uint256(1000).mul(cashTargetPrice);
     }
 
     function buyBonds(uint256 amount, uint256 targetPrice)
@@ -232,17 +241,15 @@ contract Treasury is ContractGuard, Epoch {
     {
         require(amount > 0, 'Treasury: cannot purchase bonds with zero amount');
 
-        uint256 cashPrice = _getCashPrice(bondOracle);
+        uint256 bondPrice = _getCashPrice(bondOracle);
 
-        cashPriceOne = getSimpleOraclePrice();
+        cashTargetPrice = getGMUOraclePrice();
 
-        require(cashPrice == targetPrice, 'Treasury: cash price moved');
+        require(bondPrice == targetPrice, 'Treasury: cash price moved');
         require(
-            cashPrice < cashPriceOne, // price < $1
+            bondPrice < cashTargetPrice, // price < $1
             'Treasury: cashPrice not eligible for bond purchase'
         );
-
-        uint256 bondPrice = cashPrice;
 
         IBasisAsset(cash).burnFrom(msg.sender, amount);
         IBasisAsset(bond).mint(msg.sender, amount.mul(1e18).div(bondPrice));
@@ -300,9 +307,9 @@ contract Treasury is ContractGuard, Epoch {
         uint256 cashSupply =
             IERC20(cash).totalSupply().sub(accumulatedSeigniorage);
 
-        cashPriceOne = getSimpleOraclePrice();
+        cashTargetPrice = getGMUOraclePrice();
 
-        uint256 percentage = cashPrice.sub(cashPriceOne);
+        uint256 percentage = cashPrice.sub(cashTargetPrice);
         uint256 seigniorage = cashSupply.mul(percentage).div(1e18);
         IBasisAsset(cash).mint(address(this), seigniorage);
 
