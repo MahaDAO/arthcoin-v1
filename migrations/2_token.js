@@ -2,7 +2,7 @@
  * Contracts.
  */
 const ARTH = artifacts.require('ARTH')
-const Bond = artifacts.require('Bond')
+const ARTHB = artifacts.require('ARTHB')
 const MahaToken = artifacts.require('MahaToken')
 const MockDai = artifacts.require('MockDai');
 
@@ -16,7 +16,7 @@ async function deployToken(deployer, network, accounts) {
   accounts[0] = process.env.WALLET_KEY;
 
   await deployer.deploy(ARTH);
-  await deployer.deploy(Bond);
+  await deployer.deploy(ARTHB);
   await deployer.deploy(MahaToken);
 
   if (network !== 'mainnet') {

@@ -18,7 +18,7 @@ Basis is an algorithmic stablecoin protocol where the money supply is dynamicall
 
 Read the [Basis Whitepaper](http://basis.io/basis_whitepaper_en.pdf) for more details into the protocol.
 
-Basis was shut down in 2018, due to regulatory concerns its Bond and Share tokens have security characteristics. The project team opted for compliance, and shut down operations, returned money to investors and discontinued development of the project.
+Basis was shut down in 2018, due to regulatory concerns its ARTHB and Share tokens have security characteristics. The project team opted for compliance, and shut down operations, returned money to investors and discontinued development of the project.
 
 ## The Basis ARTH Protocol
 

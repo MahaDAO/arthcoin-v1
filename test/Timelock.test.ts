@@ -30,7 +30,7 @@ describe('Timelock', () => {
     [operator, abuser] = await ethers.getSigners();
   });
 
-  let Bond: ContractFactory;
+  let ARTHB: ContractFactory;
   let ARTH: ContractFactory;
   let Share: ContractFactory;
   let Timelock: ContractFactory;
@@ -38,7 +38,7 @@ describe('Timelock', () => {
   let Boardroom: ContractFactory;
 
   before('fetch contract factories', async () => {
-    Bond = await ethers.getContractFactory('Bond');
+    ARTHB = await ethers.getContractFactory('ARTHB');
     ARTH = await ethers.getContractFactory('ARTH');
     Share = await ethers.getContractFactory('Share');
     Timelock = await ethers.getContractFactory('Timelock');
@@ -56,7 +56,7 @@ describe('Timelock', () => {
   let startTime: number;
 
   beforeEach('deploy contracts', async () => {
-    bond = await Bond.connect(operator).deploy();
+    bond = await ARTHB.connect(operator).deploy();
     cash = await ARTH.connect(operator).deploy();
     share = await Share.connect(operator).deploy();
     timelock = await Timelock.connect(operator).deploy(

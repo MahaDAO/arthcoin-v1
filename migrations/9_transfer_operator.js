@@ -3,7 +3,7 @@ const MahaBoardroom = artifacts.require('MahaBoardroom');
 const ArthBoardroom = artifacts.require('ArthBoardroom');
 const Treasury = artifacts.require('Treasury');
 const ARTH = artifacts.require('ARTH');
-const Bond = artifacts.require('Bond');
+const ARTHB = artifacts.require('ARTHB');
 const MahaToken = artifacts.require('MahaToken');
 const Timelock = artifacts.require('Timelock');
 
@@ -20,7 +20,7 @@ module.exports = async (deployer, network, accounts) => {
   accounts[0] = process.env.WALLET_KEY;
 
   const cash = await ARTH.deployed();
-  const bond = await Bond.deployed();
+  const bond = await ARTHB.deployed();
   const treasury = await Treasury.deployed();
   // const boardroom = await Boardroom.deployed();
   const mahaBoardroom = await MahaBoardroom.deployed();

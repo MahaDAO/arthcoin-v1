@@ -43,7 +43,7 @@ describe('Treasury', () => {
   });
 
   // core
-  let Bond: ContractFactory;
+  let ARTHB: ContractFactory;
   let ARTH: ContractFactory;
   let Share: ContractFactory;
   let Treasury: ContractFactory;
@@ -52,7 +52,7 @@ describe('Treasury', () => {
   let MockBoardroom: ContractFactory;
 
   before('fetch contract factories', async () => {
-    Bond = await ethers.getContractFactory('Bond');
+    ARTHB = await ethers.getContractFactory('ARTHB');
     ARTH = await ethers.getContractFactory('ARTH');
     Share = await ethers.getContractFactory('Share');
     Treasury = await ethers.getContractFactory('Treasury');
@@ -73,7 +73,7 @@ describe('Treasury', () => {
 
   beforeEach('deploy contracts', async () => {
     cash = await ARTH.connect(operator).deploy();
-    bond = await Bond.connect(operator).deploy();
+    bond = await ARTHB.connect(operator).deploy();
     share = await Share.connect(operator).deploy();
     oracle = await MockOracle.connect(operator).deploy();
     boardroom = await MockBoardroom.connect(operator).deploy(cash.address);

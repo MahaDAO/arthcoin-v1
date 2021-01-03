@@ -19,21 +19,21 @@ describe('Tokens', () => {
     [operator] = await ethers.getSigners();
   });
 
-  let Bond: ContractFactory;
+  let ARTHB: ContractFactory;
   let ARTH: ContractFactory;
   let Share: ContractFactory;
 
   before('fetch contract factories', async () => {
-    Bond = await ethers.getContractFactory('Bond');
+    ARTHB = await ethers.getContractFactory('ARTHB');
     ARTH = await ethers.getContractFactory('ARTH');
     Share = await ethers.getContractFactory('Share');
   });
 
-  describe('Bond', () => {
+  describe('ARTHB', () => {
     let token: Contract;
 
     before('deploy token', async () => {
-      token = await Bond.connect(operator).deploy();
+      token = await ARTHB.connect(operator).deploy();
     });
 
     it('mint', async () => {

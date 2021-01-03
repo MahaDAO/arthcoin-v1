@@ -1,6 +1,6 @@
 
 const ARTH = artifacts.require('ARTH');
-const Bond = artifacts.require('Bond');
+const ARTHB = artifacts.require('ARTHB');
 const MahaToken = artifacts.require('MahaToken');
 const IERC20 = artifacts.require('IERC20');
 const MockDai = artifacts.require('MockDai');
@@ -78,7 +78,7 @@ async function migration(deployer, network, accounts) {
 
   const cash = await ARTH.deployed();
   const mahaToken = await MahaToken.deployed();
-  const bond = await Bond.deployed();
+  const bond = await ARTHB.deployed();
 
   console.log('Approving Uniswap on tokens for liquidity');
   await Promise.all([
@@ -99,16 +99,16 @@ async function migration(deployer, network, accounts) {
   // WARNING: msg.sender must hold enough DAI to add liquidity to BAC-DAI & BAS-DAI
   // pools otherwise transaction will revert.
   console.log('\nAdding liquidity to pools');
-  // await uniswapRouter.addLiquidity(
-  //   cash.address,
-  //   dai.address,
-  //   unit,
-  //   unit,
-  //   unit,
-  //   unit,
-  //   accounts[0],
-  //   deadline(),
-  // );
+  await uniswapRouter.addLiquidity(
+    cash.address,
+    dai.address,
+    unit,
+    unit,
+    unit,
+    unit,
+    accounts[0],
+    deadline(),
+  );
 
   // await uniswapRouter.addLiquidity(
   //   mahaToken.address,
@@ -129,11 +129,11 @@ async function migration(deployer, network, accounts) {
 
   // Deploy maha boardroom.
   // TODO: replace cash with maha token.
-  await deployer.deploy(MahaBoardroom, cash.address, share.address);
+  await deployer.deploy(MahaBoardroom, cash.address, mahaToken.address);
 
   // Deploy arth boardroom.
   // TODO: replace cash with arth token.
-  await deployer.deploy(ArthBoardroom, cash.address, share.address);
+  await deployer.deploy(ArthBoardroom, cash.address, cash.address);
 
   // Deploy fund.
   await deployer.deploy(SimpleERCFund);
@@ -169,7 +169,7 @@ async function migration(deployer, network, accounts) {
   await deployer.deploy(
     Treasury,
     cash.address,
-    Bond.address,
+    ARTHB.address,
     MahaToken.address,
     Oracle.address,
     SeigniorageOracle.address,

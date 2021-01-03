@@ -16,7 +16,8 @@ function distributionPoolContracts() {
 // The deployment thus can be used on basiscash-frontend.
 const exportedContracts = [
   'ARTH',
-  'Bond',
+  'ARTHB',
+  'MahToken',
   // 'Boardroom',
   'MahaBoardroom',
   'ArthBoardroom',
