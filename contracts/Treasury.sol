@@ -84,6 +84,8 @@ contract Treasury is ContractGuard, Epoch {
         simpleOracle = _simpleOracle;
         arthLiquidityBoardroom = _arthLiquidityBoardroom;
         arthBoardroom = _arthBoardroom;
+        developmentFund = _fund;
+        burnbackFund = _burnbackFund;
 
         cashPriceOne = ISimpleOracle(simpleOracle).getPrice();
         initialCashPriceOne = cashPriceOne;
