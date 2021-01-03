@@ -29,7 +29,7 @@ describe('Boardroom', () => {
 
   before('fetch contract factories', async () => {
     Cash = await ethers.getContractFactory('Cash');
-    Share = await ethers.getContractFactory('Share');
+    Share = await ethers.getContractFactory('MahaToken');
     Boardroom = await ethers.getContractFactory('Boardroom');
   });
 

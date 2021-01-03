@@ -75,48 +75,52 @@ async function migration(deployer, network, accounts) {
   const max = web3.utils.toBN(10 ** 18).muln(10000).toString();
 
   const cash = await Cash.deployed();
-  const MahaToken = await MahaToken.deployed();
+  const mahaToken = await MahaToken.deployed();
   const bond = await Bond.deployed();
 
   console.log('Approving Uniswap on tokens for liquidity');
   await Promise.all([
     approveIfNot(cash, accounts[0], uniswapRouter.address, max),
-    approveIfNot(MahaToken, accounts[0], uniswapRouter.address, max),
+    approveIfNot(mahaToken, accounts[0], uniswapRouter.address, max),
     approveIfNot(dai, accounts[0], uniswapRouter.address, max),
   ]);
+
+  if (network !== 'mainnet') {
+    // mahaToken.mint(accounts[0], 10 ** 18)
+  }
 
   console.log('\nBalance check');
   console.log(' - Dai account balance:', (await dai.balanceOf(accounts[0])).toString())
   console.log(' - ARTH account balance:', (await cash.balanceOf(accounts[0])).toString())
-  console.log(' - MAHA account balance:', (await MahaToken.balanceOf(accounts[0])).toString())
+  console.log(' - MAHA account balance:', (await mahaToken.balanceOf(accounts[0])).toString())
 
   // WARNING: msg.sender must hold enough DAI to add liquidity to BAC-DAI & BAS-DAI
   // pools otherwise transaction will revert.
   console.log('\nAdding liquidity to pools');
-  await uniswapRouter.addLiquidity(
-    cash.address,
-    dai.address,
-    unit,
-    unit,
-    unit,
-    unit,
-    accounts[0],
-    deadline(),
-  );
+  // await uniswapRouter.addLiquidity(
+  //   cash.address,
+  //   dai.address,
+  //   unit,
+  //   unit,
+  //   unit,
+  //   unit,
+  //   accounts[0],
+  //   deadline(),
+  // );
 
-  await uniswapRouter.addLiquidity(
-    MahaToken.address,
-    dai.address,
-    unit,
-    unit,
-    unit,
-    unit,
-    accounts[0],
-    deadline(),
-  );
+  // await uniswapRouter.addLiquidity(
+  //   mahaToken.address,
+  //   dai.address,
+  //   unit,
+  //   unit,
+  //   unit,
+  //   unit,
+  //   accounts[0],
+  //   deadline(),
+  // );
 
   console.log(`DAI-ARTH pair address: ${await uniswap.getPair(dai.address, cash.address)}`);
-  console.log(`DAI-MAHA pair address: ${await uniswap.getPair(dai.address, MahaToken.address)}`);
+  console.log(`DAI-MAHA pair address: ${await uniswap.getPair(dai.address, mahaToken.address)}`);
 
   // Deploy boardroom.
   await deployer.deploy(Boardroom, cash.address, MahaToken.address);
@@ -133,7 +137,7 @@ async function migration(deployer, network, accounts) {
   await deployer.deploy(
     Oracle,
     uniswap.address,
-    bond.address, // NOTE YA: I guess bond oracle is for dai - cash pool.
+    cash.address, // NOTE YA: I guess bond oracle is for dai - cash pool.
     dai.address,
     2 * HOUR, // In hours for dev deployment purpose.
     startTime
@@ -143,7 +147,7 @@ async function migration(deployer, network, accounts) {
   await deployer.deploy(
     SeigniorageOracle,
     uniswap.address,
-    MahaToken.address, // NOTE YA: I guess seigniorage oracle is for dai-share pool.
+    cash.address,
     dai.address,
     2 * HOUR, // In hours for dev deployment purpose.
     startTime

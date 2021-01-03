@@ -18,13 +18,12 @@ module.exports = async (deployer, network, accounts) => {
   accounts[0] = process.env.WALLET_KEY;
 
   const cash = await Cash.deployed();
-  const share = await MahaToken.deployed();
   const bond = await Bond.deployed();
   const treasury = await Treasury.deployed();
   const boardroom = await Boardroom.deployed();
 
 
-  for await (const contract of [cash, share, bond]) {
+  for await (const contract of [cash, bond]) {
     console.log(`transferring operator for ${contract.address} to ${treasury.address}`)
     await contract.transferOperator(treasury.address);
     console.log(`transferring ownership for ${contract.address} to ${treasury.address}`)

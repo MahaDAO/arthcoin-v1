@@ -21,6 +21,7 @@ async function deployToken(deployer, network, accounts) {
 
   if (network !== 'mainnet') {
     // await deployer.deploy(MahaToken);
+    // await deployer.deploy(MahaToken);
     const dai = await deployer.deploy(MockDai);
     console.log(`MockDAI address: ${dai.address}`);
   }
