@@ -17,7 +17,7 @@ function distributionPoolContracts() {
 const exportedContracts = [
   'ARTH',
   'ARTHB',
-  'MahToken',
+  'MahaToken',
   // 'Boardroom',
   'MahaBoardroom',
   'ArthBoardroom',
