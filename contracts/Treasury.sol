@@ -36,13 +36,15 @@ contract Treasury is ContractGuard, Epoch {
     bool public initialized = false;
 
     // ========== CORE
-    address public fund;
     address public cash;
     address public bond;
     address public share;
-    address public mahaBoardroom;
-    address public arthBoardroom;
     address public simpleOracle;
+
+    address public arthLiquidityBoardroom;
+    address public arthBoardroom;
+    address public burnbackFund;
+    address public developmentFund;
 
     address public bondOracle;
     address public seigniorageOracle;
@@ -53,8 +55,10 @@ contract Treasury is ContractGuard, Epoch {
     uint256 public cashPriceCeiling;
     uint256 public bondDepletionFloor;
     uint256 public accumulatedSeigniorage = 0;
-    uint256 public fundAllocationRate = 2; // %
-    uint256 public mahaBoardroomAllocationRate = 40; // In %.
+
+    uint256 public fundAllocationRate = 2;
+    uint256 public burnbackAllocationRate = 2;
+    uint256 public arthLiquidityBoardroomAllocationRate = 50; // In %.
     uint256 public arthBoardroomAllocationRate = 50; // IN %.
 
     /* ========== CONSTRUCTOR ========== */
@@ -65,9 +69,10 @@ contract Treasury is ContractGuard, Epoch {
         address _share,
         address _bondOracle,
         address _seigniorageOracle,
-        address _mahaBoardroom,
+        address _arthLiquidityBoardroom,
         address _arthBoardroom,
         address _fund,
+        address _burnbackFund,
         address _simpleOracle,
         uint256 _startTime
     ) public Epoch(1 days, _startTime, 0) {
@@ -77,9 +82,8 @@ contract Treasury is ContractGuard, Epoch {
         bondOracle = _bondOracle;
         seigniorageOracle = _seigniorageOracle;
         simpleOracle = _simpleOracle;
-        mahaBoardroom = _mahaBoardroom;
+        arthLiquidityBoardroom = _arthLiquidityBoardroom;
         arthBoardroom = _arthBoardroom;
-        fund = _fund;
 
         cashPriceOne = ISimpleOracle(simpleOracle).getPrice();
         initialCashPriceOne = cashPriceOne;
@@ -105,7 +109,7 @@ contract Treasury is ContractGuard, Epoch {
             IBasisAsset(cash).operator() == address(this) &&
                 IBasisAsset(bond).operator() == address(this) &&
                 IBasisAsset(share).operator() == address(this) &&
-                Operator(mahaBoardroom).operator() == address(this) &&
+                Operator(arthLiquidityBoardroom).operator() == address(this) &&
                 Operator(arthBoardroom).operator() == address(this),
             'Treasury: need more permission'
         );
@@ -177,14 +181,37 @@ contract Treasury is ContractGuard, Epoch {
         emit Migration(target);
     }
 
-    function setFund(address newFund) public onlyOperator {
-        fund = newFund;
+    function setFund(address newFund, uint256 rate) public onlyOwner {
+        developmentFund = newFund;
+        fundAllocationRate = rate;
         emit ContributionPoolChanged(msg.sender, newFund);
+        emit ContributionPoolRateChanged(msg.sender, rate);
     }
 
-    function setFundAllocationRate(uint256 rate) public onlyOperator {
-        fundAllocationRate = rate;
-        emit ContributionPoolRateChanged(msg.sender, rate);
+    function setBurnback(address newFund, uint256 rate) public onlyOwner {
+        burnbackFund = newFund;
+        burnbackAllocationRate = rate;
+        // emit ContributionPoolChanged(msg.sender, newFund);
+        // emit ContributionPoolRateChanged(msg.sender, rate);
+    }
+
+    function setArthBoardroom(address newFund, uint256 rate) public onlyOwner {
+        require(rate + arthLiquidityBoardroomAllocationRate == 100);
+        arthBoardroom = newFund;
+        arthBoardroomAllocationRate = rate;
+        // emit ContributionPoolChanged(msg.sender, newFund);
+        // emit ContributionPoolRateChanged(msg.sender, rate);
+    }
+
+    function setArthLiquidityBoardroom(address newFund, uint256 rate)
+        public
+        onlyOwner
+    {
+        require(rate + arthBoardroomAllocationRate == 100);
+        arthLiquidityBoardroom = newFund;
+        arthLiquidityBoardroomAllocationRate = rate;
+        // emit ContributionPoolChanged(msg.sender, newFund);
+        // emit ContributionPoolRateChanged(msg.sender, rate);
     }
 
     /* ========== MUTABLE FUNCTIONS ========== */
@@ -278,10 +305,11 @@ contract Treasury is ContractGuard, Epoch {
         IBasisAsset(cash).mint(address(this), seigniorage);
 
         // ======================== BIP-3
+        // send funds to the community development fund
         uint256 fundReserve = seigniorage.mul(fundAllocationRate).div(100);
         if (fundReserve > 0) {
-            IERC20(cash).safeApprove(fund, fundReserve);
-            ISimpleERCFund(fund).deposit(
+            IERC20(cash).safeApprove(developmentFund, fundReserve);
+            ISimpleERCFund(developmentFund).deposit(
                 cash,
                 fundReserve,
                 'Treasury: Seigniorage Allocation'
@@ -289,9 +317,24 @@ contract Treasury is ContractGuard, Epoch {
             emit ContributionPoolFunded(now, fundReserve);
         }
 
-        seigniorage = seigniorage.sub(fundReserve);
+        // send funds to the burnback fund
+        uint256 burnbackReserve = seigniorage.mul(fundAllocationRate).div(100);
+        if (burnbackReserve > 0) {
+            IERC20(cash).safeApprove(burnbackFund, burnbackReserve);
+            ISimpleERCFund(burnbackFund).deposit(
+                cash,
+                burnbackReserve,
+                'Treasury: Seigniorage Allocation'
+            );
+
+            // TODO: yash
+            // emit ContributionPoolFunded(now, burnbackReserve);
+        }
+
+        seigniorage = seigniorage.sub(fundReserve).sub(burnbackReserve);
 
         // ======================== BIP-4
+        // keep funds for all bond token holders
         uint256 treasuryReserve =
             Math.min(
                 seigniorage,
@@ -310,15 +353,20 @@ contract Treasury is ContractGuard, Epoch {
         if (boardroomReserve <= 0) return;
 
         // Calculate boardroom reserves.
-        uint256 mahaBoardroomReserve =
-            boardroomReserve.mul(mahaBoardroomAllocationRate).div(100);
+        uint256 arthLiquidityBoardroomReserve =
+            boardroomReserve.mul(arthLiquidityBoardroomAllocationRate).div(100);
         uint256 arthBoardroomReserve =
             boardroomReserve.mul(arthBoardroomAllocationRate).div(100);
 
-        if (mahaBoardroomReserve > 0) {
-            IERC20(cash).safeApprove(mahaBoardroom, mahaBoardroomReserve);
-            IBoardroom(mahaBoardroom).allocateSeigniorage(mahaBoardroomReserve);
-            emit BoardroomFunded(now, mahaBoardroomReserve);
+        if (arthLiquidityBoardroomReserve > 0) {
+            IERC20(cash).safeApprove(
+                arthLiquidityBoardroom,
+                arthLiquidityBoardroomReserve
+            );
+            IBoardroom(arthLiquidityBoardroom).allocateSeigniorage(
+                arthLiquidityBoardroomReserve
+            );
+            emit BoardroomFunded(now, arthLiquidityBoardroomReserve);
         }
 
         if (arthBoardroomReserve > 0) {
