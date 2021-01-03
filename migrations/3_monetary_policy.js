@@ -9,6 +9,8 @@ const SimpleERCFund = artifacts.require('SimpleERCFund');
 const Oracle = artifacts.require('Oracle');
 const Treasury = artifacts.require('Treasury');
 const Boardroom = artifacts.require('Boardroom');
+const MahaBoardroom = artifacts.require('MahaBoardroom');
+const ArthBoardroom = artifacts.require('ArthBoardroom');
 const SimpleOracle = artifacts.require('SimpleOracle.sol');
 const SeigniorageOracle = artifacts.require('SeigniorageOracle');
 
@@ -123,7 +125,15 @@ async function migration(deployer, network, accounts) {
   console.log(`DAI-MAHA pair address: ${await uniswap.getPair(dai.address, mahaToken.address)}`);
 
   // Deploy boardroom.
-  await deployer.deploy(Boardroom, cash.address, MahaToken.address);
+  // await deployer.deploy(Boardroom, cash.address, share.address);
+
+  // Deploy maha boardroom.
+  // TODO: replace cash with maha token.
+  await deployer.deploy(MahaBoardroom, cash.address, share.address);
+
+  // Deploy arth boardroom.
+  // TODO: replace cash with arth token.
+  await deployer.deploy(ArthBoardroom, cash.address, share.address);
 
   // Deploy fund.
   await deployer.deploy(SimpleERCFund);
@@ -163,7 +173,8 @@ async function migration(deployer, network, accounts) {
     MahaToken.address,
     Oracle.address,
     SeigniorageOracle.address,
-    Boardroom.address,
+    MahaBoardroom.address,
+    ArthBoardroom.address,
     SimpleERCFund.address,
     SimpleOracle.address,
     startTime,
