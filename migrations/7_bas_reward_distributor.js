@@ -4,7 +4,7 @@ const {
   INITIAL_BAS_FOR_DAI_BAS,
 } = require('./pools');
 
-const Share = artifacts.require('Share');
+const MahaToken = artifacts.require('MahaToken');
 const InitialShareDistributor = artifacts.require('InitialShareDistributor');
 
 
@@ -21,7 +21,7 @@ async function migration(deployer, network, accounts) {
   const totalBalanceForDAIBAS = unit.muln(INITIAL_BAS_FOR_DAI_BAS)
   const totalBalance = totalBalanceForDAIBAC.add(totalBalanceForDAIBAS);
 
-  const share = await Share.deployed();
+  const share = await MahaToken.deployed();
 
   const lpPoolDAIBAC = artifacts.require(basPools.DAIBAC.contractName);
   const lpPoolDAIBAS = artifacts.require(basPools.DAIBAS.contractName);

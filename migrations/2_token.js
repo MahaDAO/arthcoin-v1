@@ -3,7 +3,7 @@
  */
 const Cash = artifacts.require('Cash')
 const Bond = artifacts.require('Bond')
-const Share = artifacts.require('Share')
+const MahaToken = artifacts.require('MahaToken')
 const MockDai = artifacts.require('MockDai');
 
 
@@ -17,9 +17,10 @@ async function deployToken(deployer, network, accounts) {
 
   await deployer.deploy(Cash);
   await deployer.deploy(Bond);
-  await deployer.deploy(Share);
+  await deployer.deploy(MahaToken);
 
   if (network !== 'mainnet') {
+    // await deployer.deploy(MahaToken);
     const dai = await deployer.deploy(MockDai);
     console.log(`MockDAI address: ${dai.address}`);
   }

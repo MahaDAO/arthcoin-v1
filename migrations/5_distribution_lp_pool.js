@@ -1,6 +1,6 @@
 
 const Cash = artifacts.require('Cash');
-const Share = artifacts.require('Share');
+const MahaToken = artifacts.require('MahaToken');
 const Oracle = artifacts.require('Oracle');
 const MockDai = artifacts.require('MockDai');
 
@@ -29,8 +29,8 @@ module.exports = async (deployer, network, accounts) => {
   const oracle = await Oracle.deployed();
 
   const dai_bac_lpt = await oracle.pairFor(uniswapFactory.address, Cash.address, dai.address);
-  const dai_bas_lpt = await oracle.pairFor(uniswapFactory.address, Share.address, dai.address);
+  const dai_bas_lpt = await oracle.pairFor(uniswapFactory.address, MahaToken.address, dai.address);
 
-  await deployer.deploy(DAIBACLPToken_BASPool, Share.address, dai_bac_lpt, POOL_START_DATE);
-  await deployer.deploy(DAIBASLPToken_BASPool, Share.address, dai_bas_lpt, POOL_START_DATE);
+  await deployer.deploy(DAIBACLPToken_BASPool, MahaToken.address, dai_bac_lpt, POOL_START_DATE);
+  await deployer.deploy(DAIBASLPToken_BASPool, MahaToken.address, dai_bas_lpt, POOL_START_DATE);
 };
