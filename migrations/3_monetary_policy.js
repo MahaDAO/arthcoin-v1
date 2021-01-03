@@ -50,7 +50,7 @@ async function migration(deployer, network, accounts) {
 
   // Deploy uniswap.
   if (network !== 'mainnet') {
-    console.log(`Deploying uniswap on ${network} network.`);
+    console.log(`Deploying uniswap on ${network} network.`, accounts[0]);
     await deployer.deploy(UniswapV2Factory, accounts[0]);
     uniswap = await UniswapV2Factory.deployed();
 
@@ -62,12 +62,14 @@ async function migration(deployer, network, accounts) {
   }
 
   // Deploy dai.
+  console.log(`Fetching dai on ${network} network.`);
+
   const dai = network === 'mainnet'
     ? await IERC20.at(knownContracts.DAI[network])
     : await MockDai.deployed();
 
   // 2. provide liquidity to BAC-DAI and BAS-DAI pair
-  // if you don't provide liquidity to BAC-DAI and BAS-DAI pair after step 1 and 
+  // if you don't provide liquidity to BAC-DAI and BAS-DAI pair after step 1 and
   // before step 3, creating Oracle will fail with NO_RESERVES error.
   const unit = web3.utils.toBN(10 ** 18).toString();
   const max = web3.utils.toBN(10 ** 18).muln(10000).toString();
@@ -88,7 +90,7 @@ async function migration(deployer, network, accounts) {
   console.log(' - Cash account balance:', (await cash.balanceOf(accounts[0])).toString())
   console.log(' - Share account balance:', (await share.balanceOf(accounts[0])).toString())
 
-  // WARNING: msg.sender must hold enough DAI to add liquidity to BAC-DAI & BAS-DAI 
+  // WARNING: msg.sender must hold enough DAI to add liquidity to BAC-DAI & BAS-DAI
   // pools otherwise transaction will revert.
   console.log('\nAdding liquidity to pools');
   await uniswapRouter.addLiquidity(
