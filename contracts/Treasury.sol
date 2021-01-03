@@ -58,8 +58,8 @@ contract Treasury is ContractGuard, Epoch {
 
     uint256 public fundAllocationRate = 2;
     uint256 public burnbackAllocationRate = 5;
-    uint256 public arthLiquidityBoardroomAllocationRate = 50; // In %.
-    uint256 public arthBoardroomAllocationRate = 50; // IN %.
+    uint256 public arthLiquidityBoardroomAllocationRate = 20; // In %.
+    uint256 public arthBoardroomAllocationRate = 80; // IN %.
 
     /* ========== CONSTRUCTOR ========== */
 
