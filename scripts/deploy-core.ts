@@ -29,7 +29,7 @@ async function main() {
 
   // Fetch existing contracts
   // === token
-  const cash = await ethers.getContractAt('Cash', OLD.Cash);
+  const cash = await ethers.getContractAt('ARTH', OLD.ARTH);
   const bond = await ethers.getContractAt('Bond', OLD.Bond);
   const share = await ethers.getContractAt('Share', OLD.Share);
 

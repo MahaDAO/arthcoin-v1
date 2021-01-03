@@ -5,7 +5,7 @@ const { bacPools, POOL_START_DATE } = require('./pools');
 /**
  * Tokens deployed first.
  */
-const Cash = artifacts.require('Cash');
+const ARTH = artifacts.require('ARTH');
 const MockDai = artifacts.require('MockDai');
 
 
@@ -27,6 +27,6 @@ module.exports = async (deployer, network, accounts) => {
     }
 
     const contract = artifacts.require(contractName);
-    await deployer.deploy(contract, Cash.address, tokenAddress, POOL_START_DATE);
+    await deployer.deploy(contract, ARTH.address, tokenAddress, POOL_START_DATE);
   }
 };

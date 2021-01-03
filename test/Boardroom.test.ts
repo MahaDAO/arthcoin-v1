@@ -23,12 +23,12 @@ describe('Boardroom', () => {
     [operator, whale, abuser] = await ethers.getSigners();
   });
 
-  let Cash: ContractFactory;
+  let ARTH: ContractFactory;
   let Share: ContractFactory;
   let Boardroom: ContractFactory;
 
   before('fetch contract factories', async () => {
-    Cash = await ethers.getContractFactory('Cash');
+    ARTH = await ethers.getContractFactory('ARTH');
     Share = await ethers.getContractFactory('MahaToken');
     Boardroom = await ethers.getContractFactory('Boardroom');
   });
@@ -38,7 +38,7 @@ describe('Boardroom', () => {
   let boardroom: Contract;
 
   beforeEach('deploy contracts', async () => {
-    cash = await Cash.connect(operator).deploy();
+    cash = await ARTH.connect(operator).deploy();
     share = await Share.connect(operator).deploy();
     boardroom = await Boardroom.connect(operator).deploy(
       cash.address,

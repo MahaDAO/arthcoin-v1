@@ -18,7 +18,7 @@ import './utils/ContractGuard.sol';
 import './interfaces/ISimpleOracle.sol';
 
 /**
- * @title Basis Cash Treasury contract
+ * @title Basis ARTH Treasury contract
  * @notice Monetary policy logic to adjust supplies of basis cash assets
  * @author Summer Smith & Rick Sanchez
  */

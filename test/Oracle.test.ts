@@ -53,7 +53,7 @@ describe('Oracle', () => {
     [operator, whale] = await ethers.getSigners();
   });
 
-  let Cash: ContractFactory;
+  let ARTH: ContractFactory;
   let Share: ContractFactory;
   let Oracle: ContractFactory;
   let MockDAI: ContractFactory;
@@ -69,7 +69,7 @@ describe('Oracle', () => {
   );
 
   before('fetch contract factories', async () => {
-    Cash = await ethers.getContractFactory('Cash');
+    ARTH = await ethers.getContractFactory('ARTH');
     Share = await ethers.getContractFactory('Share');
     Oracle = await ethers.getContractFactory('Oracle');
     MockDAI = await ethers.getContractFactory('MockDai');
@@ -94,7 +94,7 @@ describe('Oracle', () => {
 
   beforeEach('deploy contracts', async () => {
     dai = await MockDAI.connect(operator).deploy();
-    cash = await Cash.connect(operator).deploy();
+    cash = await ARTH.connect(operator).deploy();
     share = await Share.connect(operator).deploy();
 
     await dai.connect(operator).mint(operator.address, ETH.mul(2));

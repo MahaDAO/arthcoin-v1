@@ -44,7 +44,7 @@ describe('Treasury', () => {
 
   // core
   let Bond: ContractFactory;
-  let Cash: ContractFactory;
+  let ARTH: ContractFactory;
   let Share: ContractFactory;
   let Treasury: ContractFactory;
   let SimpleFund: ContractFactory;
@@ -53,7 +53,7 @@ describe('Treasury', () => {
 
   before('fetch contract factories', async () => {
     Bond = await ethers.getContractFactory('Bond');
-    Cash = await ethers.getContractFactory('Cash');
+    ARTH = await ethers.getContractFactory('ARTH');
     Share = await ethers.getContractFactory('Share');
     Treasury = await ethers.getContractFactory('Treasury');
     SimpleFund = await ethers.getContractFactory('SimpleERCFund');
@@ -72,7 +72,7 @@ describe('Treasury', () => {
   let startTime: BigNumber;
 
   beforeEach('deploy contracts', async () => {
-    cash = await Cash.connect(operator).deploy();
+    cash = await ARTH.connect(operator).deploy();
     bond = await Bond.connect(operator).deploy();
     share = await Share.connect(operator).deploy();
     oracle = await MockOracle.connect(operator).deploy();
@@ -311,7 +311,7 @@ describe('Treasury', () => {
           await advanceTimeAndBlock(
             provider,
             Number(await treasury.nextEpochPoint()) -
-              (await latestBlocktime(provider))
+            (await latestBlocktime(provider))
           );
 
           const cashPrice2 = ETH.mul(104).div(100);
@@ -453,7 +453,7 @@ describe('Treasury', () => {
           await advanceTimeAndBlock(
             provider,
             Number(await treasury.nextEpochPoint()) -
-              (await latestBlocktime(provider))
+            (await latestBlocktime(provider))
           );
         });
 

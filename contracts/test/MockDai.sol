@@ -5,7 +5,7 @@ import '../owner/Operator.sol';
 
 contract MockDai is ERC20Burnable, Operator {
     /**
-     * @notice Constructs the Basis Cash ERC-20 contract.
+     * @notice Constructs the Basis ARTH ERC-20 contract.
      */
     constructor() public ERC20('DAI', 'DAI') {
         _mint(msg.sender, 10000 * 10**18);

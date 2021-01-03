@@ -1,5 +1,5 @@
 
-const Cash = artifacts.require('Cash');
+const ARTH = artifacts.require('ARTH');
 const Bond = artifacts.require('Bond');
 const MahaToken = artifacts.require('MahaToken');
 const IERC20 = artifacts.require('IERC20');
@@ -74,7 +74,7 @@ async function migration(deployer, network, accounts) {
   const unit = web3.utils.toBN(10 ** 18).toString();
   const max = web3.utils.toBN(10 ** 18).muln(10000).toString();
 
-  const cash = await Cash.deployed();
+  const cash = await ARTH.deployed();
   const mahaToken = await MahaToken.deployed();
   const bond = await Bond.deployed();
 

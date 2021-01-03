@@ -1,7 +1,7 @@
 /**
  * Contracts.
  */
-const Cash = artifacts.require('Cash')
+const ARTH = artifacts.require('ARTH')
 const Bond = artifacts.require('Bond')
 const MahaToken = artifacts.require('MahaToken')
 const MockDai = artifacts.require('MockDai');
@@ -15,7 +15,7 @@ async function deployToken(deployer, network, accounts) {
   // important activities to your desired address in the .env file.
   accounts[0] = process.env.WALLET_KEY;
 
-  await deployer.deploy(Cash);
+  await deployer.deploy(ARTH);
   await deployer.deploy(Bond);
   await deployer.deploy(MahaToken);
 

@@ -1,6 +1,6 @@
 const Boardroom = artifacts.require('Boardroom');
 const Treasury = artifacts.require('Treasury');
-const Cash = artifacts.require('Cash');
+const ARTH = artifacts.require('ARTH');
 const Bond = artifacts.require('Bond');
 const MahaToken = artifacts.require('MahaToken');
 const Timelock = artifacts.require('Timelock');
@@ -17,7 +17,7 @@ module.exports = async (deployer, network, accounts) => {
   // important activities to your desired address in the .env file.
   accounts[0] = process.env.WALLET_KEY;
 
-  const cash = await Cash.deployed();
+  const cash = await ARTH.deployed();
   const bond = await Bond.deployed();
   const treasury = await Treasury.deployed();
   const boardroom = await Boardroom.deployed();

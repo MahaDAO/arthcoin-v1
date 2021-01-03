@@ -31,7 +31,7 @@ describe('Timelock', () => {
   });
 
   let Bond: ContractFactory;
-  let Cash: ContractFactory;
+  let ARTH: ContractFactory;
   let Share: ContractFactory;
   let Timelock: ContractFactory;
   let Treasury: ContractFactory;
@@ -39,7 +39,7 @@ describe('Timelock', () => {
 
   before('fetch contract factories', async () => {
     Bond = await ethers.getContractFactory('Bond');
-    Cash = await ethers.getContractFactory('Cash');
+    ARTH = await ethers.getContractFactory('ARTH');
     Share = await ethers.getContractFactory('Share');
     Timelock = await ethers.getContractFactory('Timelock');
     Treasury = await ethers.getContractFactory('Treasury');
@@ -57,7 +57,7 @@ describe('Timelock', () => {
 
   beforeEach('deploy contracts', async () => {
     bond = await Bond.connect(operator).deploy();
-    cash = await Cash.connect(operator).deploy();
+    cash = await ARTH.connect(operator).deploy();
     share = await Share.connect(operator).deploy();
     timelock = await Timelock.connect(operator).deploy(
       operator.address,

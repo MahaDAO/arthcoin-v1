@@ -20,12 +20,12 @@ describe('Tokens', () => {
   });
 
   let Bond: ContractFactory;
-  let Cash: ContractFactory;
+  let ARTH: ContractFactory;
   let Share: ContractFactory;
 
   before('fetch contract factories', async () => {
     Bond = await ethers.getContractFactory('Bond');
-    Cash = await ethers.getContractFactory('Cash');
+    ARTH = await ethers.getContractFactory('ARTH');
     Share = await ethers.getContractFactory('Share');
   });
 
@@ -60,11 +60,11 @@ describe('Tokens', () => {
     });
   });
 
-  describe('Cash', () => {
+  describe('ARTH', () => {
     let token: Contract;
 
     before('deploy token', async () => {
-      token = await Cash.connect(operator).deploy();
+      token = await ARTH.connect(operator).deploy();
     });
 
     it('mint', async () => {
