@@ -106,7 +106,7 @@ contract Treasury is ContractGuard, Epoch {
                 IBasisAsset(bond).operator() == address(this) &&
                 IBasisAsset(share).operator() == address(this) &&
                 Operator(mahaBoardroom).operator() == address(this) &&
-                Operator(arthBoardroom).operator() == address(this)
+                Operator(arthBoardroom).operator() == address(this),
             'Treasury: need more permission'
         );
 
