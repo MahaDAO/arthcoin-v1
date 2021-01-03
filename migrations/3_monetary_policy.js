@@ -88,7 +88,8 @@ async function migration(deployer, network, accounts) {
   ]);
 
   if (network !== 'mainnet') {
-    // mahaToken.mint(accounts[0], 10 ** 18)
+    // mint 10 maha tokens to self if not on mainnet
+    mahaToken.mint(accounts[0], 10 ** 18)
   }
 
   console.log('\nBalance check');
