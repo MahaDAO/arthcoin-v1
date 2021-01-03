@@ -22,16 +22,33 @@ module.exports = async (deployer, network, accounts) => {
   const bond = await Bond.deployed();
   const treasury = await Treasury.deployed();
   const boardroom = await Boardroom.deployed();
-  const timelock = await deployer.deploy(Timelock, accounts[0], 2 * DAY);
+
 
   for await (const contract of [cash, share, bond]) {
+    console.log(`transferring operator for ${contract.address} to ${treasury.address}`)
     await contract.transferOperator(treasury.address);
+    console.log(`transferring ownership for ${contract.address} to ${treasury.address}`)
     await contract.transferOwnership(treasury.address);
   }
+
+  console.log(`transferring operator for ${boardroom.address} to ${treasury.address}`)
   await boardroom.transferOperator(treasury.address);
-  await boardroom.transferOwnership(timelock.address);
-  await treasury.transferOperator(timelock.address);
-  await treasury.transferOwnership(timelock.address);
+
+
+  if (network !== 'mainnet') {
+    console.log(`transferring operator for boardroom and treasurey to ${accounts[0]}`)
+    // for dev environments; don't need to add a timelock contract
+    await boardroom.transferOwnership(accounts[0]);
+    await treasury.transferOperator(accounts[0]);
+    await treasury.transferOwnership(accounts[0]);
+  } else {
+    const timelock = await deployer.deploy(Timelock, accounts[0], 2 * DAY);
+
+    console.log(`transferring operator for boardroom and treasurey to ${timelock.address}`)
+    await boardroom.transferOwnership(timelock.address);
+    await treasury.transferOperator(timelock.address);
+    await treasury.transferOwnership(timelock.address);
+  }
 
   console.log(`Transferred the operator role from the deployer (${accounts[0]}) to Treasury (${Treasury.address})`);
 }
