@@ -46,6 +46,7 @@
     "solidity-coverage": "^0.7.12",
     "truffle": "5.1.49",
     "truffle-flattener": "^1.5.0",
+    "truffle-plugin-verify": "^0.5.4",
     "ts-node": "^9.0.0",
     "typescript": "^4.0.5"
   },
