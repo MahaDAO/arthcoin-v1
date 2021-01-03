@@ -87,7 +87,7 @@ contract Treasury is ContractGuard, Epoch {
         developmentFund = _fund;
         burnbackFund = _burnbackFund;
 
-        cashTargetPrice = ISimpleOracle(gmuOracle).getPrice();
+        cashTargetPrice = uint256(1e18); //ISimpleOracle(gmuOracle).getPrice();
         initialCashPriceOne = cashTargetPrice;
 
         // Set the ceiling price to be 5% above the inital price.

@@ -5,14 +5,14 @@ import '@openzeppelin/contracts/access/Ownable.sol';
 
 import './interfaces/ISimpleOracle.sol';
 
-contract SimpleOracle is Ownable, ISimpleOracle {
+contract GMUOracle is Ownable, ISimpleOracle {
     using SafeMath for uint256;
 
     uint256 public price;
 
     constructor() public {
         // Set the initial price to 1.05.
-        price = uint256(105).mul(1e18).div(100);
+        price = uint256(1e18);
     }
 
     function setPrice(uint256 _price) public override onlyOwner {

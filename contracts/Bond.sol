@@ -7,7 +7,7 @@ contract ARTHB is ERC20Burnable, Ownable, Operator {
     /**
      * @notice Constructs the Basis ARTHB ERC-20 contract.
      */
-    constructor() public ERC20('ARTH ARTHB', 'ARTHB') {}
+    constructor() public ERC20('ARTH Bond', 'ARTHB') {}
 
     /**
      * @notice Operator mints basis bonds to a recipient

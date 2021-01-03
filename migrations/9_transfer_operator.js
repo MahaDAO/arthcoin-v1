@@ -1,10 +1,8 @@
-const Boardroom = artifacts.require('Boardroom');
-const MahaBoardroom = artifacts.require('MahaBoardroom');
+const ArthLiquidityBoardroom = artifacts.require('ArthLiquidityBoardroom');
 const ArthBoardroom = artifacts.require('ArthBoardroom');
 const Treasury = artifacts.require('Treasury');
 const ARTH = artifacts.require('ARTH');
 const ARTHB = artifacts.require('ARTHB');
-const MahaToken = artifacts.require('MahaToken');
 const Timelock = artifacts.require('Timelock');
 
 
@@ -23,7 +21,7 @@ module.exports = async (deployer, network, accounts) => {
   const bond = await ARTHB.deployed();
   const treasury = await Treasury.deployed();
   // const boardroom = await Boardroom.deployed();
-  const mahaBoardroom = await MahaBoardroom.deployed();
+  const arthLiquidityBoardroom = await ArthLiquidityBoardroom.deployed();
   const arthBoardroom = await ArthBoardroom.deployed();
   const timelock = await deployer.deploy(Timelock, accounts[0], 2 * DAY);
 
@@ -37,10 +35,10 @@ module.exports = async (deployer, network, accounts) => {
 
   // await boardroom.transferOperator(treasury.address);
   // await boardroom.transferOwnership(timelock.address);
-  await mahaBoardroom.transferOperator(treasury.address);
+  await arthLiquidityBoardroom.transferOperator(treasury.address);
   await arthBoardroom.transferOperator(treasury.address);
 
-  await mahaBoardroom.transferOwnership(timelock.address);
+  await arthLiquidityBoardroom.transferOwnership(timelock.address);
   await arthBoardroom.transferOwnership(timelock.address);
 
   await treasury.transferOperator(timelock.address);

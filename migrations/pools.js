@@ -9,10 +9,10 @@ const POOL_START_DATE = Math.floor(Date.now() / 1000);
 
 const bacPools = [
   { contractName: 'BACDAIPool', token: 'DAI' },
-  // { contractName: 'BACSUSDPool', token: 'SUSD' },
-  // { contractName: 'BACUSDCPool', token: 'USDC' },
-  // { contractName: 'BACUSDTPool', token: 'USDT' },
-  // { contractName: 'BACyCRVPool', token: 'yCRV' },
+  { contractName: 'BACSUSDPool', token: 'SUSD' },
+  { contractName: 'BACUSDCPool', token: 'USDC' },
+  { contractName: 'BACUSDTPool', token: 'USDT' },
+  { contractName: 'BACyCRVPool', token: 'yCRV' },
 ];
 
 

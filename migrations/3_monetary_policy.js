@@ -4,14 +4,14 @@ const ARTHB = artifacts.require('ARTHB');
 const MahaToken = artifacts.require('MahaToken');
 const IERC20 = artifacts.require('IERC20');
 const MockDai = artifacts.require('MockDai');
-const SimpleERCFund = artifacts.require('SimpleERCFund');
+const DevelopmentFund = artifacts.require('DevelopmentFund');
+const BurnbackFund = artifacts.require('BurnbackFund');
 
 const Oracle = artifacts.require('Oracle');
 const Treasury = artifacts.require('Treasury');
-const Boardroom = artifacts.require('Boardroom');
-const MahaBoardroom = artifacts.require('MahaBoardroom');
+const ArthLiquidityBoardroom = artifacts.require('ArthLiquidityBoardroom');
 const ArthBoardroom = artifacts.require('ArthBoardroom');
-const SimpleOracle = artifacts.require('SimpleOracle.sol');
+const GMUOracle = artifacts.require('GMUOracle');
 const SeigniorageOracle = artifacts.require('SeigniorageOracle');
 
 const UniswapV2Factory = artifacts.require('UniswapV2Factory');
@@ -95,6 +95,7 @@ async function migration(deployer, network, accounts) {
   console.log(' - Dai account balance:', (await dai.balanceOf(accounts[0])).toString())
   console.log(' - ARTH account balance:', (await cash.balanceOf(accounts[0])).toString())
   console.log(' - MAHA account balance:', (await mahaToken.balanceOf(accounts[0])).toString())
+  console.log(' - ARTHB account balance:', (await bond.balanceOf(accounts[0])).toString())
 
   // WARNING: msg.sender must hold enough DAI to add liquidity to BAC-DAI & BAS-DAI
   // pools otherwise transaction will revert.
@@ -112,21 +113,19 @@ async function migration(deployer, network, accounts) {
 
 
   console.log(`DAI-ARTH pair address: ${await uniswap.getPair(dai.address, cash.address)}`);
-  console.log(`DAI-MAHA pair address: ${await uniswap.getPair(dai.address, mahaToken.address)}`);
-
-  // Deploy boardroom.
-  // await deployer.deploy(Boardroom, cash.address, share.address);
-
-  // Deploy maha boardroom.
-  // TODO: replace cash with maha token.
-  await deployer.deploy(MahaBoardroom, cash.address, mahaToken.address);
 
   // Deploy arth boardroom.
-  // TODO: replace cash with arth token.
+  // TODO: replace cash with bonded arth token.
+  await deployer.deploy(ArthLiquidityBoardroom, cash.address, cash.address);
+
+  // Deploy arth liquidity boardroom.
+  // TODO: replace cash with arth liqduity token.
   await deployer.deploy(ArthBoardroom, cash.address, cash.address);
 
-  // Deploy fund.
-  await deployer.deploy(SimpleERCFund);
+  // Deploy funds.
+  await deployer.deploy(DevelopmentFund);
+  await deployer.deploy(BurnbackFund);
+
 
   const startTime = POOL_START_DATE;
   if (network === 'mainnet') {
@@ -153,8 +152,9 @@ async function migration(deployer, network, accounts) {
     startTime
   );
 
-  // Deploy simple oracle.
-  await deployer.deploy(SimpleOracle)
+  // Deploy the GMU oracle.
+  const gmuOrale = await deployer.deploy(GMUOracle);
+  // await gmuOrale.setPrice(1e18);
 
   await deployer.deploy(
     Treasury,
@@ -163,10 +163,11 @@ async function migration(deployer, network, accounts) {
     MahaToken.address,
     Oracle.address,
     SeigniorageOracle.address,
-    MahaBoardroom.address,
+    ArthLiquidityBoardroom.address,
     ArthBoardroom.address,
-    SimpleERCFund.address,
-    SimpleOracle.address,
+    DevelopmentFund.address,
+    BurnbackFund.address,
+    GMUOracle.address,
     startTime,
   );
 }
