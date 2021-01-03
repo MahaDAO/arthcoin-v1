@@ -99,7 +99,6 @@ contract Treasury is ContractGuard, Epoch {
         require(
             IBasisAsset(cash).operator() == address(this) &&
                 IBasisAsset(bond).operator() == address(this) &&
-                IBasisAsset(share).operator() == address(this) &&
                 Operator(boardroom).operator() == address(this),
             'Treasury: need more permission'
         );
@@ -162,9 +161,9 @@ contract Treasury is ContractGuard, Epoch {
         Operator(bond).transferOwnership(target);
         IERC20(bond).transfer(target, IERC20(bond).balanceOf(address(this)));
 
-        // share
-        Operator(share).transferOperator(target);
-        Operator(share).transferOwnership(target);
+        // share - disabled ownership and operator functions as MAHA tokens don't have these
+        // Operator(share).transferOperator(target);
+        // Operator(share).transferOwnership(target);
         IERC20(share).transfer(target, IERC20(share).balanceOf(address(this)));
 
         migrated = true;
