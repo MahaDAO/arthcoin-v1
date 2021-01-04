@@ -15,7 +15,7 @@ import './lib/Safe112.sol';
 import './owner/Operator.sol';
 import './utils/Epoch.sol';
 import './utils/ContractGuard.sol';
-import './interfaces/ISimpleOracle.sol';
+import './interfaces/IGMUOracle.sol';
 
 /**
  * @title Basis ARTH Treasury contract
@@ -87,7 +87,7 @@ contract Treasury is ContractGuard, Epoch {
         developmentFund = _fund;
         burnbackFund = _burnbackFund;
 
-        cashTargetPrice = uint256(1e18); //ISimpleOracle(gmuOracle).getPrice();
+        cashTargetPrice = IGMUOracle(gmuOracle).getPrice();
         initialCashPriceOne = cashTargetPrice;
 
         // Set the ceiling price to be 5% above the inital price.
@@ -131,7 +131,7 @@ contract Treasury is ContractGuard, Epoch {
     }
 
     function getGMUOraclePrice() public view returns (uint256) {
-        return ISimpleOracle(gmuOracle).getPrice();
+        return IGMUOracle(gmuOracle).getPrice();
     }
 
     function getSeigniorageOraclePrice() public view returns (uint256) {
@@ -222,7 +222,7 @@ contract Treasury is ContractGuard, Epoch {
         try IOracle(bondOracle).update() {} catch {}
         try IOracle(seigniorageOracle).update() {} catch {}
 
-        cashTargetPrice = ISimpleOracle(gmuOracle).getPrice();
+        cashTargetPrice = IGMUOracle(gmuOracle).getPrice();
 
         // Set the ceiling price to be 5% above the target price.
         cashPriceCeiling =

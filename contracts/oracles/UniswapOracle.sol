@@ -2,17 +2,17 @@ pragma solidity ^0.6.0;
 
 import '@openzeppelin/contracts/math/SafeMath.sol';
 
-import './lib/Babylonian.sol';
-import './lib/FixedPoint.sol';
-import './lib/UniswapV2Library.sol';
-import './lib/UniswapV2OracleLibrary.sol';
-import './utils/Epoch.sol';
-import './interfaces/IUniswapV2Pair.sol';
-import './interfaces/IUniswapV2Factory.sol';
+import '../lib/Babylonian.sol';
+import '../lib/FixedPoint.sol';
+import '../lib/UniswapV2Library.sol';
+import '../lib/UniswapV2OracleLibrary.sol';
+import '../utils/Epoch.sol';
+import '../interfaces/IUniswapV2Pair.sol';
+import '../interfaces/IUniswapV2Factory.sol';
 
 // fixed window oracle that recomputes the average price for the entire period once every period
 // note that the price average is only guaranteed to be over at least 1 period, but may be over a longer period
-contract Oracle is Epoch {
+contract UniswapOracle is Epoch {
     using FixedPoint for *;
     using SafeMath for uint256;
 

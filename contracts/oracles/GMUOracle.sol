@@ -3,9 +3,9 @@ pragma solidity ^0.6.0;
 import '@openzeppelin/contracts/math/SafeMath.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
 
-import './interfaces/ISimpleOracle.sol';
+import '../interfaces/IGMUOracle.sol';
 
-contract GMUOracle is Ownable, ISimpleOracle {
+contract GMUOracle is Ownable, IGMUOracle {
     using SafeMath for uint256;
 
     uint256 public price;
