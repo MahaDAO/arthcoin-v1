@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 pragma solidity ^0.6.0;
 
 import '@openzeppelin/contracts/math/Math.sol';
@@ -193,16 +195,16 @@ contract Treasury is ContractGuard, Epoch {
     function setBurnback(address newFund, uint256 rate) public onlyOwner {
         burnbackFund = newFund;
         burnbackAllocationRate = rate;
-        // emit ContributionPoolChanged(msg.sender, newFund);
-        // emit ContributionPoolRateChanged(msg.sender, rate);
+        emit BurnBackPoolChanged(msg.sender, newFund);
+        emit BurnBackPoolRateChanged(msg.sender, rate);
     }
 
     function setArthBoardroom(address newFund, uint256 rate) public onlyOwner {
         require(rate + arthLiquidityBoardroomAllocationRate == 100);
         arthBoardroom = newFund;
         arthBoardroomAllocationRate = rate;
-        // emit ContributionPoolChanged(msg.sender, newFund);
-        // emit ContributionPoolRateChanged(msg.sender, rate);
+        emit ArthBoardroomChanged(msg.sender, newFund);
+        emit ArthBoardroomRateChanged(msg.sender, rate);
     }
 
     function setArthLiquidityBoardroom(address newFund, uint256 rate)
@@ -212,8 +214,8 @@ contract Treasury is ContractGuard, Epoch {
         require(rate + arthBoardroomAllocationRate == 100);
         arthLiquidityBoardroom = newFund;
         arthLiquidityBoardroomAllocationRate = rate;
-        // emit ContributionPoolChanged(msg.sender, newFund);
-        // emit ContributionPoolRateChanged(msg.sender, rate);
+        emit ArthLiquidityBoardroomChanged(msg.sender, newFund);
+        emit ArthLiquidityBoardroomRateChanged(msg.sender, rate);
     }
 
     /* ========== MUTABLE FUNCTIONS ========== */
@@ -337,7 +339,7 @@ contract Treasury is ContractGuard, Epoch {
             );
 
             // TODO: yash
-            // emit ContributionPoolFunded(now, burnbackReserve);
+            emit BurnBackPoolFunded(now, burnbackReserve);
         }
 
         seigniorage = seigniorage.sub(fundReserve).sub(burnbackReserve);
@@ -398,6 +400,18 @@ contract Treasury is ContractGuard, Epoch {
         address indexed operator,
         uint256 newRate
     );
+    event BurnBackPoolChanged(address indexed operator, address newFund);
+    event BurnBackPoolRateChanged(address indexed operator, uint256 newRate);
+    event ArthBoardroomChanged(address indexed operator, address newFund);
+    event ArthBoardroomRateChanged(address indexed operator, uint256 newRate);
+    event ArthLiquidityBoardroomChanged(
+        address indexed operator,
+        address newFund
+    );
+    event ArthLiquidityBoardroomRateChanged(
+        address indexed operator,
+        uint256 newRate
+    );
 
     // CORE
     event RedeemedBonds(address indexed from, uint256 amount);
@@ -405,4 +419,5 @@ contract Treasury is ContractGuard, Epoch {
     event TreasuryFunded(uint256 timestamp, uint256 seigniorage);
     event BoardroomFunded(uint256 timestamp, uint256 seigniorage);
     event ContributionPoolFunded(uint256 timestamp, uint256 seigniorage);
+    event BurnBackPoolFunded(uint256 timestamp, uint256 seigniorage);
 }
