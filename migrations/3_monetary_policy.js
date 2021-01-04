@@ -89,7 +89,7 @@ async function migration(deployer, network, accounts) {
 
   if (network !== 'mainnet') {
     // mint 10 maha tokens to self if not on mainnet
-    mahaToken.mint(accounts[0], web3.utils.toBN(10 * 1e18).toString());
+    await mahaToken.mint(accounts[0], web3.utils.toBN(2 * 10 * 1e18).toString());
   }
 
   console.log('\nBalance check');
@@ -111,9 +111,20 @@ async function migration(deployer, network, accounts) {
     accounts[0],
     deadline(),
   );
-
-
   console.log(`DAI-ARTH pair address: ${await uniswap.getPair(dai.address, cash.address)}`);
+
+  // Added to run 5_... migration file.
+  await uniswapRouter.addLiquidity(
+    mahaToken.address,
+    dai.address,
+    unit,
+    unit,
+    unit,
+    unit,
+    accounts[0],
+    deadline(),
+  );
+  console.log(`DAI-MAHA pair address: ${await uniswap.getPair(dai.address, mahaToken.address)}`);
 
   // Deploy arth boardroom.
   // TODO: replace cash with bonded arth token.
@@ -144,10 +155,11 @@ async function migration(deployer, network, accounts) {
   );
 
   // Deploy seigniorage oracle.
+  // Just to deploy 5_.. migration file.
   await deployer.deploy(
     SeigniorageOracle,
     uniswap.address,
-    cash.address,
+    mahaToken.address,
     dai.address,
     2 * HOUR, // In hours for dev deployment purpose.
     startTime

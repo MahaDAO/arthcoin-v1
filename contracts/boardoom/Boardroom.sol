@@ -1,5 +1,7 @@
+// SPDX-License-Identifier: MIT
+
 pragma solidity ^0.6.0;
-//pragma experimental ABIEncoderV2;
+// pragma experimental ABIEncoderV2;
 
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
@@ -32,7 +34,8 @@ contract ShareWrapper is StakingTimelock {
 
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
-        share.safeTransferFrom(msg.sender, address(this), amount);
+
+        share.transferFrom(msg.sender, address(this), amount);
     }
 
     function withdraw(uint256 amount) public virtual checkLockDuration {
@@ -41,9 +44,10 @@ contract ShareWrapper is StakingTimelock {
             directorShare >= amount,
             'MahaBoardroom: withdraw request greater than staked amount'
         );
+
         _totalSupply = _totalSupply.sub(amount);
         _balances[msg.sender] = directorShare.sub(amount);
-        share.safeTransfer(msg.sender, amount);
+        share.transfer(msg.sender, amount);
     }
 }
 
