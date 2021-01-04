@@ -34,20 +34,18 @@ contract ShareWrapper is StakingTimelock {
 
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
-
-        share.transferFrom(msg.sender, address(this), amount);
+        share.safeTransferFrom(msg.sender, address(this), amount);
     }
 
     function withdraw(uint256 amount) public virtual checkLockDuration {
         uint256 directorShare = _balances[msg.sender];
         require(
             directorShare >= amount,
-            'MahaBoardroom: withdraw request greater than staked amount'
+            'Boardroom: withdraw request greater than staked amount'
         );
-
         _totalSupply = _totalSupply.sub(amount);
         _balances[msg.sender] = directorShare.sub(amount);
-        share.transfer(msg.sender, amount);
+        share.safeTransfer(msg.sender, amount);
     }
 }
 
@@ -96,7 +94,7 @@ contract Boardroom is ShareWrapper, ContractGuard, Operator {
     modifier directorExists {
         require(
             balanceOf(msg.sender) > 0,
-            'MahaBoardroom: The director does not exist'
+            'Boardroom: The director does not exist'
         );
         _;
     }
@@ -163,7 +161,7 @@ contract Boardroom is ShareWrapper, ContractGuard, Operator {
         onlyOneBlock
         updateReward(msg.sender)
     {
-        require(amount > 0, 'MahaBoardroom: Cannot stake 0');
+        require(amount > 0, 'Boardroom: Cannot stake 0');
         super.stake(amount);
         emit Staked(msg.sender, amount);
     }
@@ -175,7 +173,7 @@ contract Boardroom is ShareWrapper, ContractGuard, Operator {
         directorExists
         updateReward(msg.sender)
     {
-        require(amount > 0, 'MahaBoardroom: Cannot withdraw 0');
+        require(amount > 0, 'Boardroom: Cannot withdraw 0');
         super.withdraw(amount);
         emit Withdrawn(msg.sender, amount);
     }
@@ -199,10 +197,10 @@ contract Boardroom is ShareWrapper, ContractGuard, Operator {
         onlyOneBlock
         onlyOperator
     {
-        require(amount > 0, 'MahaBoardroom: Cannot allocate 0');
+        require(amount > 0, 'Boardroom: Cannot allocate 0');
         require(
             totalSupply() > 0,
-            'MahaBoardroom: Cannot allocate when totalSupply is 0'
+            'Boardroom: Cannot allocate when totalSupply is 0'
         );
 
         // Create & add new snapshot
