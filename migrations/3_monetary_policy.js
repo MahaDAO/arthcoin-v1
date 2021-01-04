@@ -7,7 +7,7 @@ const MockDai = artifacts.require('MockDai');
 const DevelopmentFund = artifacts.require('DevelopmentFund');
 const BurnbackFund = artifacts.require('BurnbackFund');
 
-const Oracle = artifacts.require('Oracle');
+const BondRedemtionOracle = artifacts.require('BondRedemtionOracle');
 const Treasury = artifacts.require('Treasury');
 const ArthLiquidityBoardroom = artifacts.require('ArthLiquidityBoardroom');
 const ArthBoardroom = artifacts.require('ArthBoardroom');
@@ -89,7 +89,7 @@ async function migration(deployer, network, accounts) {
 
   if (network !== 'mainnet') {
     // mint 10 maha tokens to self if not on mainnet
-    mahaToken.mint(accounts[0], 10 ** 18)
+    mahaToken.mint(accounts[0], web3.utils.toBN(10 * 1e18).toString());
   }
 
   console.log('\nBalance check');
@@ -135,7 +135,7 @@ async function migration(deployer, network, accounts) {
 
   // Deploy oracle for the pair between bac and dai.
   await deployer.deploy(
-    Oracle,
+    BondRedemtionOracle,
     uniswap.address,
     cash.address, // NOTE YA: I guess bond oracle is for dai - cash pool.
     dai.address,
@@ -155,14 +155,14 @@ async function migration(deployer, network, accounts) {
 
   // Deploy the GMU oracle.
   const gmuOrale = await deployer.deploy(GMUOracle);
-  // await gmuOrale.setPrice(1e18);
+  await gmuOrale.setPrice(web3.utils.toBN(1e18).toString()); // set starting price to be 1$
 
   await deployer.deploy(
     Treasury,
     cash.address,
     ARTHB.address,
     MahaToken.address,
-    Oracle.address,
+    BondRedemtionOracle.address,
     SeigniorageOracle.address,
     ArthLiquidityBoardroom.address,
     ArthBoardroom.address,
