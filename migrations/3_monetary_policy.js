@@ -51,7 +51,7 @@ async function migration(deployer, network, accounts) {
   let uniswap, uniswapRouter;
 
   // Deploy uniswap.
-  if (network !== 'mainnet') {
+  if (network !== 'mainnet' && network !== 'ropsten') {
     console.log(`Deploying uniswap on ${network} network.`, accounts[0]);
     await deployer.deploy(UniswapV2Factory, accounts[0]);
     uniswap = await UniswapV2Factory.deployed();
