@@ -113,18 +113,18 @@ async function migration(deployer, network, accounts) {
   );
   console.log(`DAI-ARTH pair address: ${await uniswap.getPair(dai.address, cash.address)}`);
 
-  // Added to run 5_... migration file.
-  await uniswapRouter.addLiquidity(
-    mahaToken.address,
-    dai.address,
-    unit,
-    unit,
-    unit,
-    unit,
-    accounts[0],
-    deadline(),
-  );
-  console.log(`DAI-MAHA pair address: ${await uniswap.getPair(dai.address, mahaToken.address)}`);
+  // // Added to run 5_... migration file.
+  // await uniswapRouter.addLiquidity(
+  //   mahaToken.address,
+  //   dai.address,
+  //   unit,
+  //   unit,
+  //   unit,
+  //   unit,
+  //   accounts[0],
+  //   deadline(),
+  // );
+  // console.log(`DAI-MAHA pair address: ${await uniswap.getPair(dai.address, mahaToken.address)}`);
 
   // Deploy arth boardroom.
   // TODO: replace cash with bonded arth token.
@@ -159,7 +159,7 @@ async function migration(deployer, network, accounts) {
   await deployer.deploy(
     SeigniorageOracle,
     uniswap.address,
-    mahaToken.address,
+    cash.address,
     dai.address,
     2 * HOUR, // In hours for dev deployment purpose.
     startTime
