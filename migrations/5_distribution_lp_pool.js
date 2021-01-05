@@ -1,13 +1,11 @@
 
 const ARTH = artifacts.require('ARTH');
 const MahaToken = artifacts.require('MahaToken');
-const SeigniorageOracle = artifacts.require('SeigniorageOracle');
 const MockDai = artifacts.require('MockDai');
 const BondRedemtionOracle = artifacts.require('BondRedemtionOracle');
 const SeigniorageOracle = artifacts.require('SeigniorageOracle');
 
 const DAIBACLPToken_BASPool = artifacts.require('DAIBACLPTokenSharePool')
-const DAIBASLPToken_BASPool = artifacts.require('DAIBASLPTokenSharePool')
 
 const UniswapV2Factory = artifacts.require('UniswapV2Factory');
 
@@ -31,8 +29,5 @@ module.exports = async (deployer, network, accounts) => {
   const oracle = await SeigniorageOracle.deployed();
 
   const dai_bac_lpt = await oracle.pairFor(uniswapFactory.address, ARTH.address, dai.address);
-  // const dai_bas_lpt = await oracle.pairFor(uniswapFactory.address, MahaToken.address, dai.address);
-
   await deployer.deploy(DAIBACLPToken_BASPool, MahaToken.address, dai_bac_lpt, POOL_START_DATE);
-  // await deployer.deploy(DAIBASLPToken_BASPool, MahaToken.address, dai_bas_lpt, POOL_START_DATE);
 };

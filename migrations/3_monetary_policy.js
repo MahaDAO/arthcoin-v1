@@ -70,6 +70,8 @@ async function migration(deployer, network, accounts) {
     ? await IERC20.at(knownContracts.DAI[network])
     : await MockDai.deployed();
 
+
+
   // 2. provide liquidity to BAC-DAI and BAS-DAI pair
   // if you don't provide liquidity to BAC-DAI and BAS-DAI pair after step 1 and
   // before step 3, creating Oracle will fail with NO_RESERVES error.
@@ -114,10 +116,9 @@ async function migration(deployer, network, accounts) {
 
 
   console.log(`DAI-ARTH pair address: ${await uniswap.getPair(dai.address, cash.address)}`);
-  console.log(`DAI-MAHA pair address: ${await uniswap.getPair(dai.address, mahaToken.address)}`);
-
 
   // Deploy funds.
+  console.log('deploying funds')
   await deployer.deploy(DevelopmentFund);
   await deployer.deploy(BurnbackFund);
 
@@ -126,7 +127,8 @@ async function migration(deployer, network, accounts) {
     startTime += 5 * DAY;
   }
 
-  // Deploy oracle for the pair between bac and dai.
+  // Deploy oracle for the pair between ARTH and dai.
+  console.log('deploying bond oracle')
   const bondRedemtionOralce = await deployer.deploy(
     BondRedemtionOracle,
     uniswap.address,
@@ -137,25 +139,27 @@ async function migration(deployer, network, accounts) {
   );
 
   // Deploy seigniorage oracle.
-  // Just to deploy 5_.. migration file.
+  console.log('deploying seigniorage oracle')
   await deployer.deploy(
     SeigniorageOracle,
     uniswap.address,
-    mahaToken.address,
+    cash.address,
     dai.address,
     2 * HOUR, // In hours for dev deployment purpose.
     startTime
   );
 
   // Deploy boardrooms.
-  const dai_arth_lpt = await bondRedemtionOralce.pairFor(uniswapFactory.address, ARTH.address, dai.address);
-  const arthLiquidityBoardroom = await deployer.deploy(ArthLiquidityBoardroom, cash.address, dai_arth_lpt.address);
+  const dai_arth_lpt = await bondRedemtionOralce.pairFor(uniswap.address, cash.address, dai.address);
+  const arthLiquidityBoardroom = await deployer.deploy(ArthLiquidityBoardroom, cash.address, dai_arth_lpt);
   const arthBoardroom = await deployer.deploy(ArthBoardroom, cash.address);
 
   // Deploy the GMU oracle.
+  console.log('deploying GMU oracle')
   const gmuOrale = await deployer.deploy(GMUOracle);
   await gmuOrale.setPrice(web3.utils.toBN(1e18).toString()); // set starting price to be 1$
 
+  console.log('deploying treasurey')
   const treasurey = await deployer.deploy(
     Treasury,
     cash.address,
@@ -171,12 +175,14 @@ async function migration(deployer, network, accounts) {
     startTime,
   );
 
+  // TODO: yash; pass this within the constructor itself
+  console.log('setting timestamp properly')
   if (network !== 'mainnet') {
-    await treasurey.setEpoch(10 * 60) // 10 min epoch for development purposes
+    await treasurey.setPeriod(10 * 60) // 10 min epoch for development purposes
     await arthLiquidityBoardroom.changeLockDuration(5 * 60) // 5 min for liquidity staking locks
     await arthBoardroom.changeLockDuration(5 * 60) // 5 min for staking locks
   } else {
-    await treasurey.setEpoch(6 * 60 * 60) // start with a 6 hour epoch
+    await treasurey.setPeriod(6 * 60 * 60) // start with a 6 hour epoch
     await arthLiquidityBoardroom.changeLockDuration(86400) // 1 day for staking locks
     await arthBoardroom.changeLockDuration(5 * 86400) // 5 days for staking locks
   }
