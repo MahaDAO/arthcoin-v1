@@ -181,6 +181,14 @@ async function migration(deployer, network, accounts) {
     await treasurey.setPeriod(10 * 60) // 10 min epoch for development purposes
     await arthLiquidityBoardroom.changeLockDuration(5 * 60) // 5 min for liquidity staking locks
     await arthBoardroom.changeLockDuration(5 * 60) // 5 min for staking locks
+
+    // mint some tokens to the metamask wallet holder in dev
+    if (process.env.METAMASK_WALLET) {
+      console.log('sending some dummy tokens')
+      await cash.mint(process.env.METAMASK_WALLET, web3.utils.toBN(2 * 10 * 1e18).toString());
+      await mahaToken.mint(process.env.METAMASK_WALLET, web3.utils.toBN(2 * 10 * 1e18).toString());
+      await dai.transfer(process.env.METAMASK_WALLET, web3.utils.toBN(2 * 10 * 1e18).toString());
+    }
   } else {
     await treasurey.setPeriod(6 * 60 * 60) // start with a 6 hour epoch
     await arthLiquidityBoardroom.changeLockDuration(86400) // 1 day for staking locks
