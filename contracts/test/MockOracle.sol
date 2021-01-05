@@ -22,6 +22,7 @@ contract MockOracle is IOracle {
 
     function update() external override {
         require(!error, 'Oracle: mocked error');
+
         emit Updated(0, 0);
     }
 

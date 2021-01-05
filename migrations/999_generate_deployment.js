@@ -10,7 +10,7 @@ function distributionPoolContracts() {
   return fs.readdirSync(path.resolve(__dirname, '../contracts/distribution'))
     .filter(filename => filename.endsWith('Pool.sol'))
     .filter(filename => !filename.includes('DAIMAHALPTokenSharePool'))
-    .filter(filename => filename !== 'BACTOKENPool.sol')
+    .filter(filename => filename !== 'ARTHTOKENPool.sol')
     .map(filename => filename.replace('.sol', ''));
 }
 

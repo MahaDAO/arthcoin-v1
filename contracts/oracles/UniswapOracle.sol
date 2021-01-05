@@ -12,8 +12,9 @@ import '../utils/Epoch.sol';
 import '../interfaces/IUniswapV2Pair.sol';
 import '../interfaces/IUniswapV2Factory.sol';
 
-// fixed window oracle that recomputes the average price for the entire period once every period
-// note that the price average is only guaranteed to be over at least 1 period, but may be over a longer period
+// Fixed window oracle that recomputes the average price for the entire period once every period
+// note that the price average is only guaranteed to be over at least 1 period, but may be over a
+// longer period
 contract UniswapOracle is Epoch {
     using FixedPoint for *;
     using SafeMath for uint256;
@@ -47,13 +48,17 @@ contract UniswapOracle is Epoch {
             );
 
         pair = _pair;
+
         token0 = _pair.token0();
         token1 = _pair.token1();
         price0CumulativeLast = _pair.price0CumulativeLast(); // fetch the current accumulated price value (1 / 0)
         price1CumulativeLast = _pair.price1CumulativeLast(); // fetch the current accumulated price value (0 / 1)
+
         uint112 reserve0;
         uint112 reserve1;
+
         (reserve0, reserve1, blockTimestampLast) = _pair.getReserves();
+
         require(reserve0 != 0 && reserve1 != 0, 'Oracle: NO_RESERVES'); // ensure that there's liquidity in the pair
     }
 
