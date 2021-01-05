@@ -4,7 +4,7 @@ pragma solidity ^0.6.0;
 
 import './BACTOKENPool.sol';
 
-contract ARTHBSCPool is BACTOKENPool {
+contract ARTHYFIPool is BACTOKENPool {
     constructor(
         address token0_,
         address token1_,
