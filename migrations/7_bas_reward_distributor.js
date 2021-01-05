@@ -12,6 +12,8 @@ const InitialShareDistributor = artifacts.require('InitialShareDistributor');
  * Main migrations
  */
 async function migration(deployer, network, accounts) {
+  return
+
   // Set the main account, you'll be using accross all the files for various
   // important activities to your desired address in the .env file.
   accounts[0] = process.env.WALLET_KEY;

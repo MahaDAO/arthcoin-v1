@@ -20,10 +20,9 @@ module.exports = async (deployer, network, accounts) => {
   const cash = await ARTH.deployed();
   const bond = await ARTHB.deployed();
   const treasury = await Treasury.deployed();
-  // const boardroom = await Boardroom.deployed();
   const arthLiquidityBoardroom = await ArthLiquidityBoardroom.deployed();
   const arthBoardroom = await ArthBoardroom.deployed();
-  const timelock = await deployer.deploy(Timelock, accounts[0], 2 * DAY);
+
 
 
   for await (const contract of [cash, bond]) {
@@ -33,16 +32,19 @@ module.exports = async (deployer, network, accounts) => {
     await contract.transferOwnership(treasury.address);
   }
 
-  // await boardroom.transferOperator(treasury.address);
-  // await boardroom.transferOwnership(timelock.address);
   await arthLiquidityBoardroom.transferOperator(treasury.address);
   await arthBoardroom.transferOperator(treasury.address);
 
-  await arthLiquidityBoardroom.transferOwnership(timelock.address);
-  await arthBoardroom.transferOwnership(timelock.address);
+  // if mainnet only then migrate ownership to a timelocked contract; else keep it the same user
+  // with no timelock
+  if (network === 'mainnet') {
+    const timelock = await deployer.deploy(Timelock, accounts[0], 2 * DAY);
+    await arthLiquidityBoardroom.transferOwnership(timelock.address);
+    await arthBoardroom.transferOwnership(timelock.address);
 
-  await treasury.transferOperator(timelock.address);
-  await treasury.transferOwnership(timelock.address);
+    await treasury.transferOperator(timelock.address);
+    await treasury.transferOwnership(timelock.address);
+  }
 
   console.log(`Transferred the operator role from the deployer (${accounts[0]}) to Treasury (${Treasury.address})`);
 }

@@ -9,6 +9,7 @@ const writeFile = util.promisify(fs.writeFile);
 function distributionPoolContracts() {
   return fs.readdirSync(path.resolve(__dirname, '../contracts/distribution'))
     .filter(filename => filename.endsWith('Pool.sol'))
+    .filter(filename => !filename.includes('DAIBASLPTokenSharePool'))
     .map(filename => filename.replace('.sol', ''));
 }
 

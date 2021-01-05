@@ -1,7 +1,7 @@
 
 const ARTH = artifacts.require('ARTH');
 const MahaToken = artifacts.require('MahaToken');
-const Oracle = artifacts.require('Oracle');
+const SeigniorageOracle = artifacts.require('SeigniorageOracle');
 const MockDai = artifacts.require('MockDai');
 
 const DAIBACLPToken_BASPool = artifacts.require('DAIBACLPTokenSharePool')
@@ -18,7 +18,7 @@ module.exports = async (deployer, network, accounts) => {
   // important activities to your desired address in the .env file.
   accounts[0] = process.env.WALLET_KEY;
 
-  const uniswapFactory = network === 'mainnet'
+  const uniswapFactory = network === 'mainnet' || network === 'ropsten'
     ? await UniswapV2Factory.at(knownContracts.UniswapV2Factory[network])
     : await UniswapV2Factory.deployed()
 
@@ -26,11 +26,11 @@ module.exports = async (deployer, network, accounts) => {
     ? await IERC20.at(knownContracts.DAI[network])
     : await MockDai.deployed();
 
-  const oracle = await Oracle.deployed();
+  const oracle = await SeigniorageOracle.deployed();
 
   const dai_bac_lpt = await oracle.pairFor(uniswapFactory.address, ARTH.address, dai.address);
-  const dai_bas_lpt = await oracle.pairFor(uniswapFactory.address, MahaToken.address, dai.address);
+  // const dai_bas_lpt = await oracle.pairFor(uniswapFactory.address, MahaToken.address, dai.address);
 
   await deployer.deploy(DAIBACLPToken_BASPool, MahaToken.address, dai_bac_lpt, POOL_START_DATE);
-  await deployer.deploy(DAIBASLPToken_BASPool, MahaToken.address, dai_bas_lpt, POOL_START_DATE);
+  // await deployer.deploy(DAIBASLPToken_BASPool, MahaToken.address, dai_bas_lpt, POOL_START_DATE);
 };

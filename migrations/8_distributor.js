@@ -14,7 +14,7 @@ module.exports = async (deployer, network, accounts) => {
   const distributors = await Promise.all(
     [
       InitialCashDistributor,
-      InitialShareDistributor,
+      // InitialShareDistributor,
     ].map(distributor => distributor.deployed())
   );
 
