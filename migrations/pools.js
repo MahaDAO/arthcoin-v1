@@ -17,7 +17,7 @@ function distributionPoolContracts() {
     .filter(filename => !filename.includes('DAIBASLPTokenSharePool'))
     .filter(filename => filename !== 'BACTOKENPool.sol')
     .map(filename => {
-      filnameWithoutExtension = filename.replace('.sol', '');
+      const filnameWithoutExtension = filename.replace('.sol', '');
 
       return {
         contractName: filnameWithoutExtension,
