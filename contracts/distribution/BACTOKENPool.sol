@@ -75,7 +75,7 @@ contract BACTOKENPool is Token1Wrapper, IRewardDistributionRecipient {
     }
 
     modifier checkStart() {
-        require(block.timestamp >= starttime, 'BACDAIPool: not start');
+        require(block.timestamp >= starttime, 'BACTOKENPool: not start');
         _;
     }
 
@@ -124,13 +124,13 @@ contract BACTOKENPool is Token1Wrapper, IRewardDistributionRecipient {
         updateReward(msg.sender)
         checkStart
     {
-        require(amount > 0, 'BACDAIPool: Cannot stake 0');
+        require(amount > 0, 'BACTOKENIPool: Cannot stake 0');
 
         uint256 newDeposit = deposits[msg.sender].add(amount);
 
         require(
             newDeposit <= 20000e18,
-            'BACDAIPool: deposit amount exceeds maximum 20000'
+            'BACTOKENPool: deposit amount exceeds maximum 20000'
         );
 
         deposits[msg.sender] = newDeposit;
@@ -145,7 +145,7 @@ contract BACTOKENPool is Token1Wrapper, IRewardDistributionRecipient {
         updateReward(msg.sender)
         checkStart
     {
-        require(amount > 0, 'BACDAIPool: Cannot withdraw 0');
+        require(amount > 0, 'BACTOKENPool: Cannot withdraw 0');
 
         deposits[msg.sender] = deposits[msg.sender].sub(amount);
         super.withdraw(amount);
