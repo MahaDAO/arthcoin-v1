@@ -114,7 +114,6 @@ async function migration(deployer, network, accounts) {
     deadline(),
   );
 
-
   console.log(`DAI-ARTH pair address: ${await uniswap.getPair(dai.address, cash.address)}`);
 
   // Deploy funds.

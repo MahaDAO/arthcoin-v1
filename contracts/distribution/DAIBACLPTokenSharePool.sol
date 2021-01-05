@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.6.0;
+
 /**
- *Submitted for verification at Etherscan.io on 2020-07-17
+ * Submitted for verification at Etherscan.io on 2020-07-17
  */
 
 /*
@@ -11,7 +12,6 @@ pragma solidity ^0.6.0;
  _\ \ / // // _ \/ __// _ \/ -_)/ __// / \ \ /
 /___/ \_, //_//_/\__//_//_/\__/ \__//_/ /_\_\
      /___/
-
 * Synthetix: BASISCASHRewards.sol
 *
 * Docs: https://docs.synthetix.io/
@@ -40,27 +40,11 @@ pragma solidity ^0.6.0;
 * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 */
 
-// File: @openzeppelin/contracts/math/Math.sol
-
 import '@openzeppelin/contracts/math/Math.sol';
-
-// File: @openzeppelin/contracts/math/SafeMath.sol
-
 import '@openzeppelin/contracts/math/SafeMath.sol';
-
-// File: @openzeppelin/contracts/token/ERC20/IERC20.sol
-
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-
-// File: @openzeppelin/contracts/utils/Address.sol
-
 import '@openzeppelin/contracts/utils/Address.sol';
-
-// File: @openzeppelin/contracts/token/ERC20/SafeERC20.sol
-
 import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
-
-// File: contracts/IRewardDistributionRecipient.sol
 
 import '../interfaces/IRewardDistributionRecipient.sol';
 
