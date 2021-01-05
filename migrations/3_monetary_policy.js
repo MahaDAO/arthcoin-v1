@@ -113,31 +113,17 @@ async function migration(deployer, network, accounts) {
   );
   console.log(`DAI-ARTH pair address: ${await uniswap.getPair(dai.address, cash.address)}`);
 
-  // // Added to run 5_... migration file.
-  // await uniswapRouter.addLiquidity(
-  //   mahaToken.address,
-  //   dai.address,
-  //   unit,
-  //   unit,
-  //   unit,
-  //   unit,
-  //   accounts[0],
-  //   deadline(),
-  // );
-  // console.log(`DAI-MAHA pair address: ${await uniswap.getPair(dai.address, mahaToken.address)}`);
-
   // Deploy arth boardroom.
   // TODO: replace cash with bonded arth token.
   await deployer.deploy(ArthLiquidityBoardroom, cash.address, cash.address);
 
   // Deploy arth liquidity boardroom.
   // TODO: replace cash with arth liqduity token.
-  await deployer.deploy(ArthBoardroom, cash.address, cash.address);
+  await deployer.deploy(ArthBoardroom, cash.address);
 
   // Deploy funds.
   await deployer.deploy(DevelopmentFund);
   await deployer.deploy(BurnbackFund);
-
 
   const startTime = POOL_START_DATE;
   if (network === 'mainnet') {

@@ -61,7 +61,7 @@ contract Epoch is Operator {
 
     /* ========== GOVERNANCE ========== */
 
-    function setPeriod(uint256 _period) external onlyOperator {
+    function setPeriod(uint256 _period) external onlyOwner {
         period = _period;
     }
 }
