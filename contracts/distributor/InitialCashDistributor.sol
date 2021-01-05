@@ -50,7 +50,7 @@ contract InitialCashDistributor is IDistributor {
         IRewardDistributionRecipient[] memory _pools,
         uint256 _totalInitialBalance
     ) public {
-        require(_pools.length != 0, 'a list of BAC pools are required');
+        require(_pools.length != 0, 'a list of ARTH pools are required');
 
         cash = _cash;
         pools = _pools;
