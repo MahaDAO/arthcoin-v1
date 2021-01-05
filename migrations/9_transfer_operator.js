@@ -1,3 +1,5 @@
+const { BigNumber } = require("ethers");
+
 const ArthLiquidityBoardroom = artifacts.require('ArthLiquidityBoardroom');
 const ArthBoardroom = artifacts.require('ArthBoardroom');
 const Treasury = artifacts.require('Treasury');
@@ -22,8 +24,6 @@ module.exports = async (deployer, network, accounts) => {
   const treasury = await Treasury.deployed();
   const arthLiquidityBoardroom = await ArthLiquidityBoardroom.deployed();
   const arthBoardroom = await ArthBoardroom.deployed();
-
-
 
   for await (const contract of [cash, bond]) {
     console.log(`transferring operator for ${contract.address} to ${treasury.address}`)
@@ -52,6 +52,12 @@ module.exports = async (deployer, network, accounts) => {
     await arthBoardroom.transferOwnership(process.env.METAMASK_WALLET);
     await treasury.transferOperator(process.env.METAMASK_WALLET);
     await treasury.transferOwnership(process.env.METAMASK_WALLET);
+
+    if (network === 'development') {
+      const amountToSend = web3.utils.toWei("1", "ether"); // Convert to wei value
+      web3.eth.sendTransaction({ from: accounts[0], to: process.env.METAMASK_WALLET, value: String(amountToSend) });
+    }
+
   }
 
   console.log(`Transferred the operator role from the deployer (${accounts[0]}) to Treasury (${Treasury.address})`);
