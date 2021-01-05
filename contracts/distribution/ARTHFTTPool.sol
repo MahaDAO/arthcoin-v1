@@ -2,12 +2,12 @@
 
 pragma solidity ^0.6.0;
 
-import './BACTOKENPool.sol';
+import './ARTHTOKENPool.sol';
 
-contract ARTHFTTPool is BACTOKENPool {
+contract ARTHFTTPool is ARTHTOKENPool {
     constructor(
         address token0_,
         address token1_,
         uint256 starttime_
-    ) public BACTOKENPool(token0_, token1_, starttime_) {}
+    ) public ARTHTOKENPool(token0_, token1_, starttime_) {}
 }

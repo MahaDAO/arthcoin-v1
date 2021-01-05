@@ -113,11 +113,11 @@ async function migration(deployer, network, accounts) {
   console.log(`DAI-ARTH pair address: ${await uniswap.getPair(dai.address, cash.address)}`);
 
   // Deploy arth boardroom.
-  // TODO: replace cash with bonded arth token.
+  // TODO: Replace cash with bonded arth token.
   await deployer.deploy(ArthLiquidityBoardroom, cash.address, cash.address);
 
   // Deploy arth liquidity boardroom.
-  // TODO: replace cash with arth liqduity token.
+  // TODO: Replace cash with arth liqduity token.
   await deployer.deploy(ArthBoardroom, cash.address);
 
   // Deploy funds.

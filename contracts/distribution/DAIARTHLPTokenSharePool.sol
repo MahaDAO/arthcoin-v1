@@ -49,14 +49,15 @@ import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import '../interfaces/IRewardDistributionRecipient.sol';
 import '../token/LPTokenWrapper.sol';
 
-contract DAIBASLPTokenSharePool is
+contract DAIARTHLPTokenSharePool is
     LPTokenWrapper,
     IRewardDistributionRecipient
 {
     IERC20 public basisShare;
-    uint256 public DURATION = 365 days;
+    uint256 public constant DURATION = 30 days;
 
-    uint256 public starttime;
+    uint256 public initreward = 18479995 * 10**16; // 184,799.95 Shares
+    uint256 public starttime; // starttime TBD
     uint256 public periodFinish = 0;
     uint256 public rewardRate = 0;
     uint256 public lastUpdateTime;
@@ -77,14 +78,6 @@ contract DAIBASLPTokenSharePool is
         basisShare = IERC20(basisShare_);
         lpt = IERC20(lptoken_);
         starttime = starttime_;
-    }
-
-    modifier checkStart() {
-        require(
-            block.timestamp >= starttime,
-            'DAIBASLPTokenSharePool: not start'
-        );
-        _;
     }
 
     modifier updateReward(address account) {
@@ -128,9 +121,10 @@ contract DAIBASLPTokenSharePool is
         public
         override
         updateReward(msg.sender)
+        checkhalve
         checkStart
     {
-        require(amount > 0, 'DAIBASLPTokenSharePool: Cannot stake 0');
+        require(amount > 0, 'Cannot stake 0');
         super.stake(amount);
         emit Staked(msg.sender, amount);
     }
@@ -139,9 +133,10 @@ contract DAIBASLPTokenSharePool is
         public
         override
         updateReward(msg.sender)
+        checkhalve
         checkStart
     {
-        require(amount > 0, 'DAIBASLPTokenSharePool: Cannot withdraw 0');
+        require(amount > 0, 'Cannot withdraw 0');
         super.withdraw(amount);
         emit Withdrawn(msg.sender, amount);
     }
@@ -151,13 +146,29 @@ contract DAIBASLPTokenSharePool is
         getReward();
     }
 
-    function getReward() public updateReward(msg.sender) checkStart {
+    function getReward() public updateReward(msg.sender) checkhalve checkStart {
         uint256 reward = earned(msg.sender);
         if (reward > 0) {
             rewards[msg.sender] = 0;
             basisShare.safeTransfer(msg.sender, reward);
             emit RewardPaid(msg.sender, reward);
         }
+    }
+
+    modifier checkhalve() {
+        if (block.timestamp >= periodFinish) {
+            initreward = initreward.mul(75).div(100);
+
+            rewardRate = initreward.div(DURATION);
+            periodFinish = block.timestamp.add(DURATION);
+            emit RewardAdded(initreward);
+        }
+        _;
+    }
+
+    modifier checkStart() {
+        require(block.timestamp >= starttime, 'not start');
+        _;
     }
 
     function notifyRewardAmount(uint256 reward)
@@ -178,7 +189,7 @@ contract DAIBASLPTokenSharePool is
             periodFinish = block.timestamp.add(DURATION);
             emit RewardAdded(reward);
         } else {
-            rewardRate = reward.div(DURATION);
+            rewardRate = initreward.div(DURATION);
             lastUpdateTime = starttime;
             periodFinish = starttime.add(DURATION);
             emit RewardAdded(reward);

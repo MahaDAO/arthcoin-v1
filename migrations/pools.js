@@ -14,7 +14,9 @@ const POOL_START_DATE = Math.floor(Date.now() / 1000);
 function distributionPoolContracts() {
   return fs.readdirSync(path.resolve(__dirname, '../contracts/distribution'))
     .filter(filename => filename.endsWith('Pool.sol'))
-    .filter(filename => !filename.includes('DAIBASLPTokenSharePool'))
+    .filter(filename => (
+      !filename.includes('DAIMAHALPTokenSharePool') && !filename.includes('DAIARTHLPTokenSharePool'))
+    )
     .filter(filename => filename !== 'BACTOKENPool.sol')
     .map(filename => {
       const filnameWithoutExtension = filename.replace('.sol', '');
@@ -31,8 +33,8 @@ const bacPools = distributionPoolContracts();
 
 
 const basPools = {
-  DAIBAC: { contractName: 'DAIBACLPTokenSharePool', token: 'DAI_BAC-LPv2' },
-  DAIBAS: { contractName: 'DAIBASLPTokenSharePool', token: 'DAI_BAS-LPv2' },
+  DAIBAC: { contractName: 'DAIARTHLPTokenSharePool', token: 'DAI_BAC-LPv2' },
+  DAIBAS: { contractName: 'DAIMAHALPTokenSharePool', token: 'DAI_BAS-LPv2' },
 }
 
 

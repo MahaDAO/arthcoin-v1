@@ -2,11 +2,36 @@
 
 pragma solidity ^0.6.0;
 
-import '../distribution/BACDAIPool.sol';
-import '../distribution/BACSUSDPool.sol';
-import '../distribution/BACUSDCPool.sol';
-import '../distribution/BACUSDTPool.sol';
-import '../distribution/BACyCRVPool.sol';
+import '../distribution/ARTHBACPool.sol';
+import '../distribution/ARTHBALPool.sol';
+import '../distribution/ARTHBASPool.sol';
+import '../distribution/ARTHBNBPool.sol';
+import '../distribution/ARTHBUSDPool.sol';
+import '../distribution/ARTHCOMPPool.sol';
+import '../distribution/ARTHCREAMPool.sol';
+import '../distribution/ARTHDAIPool.sol';
+import '../distribution/ARTHDOTPool.sol';
+import '../distribution/ARTHDSDPool.sol';
+import '../distribution/ARTHESDPool.sol';
+import '../distribution/ARTHFRAXPool.sol';
+import '../distribution/ARTHFTTPool.sol';
+import '../distribution/ARTHHTPool.sol';
+import '../distribution/ARTHKCSPool.sol';
+import '../distribution/ARTHDAIPool.sol';
+import '../distribution/ARTHLEOPool.sol';
+import '../distribution/ARTHLINKPool.sol';
+import '../distribution/ARTHMAHAPool.sol';
+import '../distribution/ARTHMATICPool.sol';
+import '../distribution/ARTHMICPool.sol';
+import '../distribution/ARTHMISPool.sol';
+import '../distribution/ARTHMKRPool.sol';
+import '../distribution/ARTHRSRPool.sol';
+import '../distribution/ARTHSUSDPool.sol';
+import '../distribution/ARTHSUSHIPool.sol';
+import '../distribution/ARTHUSDCPool.sol';
+import '../distribution/ARTHUSDTPool.sol';
+import '../distribution/ARTHyCRVPool.sol';
+import '../distribution/ARTHYFIPool.sol';
 import '../interfaces/IDistributor.sol';
 
 contract InitialCashDistributor is IDistributor {
