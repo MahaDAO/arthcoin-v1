@@ -1,7 +1,6 @@
 const knownContracts = require('./known-contracts');
 const { bacPools, POOL_START_DATE } = require('./pools');
 
-
 /**
  * Tokens deployed first.
  */
@@ -18,7 +17,7 @@ module.exports = async (deployer, network, accounts) => {
   accounts[0] = process.env.WALLET_KEY;
 
   for await (const { contractName, token } of bacPools) {
-    const tokenAddress = knownContracts[token][network] || MockDai.address;
+    const tokenAddress = knownContracts[token] && knownContracts[token][network] || MockDai.address;
     if (!tokenAddress) {
       // Network is mainnet, so MockDai is not available.
       throw new Error(
