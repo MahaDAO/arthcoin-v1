@@ -1,6 +1,5 @@
 const Distributor = artifacts.require('Distributor');
 const InitialCashDistributor = artifacts.require('InitialCashDistributor');
-const InitialShareDistributor = artifacts.require('InitialShareDistributor');
 
 
 /**

@@ -1,13 +1,8 @@
-
 const ARTH = artifacts.require('ARTH');
 const MahaToken = artifacts.require('MahaToken');
 const MockDai = artifacts.require('MockDai');
-const BondRedemtionOracle = artifacts.require('BondRedemtionOracle');
 const SeigniorageOracle = artifacts.require('SeigniorageOracle');
-
 const DAIBACLPToken_BASPool = artifacts.require('DAIBACLPTokenSharePool')
-const DAIBASLPToken_BASPool = artifacts.require('DAIBASLPTokenSharePool')
-
 const UniswapV2Factory = artifacts.require('UniswapV2Factory');
 
 const knownContracts = require('./known-contracts');

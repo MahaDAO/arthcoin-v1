@@ -35,8 +35,8 @@ module.exports = async (deployer, network, accounts) => {
   await arthLiquidityBoardroom.transferOperator(treasury.address);
   await arthBoardroom.transferOperator(treasury.address);
 
-  // if mainnet only then migrate ownership to a timelocked contract; else keep it the same user
-  // with no timelock
+  // If mainnet only then migrate ownership to a timelocked contract; else keep it the same user
+  // with no timelock.
   if (network === 'mainnet') {
     const timelock = await deployer.deploy(Timelock, accounts[0], 2 * DAY);
     await arthLiquidityBoardroom.transferOwnership(timelock.address);

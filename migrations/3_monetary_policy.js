@@ -1,4 +1,3 @@
-
 const ARTH = artifacts.require('ARTH');
 const ARTHB = artifacts.require('ARTHB');
 const MahaToken = artifacts.require('MahaToken');
@@ -6,7 +5,6 @@ const IERC20 = artifacts.require('IERC20');
 const MockDai = artifacts.require('MockDai');
 const DevelopmentFund = artifacts.require('DevelopmentFund');
 const BurnbackFund = artifacts.require('BurnbackFund');
-
 const BondRedemtionOracle = artifacts.require('BondRedemtionOracle');
 const Treasury = artifacts.require('Treasury');
 const ArthLiquidityBoardroom = artifacts.require('ArthLiquidityBoardroom');
@@ -44,8 +42,9 @@ function deadline() {
 
 
 async function migration(deployer, network, accounts) {
-  // Set the main account, you'll be using accross all the files for various
-  // important activities to your desired address in the .env file.
+  // Set the main account, you'll be using accross all the files for 
+  // various important activities to your desired address in the .env 
+  // file.
   accounts[0] = process.env.WALLET_KEY;
 
   let uniswap, uniswapRouter;
@@ -70,9 +69,9 @@ async function migration(deployer, network, accounts) {
     ? await IERC20.at(knownContracts.DAI[network])
     : await MockDai.deployed();
 
-  // 2. provide liquidity to BAC-DAI and BAS-DAI pair
-  // if you don't provide liquidity to BAC-DAI and BAS-DAI pair after step 1 and
-  // before step 3, creating Oracle will fail with NO_RESERVES error.
+  // Provide liquidity to BAC-DAI and BAS-DAI pair if you don't provide 
+  // liquidity to BAC-DAI and BAS-DAI pair after step 1 and before step 
+  // 3, creating Oracle will fail with NO_RESERVES error.
   const unit = web3.utils.toBN(10 ** 18).toString();
   const max = web3.utils.toBN(10 ** 18).muln(10000).toString();
 
@@ -88,7 +87,7 @@ async function migration(deployer, network, accounts) {
   ]);
 
   if (network !== 'mainnet') {
-    // mint 10 maha tokens to self if not on mainnet
+    // Mint 10 maha tokens to self if not on mainnet.
     await mahaToken.mint(accounts[0], web3.utils.toBN(2 * 10 * 1e18).toString());
   }
 
