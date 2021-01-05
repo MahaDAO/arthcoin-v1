@@ -111,16 +111,11 @@ async function migration(deployer, network, accounts) {
     accounts[0],
     deadline(),
   );
+
+
   console.log(`DAI-ARTH pair address: ${await uniswap.getPair(dai.address, cash.address)}`);
   console.log(`DAI-MAHA pair address: ${await uniswap.getPair(dai.address, mahaToken.address)}`);
 
-  // Deploy arth boardroom.
-  // TODO: replace cash with bonded arth token.
-  await deployer.deploy(ArthLiquidityBoardroom, cash.address, cash.address);
-
-  // Deploy arth liquidity boardroom.
-  // TODO: replace cash with arth liqduity token.
-  await deployer.deploy(ArthBoardroom, cash.address);
 
   // Deploy funds.
   await deployer.deploy(DevelopmentFund);
@@ -132,7 +127,7 @@ async function migration(deployer, network, accounts) {
   }
 
   // Deploy oracle for the pair between bac and dai.
-  await deployer.deploy(
+  const bondRedemtionOralce = await deployer.deploy(
     BondRedemtionOracle,
     uniswap.address,
     cash.address, // NOTE YA: I guess bond oracle is for dai - cash pool.
@@ -152,11 +147,16 @@ async function migration(deployer, network, accounts) {
     startTime
   );
 
+  // Deploy boardrooms.
+  const dai_arth_lpt = await bondRedemtionOralce.pairFor(uniswapFactory.address, ARTH.address, dai.address);
+  const arthLiquidityBoardroom = await deployer.deploy(ArthLiquidityBoardroom, cash.address, dai_arth_lpt.address);
+  const arthBoardroom = await deployer.deploy(ArthBoardroom, cash.address);
+
   // Deploy the GMU oracle.
   const gmuOrale = await deployer.deploy(GMUOracle);
   await gmuOrale.setPrice(web3.utils.toBN(1e18).toString()); // set starting price to be 1$
 
-  await deployer.deploy(
+  const treasurey = await deployer.deploy(
     Treasury,
     cash.address,
     ARTHB.address,
@@ -170,6 +170,16 @@ async function migration(deployer, network, accounts) {
     GMUOracle.address,
     startTime,
   );
+
+  if (network !== 'mainnet') {
+    await treasurey.setEpoch(10 * 60) // 10 min epoch for development purposes
+    await arthLiquidityBoardroom.changeLockDuration(5 * 60) // 5 min for liquidity staking locks
+    await arthBoardroom.changeLockDuration(5 * 60) // 5 min for staking locks
+  } else {
+    await treasurey.setEpoch(6 * 60 * 60) // start with a 6 hour epoch
+    await arthLiquidityBoardroom.changeLockDuration(86400) // 1 day for staking locks
+    await arthBoardroom.changeLockDuration(5 * 86400) // 5 days for staking locks
+  }
 }
 
 
