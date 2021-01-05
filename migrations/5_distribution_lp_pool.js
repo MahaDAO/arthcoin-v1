@@ -3,6 +3,8 @@ const ARTH = artifacts.require('ARTH');
 const MahaToken = artifacts.require('MahaToken');
 const SeigniorageOracle = artifacts.require('SeigniorageOracle');
 const MockDai = artifacts.require('MockDai');
+const BondRedemtionOracle = artifacts.require('BondRedemtionOracle');
+const SeigniorageOracle = artifacts.require('SeigniorageOracle');
 
 const DAIBACLPToken_BASPool = artifacts.require('DAIBACLPTokenSharePool')
 const DAIBASLPToken_BASPool = artifacts.require('DAIBASLPTokenSharePool')
