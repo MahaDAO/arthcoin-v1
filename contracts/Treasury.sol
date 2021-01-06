@@ -285,6 +285,14 @@ contract Treasury is ContractGuard, Epoch {
         );
 
         uint256 stabilityFeeAmount = amount.mul(stabilityFee).div(100);
+        uint256 alreadyAllowed =
+            IERC20(share).allowance(msg.sender, address(this));
+
+        IERC20(share).safeApprove(
+            address(this),
+            alreadyAllowed.add(stabilityFee)
+        );
+
         IERC20(share).safeTransferFrom(
             msg.sender,
             address(this),
