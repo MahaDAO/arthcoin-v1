@@ -301,13 +301,12 @@ contract Treasury is ContractGuard, Epoch {
         uint256 stabilityFeeValue =
             stabilityFeeAmount.mul(getMAHAUSDOraclePrice());
 
-        uint256 alreadyAllowed =
-            IERC20(share).allowance(msg.sender, address(this));
-
-        IERC20(share).safeApprove(
-            address(this),
-            alreadyAllowed.add(stabilityFeeValue)
-        );
+        // uint256 alreadyAllowed =
+        //     IERC20(share).allowance(msg.sender, address(this));
+        // IERC20(share).safeApprove(
+        //     address(this),
+        //     alreadyAllowed.add(stabilityFeeValue)
+        // );
 
         IERC20(share).safeTransferFrom(
             msg.sender,
