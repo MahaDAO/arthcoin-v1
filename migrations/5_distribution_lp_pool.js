@@ -26,8 +26,5 @@ module.exports = async (deployer, network, accounts) => {
   const oracle = await SeigniorageOracle.deployed();
 
   const dai_arth_lpt = await oracle.pairFor(uniswapFactory.address, ARTH.address, dai.address);
-  // const dai_maha_lpt = await oracle.pairFor(uniswapFactory.address, MahaToken.address, dai.address);
-
   await deployer.deploy(DAIARTHLPToken_MAHAPool, MahaToken.address, dai_arth_lpt, POOL_START_DATE);
-  // await deployer.deploy(DAIMAHALPToken_MAHAPool, MahaToken.address, dai_maha_lpt, POOL_START_DATE);
 };
