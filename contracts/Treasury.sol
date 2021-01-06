@@ -42,6 +42,7 @@ contract Treasury is ContractGuard, Epoch {
     address public bond;
     address public share;
     address public gmuOracle;
+    address public mahausdOracle;
 
     address public arthLiquidityBoardroom;
     address public arthBoardroom;
@@ -71,6 +72,7 @@ contract Treasury is ContractGuard, Epoch {
         address _bond,
         address _share,
         address _bondOracle,
+        address _mahausdOracle,
         address _seigniorageOracle,
         address _arthLiquidityBoardroom,
         address _arthBoardroom,
@@ -83,6 +85,7 @@ contract Treasury is ContractGuard, Epoch {
         bond = _bond;
         share = _share;
         bondOracle = _bondOracle;
+        mahausdOracle = _mahausdOracle;
         seigniorageOracle = _seigniorageOracle;
         gmuOracle = _gmuOracle;
         arthLiquidityBoardroom = _arthLiquidityBoardroom;
@@ -134,6 +137,10 @@ contract Treasury is ContractGuard, Epoch {
 
     function getGMUOraclePrice() public view returns (uint256) {
         return IGMUOracle(gmuOracle).getPrice();
+    }
+
+    function getMAHAUSDOraclePrice() public view returns (uint256) {
+        return IGMUOracle(mahausdOracle).getPrice();
     }
 
     function getSeigniorageOraclePrice() public view returns (uint256) {
@@ -188,6 +195,7 @@ contract Treasury is ContractGuard, Epoch {
     function setFund(address newFund, uint256 rate) public onlyOwner {
         developmentFund = newFund;
         fundAllocationRate = rate;
+
         emit ContributionPoolChanged(msg.sender, newFund);
         emit ContributionPoolRateChanged(msg.sender, rate);
     }
@@ -195,14 +203,17 @@ contract Treasury is ContractGuard, Epoch {
     function setBurnback(address newFund, uint256 rate) public onlyOwner {
         burnbackFund = newFund;
         burnbackAllocationRate = rate;
+
         emit BurnBackPoolChanged(msg.sender, newFund);
         emit BurnBackPoolRateChanged(msg.sender, rate);
     }
 
     function setArthBoardroom(address newFund, uint256 rate) public onlyOwner {
         require(rate + arthLiquidityBoardroomAllocationRate == 100);
+
         arthBoardroom = newFund;
         arthBoardroomAllocationRate = rate;
+
         emit ArthBoardroomChanged(msg.sender, newFund);
         emit ArthBoardroomRateChanged(msg.sender, rate);
     }
@@ -212,8 +223,10 @@ contract Treasury is ContractGuard, Epoch {
         onlyOwner
     {
         require(rate + arthBoardroomAllocationRate == 100);
+
         arthLiquidityBoardroom = newFund;
         arthLiquidityBoardroomAllocationRate = rate;
+
         emit ArthLiquidityBoardroomChanged(msg.sender, newFund);
         emit ArthLiquidityBoardroomRateChanged(msg.sender, rate);
     }
@@ -285,18 +298,21 @@ contract Treasury is ContractGuard, Epoch {
         );
 
         uint256 stabilityFeeAmount = amount.mul(stabilityFee).div(100);
+        uint256 stabilityFeeValue =
+            stabilityFeeAmount.mul(getMAHAUSDOraclePrice());
+
         uint256 alreadyAllowed =
             IERC20(share).allowance(msg.sender, address(this));
 
         IERC20(share).safeApprove(
             address(this),
-            alreadyAllowed.add(stabilityFeeAmount)
+            alreadyAllowed.add(stabilityFeeValue)
         );
 
         IERC20(share).safeTransferFrom(
             msg.sender,
             address(this),
-            stabilityFeeAmount
+            stabilityFeeValue
         );
 
         IBasisAsset(bond).burnFrom(msg.sender, amount);
