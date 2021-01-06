@@ -62,6 +62,7 @@ contract Treasury is ContractGuard, Epoch {
     uint256 public burnbackAllocationRate = 5;
     uint256 public arthLiquidityBoardroomAllocationRate = 20; // In %.
     uint256 public arthBoardroomAllocationRate = 80; // IN %.
+    uint256 public stabilityFee = 1; // IN %;
 
     /* ========== CONSTRUCTOR ========== */
 
@@ -281,6 +282,13 @@ contract Treasury is ContractGuard, Epoch {
 
         accumulatedSeigniorage = accumulatedSeigniorage.sub(
             Math.min(accumulatedSeigniorage, amount)
+        );
+
+        uint256 stabilityFeeAmount = amount.mul(stabilityFee).div(100);
+        IERC20(share).safeTransferFrom(
+            msg.sender,
+            address(this),
+            stabilityFeeAmount
         );
 
         IBasisAsset(bond).burnFrom(msg.sender, amount);
