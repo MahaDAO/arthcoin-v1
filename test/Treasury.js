@@ -191,7 +191,8 @@ contract ('Treasury', async () => {
       ).to.revertedWith('Treasury: migrated');
     });
   });
-
+  
+  // TODO POINT.
   describe('seigniorage', () => {
     describe('#allocateSeigniorage', () => {
       
