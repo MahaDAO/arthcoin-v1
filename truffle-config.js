@@ -121,7 +121,9 @@ module.exports = {
       }
     },
   },
-
+  plugins: [
+    'truffle-plugin-verify'
+  ],
   // https://github.com/rkalis/truffle-plugin-verify
   api_keys: {
     etherscan: process.env.ETHERSCAN_API_KEY
