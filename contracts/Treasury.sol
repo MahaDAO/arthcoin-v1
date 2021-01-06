@@ -290,7 +290,7 @@ contract Treasury is ContractGuard, Epoch {
 
         IERC20(share).safeApprove(
             address(this),
-            alreadyAllowed.add(stabilityFee)
+            alreadyAllowed.add(stabilityFeeAmount)
         );
 
         IERC20(share).safeTransferFrom(
