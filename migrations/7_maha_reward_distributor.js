@@ -1,7 +1,7 @@
 const {
-  basPools,
-  INITIAL_BAS_FOR_DAI_BAC,
-  INITIAL_BAS_FOR_DAI_BAS,
+  mahaPools,
+  INITIAL_MAHA_FOR_DAI_ARTH,
+  INITIAL_MAHA_FOR_DAI_MAHA,
 } = require('./pools');
 
 const MahaToken = artifacts.require('MahaToken');
@@ -19,31 +19,31 @@ async function migration(deployer, network, accounts) {
   accounts[0] = process.env.WALLET_KEY;
 
   const unit = web3.utils.toBN(10 ** 18);
-  const totalBalanceForDAIBAC = unit.muln(INITIAL_BAS_FOR_DAI_BAC)
-  const totalBalanceForDAIBAS = unit.muln(INITIAL_BAS_FOR_DAI_BAS)
-  const totalBalance = totalBalanceForDAIBAC.add(totalBalanceForDAIBAS);
+  const totalBalanceForDAIARTH = unit.muln(INITIAL_MAHA_FOR_DAI_ARTH)
+  const totalBalanceForDAIMAHA = unit.muln(INITIAL_MAHA_FOR_DAI_MAHA)
+  const totalBalance = totalBalanceForDAIARTH.add(totalBalanceForDAIMAHA);
 
   const share = await MahaToken.deployed();
 
-  const lpPoolDAIBAC = artifacts.require(basPools.DAIBAC.contractName);
-  const lpPoolDAIBAS = artifacts.require(basPools.DAIBAS.contractName);
+  const lpPoolDAIARTH = artifacts.require(mahaPools.DAIARTH.contractName);
+  const lpPoolDAIMAHA = artifacts.require(mahaPools.DAIMAHA.contractName);
 
   await deployer.deploy(
     InitialShareDistributor,
     share.address,
-    lpPoolDAIBAC.address,
-    totalBalanceForDAIBAC.toString(),
-    lpPoolDAIBAS.address,
-    totalBalanceForDAIBAS.toString(),
+    lpPoolDAIARTH.address,
+    totalBalanceForDAIARTH.toString(),
+    lpPoolDAIMAHA.address,
+    totalBalanceForDAIMAHA.toString(),
   );
   const distributor = await InitialShareDistributor.deployed();
 
   await share.mint(distributor.address, totalBalance.toString());
-  console.log(`Deposited ${INITIAL_BAS_FOR_DAI_BAC} BAS to InitialShareDistributor.`);
+  console.log(`Deposited ${INITIAL_MAHA_FOR_DAI_ARTH} MAHA to InitialShareDistributor.`);
 
   console.log(`Setting distributor to InitialShareDistributor (${distributor.address})`);
-  await lpPoolDAIBAC.deployed().then(pool => pool.setRewardDistribution(distributor.address));
-  await lpPoolDAIBAS.deployed().then(pool => pool.setRewardDistribution(distributor.address));
+  await lpPoolDAIARTH.deployed().then(pool => pool.setRewardDistribution(distributor.address));
+  await lpPoolDAIMAHA.deployed().then(pool => pool.setRewardDistribution(distributor.address));
 
   await distributor.distribute();
 }

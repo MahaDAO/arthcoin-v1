@@ -39,10 +39,12 @@ contract ShareWrapper is StakingTimelock {
 
     function withdraw(uint256 amount) public virtual checkLockDuration {
         uint256 directorShare = _balances[msg.sender];
+
         require(
             directorShare >= amount,
             'Boardroom: withdraw request greater than staked amount'
         );
+
         _totalSupply = _totalSupply.sub(amount);
         _balances[msg.sender] = directorShare.sub(amount);
         share.safeTransfer(msg.sender, amount);
@@ -162,7 +164,9 @@ contract Boardroom is ShareWrapper, ContractGuard, Operator {
         updateReward(msg.sender)
     {
         require(amount > 0, 'Boardroom: Cannot stake 0');
+
         super.stake(amount);
+
         emit Staked(msg.sender, amount);
     }
 
@@ -174,7 +178,9 @@ contract Boardroom is ShareWrapper, ContractGuard, Operator {
         updateReward(msg.sender)
     {
         require(amount > 0, 'Boardroom: Cannot withdraw 0');
+
         super.withdraw(amount);
+
         emit Withdrawn(msg.sender, amount);
     }
 
@@ -185,9 +191,11 @@ contract Boardroom is ShareWrapper, ContractGuard, Operator {
 
     function claimReward() public updateReward(msg.sender) {
         uint256 reward = directors[msg.sender].rewardEarned;
+
         if (reward > 0) {
             directors[msg.sender].rewardEarned = 0;
             cash.safeTransfer(msg.sender, reward);
+
             emit RewardPaid(msg.sender, reward);
         }
     }
@@ -216,6 +224,7 @@ contract Boardroom is ShareWrapper, ContractGuard, Operator {
         boardHistory.push(newSnapshot);
 
         cash.safeTransferFrom(msg.sender, address(this), amount);
+
         emit RewardAdded(msg.sender, amount);
     }
 

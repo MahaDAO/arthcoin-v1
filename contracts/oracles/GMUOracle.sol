@@ -13,7 +13,7 @@ contract GMUOracle is Ownable, IGMUOracle {
     uint256 public price;
 
     constructor() public {
-        // Set the initial price to 1.05.
+        // Set the initial price to 1.
         price = uint256(1e18);
     }
 

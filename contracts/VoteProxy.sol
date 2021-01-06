@@ -32,11 +32,11 @@ contract VoteProxy is Operator {
     }
 
     function name() external pure returns (string memory) {
-        return 'BAS in Boardroom';
+        return 'MAHA in Boardroom';
     }
 
     function symbol() external pure returns (string memory) {
-        return 'SBAS';
+        return 'SMAHA';
     }
 
     function totalSupply() external view returns (uint256) {

@@ -29,7 +29,9 @@ contract MockArthBoardroom is IBoardroom, Operator {
         onlyOperator
     {
         require(amount > 0, 'MockArthBoardroom: Cannot allocate 0');
+
         cash.safeTransferFrom(msg.sender, address(this), amount);
+
         emit RewardAdded(msg.sender, amount);
     }
 

@@ -49,7 +49,7 @@ import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import '../interfaces/IRewardDistributionRecipient.sol';
 import '../token/LPTokenWrapper.sol';
 
-contract DAIBASLPTokenSharePool is
+contract DAIMAHALPTokenSharePool is
     LPTokenWrapper,
     IRewardDistributionRecipient
 {
@@ -82,7 +82,7 @@ contract DAIBASLPTokenSharePool is
     modifier checkStart() {
         require(
             block.timestamp >= starttime,
-            'DAIBASLPTokenSharePool: not start'
+            'DAIMAHALPTokenSharePool: not start'
         );
         _;
     }
@@ -130,7 +130,7 @@ contract DAIBASLPTokenSharePool is
         updateReward(msg.sender)
         checkStart
     {
-        require(amount > 0, 'DAIBASLPTokenSharePool: Cannot stake 0');
+        require(amount > 0, 'DAIMAHALPTokenSharePool: Cannot stake 0');
         super.stake(amount);
         emit Staked(msg.sender, amount);
     }
@@ -141,7 +141,7 @@ contract DAIBASLPTokenSharePool is
         updateReward(msg.sender)
         checkStart
     {
-        require(amount > 0, 'DAIBASLPTokenSharePool: Cannot withdraw 0');
+        require(amount > 0, 'DAIMAHALPTokenSharePool: Cannot withdraw 0');
         super.withdraw(amount);
         emit Withdrawn(msg.sender, amount);
     }
