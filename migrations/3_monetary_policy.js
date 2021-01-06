@@ -10,6 +10,7 @@ const Treasury = artifacts.require('Treasury');
 const ArthLiquidityBoardroom = artifacts.require('ArthLiquidityBoardroom');
 const ArthBoardroom = artifacts.require('ArthBoardroom');
 const GMUOracle = artifacts.require('GMUOracle');
+const MAHAUSDOracle = artifacts.require('MAHAUSDOracle');
 const SeigniorageOracle = artifacts.require('SeigniorageOracle');
 
 const UniswapV2Factory = artifacts.require('UniswapV2Factory');
@@ -42,8 +43,8 @@ function deadline() {
 
 
 async function migration(deployer, network, accounts) {
-  // Set the main account, you'll be using accross all the files for 
-  // various important activities to your desired address in the .env 
+  // Set the main account, you'll be using accross all the files for
+  // various important activities to your desired address in the .env
   // file.
   accounts[0] = process.env.WALLET_KEY;
 
@@ -158,8 +159,13 @@ async function migration(deployer, network, accounts) {
 
   // Deploy the GMU oracle.
   console.log('deploying GMU oracle')
-  const gmuOrale = await deployer.deploy(GMUOracle);
+  const gmuOrale = await deployer.deploy(GMUOracle, 'GMU');
   await gmuOrale.setPrice(web3.utils.toBN(1e18).toString()); // set starting price to be 1$
+  
+  // Deploy MAHA-USD oracle.
+  console.log('Deploying MAHA-USD oracle')
+  const mahausdOracle = await deployer.deploy(MAHAUSDOracle, 'MAHA-USD');
+  await mahausdOracle.setPrice(web3.utils.toBN(1e18).toString()); // set starting price to be 1$
 
   console.log('deploying treasurey')
   const treasurey = await deployer.deploy(
@@ -168,6 +174,7 @@ async function migration(deployer, network, accounts) {
     ARTHB.address,
     MahaToken.address,
     BondRedemtionOracle.address,
+    MAHAUSDOracle.address,
     SeigniorageOracle.address,
     ArthLiquidityBoardroom.address,
     ArthBoardroom.address,
