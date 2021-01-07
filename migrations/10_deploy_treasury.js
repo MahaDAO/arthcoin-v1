@@ -12,7 +12,7 @@ const MAHAUSDOracle = artifacts.require('MAHAUSDOracle');
 const SeigniorageOracle = artifacts.require('SeigniorageOracle');
 
 
-const { POOL_START_DATE, DAY, HOUR } = require('./config');
+const { POOL_START_DATE, DAY, TREASURY_PERIOD } = require('./config');
 
 // Set starttime for different networks.
   const startTime = POOL_START_DATE;
@@ -41,6 +41,7 @@ async function migration(deployer, network, accounts) {
     BurnbackFund.address,
     GMUOracle.address,
     startTime,
+    TREASURY_PERIOD
   );
 }
 

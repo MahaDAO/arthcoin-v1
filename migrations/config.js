@@ -11,10 +11,13 @@ const HOUR = 1 * 60 * 60;
 const POOL_START_DATE = Math.floor(Date.now() / 1000);
 
 
+const TREASURY_PERIOD = DAY;
+
 module.exports = {
   UINT,
   MAX,
   POOL_START_DATE,
   DAY,
-  HOUR
+  HOUR,
+  TREASURY_PERIOD
 };
