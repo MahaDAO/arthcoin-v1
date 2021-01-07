@@ -5,5 +5,8 @@ pragma solidity ^0.6.0;
 import './Boardroom.sol';
 
 contract ArthBoardroom is Boardroom {
-    constructor(IERC20 _cash) public Boardroom(_cash, _cash) {}
+    constructor(IERC20 _cash, uint256 _duration)
+        public
+        Boardroom(_cash, _cash, _duration)
+    {}
 }

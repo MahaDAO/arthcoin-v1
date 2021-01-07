@@ -18,6 +18,10 @@ contract StakingTimelock is Ownable {
 
     mapping(address => StakingDetails) public _stakingDetails;
 
+    constructor(uint256 _duration) public {
+        duration = _duration;
+    }
+
     modifier checkLockDuration {
         StakingDetails memory _stakerDetails = _stakingDetails[msg.sender];
 

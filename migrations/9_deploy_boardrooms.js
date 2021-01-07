@@ -5,6 +5,11 @@ const UniswapV2Factory = artifacts.require('UniswapV2Factory');
 const BondRedemtionOracle = artifacts.require('BondRedemtionOracle');
 const ArthLiquidityBoardroom = artifacts.require('ArthLiquidityBoardroom');
 
+const {
+  ARTH_LIQUIDITY_BOARDROOM_LOCK_DURATION,
+  ARTH_BOARDROOM_LOCK_DURATION
+} = require('./config');
+
 
 async function migration(deployer, network, accounts) {
   // Set the main account, you'll be using accross all the files for
@@ -33,10 +38,10 @@ async function migration(deployer, network, accounts) {
   const dai_arth_lpt = await bondRedemtionOralce.pairFor(uniswap.address, cash.address, dai.address);
   
   // Deploy ARTH-DAI liquidity boardroom.
-  await deployer.deploy(ArthLiquidityBoardroom, cash.address, dai_arth_lpt);
+  await deployer.deploy(ArthLiquidityBoardroom, cash.address, dai_arth_lpt, ARTH_LIQUIDITY_BOARDROOM_LOCK_DURATION);
 
   // Deploy arth boardroom.
-  await deployer.deploy(ArthBoardroom, cash.address);
+  await deployer.deploy(ArthBoardroom, cash.address, ARTH_BOARDROOM_LOCK_DURATION);
 }
 
 
