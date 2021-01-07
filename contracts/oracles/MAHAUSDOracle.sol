@@ -4,6 +4,6 @@ pragma solidity ^0.6.0;
 
 import './Oracle.sol';
 
-contract GMUOracle is Oracle {
+contract MAHAUSDOracle is Oracle {
     constructor(string memory _name) public Oracle(_name) {}
 }
