@@ -72,11 +72,14 @@ contract DAIMAHALPTokenSharePool is
     constructor(
         address basisShare_,
         address lptoken_,
-        uint256 starttime_
-    ) public {
+        uint256 starttime_,
+        uint256 duration_
+    ) public StakingTimelock(duration_) {
         basisShare = IERC20(basisShare_);
         lpt = IERC20(lptoken_);
         starttime = starttime_;
+
+        DURATION = duration_;
     }
 
     modifier checkStart() {

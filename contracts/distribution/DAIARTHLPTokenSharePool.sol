@@ -54,7 +54,7 @@ contract DAIARTHLPTokenSharePool is
     IRewardDistributionRecipient
 {
     IERC20 public basisShare;
-    uint256 public constant DURATION = 30 days;
+    uint256 public DURATION = 30 days;
 
     uint256 public initreward = 18479995 * 10**16; // 184,799.95 Shares
     uint256 public starttime; // starttime TBD
@@ -73,11 +73,14 @@ contract DAIARTHLPTokenSharePool is
     constructor(
         address basisShare_,
         address lptoken_,
-        uint256 starttime_
-    ) public {
+        uint256 starttime_,
+        uint256 duration_
+    ) public StakingTimelock(duration_) {
         basisShare = IERC20(basisShare_);
         lpt = IERC20(lptoken_);
         starttime = starttime_;
+
+        DURATION = duration_;
     }
 
     modifier updateReward(address account) {
