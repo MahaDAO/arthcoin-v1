@@ -12,7 +12,7 @@ import '../utils/ContractGuard.sol';
 import '../interfaces/IBasisAsset.sol';
 import '../StakingTimelock.sol';
 
-contract ShareWrapper is StakingTimelock {
+abstract contract ShareWrapper is StakingTimelock {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
