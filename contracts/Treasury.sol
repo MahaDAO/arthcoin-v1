@@ -130,6 +130,10 @@ contract Treasury is ContractGuard, Epoch {
         return accumulatedSeigniorage;
     }
 
+    function getStabilityFee() public view returns (uint256) {
+        return stabilityFee;
+    }
+
     // oracle
     function getBondOraclePrice() public view returns (uint256) {
         return _getCashPrice(bondOracle);
@@ -190,6 +194,14 @@ contract Treasury is ContractGuard, Epoch {
 
         migrated = true;
         emit Migration(target);
+    }
+
+    function setStabilityFee(uint256 _stabilityFee) public onlyOwner {
+        require(_stabilityFee > 0, 'Treasury: fee < 0');
+        require(_stabilityFee < 100, 'Treasury: fee >= 0');
+        stabilityFee = _stabilityFee;
+
+        emit StabilityFeeChanged(stabilityFee, _stabilityFee);
     }
 
     function setFund(address newFund, uint256 rate) public onlyOwner {
@@ -300,6 +312,11 @@ contract Treasury is ContractGuard, Epoch {
         uint256 stabilityFeeAmount = amount.mul(stabilityFee).div(100);
         uint256 stabilityFeeValue =
             stabilityFeeAmount.mul(getMAHAUSDOraclePrice());
+
+        require(
+            IERC20(share).balanceOf(msg.sender) >= stabilityFeeValue,
+            'Treasury: not enough MAHA balance'
+        );
 
         uint256 alreadyAllowed =
             IERC20(share).allowance(msg.sender, address(this));
@@ -451,4 +468,5 @@ contract Treasury is ContractGuard, Epoch {
     event BoardroomFunded(uint256 timestamp, uint256 seigniorage);
     event ContributionPoolFunded(uint256 timestamp, uint256 seigniorage);
     event BurnBackPoolFunded(uint256 timestamp, uint256 seigniorage);
+    event StabilityFeeChanged(uint256 old, uint256 newRate);
 }
