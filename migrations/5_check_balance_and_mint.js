@@ -3,8 +3,6 @@ const ARTHB = artifacts.require('ARTHB');
 const MahaToken = artifacts.require('MahaToken');
 const MockDai = artifacts.require('MockDai');
 
-const { UNIT } = require('./config');
-
 
 async function migration(deployer, network, accounts) {
   // Set the main account, you'll be using accross all the files for
@@ -12,12 +10,12 @@ async function migration(deployer, network, accounts) {
   // file.
   accounts[0] = process.env.WALLET_KEY;
 
-   // Deploy or fetch deployed dai.
+  // Deploy or fetch deployed dai.
   console.log(`Fetching dai on ${network} network.`);
   const dai = network === 'mainnet'
     ? await IERC20.at(knownContracts.DAI[network])
     : await MockDai.deployed();
-  
+
   // Fetch deployed tokens.
   const cash = await ARTH.deployed();
   const mahaToken = await MahaToken.deployed();
@@ -26,14 +24,14 @@ async function migration(deployer, network, accounts) {
   if (network !== 'mainnet') {
     // Mint 10 maha tokens to self if not on mainnet.
     console.log('Minting MAHA tokens.')
-    await mahaToken.mint(accounts[0], web3.utils.toBN(UNIT).toString());
+    await mahaToken.mint(accounts[0], web3.utils.toBN(10 ** 18).toString());
 
     // Mint some tokens to the metamask wallet holder in dev.
     if (process.env.METAMASK_WALLET) {
       console.log('sending some dummy tokens; 100k')
-      await cash.mint(process.env.METAMASK_WALLET, web3.utils.toBN(10 * UNIT).toString());
-      await mahaToken.mint(process.env.METAMASK_WALLET, web3.utils.toBN(10 * UNIT).toString());
-      await dai.transfer(process.env.METAMASK_WALLET, web3.utils.toBN(10 * UNIT).toString());
+      await cash.mint(process.env.METAMASK_WALLET, web3.utils.toBN(10 * 10 ** 18).toString());
+      await mahaToken.mint(process.env.METAMASK_WALLET, web3.utils.toBN(10 * 10 ** 18).toString());
+      await dai.transfer(process.env.METAMASK_WALLET, web3.utils.toBN(10 * 10 ** 18).toString());
     }
   }
 

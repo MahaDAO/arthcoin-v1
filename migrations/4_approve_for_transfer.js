@@ -7,9 +7,6 @@ const UniswapV2Router02 = artifacts.require('UniswapV2Router02');
 const knownContracts = require('./known-contracts');
 
 
-const { MAX } = require('./config');
-
-
 async function approveIfNot(token, owner, spender, amount) {
   const allowance = await token.allowance(owner, spender);
 
@@ -28,27 +25,29 @@ async function migration(deployer, network, accounts) {
   // file.
   accounts[0] = process.env.WALLET_KEY;
 
-   // Deploy or fetch deployed dai.
+  // Deploy or fetch deployed dai.
   console.log(`Fetching dai on ${network} network.`);
   const dai = network === 'mainnet'
     ? await IERC20.at(knownContracts.DAI[network])
     : await MockDai.deployed();
-  
+
   // Fetch deployed tokens.
   const cash = await ARTH.deployed();
   const mahaToken = await MahaToken.deployed();
   const bond = await ARTHB.deployed();
-  
+
   // Fetch deployed uniswap router.
   const uniswapRouter = network === 'mainnet' || network === 'ropsten'
     ? await UniswapV2Router02.at(knownContracts.UniswapV2Router02[network])
     : await UniswapV2Router02.deployed();
 
   console.log('Approving Uniswap on tokens for liquidity');
+  const max = web3.utils.toBN(10 ** 18).muln(10000).toString();
+
   await Promise.all([
-    approveIfNot(cash, accounts[0], uniswapRouter.address, MAX),
-    approveIfNot(mahaToken, accounts[0], uniswapRouter.address, MAX),
-    approveIfNot(dai, accounts[0], uniswapRouter.address, MAX),
+    approveIfNot(cash, accounts[0], uniswapRouter.address, max),
+    approveIfNot(mahaToken, accounts[0], uniswapRouter.address, max),
+    approveIfNot(dai, accounts[0], uniswapRouter.address, max),
   ]);
 }
 

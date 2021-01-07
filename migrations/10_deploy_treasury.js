@@ -12,22 +12,25 @@ const MAHAUSDOracle = artifacts.require('MAHAUSDOracle');
 const SeigniorageOracle = artifacts.require('SeigniorageOracle');
 
 
-const { POOL_START_DATE, DAY, TREASURY_PERIOD } = require('./config');
 
-// Set starttime for different networks.
-  const startTime = POOL_START_DATE;
-  if (network === 'mainnet') {
-    startTime += 5 * DAY;
-  }
-  
 async function migration(deployer, network, accounts) {
   // Set the main account, you'll be using accross all the files for
   // various important activities to your desired address in the .env
   // file.
   accounts[0] = process.env.WALLET_KEY;
 
+  // Set starttime for different networks.
+
+  const POOL_START_DATE = Math.floor(Date.now() / 1000);
+  const startTime = POOL_START_DATE;
+  if (network === 'mainnet') {
+    startTime += 5 * DAY;
+  }
+  const TREASURY_PERIOD = 10 * 60;
+
+
   console.log('Deploying treasury.')
-  const treasurey = await deployer.deploy(
+  await deployer.deploy(
     Treasury,
     ARTH.address,
     ARTHB.address,

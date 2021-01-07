@@ -13,7 +13,7 @@ async function migration(deployer, network, accounts) {
     console.log(`Deploying uniswap on ${network} network.`, accounts[0]);
     const uniswap = await deployer.deploy(UniswapV2Factory, accounts[0]);
 
-    await deployer.deploy(UniswapV2Router02, uniswap.address, accounts[0]);
+    await deployer.deploy(UniswapV2Router02, UniswapV2Factory.address, accounts[0]);
   }
 }
 

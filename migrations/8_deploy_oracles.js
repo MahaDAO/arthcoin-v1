@@ -6,13 +6,9 @@ const UniswapV2Factory = artifacts.require('UniswapV2Factory');
 const SeigniorageOracle = artifacts.require('SeigniorageOracle');
 const BondRedemtionOracle = artifacts.require('BondRedemtionOracle');
 
-const { 
+const {
   POOL_START_DATE,
-  DAY, 
-  GMU_ORACLE_START_PRICE,
-  MAHAUSD_ORACLE_START_PRICE,
-  BOND_ORACLE_PERIOD, 
-  SEIGNIORAGE_ORACLE_PERIOD 
+  DAY,
 } = require('./config');
 
 const knownContracts = require('./known-contracts');
@@ -29,18 +25,26 @@ async function migration(deployer, network, accounts) {
   if (network === 'mainnet') {
     startTime += 5 * DAY;
   }
-  
+
+  const ORACLE_START_PRICE = web3.utils.toBN(1e18).toString();
+  const GMU_ORACLE_START_PRICE = ORACLE_START_PRICE;
+  const MAHAUSD_ORACLE_START_PRICE = ORACLE_START_PRICE;
+
+  const ORACLE_PERIOD = 5 * 60;
+  const BOND_ORACLE_PERIOD = ORACLE_PERIOD;
+  const SEIGNIORAGE_ORACLE_PERIOD = ORACLE_PERIOD;
+
   // Deploy dai or fetch deployed dai.
   console.log(`Fetching dai on ${network} network.`);
   const dai = network === 'mainnet'
     ? await IERC20.at(knownContracts.DAI[network])
     : await MockDai.deployed();
-  
+
   // Fetching deployed ARTH.
   const cash = await ARTH.deployed();
-  
+
   // Fetch the deployed uniswap contract.
-  const uniswap= network === 'mainnet' || network === 'ropsten'
+  const uniswap = network === 'mainnet' || network === 'ropsten'
     ? await UniswapV2Factory.at(knownContracts.UniswapV2Factory[network])
     : await UniswapV2Factory.deployed()
 
