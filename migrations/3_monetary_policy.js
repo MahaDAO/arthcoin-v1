@@ -184,7 +184,7 @@ async function migration(deployer, network, accounts) {
   console.log('setting timestamp properly')
   if (network !== 'mainnet') {
     await treasurey.setPeriod(10 * 60) // 10 min epoch for development purposes
-    await mahausdOracle.setPeriod(5 * 60) // 5 min epoch
+    // await mahausdOracle.setPeriod(5 * 60) // 5 min epoch
     await bondRedemtionOralce.setPeriod(5 * 60) // 5 min epoch
     await seigniorageOracle.setPeriod(5 * 60) // 5 min epoch
     await arthLiquidityBoardroom.changeLockDuration(5 * 60) // 5 min for liquidity staking locks
@@ -193,9 +193,9 @@ async function migration(deployer, network, accounts) {
     // mint some tokens to the metamask wallet holder in dev
     if (process.env.METAMASK_WALLET) {
       console.log('sending some dummy tokens; 100k')
-      await cash.mint(process.env.METAMASK_WALLET, web3.utils.toBN(100000 * 10 * 1e18).toString());
-      await mahaToken.mint(process.env.METAMASK_WALLET, web3.utils.toBN(100000 * 10 * 1e18).toString());
-      await dai.transfer(process.env.METAMASK_WALLET, web3.utils.toBN(100000 * 10 * 1e18).toString());
+      await cash.mint(process.env.METAMASK_WALLET, web3.utils.toBN(10e18).toString());
+      await mahaToken.mint(process.env.METAMASK_WALLET, web3.utils.toBN(10e18).toString());
+      await dai.transfer(process.env.METAMASK_WALLET, web3.utils.toBN(10e18).toString());
     }
   } else {
     await treasurey.setPeriod(6 * 60 * 60) // start with a 6 hour epoch
