@@ -24,6 +24,8 @@ const exportedContracts = [
   'ArthBoardroom',
   'GMUOracle',
   'SeigniorageOracle',
+  'MAHAUSDOracle',
+  'BondRedemtionOracle',
   'BurnbackFund',
   'DevelopmentFund',
   'Treasury',
