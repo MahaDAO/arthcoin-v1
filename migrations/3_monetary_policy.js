@@ -139,7 +139,7 @@ async function migration(deployer, network, accounts) {
 
   // Deploy seigniorage oracle.
   console.log('deploying seigniorage oracle')
-  await deployer.deploy(
+  const seigniorageOracle = await deployer.deploy(
     SeigniorageOracle,
     uniswap.address,
     cash.address,
@@ -157,7 +157,7 @@ async function migration(deployer, network, accounts) {
   console.log('deploying GMU oracle')
   const gmuOrale = await deployer.deploy(GMUOracle, 'GMU');
   await gmuOrale.setPrice(web3.utils.toBN(1e18).toString()); // set starting price to be 1$
-  
+
   // Deploy MAHA-USD oracle.
   console.log('Deploying MAHA-USD oracle')
   const mahausdOracle = await deployer.deploy(MAHAUSDOracle, 'MAHA-USD');
@@ -184,15 +184,18 @@ async function migration(deployer, network, accounts) {
   console.log('setting timestamp properly')
   if (network !== 'mainnet') {
     await treasurey.setPeriod(10 * 60) // 10 min epoch for development purposes
+    await mahausdOracle.setPeriod(5 * 60) // 5 min epoch
+    await bondRedemtionOralce.setPeriod(5 * 60) // 5 min epoch
+    await seigniorageOracle.setPeriod(5 * 60) // 5 min epoch
     await arthLiquidityBoardroom.changeLockDuration(5 * 60) // 5 min for liquidity staking locks
     await arthBoardroom.changeLockDuration(5 * 60) // 5 min for staking locks
 
     // mint some tokens to the metamask wallet holder in dev
     if (process.env.METAMASK_WALLET) {
-      console.log('sending some dummy tokens')
-      await cash.mint(process.env.METAMASK_WALLET, web3.utils.toBN(2 * 10 * 1e18).toString());
-      await mahaToken.mint(process.env.METAMASK_WALLET, web3.utils.toBN(2 * 10 * 1e18).toString());
-      await dai.transfer(process.env.METAMASK_WALLET, web3.utils.toBN(2 * 10 * 1e18).toString());
+      console.log('sending some dummy tokens; 100k')
+      await cash.mint(process.env.METAMASK_WALLET, web3.utils.toBN(100000 * 10 * 1e18).toString());
+      await mahaToken.mint(process.env.METAMASK_WALLET, web3.utils.toBN(100000 * 10 * 1e18).toString());
+      await dai.transfer(process.env.METAMASK_WALLET, web3.utils.toBN(100000 * 10 * 1e18).toString());
     }
   } else {
     await treasurey.setPeriod(6 * 60 * 60) // start with a 6 hour epoch

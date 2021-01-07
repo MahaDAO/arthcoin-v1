@@ -56,4 +56,4 @@ module.exports = async (callback) => {
     // callback()
 }
 
-// truffle run verify ARTHB MahaToken ArthLiquidityBoardroom ArthBoardroom GMUOracle SeigniorageOracle BurnbackFund DevelopmentFund Treasury BACDAIPool BACSUSDPool BACUSDCPool BACUSDTPool BACyCRVPool DAIBACLPTokenSharePool --network ropsten
+// truffle run verify ARTHB MahaToken ArthLiquidityBoardroom ArthBoardroom GMUOracle SeigniorageOracle BurnbackFund DevelopmentFund Treasury BACDAIPool BACSUSDPool BACUSDCPool BACUSDTPool BACyCRVPool DAIBACLPTokenSharePool BondRedemtionOracle --network ropsten
