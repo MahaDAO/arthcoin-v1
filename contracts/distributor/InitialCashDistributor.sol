@@ -63,6 +63,8 @@ contract InitialCashDistributor is IDistributor {
             'InitialCashDistributor: you cannot run this function twice'
         );
 
+        // TODO: give special allocation to maha pools
+
         for (uint256 i = 0; i < pools.length; i++) {
             uint256 amount = totalInitialBalance.div(pools.length);
 

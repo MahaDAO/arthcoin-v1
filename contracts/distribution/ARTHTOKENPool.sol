@@ -11,7 +11,7 @@ import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import '../interfaces/IRewardDistributionRecipient.sol';
 import '../StakingTimelock.sol';
 
-contract Token1Wrapper is StakingTimelock {
+contract TokenWrapper is StakingTimelock {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -45,7 +45,7 @@ contract Token1Wrapper is StakingTimelock {
     }
 }
 
-contract ARTHTOKENPool is Token1Wrapper, IRewardDistributionRecipient {
+contract ARTHTOKENPool is TokenWrapper, IRewardDistributionRecipient {
     IERC20 public token0;
     uint256 public DURATION = 5 days;
 
