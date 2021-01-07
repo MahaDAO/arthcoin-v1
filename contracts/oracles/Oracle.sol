@@ -13,10 +13,11 @@ contract Oracle is Ownable, IGMUOracle {
     uint256 public price;
     string public name;
 
-    constructor(string memory _name) public {
+    constructor(string memory _name, uint256 _price) public {
         name = _name;
+
         // Set the initial price to 1.
-        price = uint256(1e18);
+        price = _price;
     }
 
     function setPrice(uint256 _price) public override onlyOwner {

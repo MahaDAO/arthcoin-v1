@@ -6,7 +6,15 @@ const UniswapV2Factory = artifacts.require('UniswapV2Factory');
 const SeigniorageOracle = artifacts.require('SeigniorageOracle');
 const BondRedemtionOracle = artifacts.require('BondRedemtionOracle');
 
-const { POOL_START_DATE, DAY, HOUR } = require('./config');
+const { 
+  POOL_START_DATE,
+  DAY, 
+  GMU_ORACLE_START_PRICE,
+  MAHAUSD_ORACLE_START_PRICE,
+  BOND_ORACLE_PERIOD, 
+  SEIGNIORAGE_ORACLE_PERIOD 
+} = require('./config');
+
 const knownContracts = require('./known-contracts');
 
 
@@ -43,7 +51,7 @@ async function migration(deployer, network, accounts) {
     uniswap.address,
     cash.address, // NOTE YA: I guess bond oracle is for dai - cash pool.
     dai.address,
-    2 * HOUR, // In hours for dev deployment purpose.
+    BOND_ORACLE_PERIOD, // In hours for dev deployment purpose.
     startTime
   );
 
@@ -54,19 +62,17 @@ async function migration(deployer, network, accounts) {
     uniswap.address,
     cash.address,
     dai.address,
-    2 * HOUR, // In hours for dev deployment purpose.
+    SEIGNIORAGE_ORACLE_PERIOD, // In hours for dev deployment purpose.
     startTime
   );
 
   // Deploy the GMU oracle.
   console.log('Deploying GMU oracle.')
-  const gmuOrale = await deployer.deploy(GMUOracle, 'GMU');
-  await gmuOrale.setPrice(web3.utils.toBN(1e18).toString()); // Set starting price to be 1$.
+  await deployer.deploy(GMUOracle, 'GMU', GMU_ORACLE_START_PRICE);
 
   // Deploy MAHAUSD oracle.
   console.log('Deploying MAHAUSD oracle.')
-  const mahausdOracle = await deployer.deploy(MAHAUSDOracle, 'MAHA-USD');
-  await mahausdOracle.setPrice(web3.utils.toBN(1e18).toString()); // Set starting price to be 1$.
+  await deployer.deploy(MAHAUSDOracle, 'MAHA-USD', MAHAUSD_ORACLE_START_PRICE);
 }
 
 
