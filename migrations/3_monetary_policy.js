@@ -70,11 +70,9 @@ async function migration(deployer, network, accounts) {
     ? await IERC20.at(knownContracts.DAI[network])
     : await MockDai.deployed();
 
-
-
-  // 2. provide liquidity to BAC-DAI and BAS-DAI pair
-  // if you don't provide liquidity to BAC-DAI and BAS-DAI pair after step 1 and
-  // before step 3, creating Oracle will fail with NO_RESERVES error.
+  // Provide liquidity to BAC-DAI and BAS-DAI pair if you don't provide 
+  // liquidity to BAC-DAI and BAS-DAI pair after step 1 and before step 
+  // 3, creating Oracle will fail with NO_RESERVES error.
   const unit = web3.utils.toBN(10 ** 18).toString();
   const max = web3.utils.toBN(10 ** 18).muln(10000).toString();
 
@@ -114,7 +112,13 @@ async function migration(deployer, network, accounts) {
     deadline(),
   );
 
-  console.log(`DAI-ARTH pair address: ${await uniswap.getPair(dai.address, cash.address)}`);
+  // Deploy arth boardroom.
+  // TODO: Replace cash with bonded arth token.
+  await deployer.deploy(ArthLiquidityBoardroom, cash.address, cash.address);
+
+  // Deploy arth liquidity boardroom.
+  // TODO: Replace cash with arth liqduity token.
+  await deployer.deploy(ArthBoardroom, cash.address);
 
   // Deploy funds.
   console.log('deploying funds')

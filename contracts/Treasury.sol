@@ -313,17 +313,15 @@ contract Treasury is ContractGuard, Epoch {
         uint256 stabilityFeeValue =
             stabilityFeeAmount.mul(getMAHAUSDOraclePrice());
 
+        // check balances
         require(
             IERC20(share).balanceOf(msg.sender) >= stabilityFeeValue,
             'Treasury: not enough MAHA balance'
         );
-
-        uint256 alreadyAllowed =
-            IERC20(share).allowance(msg.sender, address(this));
-
-        IERC20(share).safeApprove(
-            address(this),
-            alreadyAllowed.add(stabilityFeeValue)
+        require(
+            IERC20(share).allowance(msg.sender, address(this)) >=
+                stabilityFeeValue,
+            'Treasury: not enough MAHA balance'
         );
 
         IERC20(share).safeTransferFrom(
