@@ -36,9 +36,9 @@ const DAY = 86400;
 const ETH = utils.parseEther('1');
 const ZERO = BigNumber.from(0);
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000';
-const INITIAL_BAC_AMOUNT = utils.parseEther('50000');
-const INITIAL_BAS_AMOUNT = utils.parseEther('10000');
-const INITIAL_BAB_AMOUNT = utils.parseEther('50000');
+const INITIAL_ARTH_AMOUNT = utils.parseEther('50000');
+const INITIAL_MAHA_AMOUNT = utils.parseEther('10000');
+const INITIAL_ARTHB_AMOUNT = utils.parseEther('50000');
 
 
 async function latestBlocktime(provider) {
@@ -197,10 +197,10 @@ contract ('Treasury', async () => {
     describe('#allocateSeigniorage', () => {
       
         beforeEach('Transfer permissions', async () => {
-        await arthb.mint(operatorAddress, INITIAL_BAB_AMOUNT);
-        await arth.mint(operatorAddress, INITIAL_BAC_AMOUNT);
-        await arth.mint(treasuryAddress, INITIAL_BAC_AMOUNT);
-        await maha.mint(operatorAddress, INITIAL_BAS_AMOUNT);
+        await arthb.mint(operatorAddress, INITIAL_ARTHB_AMOUNT);
+        await arth.mint(operatorAddress, INITIAL_ARTH_AMOUNT);
+        await arth.mint(treasuryAddress, INITIAL_ARTH_AMOUNT);
+        await maha.mint(operatorAddress, INITIAL_MAHA_AMOUNT);
         
         for await (const contract of [arth, arthb, maha, arthBoardroom]) {
           await contract.connect(operatorAddress).transferOperator(treasury.address);
@@ -234,7 +234,7 @@ contract ('Treasury', async () => {
 
       describe('After startTime', () => {
         beforeEach('Advance blocktime', async () => {
-          // wait till first epoch.
+          // Wait till first epoch.
           await advanceTimeAndBlock(
             provider,
             startTime.sub(await latestBlocktime(provider)).toNumber()
@@ -245,7 +245,7 @@ contract ('Treasury', async () => {
           const cashPrice = ETH.mul(210).div(100);
           await gmuOracle.setPrice(cashPrice);
 
-          // Calculate with circulating supply
+          // Calculate with circulating supply.
           const treasuryHoldings = await treasury.getReserve();
           const cashSupply = (await arth.totalSupply()).sub(treasuryHoldings);
           const expectedSeigniorage = cashSupply
@@ -299,20 +299,20 @@ contract ('Treasury', async () => {
           );
         });
 
-        it('Should funded even fails to call update function in oracle', async () => {
-          const cashPrice = ETH.mul(106).div(100);
-          await oracle.setRevert(true);
-          await oracle.setPrice(cashPrice);
+        // it('Should funded even fails to call update function in oracle', async () => {
+        //   const cashPrice = ETH.mul(106).div(100);
+        //   await gmuOracle.setRevert(true);
+        //   await gmuOracle.setPrice(cashPrice);
 
-          await expect(treasury.allocateSeigniorage()).to.emit(
-            treasury,
-            'TreasuryFunded'
-          );
-        });
+        //   await expect(treasury.allocateSeigniorage()).to.emit(
+        //     treasury,
+        //     'TreasuryFunded'
+        //   );
+        // });
 
         it('should move to next epoch after allocation', async () => {
           const cashPrice1 = ETH.mul(106).div(100);
-          await oracle.setPrice(cashPrice1);
+          await gmuOracle.setPrice(cashPrice1);
 
           expect(await treasury.getCurrentEpoch()).to.eq(BigNumber.from(0));
           expect(await treasury.nextEpochPoint()).to.eq(startTime);
@@ -328,29 +328,29 @@ contract ('Treasury', async () => {
           );
 
           const cashPrice2 = ETH.mul(104).div(100);
-          await oracle.setPrice(cashPrice2);
+          await gmuOracle.setPrice(cashPrice2);
 
           await treasury.allocateSeigniorage();
           expect(await treasury.getCurrentEpoch()).to.eq(BigNumber.from(2));
           expect(await treasury.nextEpochPoint()).to.eq(startTime.add(DAY * 2));
         });
 
-        describe('should fail', () => {
-          it('if treasury is not the operator of core contract', async () => {
+        describe('Should fail', () => {
+          it('If treasury is not the operator of core contract', async () => {
             const cashPrice = ETH.mul(106).div(100);
-            await oracle.setPrice(cashPrice);
+            await gmuOracle.setPrice(cashPrice);
 
-            for await (const target of [cash, bond, share, boardroom]) {
-              await target.connect(operator).transferOperator(ant.address);
+            for await (const target of [arth, arthb, maha, arthBoardroom]) {
+              await target.connect(operatorAddress).transferOperator(operatorAddress2.address);
               await expect(treasury.allocateSeigniorage()).to.revertedWith(
                 'Treasury: need more permission'
               );
             }
           });
 
-          it('if seigniorage already allocated in this epoch', async () => {
+          it('If seigniorage already allocated in this epoch', async () => {
             const cashPrice = ETH.mul(106).div(100);
-            await oracle.setPrice(cashPrice);
+            await gmuOracle.setPrice(cashPrice);
             await treasury.allocateSeigniorage();
             await expect(treasury.allocateSeigniorage()).to.revertedWith(
               'Epoch: not allowed'
@@ -359,49 +359,52 @@ contract ('Treasury', async () => {
         });
       });
     });
-  });
+  }); 
 
-  describe('bonds', async () => {
-    beforeEach('transfer permissions', async () => {
-      await cash.mint(operator.address, INITIAL_BAC_AMOUNT);
-      await bond.mint(operator.address, INITIAL_BAB_AMOUNT);
-      for await (const contract of [cash, bond, share, boardroom]) {
-        await contract.connect(operator).transferOperator(treasury.address);
+  describe('Bonds', async () => {
+    beforeEach('Transfer permissions', async () => {
+      await arth.mint(operatorAddress, INITIAL_ARTH_AMOUNT);
+      await arthb.mint(operatorAddress, INITIAL_ARTHB_AMOUNT);
+      
+      for await (const contract of [arth, arthb, maha, arthBoardroom]) {
+        await contract.connect(operatorAddress).transferOperator(treasury.address);
       }
     });
 
-    describe('after migration', () => {
-      it('should fail if contract migrated', async () => {
-        for await (const contract of [cash, bond, share]) {
-          await contract.connect(operator).transferOwnership(treasury.address);
+    describe('After migration', () => {
+      it('Should fail if contract migrated', async () => {
+        for await (const contract of [arth, arthb, maha]) {
+          await contract.connect(operatorAddress).transferOwnership(treasury.address);
         }
 
-        await treasury.connect(operator).migrate(operator.address);
+        await treasury.connect(operatorAddress).migrate(operatorAddress);
         expect(await treasury.migrated()).to.be.true;
 
         await expect(treasury.buyBonds(ETH, ETH)).to.revertedWith(
           'Treasury: migrated'
         );
+
         await expect(treasury.redeemBonds(ETH, ETH)).to.revertedWith(
           'Treasury: migrated'
         );
       });
     });
 
-    describe('before startTime', () => {
-      it('should fail if not started yet', async () => {
+    describe('Before startTime', () => {
+      it('Should fail if not started yet', async () => {
         await expect(treasury.buyBonds(ETH, ETH)).to.revertedWith(
           'Epoch: not started yet'
         );
+
         await expect(treasury.redeemBonds(ETH, ETH)).to.revertedWith(
           'Epoch: not started yet'
         );
       });
     });
 
-    describe('after startTime', () => {
-      beforeEach('advance blocktime', async () => {
-        // wait til first epoch
+    describe('After startTime', () => {
+      beforeEach('Advance blocktime', async () => {
+        // Wait til first epoch.
         await advanceTimeAndBlock(
           provider,
           startTime.sub(await latestBlocktime(provider)).toNumber()
@@ -409,59 +412,64 @@ contract ('Treasury', async () => {
       });
 
       describe('#buyBonds', () => {
-        it('should work if cash price below $1', async () => {
+        it('Should work if cash price below $1', async () => {
           const cashPrice = ETH.mul(99).div(100); // $0.99
-          await oracle.setPrice(cashPrice);
-          await cash.connect(operator).transfer(ant.address, ETH);
-          await cash.connect(ant).approve(treasury.address, ETH);
+          
+          await gmuOracle.setPrice(cashPrice);
+          await arth.connect(operatorAddress).transfer(operatorAddress2.address, ETH);
+          await cash.connect(operatorAddress2).approve(treasury.address, ETH);
 
-          await expect(treasury.connect(ant).buyBonds(ETH, cashPrice))
+          await expect(treasury.connect(operatorAddress2).buyBonds(ETH, cashPrice))
             .to.emit(treasury, 'BoughtBonds')
-            .withArgs(ant.address, ETH);
+            .withArgs(operatorAddress2, ETH);
 
-          expect(await cash.balanceOf(ant.address)).to.eq(ZERO);
-          expect(await bond.balanceOf(ant.address)).to.eq(
+          expect(await arth.balanceOf(operatorAddress2)).to.eq(ZERO);
+          expect(await arthb.balanceOf(operatorAddress2)).to.eq(
             ETH.mul(ETH).div(cashPrice)
           );
         });
 
-        it('should fail if cash price over $1', async () => {
+        it('Should fail if cash price over $1', async () => {
           const cashPrice = ETH.mul(101).div(100); // $1.01
-          await oracle.setPrice(cashPrice);
-          await cash.connect(operator).transfer(ant.address, ETH);
-          await cash.connect(ant).approve(treasury.address, ETH);
+          await gmuOracle.setPrice(cashPrice);
+          
+          await arth.connect(operatorAddress).transfer(operatorAddress2, ETH);
+          await arth.connect(operatorAddress2).approve(treasury.address, ETH);
 
           await expect(
-            treasury.connect(ant).buyBonds(ETH, cashPrice)
+            treasury.connect(operatorAddress2).buyBonds(ETH, cashPrice)
           ).to.revertedWith(
             'Treasury: cashPrice not eligible for bond purchase'
           );
         });
 
-        it('should fail if price changed', async () => {
+        it('Should fail if price changed', async () => {
           const cashPrice = ETH.mul(99).div(100); // $0.99
-          await oracle.setPrice(cashPrice);
-          await cash.connect(operator).transfer(ant.address, ETH);
-          await cash.connect(ant).approve(treasury.address, ETH);
+          await gmuOracle.setPrice(cashPrice);
+
+          await arth.connect(operatorAddress).transfer(operatorAddress2, ETH);
+          await arth.connect(operatorAddress2).approve(treasury.address, ETH);
 
           await expect(
-            treasury.connect(ant).buyBonds(ETH, ETH)
+            treasury.connect(operatorAddress2).buyBonds(ETH, ETH)
           ).to.revertedWith('Treasury: cash price moved');
         });
 
-        it('should fail if purchase bonds with zero amount', async () => {
+        it('Should fail if purchase bonds with zero amount', async () => {
           const cashPrice = ETH.mul(99).div(100); // $0.99
-          await oracle.setPrice(cashPrice);
+          await gmuOracle.setPrice(cashPrice);
 
           await expect(
-            treasury.connect(ant).buyBonds(ZERO, cashPrice)
+            treasury.connect(operatorAddress2).buyBonds(ZERO, cashPrice)
           ).to.revertedWith('Treasury: cannot purchase bonds with zero amount');
         });
       });
+      
       describe('#redeemBonds', () => {
-        beforeEach('allocate seigniorage to treasury', async () => {
+        beforeEach('Allocate seigniorage to treasury', async () => {
           const cashPrice = ETH.mul(106).div(100);
-          await oracle.setPrice(cashPrice);
+          await gmuOracle.setPrice(cashPrice);
+          
           await treasury.allocateSeigniorage();
           await advanceTimeAndBlock(
             provider,
@@ -470,76 +478,78 @@ contract ('Treasury', async () => {
           );
         });
 
-        it('should work if cash price exceeds $1.05', async () => {
+        it('Should work if cash price exceeds $1.05', async () => {
           const cashPrice = ETH.mul(106).div(100);
-          await oracle.setPrice(cashPrice);
+          await gmuOracle.setPrice(cashPrice);
 
-          await bond.connect(operator).transfer(ant.address, ETH);
-          await bond.connect(ant).approve(treasury.address, ETH);
-          await expect(treasury.connect(ant).redeemBonds(ETH, cashPrice))
+          await arthb.connect(operatorAddress).transfer(operatorAddress2, ETH);
+          await arthb.connect(operatorAddress2).approve(treasury.address, ETH);
+
+          await expect(treasury.connect(operatorAddress2).redeemBonds(ETH, cashPrice))
             .to.emit(treasury, 'RedeemedBonds')
-            .withArgs(ant.address, ETH);
+            .withArgs(operatorAddress2, ETH);
 
-          expect(await bond.balanceOf(ant.address)).to.eq(ZERO); // 1:1
-          expect(await cash.balanceOf(ant.address)).to.eq(ETH);
+          expect(await arthb.balanceOf(operatorAddress2)).to.eq(ZERO); // 1:1
+          expect(await arth.balanceOf(operatorAddress2)).to.eq(ETH);
         });
 
-        it("should drain over seigniorage and even contract's budget", async () => {
+        it("Should drain over seigniorage and even contract's budget", async () => {
           const cashPrice = ETH.mul(106).div(100);
-          await oracle.setPrice(cashPrice);
+          await gmuOracle.setPrice(cashPrice);
 
-          await cash.connect(operator).transfer(treasury.address, ETH); // $1002
+          await arth.connect(operatorAddress).transfer(treasury.address, ETH); // $1002
 
-          const treasuryBalance = await cash.balanceOf(treasury.address);
-          await bond.connect(operator).transfer(ant.address, treasuryBalance);
-          await bond.connect(ant).approve(treasury.address, treasuryBalance);
-          await treasury.connect(ant).redeemBonds(treasuryBalance, cashPrice);
+          const treasuryBalance = await arth.balanceOf(treasury.address);
+          await arthb.connect(operatorAddress).transfer(operatorAddress2, treasuryBalance);
+          await arthb.connect(operatorAddress2).approve(treasury.address, treasuryBalance);
+          await treasury.connect(operatorAddress2).redeemBonds(treasuryBalance, cashPrice);
 
-          expect(await bond.balanceOf(ant.address)).to.eq(ZERO);
-          expect(await cash.balanceOf(ant.address)).to.eq(treasuryBalance); // 1:1
+          expect(await arthb.balanceOf(operatorAddress2)).to.eq(ZERO);
+          expect(await cash.balanceOf(operatorAddress2)).to.eq(treasuryBalance); // 1:1
         });
 
-        it('should fail if price changed', async () => {
+        it('Should fail if price changed', async () => {
           const cashPrice = ETH.mul(106).div(100);
-          await oracle.setPrice(cashPrice);
+          await gmuOracle.setPrice(cashPrice);
 
-          await bond.connect(operator).transfer(ant.address, ETH);
-          await bond.connect(ant).approve(treasury.address, ETH);
+          await arthb.connect(operatorAddress).transfer(operatorAddress2, ETH);
+          await arthb.connect(operatorAddress2).approve(treasury.address, ETH);
           await expect(
-            treasury.connect(ant).redeemBonds(ETH, ETH)
+            treasury.connect(operatorAddress2).redeemBonds(ETH, ETH)
           ).to.revertedWith('Treasury: cash price moved');
         });
 
-        it('should fail if redeem bonds with zero amount', async () => {
+        it('Should fail if redeem bonds with zero amount', async () => {
           const cashPrice = ETH.mul(106).div(100);
-          await oracle.setPrice(cashPrice);
+          await gmuOracle.setPrice(cashPrice);
 
           await expect(
-            treasury.connect(ant).redeemBonds(ZERO, cashPrice)
+            treasury.connect(operatorAddress2).redeemBonds(ZERO, cashPrice)
           ).to.revertedWith('Treasury: cannot redeem bonds with zero amount');
         });
 
-        it('should fail if cash price is below $1+ε', async () => {
+        it('Should fail if cash price is below $1+ε', async () => {
           const cashPrice = ETH.mul(104).div(100);
-          await oracle.setPrice(cashPrice);
+          await gmuOracle.setPrice(cashPrice);
 
-          await bond.connect(operator).transfer(ant.address, ETH);
-          await bond.connect(ant).approve(treasury.address, ETH);
+          await arthb.connect(operatorAddress).transfer(ant.address, ETH);
+          await arthb.connect(operatorAddress2).approve(treasury.address, ETH);
+          
           await expect(
-            treasury.connect(ant).redeemBonds(ETH, cashPrice)
+            treasury.connect(operatorAddress2).redeemBonds(ETH, cashPrice)
           ).to.revertedWith(
             'Treasury: cashPrice not eligible for bond purchase'
           );
         });
 
-        it("should fail if redeem bonds over contract's budget", async () => {
+        it("Should fail if redeem bonds over contract's budget", async () => {
           const cashPrice = ETH.mul(106).div(100);
-          await oracle.setPrice(cashPrice);
+          await gmuOracle.setPrice(cashPrice);
 
-          const treasuryBalance = await cash.balanceOf(treasury.address);
+          const treasuryBalance = await arth.balanceOf(treasury.address);
           const redeemAmount = treasuryBalance.add(ETH);
-          await bond.connect(operator).transfer(ant.address, redeemAmount);
-          await bond.connect(ant).approve(treasury.address, redeemAmount);
+          await arthb.connect(operatorAddress).transfer(operatorAddress2, redeemAmount);
+          await arthb.connect(operatorAddress2).approve(treasury.address, redeemAmount);
 
           await expect(
             treasury.connect(ant).redeemBonds(redeemAmount, cashPrice)
