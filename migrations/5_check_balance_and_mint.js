@@ -27,6 +27,14 @@ async function migration(deployer, network, accounts) {
     // Mint 10 maha tokens to self if not on mainnet.
     console.log('Minting MAHA tokens.')
     await mahaToken.mint(accounts[0], web3.utils.toBN(UNIT).toString());
+
+    // Mint some tokens to the metamask wallet holder in dev.
+    if (process.env.METAMASK_WALLET) {
+      console.log('sending some dummy tokens; 100k')
+      await cash.mint(process.env.METAMASK_WALLET, web3.utils.toBN(10 * UNIT).toString());
+      await mahaToken.mint(process.env.METAMASK_WALLET, web3.utils.toBN(10 * UNIT).toString());
+      await dai.transfer(process.env.METAMASK_WALLET, web3.utils.toBN(10 * UNIT).toString());
+    }
   }
 
   console.log('\nChecking balance of all tokens.');
