@@ -417,7 +417,7 @@ contract ('Treasury', async () => {
           
           await gmuOracle.setPrice(cashPrice);
           await arth.connect(operatorAddress).transfer(operatorAddress2.address, ETH);
-          await cash.connect(operatorAddress2).approve(treasury.address, ETH);
+          await arth.connect(operatorAddress2).approve(treasury.address, ETH);
 
           await expect(treasury.connect(operatorAddress2).buyBonds(ETH, cashPrice))
             .to.emit(treasury, 'BoughtBonds')
@@ -505,7 +505,7 @@ contract ('Treasury', async () => {
           await treasury.connect(operatorAddress2).redeemBonds(treasuryBalance, cashPrice);
 
           expect(await arthb.balanceOf(operatorAddress2)).to.eq(ZERO);
-          expect(await cash.balanceOf(operatorAddress2)).to.eq(treasuryBalance); // 1:1
+          expect(await arth.balanceOf(operatorAddress2)).to.eq(treasuryBalance); // 1:1
         });
 
         it('Should fail if price changed', async () => {
