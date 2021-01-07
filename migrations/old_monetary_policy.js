@@ -42,7 +42,10 @@ function deadline() {
 }
 
 
+// NOTE: USe just for reference.
 async function migration(deployer, network, accounts) {
+  return;
+
   // Set the main account, you'll be using accross all the files for
   // various important activities to your desired address in the .env
   // file.
@@ -194,7 +197,7 @@ async function migration(deployer, network, accounts) {
     await arthLiquidityBoardroom.changeLockDuration(5 * 60) // 5 min for liquidity staking locks
     await arthBoardroom.changeLockDuration(5 * 60) // 5 min for staking locks
 
-    // mint some tokens to the metamask wallet holder in dev
+    // Mint some tokens to the metamask wallet holder in dev.
     if (process.env.METAMASK_WALLET) {
       console.log('sending some dummy tokens; 100k')
       await cash.mint(process.env.METAMASK_WALLET, web3.utils.toBN(10e18).toString());

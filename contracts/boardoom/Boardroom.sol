@@ -12,7 +12,7 @@ import '../utils/ContractGuard.sol';
 import '../interfaces/IBasisAsset.sol';
 import '../StakingTimelock.sol';
 
-contract ShareWrapper is StakingTimelock {
+abstract contract ShareWrapper is StakingTimelock {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -79,7 +79,11 @@ contract Boardroom is ShareWrapper, ContractGuard, Operator {
 
     /* ========== CONSTRUCTOR ========== */
 
-    constructor(IERC20 _cash, IERC20 _share) public {
+    constructor(
+        IERC20 _cash,
+        IERC20 _share,
+        uint256 _duration
+    ) public StakingTimelock(_duration) {
         cash = _cash;
         share = _share;
 

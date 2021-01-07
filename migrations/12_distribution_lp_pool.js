@@ -8,6 +8,7 @@ const UniswapV2Factory = artifacts.require('UniswapV2Factory');
 
 const knownContracts = require('./known-contracts');
 const { POOL_START_DATE } = require('./pools');
+const {POOL_START_DATE, DAIARTHLPToken_MAHA_POOL_LOCK_DURATION } = require('./config');
 
 
 module.exports = async (deployer, network, accounts) => {
@@ -26,5 +27,5 @@ module.exports = async (deployer, network, accounts) => {
   const oracle = await SeigniorageOracle.deployed();
 
   const dai_arth_lpt = await oracle.pairFor(uniswapFactory.address, ARTH.address, dai.address);
-  await deployer.deploy(DAIARTHLPToken_MAHAPool, MahaToken.address, dai_arth_lpt, POOL_START_DATE);
+  await deployer.deploy(DAIARTHLPToken_MAHAPool, MahaToken.address, dai_arth_lpt, POOL_START_DATE, DAIARTHLPToken_MAHA_POOL_LOCK_DURATION) ;
 };

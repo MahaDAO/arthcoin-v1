@@ -79,8 +79,9 @@ contract Treasury is ContractGuard, Epoch {
         address _fund,
         address _burnbackFund,
         address _gmuOracle,
-        uint256 _startTime
-    ) public Epoch(1 days, _startTime, 0) {
+        uint256 _startTime,
+        uint256 _period
+    ) public Epoch(_period, _startTime, 0) {
         cash = _cash;
         bond = _bond;
         share = _share;

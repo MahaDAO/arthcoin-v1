@@ -1,7 +1,7 @@
-const { arthPools, INITIAL_ARTH_FOR_POOLS } = require('./pools');
-
 const ARTH = artifacts.require('ARTH')
 const InitialCashDistributor = artifacts.require('InitialCashDistributor');
+
+const { arthPools, INITIAL_ARTH_FOR_POOLS } = require('./pools');
 
 
 /**

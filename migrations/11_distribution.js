@@ -1,11 +1,11 @@
-const knownContracts = require('./known-contracts');
-const { arthPools, POOL_START_DATE } = require('./pools');
-
 /**
  * Tokens deployed first.
  */
 const ARTH = artifacts.require('ARTH');
 const MockDai = artifacts.require('MockDai');
+
+const knownContracts = require('./known-contracts');
+const { arthPools, POOL_START_DATE } = require('./pools');
 
 
 /**
