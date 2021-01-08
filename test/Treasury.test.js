@@ -155,7 +155,8 @@ contract ('Treasury', async () => {
         developmentFund.address,
         burnbackFund.address,
         gmuOracle.address,
-        await latestBlocktime(provider)
+        await latestBlocktime(provider),
+        2 * 60 // 2 mintues.
       );
 
       for await (const token of [arth, arthb, maha]) {
