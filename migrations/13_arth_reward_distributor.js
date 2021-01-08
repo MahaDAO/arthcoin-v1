@@ -1,4 +1,5 @@
-const { arthPools, INITIAL_ARTH_FOR_POOLS } = require('./pools');
+const { INITIAL_ARTH_FOR_POOLS } = require('./config');
+const { arthPools } = require('./pools');
 
 
 const ARTH = artifacts.require('ARTH')

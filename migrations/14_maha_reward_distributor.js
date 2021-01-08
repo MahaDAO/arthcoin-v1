@@ -1,7 +1,6 @@
+const { INITIAL_MAHA_FOR_DAI_MAHA, INITIAL_MAHA_FOR_DAI_ARTH } = require('./config');
 const {
   mahaPools,
-  INITIAL_MAHA_FOR_DAI_ARTH,
-  INITIAL_MAHA_FOR_DAI_MAHA,
 } = require('./pools');
 
 const MahaToken = artifacts.require('MahaToken');

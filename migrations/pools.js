@@ -3,9 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 
-const INITIAL_ARTH_FOR_POOLS = 50000;
-const INITIAL_MAHA_FOR_DAI_ARTH = 750000;
-const INITIAL_MAHA_FOR_DAI_MAHA = 250000;
+
 
 
 const POOL_START_DATE = Math.floor(Date.now() / 1000);

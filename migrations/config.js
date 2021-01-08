@@ -4,6 +4,12 @@ const MAX = 1000 * 10 ** 18;
 const DAY = 1 * 24 * 60 * 60;
 
 
+/**
+ * Config for pools.
+ */
+const INITIAL_ARTH_FOR_POOLS = 50000;
+const INITIAL_MAHA_FOR_DAI_MAHA = 250000;
+const INITIAL_MAHA_FOR_DAI_ARTH = 750000;
 const POOL_START_DATE = Math.floor(Date.now() / 1000);
 
 
@@ -163,6 +169,9 @@ const knownContracts = {
 
 
 module.exports = {
+  INITIAL_ARTH_FOR_POOLS,
+  INITIAL_MAHA_FOR_DAI_MAHA,
+  INITIAL_MAHA_FOR_DAI_ARTH,
   POOL_START_DATE,
   DAY,
   HOUR,
