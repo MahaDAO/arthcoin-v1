@@ -189,12 +189,22 @@ contract ('Treasury', async () => {
       ).to.revertedWith('Treasury: need more permission');
     });
 
+    it('Should fail if treasury is not the operator of core contracts', async () => {
+      await arthLiquidityBoardroom.connect(operatorAddress).transferOperator(operatorAddress2);
+      
+      await expect(
+        treasury.connect(operatorAddress).migrate(newTreasury.address)
+      ).to.revertedWith('Treasury: need more permission');
+    });
+
     it('Should fail if already migrated', async () => {
       await treasury.connect(operatorAddress).migrate(newTreasury.address);
       await arthBoardroom.connect(operatorAddress).transferOperator(newTreasury.address);
+      await arthLiquidityBoardroom.connect(operatorAddress).transferOperator(newTreasury.address);
 
       await newTreasury.connect(operatorAddress).migrate(treasury.address);
       await arthBoardroom.connect(operatorAddress).transferOperator(treasury.address);
+      await arthLiquidityBoardroom.connect(operatorAddress).transferOperator(treasury.address);
 
       await expect(
         treasury.connect(operatorAddress).migrate(newTreasury.address)
