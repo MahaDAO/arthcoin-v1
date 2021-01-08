@@ -271,27 +271,50 @@ contract ('Treasury', async () => {
           const expectedSeigniorage = cashSupply
             .mul(cashPrice.sub(ETH))
             .div(ETH);
+          
+          // To track updates to seigniorage.
+          let updatedExpectedSeigniorage = expectedSeigniorage;
 
-          // Get all expected reserve.
-          const expectedFundReserve = expectedSeigniorage
+          // Get all expected fund reserve and update the expected seigniorage value.
+          const expectedDevFundReserve = expectedSeigniorage
             .mul(await treasury.fundAllocationRate())
             .div(100);
-
+          const expectedBurnbackFundReserve = expectedSeigniorage
+            .mul(await treasury.fundAllocationRate())
+            .div(100);
+          updatedExpectedSeigniorage = expectedSeigniorage.sub(expectedBurnbackFundReserve).sub(expectedDevFundReserve);
+         
+          // Get all expected treasury reserve and update the expected seigniorage value.
           const expectedTreasuryReserve = bigmin(
-            expectedSeigniorage.sub(expectedFundReserve),
+            updatedExpectedSeigniorage,
             (await arthb.totalSupply()).sub(treasuryHoldings)
           );
+          updatedExpectedSeigniorage = updatedExpectedSeigniorage.sub(expectedTreasuryReserve);
+          
+          // Get all expected boardroom reserve and update the expected seigniorage value.
+          const expectedArthBoardroomReserve = updatedExpectedSeigniorage
+            .mul(await treasury.arthLiquidityBoardroomAllocationRate())
+            .div(100);
+          const expectedArthLiquidityBoardroomReserve = updatedExpectedSeigniorage
+            .mul(await treasury.arthBoardroomAllocationRate())
+            .div(100);
+          updatedExpectedSeigniorage = updatedExpectedSeigniorage
+            .sub(expectedArthBoardroomReserve)
+            .sub(expectedArthLiquidityBoardroomReserve);
 
-          const expectedBoardroomReserve = expectedSeigniorage
-            .sub(expectedFundReserve)
-            .sub(expectedTreasuryReserve);
-
+          // Get the new treasury seigniorage allocation.
           const allocationResult = await treasury.allocateSeigniorage();
 
-          if (expectedFundReserve.gt(ZERO)) {
+          if (expectedDevFundReserve.gt(ZERO)) {
             await expect(new Promise((resolve) => resolve(allocationResult)))
               .to.emit(treasury, 'ContributionPoolFunded')
-              .withArgs(await latestBlocktime(provider), expectedFundReserve);
+              .withArgs(await latestBlocktime(provider), expectedDevFundReserve);
+          }
+
+          if (expectedBurnbackFundReserve.gt(ZERO)) {
+            await expect(new Promise((resolve) => resolve(allocationResult)))
+              .to.emit(treasury, 'BurnBackPoolFunded')
+              .withArgs(await latestBlocktime(provider), expectedBurnbackFundReserve);
           }
 
           if (expectedTreasuryReserve.gt(ZERO)) {
@@ -303,19 +326,37 @@ contract ('Treasury', async () => {
               );
           }
 
-          if (expectedBoardroomReserve.gt(ZERO)) {
+          if (expectedArthBoardroomReserve.gt(ZERO)) {
             await expect(new Promise((resolve) => resolve(allocationResult)))
               .to.emit(treasury, 'BoardroomFunded')
               .withArgs(
                 await latestBlocktime(provider),
-                expectedBoardroomReserve
+                expectedArthBoardroomReserve
               );
           }
 
-          expect(await arth.balanceOf(fund.address)).to.eq(expectedFundReserve);
+          if (expectedArthLiquidityBoardroomReserve.gt(ZERO)) {
+            await expect(new Promise((resolve) => resolve(allocationResult)))
+              .to.emit(treasury, 'BoardroomFunded')
+              .withArgs(
+                await latestBlocktime(provider),
+                expectedArthLiquidityBoardroomReserve
+              );
+          }
+          
+          // They both have same fund allocation rate.
+          expect(expectedDevFundReserve).to.eq(expectedBurnbackFundReserve);
+
+          expect(await arth.balanceOf(developmentFund.address)).to.eq(expectedDevFundReserve);
+          expect(await arth.balanceOf(burnbackFund.address)).to.eq(expectedBurnbackFundReserve);
+
           expect(await treasury.getReserve()).to.eq(expectedTreasuryReserve);
-          expect(await arth.balanceOf(boardroom.address)).to.eq(
-            expectedBoardroomReserve
+          
+          expect(await arth.balanceOf(arthBoardroom.address)).to.eq(
+            expectedArthBoardroomReserve
+          );
+          expect(await arth.balanceOf(arthLiquidityBoardroom.address)).to.eq(
+            expectedArthLiquidityBoardroomReserve
           );
         });
 
