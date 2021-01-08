@@ -166,6 +166,7 @@ contract ('Treasury', async () => {
       }
 
       await arthBoardroom.connect(operatorAddress).transferOperator(treasury.address);
+      await arthLiquidityBoardroom.connect(operatorAddress).transferOperator(treasury.address);
     });
     
     it('Should works correctly', async () => {
