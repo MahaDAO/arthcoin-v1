@@ -73,8 +73,6 @@ contract ARTHTOKENPool is TokenWrapper, IRewardDistributionRecipient {
         token0 = IERC20(token0_);
         token1 = IERC20(token1_);
         starttime = starttime_;
-
-        DURATION = _duration;
     }
 
     modifier checkStart() {

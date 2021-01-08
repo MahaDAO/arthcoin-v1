@@ -79,8 +79,6 @@ contract DAIARTHLPTokenSharePool is
         basisShare = IERC20(basisShare_);
         lpt = IERC20(lptoken_);
         starttime = starttime_;
-
-        DURATION = duration_;
     }
 
     modifier updateReward(address account) {
