@@ -122,6 +122,14 @@ contract ('Treasury', async () => {
       );
     });
 
+    it('Should fail if treasury is not the operator of core contracts', async () => {
+      await arthLiquidityBoardroom.connect(operatorAddress).transferOperator(operatorAddress2);
+      
+      await expect(treasury.initialize()).to.revertedWith(
+        'Treasury: need more permission'
+      );
+    });
+
     it('Should fail if abuser tries to initialize twice', async () => {
       await treasury.initialize();
       
