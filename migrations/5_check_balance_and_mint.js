@@ -1,4 +1,4 @@
-const { knownContracts } = require('./config');
+const { KNOWN_CONTRACTS } = require('./config');
 
 
 const ARTH = artifacts.require('ARTH');
@@ -16,7 +16,7 @@ async function migration(deployer, network, accounts) {
   // Deploy or fetch deployed dai.
   console.log(`Fetching dai on ${network} network.`);
   const dai = network === 'mainnet'
-    ? await IERC20.at(knownContracts.DAI[network])
+    ? await IERC20.at(KNOWN_CONTRACTS.DAI[network])
     : await MockDai.deployed();
 
   // Fetch deployed tokens.

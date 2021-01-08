@@ -1,4 +1,4 @@
-const { POOL_START_DATE, DAY, knownContracts } = require('./config');
+const { POOL_START_DATE, DAY, KNOWN_CONTRACTS } = require('./config');
 
 
 const ARTH = artifacts.require('ARTH');
@@ -33,7 +33,7 @@ async function migration(deployer, network, accounts) {
   // Deploy dai or fetch deployed dai.
   console.log(`Fetching dai on ${network} network.`);
   const dai = network === 'mainnet'
-    ? await IERC20.at(knownContracts.DAI[network])
+    ? await IERC20.at(KNOWN_CONTRACTS.DAI[network])
     : await MockDai.deployed();
 
   // Fetching deployed ARTH.
@@ -41,7 +41,7 @@ async function migration(deployer, network, accounts) {
 
   // Fetch the deployed uniswap contract.
   const uniswap = network === 'mainnet' || network === 'ropsten'
-    ? await UniswapV2Factory.at(knownContracts.UniswapV2Factory[network])
+    ? await UniswapV2Factory.at(KNOWN_CONTRACTS.UniswapV2Factory[network])
     : await UniswapV2Factory.deployed()
 
   // Deploy oracle for the pair between ARTH and Dai.

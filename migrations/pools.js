@@ -3,9 +3,6 @@ const fs = require('fs');
 const path = require('path');
 
 
-
-
-
 const POOL_START_DATE = Math.floor(Date.now() / 1000);
 
 

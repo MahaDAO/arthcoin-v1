@@ -1,3 +1,7 @@
+/**
+ * Common units and measurements.
+ * NOTE: Time is in seconds.
+ */
 const UNIT = 10 ** 18;
 const HOUR = 1 * 60 * 60;
 const MAX = 1000 * 10 ** 18;
@@ -13,31 +17,42 @@ const INITIAL_MAHA_FOR_DAI_ARTH = 750000;
 const POOL_START_DATE = Math.floor(Date.now() / 1000);
 
 
+// Config for treasury.
 const TREASURY_PERIOD = 10 * 60;
+
+
+/**
+ * Config for oracles.
+ */
 const ORACLE_PERIOD = 5 * 60;
 const BOND_ORACLE_PERIOD = ORACLE_PERIOD;
 const SEIGNIORAGE_ORACLE_PERIOD = ORACLE_PERIOD;
-
-
-// const ORACLE_START_PRICE = web3.utils.toBN(1e18).toString();
+// const ORACLE_START_PRICE = 1e18;
 // const GMU_ORACLE_START_PRICE = ORACLE_START_PRICE;
 // const MAHAUSD_ORACLE_START_PRICE = ORACLE_START_PRICE;
 
 
+/**
+ * Config for boardrooms.
+ */
 const BOARDROOM_LOCK_DURATION = 5 * 60;
-const ARTH_LIQUIDITY_BOARDROOM_LOCK_DURATION = BOARDROOM_LOCK_DURATION;
 const ARTH_BOARDROOM_LOCK_DURATION = BOARDROOM_LOCK_DURATION;
+const ARTH_LIQUIDITY_BOARDROOM_LOCK_DURATION = BOARDROOM_LOCK_DURATION;
 
 
+/**
+ * Config for LP Pools.
+ */
 const ARTH_LP_TOKEN_POOL_LOCK_AND_DURATION = 5 * 60;
 const DAIARTHLPToken_MAHA_POOL_LOCK_DURATION = ARTH_LP_TOKEN_POOL_LOCK_AND_DURATION;
+
 
 /**
  * List of known (already deployed and verified) contract addresses on here.
  * NOTE: The ropsten token addresses might not be the actual/correct addresses for the 
  * respective token.
  */
-const knownContracts = {
+const KNOWN_CONTRACTS = {
   // https://uniswap.org/docs/v2/smart-contracts/factory/#address
   UniswapV2Factory: {
     mainnet: '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f',
@@ -169,19 +184,21 @@ const knownContracts = {
 
 
 module.exports = {
+  UNIT,
+  HOUR,
+  MAX,
+  DAY,
   INITIAL_ARTH_FOR_POOLS,
   INITIAL_MAHA_FOR_DAI_MAHA,
   INITIAL_MAHA_FOR_DAI_ARTH,
   POOL_START_DATE,
-  DAY,
-  HOUR,
   TREASURY_PERIOD,
   BOND_ORACLE_PERIOD,
-  // SEIGNIORAGE_ORACLE_PERIOD,
+  SEIGNIORAGE_ORACLE_PERIOD,
   // GMU_ORACLE_START_PRICE,
   // MAHAUSD_ORACLE_START_PRICE,
   ARTH_LIQUIDITY_BOARDROOM_LOCK_DURATION,
   ARTH_BOARDROOM_LOCK_DURATION,
   DAIARTHLPToken_MAHA_POOL_LOCK_DURATION,
-  knownContracts
+  KNOWN_CONTRACTS
 };
