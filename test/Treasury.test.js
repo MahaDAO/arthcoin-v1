@@ -283,7 +283,7 @@ contract ('Treasury', async () => {
             .mul(await treasury.fundAllocationRate())
             .div(100);
           updatedExpectedSeigniorage = expectedSeigniorage.sub(expectedBurnbackFundReserve).sub(expectedDevFundReserve);
-         
+
           // Get all expected treasury reserve and update the expected seigniorage value.
           const expectedTreasuryReserve = bigmin(
             updatedExpectedSeigniorage,
@@ -371,7 +371,7 @@ contract ('Treasury', async () => {
         //   );
         // });
 
-        it('should move to next epoch after allocation', async () => {
+        it('Should move to next epoch after allocation', async () => {
           const cashPrice1 = ETH.mul(106).div(100);
           await gmuOracle.setPrice(cashPrice1);
 
@@ -401,8 +401,8 @@ contract ('Treasury', async () => {
             const cashPrice = ETH.mul(106).div(100);
             await gmuOracle.setPrice(cashPrice);
 
-            for await (const target of [arth, arthb, maha, arthBoardroom]) {
-              await target.connect(operatorAddress).transferOperator(operatorAddress2.address);
+            for await (const target of [arth, arthb, maha, arthBoardroom, arthLiquidityBoardroom]) {
+              await target.connect(operatorAddress).transferOperator(operatorAddress2);
               await expect(treasury.allocateSeigniorage()).to.revertedWith(
                 'Treasury: need more permission'
               );
@@ -412,6 +412,7 @@ contract ('Treasury', async () => {
           it('If seigniorage already allocated in this epoch', async () => {
             const cashPrice = ETH.mul(106).div(100);
             await gmuOracle.setPrice(cashPrice);
+            
             await treasury.allocateSeigniorage();
             await expect(treasury.allocateSeigniorage()).to.revertedWith(
               'Epoch: not allowed'
