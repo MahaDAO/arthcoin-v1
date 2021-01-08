@@ -222,7 +222,7 @@ contract ('Treasury', async () => {
         await arth.mint(treasuryAddress, INITIAL_ARTH_AMOUNT);
         await maha.mint(operatorAddress, INITIAL_MAHA_AMOUNT);
         
-        for await (const contract of [arth, arthb, maha, arthBoardroom]) {
+        for await (const contract of [arth, arthb, maha, arthBoardroom, arthLiquidityBoardroom]) {
           await contract.connect(operatorAddress).transferOperator(treasury.address);
         }
       });
