@@ -37,10 +37,6 @@ const mahaPools = {
 
 
 module.exports = {
-  POOL_START_DATE,
-  INITIAL_ARTH_FOR_POOLS,
-  INITIAL_MAHA_FOR_DAI_ARTH,
-  INITIAL_MAHA_FOR_DAI_MAHA,
   arthPools,
   mahaPools,
 };
