@@ -1,3 +1,7 @@
+const { POOL_START_DATE } = require('./pools');
+const { DAIARTHLPToken_MAHA_POOL_LOCK_DURATION, knownContracts } = require('./config');
+
+
 const ARTH = artifacts.require('ARTH');
 const MahaToken = artifacts.require('MahaToken');
 const MockDai = artifacts.require('MockDai');
@@ -6,13 +10,9 @@ const DAIARTHLPToken_MAHAPool = artifacts.require('DAIARTHLPTokenSharePool')
 const UniswapV2Factory = artifacts.require('UniswapV2Factory');
 // const DAIMAHALPToken_MAHAPool = artifacts.require('DAIMAHALPTokenSharePool')
 
-const knownContracts = require('./known-contracts');
-const { POOL_START_DATE } = require('./pools');
-const { DAIARTHLPToken_MAHA_POOL_LOCK_DURATION } = require('./config');
-
 
 module.exports = async (deployer, network, accounts) => {
-  return
+  // return
 
   // Set the main account, you'll be using accross all the files for various
   // important activities to your desired address in the .env file.

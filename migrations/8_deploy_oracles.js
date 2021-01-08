@@ -1,3 +1,6 @@
+const { POOL_START_DATE, DAY, knownContracts } = require('./config');
+
+
 const ARTH = artifacts.require('ARTH');
 const MockDai = artifacts.require('MockDai');
 const GMUOracle = artifacts.require('GMUOracle');
@@ -5,13 +8,6 @@ const MAHAUSDOracle = artifacts.require('MAHAUSDOracle');
 const UniswapV2Factory = artifacts.require('UniswapV2Factory');
 const SeigniorageOracle = artifacts.require('SeigniorageOracle');
 const BondRedemtionOracle = artifacts.require('BondRedemtionOracle');
-
-const {
-  POOL_START_DATE,
-  DAY,
-} = require('./config');
-
-const knownContracts = require('./known-contracts');
 
 
 async function migration(deployer, network, accounts) {

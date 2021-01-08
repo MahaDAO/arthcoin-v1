@@ -14,6 +14,7 @@ function distributionPoolContracts() {
     .map(filename => filename.replace('.sol', ''));
 }
 
+
 // Deployment and ABI will be generated for contracts listed on here.
 // The deployment thus can be used on basiscash-frontend.
 const exportedContracts = [

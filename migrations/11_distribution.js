@@ -1,18 +1,19 @@
+const { knownContracts } = require('./config');
+const { arthPools, POOL_START_DATE } = require('./pools');
+
+
 /**
  * Tokens deployed first.
  */
 const ARTH = artifacts.require('ARTH');
 const MockDai = artifacts.require('MockDai');
 
-const knownContracts = require('./known-contracts');
-const { arthPools, POOL_START_DATE } = require('./pools');
-
 
 /**
  * Main migrations
  */
 module.exports = async (deployer, network, accounts) => {
-  return
+  // return
   // Set the main account, you'll be using accross all the files for various
   // important activities to your desired address in the .env file.
   accounts[0] = process.env.WALLET_KEY;
@@ -27,6 +28,6 @@ module.exports = async (deployer, network, accounts) => {
     }
 
     const contract = artifacts.require(contractName);
-    await deployer.deploy(contract, ARTH.address, tokenAddress, POOL_START_DATE);
+    await deployer.deploy(contract, ARTH.address, tokenAddress, POOL_START_DATE, 0);
   }
 };

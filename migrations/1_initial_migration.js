@@ -1,7 +1,10 @@
 const Artifactor = require('@truffle/artifactor');
-const artifactor = new Artifactor(`${__dirname}/../build/contracts`);
+
 
 const Migrations = artifacts.require('Migrations')
+
+
+const artifactor = new Artifactor(`${__dirname}/../build/contracts`);
 
 
 const InitialArtifacts = {

@@ -1,3 +1,6 @@
+const { knownContracts } = require('./config');
+
+
 const ARTH = artifacts.require('ARTH');
 const ARTHB = artifacts.require('ARTHB');
 const MahaToken = artifacts.require('MahaToken');

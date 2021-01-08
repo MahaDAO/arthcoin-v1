@@ -1,10 +1,10 @@
 /**
  * Contracts.
  */
-const ARTH = artifacts.require('ARTH')
-const ARTHB = artifacts.require('ARTHB')
-const MahaToken = artifacts.require('MahaToken')
+const ARTH = artifacts.require('ARTH');
+const ARTHB = artifacts.require('ARTHB');
 const MockDai = artifacts.require('MockDai');
+const MahaToken = artifacts.require('MahaToken');
 
 
 /**

@@ -1,10 +1,11 @@
+const { knownContracts } = require('./config');
+
+
 const ARTH = artifacts.require('ARTH');
 const ARTHB = artifacts.require('ARTHB');
-const MahaToken = artifacts.require('MahaToken');
 const MockDai = artifacts.require('MockDai');
+const MahaToken = artifacts.require('MahaToken');
 const UniswapV2Router02 = artifacts.require('UniswapV2Router02');
-
-const knownContracts = require('./known-contracts');
 
 
 async function approveIfNot(token, owner, spender, amount) {
