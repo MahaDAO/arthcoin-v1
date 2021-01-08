@@ -1,5 +1,6 @@
 const { arthPools } = require('./pools');
-const { KNOWN_CONTRACTS, POOL_START_DATE } = require('./config');
+const { POOL_START_DATE } = require('./config');
+const knownContracts = require('./known-contracts');
 
 
 /**
@@ -19,7 +20,7 @@ module.exports = async (deployer, network, accounts) => {
   accounts[0] = process.env.WALLET_KEY;
 
   for await (const { contractName, token } of arthPools) {
-    const tokenAddress = KNOWN_CONTRACTS[token] && KNOWN_CONTRACTS[token][network] || MockDai.address;
+    const tokenAddress = knownContracts[token] && knownContracts[token][network] || MockDai.address;
     if (!tokenAddress) {
       // Network is mainnet, so MockDai is not available.
       throw new Error(

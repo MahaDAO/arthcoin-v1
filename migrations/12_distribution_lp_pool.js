@@ -1,8 +1,8 @@
 const { 
   POOL_START_DATE, 
-  DAIARTHLPToken_MAHA_POOL_LOCK_DURATION, 
-  KNOWN_CONTRACTS 
+  DAIARTHLPToken_MAHA_POOL_LOCK_DURATION,
 } = require('./config');
+const knownContracts = require('./known-contracts');
 
 
 const ARTH = artifacts.require('ARTH');
@@ -22,11 +22,11 @@ module.exports = async (deployer, network, accounts) => {
   accounts[0] = process.env.WALLET_KEY;
 
   const uniswapFactory = network === 'mainnet' || network === 'ropsten'
-    ? await UniswapV2Factory.at(KNOWN_CONTRACTS.UniswapV2Factory[network])
+    ? await UniswapV2Factory.at(knownContracts.UniswapV2Factory[network])
     : await UniswapV2Factory.deployed()
 
   const dai = network === 'mainnet'
-    ? await IERC20.at(KNOWN_CONTRACTS.DAI[network])
+    ? await IERC20.at(knownContracts.DAI[network])
     : await MockDai.deployed();
 
   const oracle = await SeigniorageOracle.deployed();

@@ -1,5 +1,5 @@
-const DevelopmentFund = artifacts.require('DevelopmentFund');
 const BurnbackFund = artifacts.require('BurnbackFund');
+const DevelopmentFund = artifacts.require('DevelopmentFund');
 
 
 async function migration(deployer, network, accounts) {

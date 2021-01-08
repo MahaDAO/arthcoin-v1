@@ -1,8 +1,8 @@
 const {
-  KNOWN_CONTRACTS,
   ARTH_LIQUIDITY_BOARDROOM_LOCK_DURATION,
   ARTH_BOARDROOM_LOCK_DURATION
 } = require('./config');
+const knownContracts = require('./known-contracts');
 
 
 const ARTH = artifacts.require('ARTH');
@@ -22,7 +22,7 @@ async function migration(deployer, network, accounts) {
   // Deploy dai or fetch deployed dai.
   console.log(`Fetching dai on ${network} network.`);
   const dai = network === 'mainnet'
-    ? await IERC20.at(KNOWN_CONTRACTS.DAI[network])
+    ? await IERC20.at(knownContracts.DAI[network])
     : await MockDai.deployed();
   
   // Fetching deployed ARTH.
@@ -33,7 +33,7 @@ async function migration(deployer, network, accounts) {
   
   // Fetch the deployed uniswap.
   const uniswap = network === 'mainnet' || network === 'ropsten'
-    ? await UniswapV2Factory.at(KNOWN_CONTRACTS.UniswapV2Factory[network])
+    ? await UniswapV2Factory.at(knownContracts.UniswapV2Factory[network])
     : await UniswapV2Factory.deployed()
 
   // Get the oracle pair of ARTH-DAI.

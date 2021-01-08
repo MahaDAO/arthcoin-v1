@@ -4,8 +4,8 @@ const GMUOracle = artifacts.require('GMUOracle');
 const Treasury = artifacts.require('Treasury');
 const UniswapV2Factory = artifacts.require('UniswapV2Factory');
 const ARTH = artifacts.require('ARTH');
-const cron = require('node-cron')
-const {KNOWN_CONTRACTS} = require('../migrations/config');
+const cron = require('node-cron');
+const knownContracts = require('./known-contracts');
 // const IERC20 = artifacts.require('IERC20');
 
 
@@ -17,11 +17,11 @@ module.exports = async (callback) => {
     const network = 'ropsten'
     try {
         // const uniswapFactory = network === 'mainnet' || network === 'ropsten'
-        //     ? await UniswapV2Factory.at(KNOWN_CONTRACTS.UniswapV2Factory[network])
+        //     ? await UniswapV2Factory.at(knownContracts.UniswapV2Factory[network])
         //     : await UniswapV2Factory.deployed()
 
         // const dai = network === 'mainnet'
-        //     ? await IERC20.at(KNOWN_CONTRACTS.DAI[network])
+        //     ? await IERC20.at(knownContracts.DAI[network])
         //     : await MockDai.deployed();
 
         // const oracle = await SeigniorageOracle.deployed();

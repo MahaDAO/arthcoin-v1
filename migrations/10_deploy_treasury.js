@@ -12,7 +12,6 @@ const MAHAUSDOracle = artifacts.require('MAHAUSDOracle');
 const SeigniorageOracle = artifacts.require('SeigniorageOracle');
 
 
-
 async function migration(deployer, network, accounts) {
   // Set the main account, you'll be using accross all the files for
   // various important activities to your desired address in the .env

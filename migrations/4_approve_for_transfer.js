@@ -1,4 +1,4 @@
-const { KNOWN_CONTRACTS } = require('./config');
+const knownContracts = require('./known-contracts');
 
 
 const ARTH = artifacts.require('ARTH');
@@ -29,7 +29,7 @@ async function migration(deployer, network, accounts) {
   // Deploy or fetch deployed dai.
   console.log(`Fetching dai on ${network} network.`);
   const dai = network === 'mainnet'
-    ? await IERC20.at(KNOWN_CONTRACTS.DAI[network])
+    ? await IERC20.at(knownContracts.DAI[network])
     : await MockDai.deployed();
 
   // Fetch deployed tokens.
@@ -39,7 +39,7 @@ async function migration(deployer, network, accounts) {
 
   // Fetch deployed uniswap router.
   const uniswapRouter = network === 'mainnet' || network === 'ropsten'
-    ? await UniswapV2Router02.at(KNOWN_CONTRACTS.UniswapV2Router02[network])
+    ? await UniswapV2Router02.at(knownContracts.UniswapV2Router02[network])
     : await UniswapV2Router02.deployed();
 
   console.log('Approving Uniswap on tokens for liquidity');
