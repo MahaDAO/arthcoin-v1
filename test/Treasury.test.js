@@ -412,7 +412,7 @@ contract ('Treasury', async () => {
           it('If seigniorage already allocated in this epoch', async () => {
             const cashPrice = ETH.mul(106).div(100);
             await gmuOracle.setPrice(cashPrice);
-            
+
             await treasury.allocateSeigniorage();
             await expect(treasury.allocateSeigniorage()).to.revertedWith(
               'Epoch: not allowed'
@@ -428,7 +428,7 @@ contract ('Treasury', async () => {
       await arth.mint(operatorAddress, INITIAL_ARTH_AMOUNT);
       await arthb.mint(operatorAddress, INITIAL_ARTHB_AMOUNT);
       
-      for await (const contract of [arth, arthb, maha, arthBoardroom]) {
+      for await (const contract of [arth, arthb, maha, arthBoardroom, arthLiquidityBoardroom]) {
         await contract.connect(operatorAddress).transferOperator(treasury.address);
       }
     });
