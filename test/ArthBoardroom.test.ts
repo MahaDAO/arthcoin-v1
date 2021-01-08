@@ -4,10 +4,13 @@ import { solidity } from 'ethereum-waffle';
 import { Contract, ContractFactory, BigNumber, utils } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address';
 
+
 chai.use(solidity);
 
-describe('Boardroom', () => {
+
+describe('ArthBoardroom', () => {
   const DAY = 86400;
+  const BOARDROOM_LOCK_PERIOD = 5 * 60;
   const ETH = utils.parseEther('1');
   const ZERO = BigNumber.from(0);
   const STAKE_AMOUNT = ETH.mul(5000);
@@ -24,33 +27,29 @@ describe('Boardroom', () => {
   });
 
   let ARTH: ContractFactory;
-  let Share: ContractFactory;
-  let Boardroom: ContractFactory;
+  let ArthBoardroom: ContractFactory;
 
-  before('fetch contract factories', async () => {
+  before('Fetch contract factories', async () => {
     ARTH = await ethers.getContractFactory('ARTH');
-    Share = await ethers.getContractFactory('MahaToken');
-    Boardroom = await ethers.getContractFactory('Boardroom');
+    ArthBoardroom = await ethers.getContractFactory('ArthBoardroom');
   });
 
   let cash: Contract;
-  let share: Contract;
   let boardroom: Contract;
 
-  beforeEach('deploy contracts', async () => {
+  beforeEach('Deploy contracts', async () => {
     cash = await ARTH.connect(operator).deploy();
-    share = await Share.connect(operator).deploy();
-    boardroom = await Boardroom.connect(operator).deploy(
+    boardroom = await ArthBoardroom.connect(operator).deploy(
       cash.address,
-      share.address
+      BOARDROOM_LOCK_PERIOD
     );
   });
 
   describe('#stake', () => {
-    it('should work correctly', async () => {
+    it('Should work correctly', async () => {
       await Promise.all([
-        share.connect(operator).mint(whale.address, STAKE_AMOUNT),
-        share.connect(whale).approve(boardroom.address, STAKE_AMOUNT),
+        cash.connect(operator).mint(whale.address, STAKE_AMOUNT),
+        cash.connect(whale).approve(boardroom.address, STAKE_AMOUNT),
       ]);
 
       await expect(boardroom.connect(whale).stake(STAKE_AMOUNT))
@@ -66,38 +65,55 @@ describe('Boardroom', () => {
       );
     });
 
-    it('should fail when user tries to stake with zero amount', async () => {
+    it('Should fail when user tries to stake with zero amount', async () => {
       await expect(boardroom.connect(whale).stake(ZERO)).to.revertedWith(
         'Boardroom: Cannot stake 0'
       );
     });
   });
 
-  describe('#withdraw', () => {
-    beforeEach('stake', async () => {
+  describe('#withdraw', async () => {
+    beforeEach('Stake', async () => {
       await Promise.all([
-        share.connect(operator).mint(whale.address, STAKE_AMOUNT),
-        share.connect(whale).approve(boardroom.address, STAKE_AMOUNT),
+        cash.connect(operator).mint(whale.address, STAKE_AMOUNT),
+        cash.connect(whale).approve(boardroom.address, STAKE_AMOUNT),
       ]);
       await boardroom.connect(whale).stake(STAKE_AMOUNT);
     });
 
-    it('should work correctly', async () => {
+    it('Should not work correctly', async () => {
+        try {
+          await expect(boardroom.connect(whale).withdraw(STAKE_AMOUNT))
+            .to.emit(boardroom, 'Withdrawn')
+            .withArgs(whale.address, STAKE_AMOUNT);
+
+          expect(await cash.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
+          expect(await boardroom.balanceOf(whale.address)).to.eq(ZERO);
+
+          return false;
+        } catch (e) {
+          return true;
+        }
+    });
+
+    await new Promise(resolve => setTimeout(resolve, 1000 *  BOARDROOM_LOCK_PERIOD));
+
+    it('Should work correctly', async () => {
       await expect(boardroom.connect(whale).withdraw(STAKE_AMOUNT))
         .to.emit(boardroom, 'Withdrawn')
         .withArgs(whale.address, STAKE_AMOUNT);
 
-      expect(await share.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
+      expect(await cash.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
       expect(await boardroom.balanceOf(whale.address)).to.eq(ZERO);
     });
 
-    it('should fail when user tries to withdraw with zero amount', async () => {
+    it('Should fail when user tries to withdraw with zero amount', async () => {
       await expect(boardroom.connect(whale).withdraw(ZERO)).to.revertedWith(
         'Boardroom: Cannot withdraw 0'
       );
     });
 
-    it('should fail when user tries to withdraw more than staked amount', async () => {
+    it('Should fail when user tries to withdraw more than staked amount', async () => {
       await expect(
         boardroom.connect(whale).withdraw(STAKE_AMOUNT.add(1))
       ).to.revertedWith(
@@ -105,7 +121,7 @@ describe('Boardroom', () => {
       );
     });
 
-    it('should fail when non-director tries to withdraw', async () => {
+    it('Should fail when non-director tries to withdraw', async () => {
       await expect(boardroom.connect(abuser).withdraw(ZERO)).to.revertedWith(
         'Boardroom: The director does not exist'
       );
@@ -113,34 +129,51 @@ describe('Boardroom', () => {
   });
 
   describe('#exit', async () => {
-    beforeEach('stake', async () => {
+    beforeEach('Stake', async () => {
       await Promise.all([
-        share.connect(operator).mint(whale.address, STAKE_AMOUNT),
-        share.connect(whale).approve(boardroom.address, STAKE_AMOUNT),
+        cash.connect(operator).mint(whale.address, STAKE_AMOUNT),
+        cash.connect(whale).approve(boardroom.address, STAKE_AMOUNT),
       ]);
+
       await boardroom.connect(whale).stake(STAKE_AMOUNT);
     });
 
-    it('should work correctly', async () => {
+    it('Should not work correctly', async () => {
+      try {
+        await expect(boardroom.connect(whale).exit())
+        .to.emit(boardroom, 'Withdrawn')
+        .withArgs(whale.address, STAKE_AMOUNT);
+
+        expect(await cash.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
+        expect(await boardroom.balanceOf(whale.address)).to.eq(ZERO);
+        expect(false);
+      } catch(e) {
+        expect(true);
+      }
+    });
+
+    await new Promise(resolve => setTimeout(resolve, 1000 *  BOARDROOM_LOCK_PERIOD));
+
+    it('Should work correctly', async () => {
       await expect(boardroom.connect(whale).exit())
         .to.emit(boardroom, 'Withdrawn')
         .withArgs(whale.address, STAKE_AMOUNT);
 
-      expect(await share.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
+      expect(await cash.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
       expect(await boardroom.balanceOf(whale.address)).to.eq(ZERO);
     });
   });
 
   describe('#allocateSeigniorage', () => {
-    beforeEach('stake', async () => {
+    beforeEach('Stake', async () => {
       await Promise.all([
-        share.connect(operator).mint(whale.address, STAKE_AMOUNT),
-        share.connect(whale).approve(boardroom.address, STAKE_AMOUNT),
+        cash.connect(operator).mint(whale.address, STAKE_AMOUNT),
+        cash.connect(whale).approve(boardroom.address, STAKE_AMOUNT),
       ]);
       await boardroom.connect(whale).stake(STAKE_AMOUNT);
     });
 
-    it('should allocate seigniorage to stakers', async () => {
+    it('Should allocate seigniorage to stakers', async () => {
       await cash.connect(operator).mint(operator.address, SEIGNIORAGE_AMOUNT);
       await cash
         .connect(operator)
@@ -157,13 +190,13 @@ describe('Boardroom', () => {
       );
     });
 
-    it('should fail when user tries to allocate with zero amount', async () => {
+    it('Should fail when user tries to allocate with zero amount', async () => {
       await expect(
         boardroom.connect(operator).allocateSeigniorage(ZERO)
       ).to.revertedWith('Boardroom: Cannot allocate 0');
     });
 
-    it('should fail when non-operator tries to allocate seigniorage', async () => {
+    it('Should fail when non-operator tries to allocate seigniorage', async () => {
       await expect(
         boardroom.connect(abuser).allocateSeigniorage(ZERO)
       ).to.revertedWith('operator: caller is not the operator');
@@ -171,18 +204,18 @@ describe('Boardroom', () => {
   });
 
   describe('#claimDividends', () => {
-    beforeEach('stake', async () => {
+    beforeEach('Stake', async () => {
       await Promise.all([
-        share.connect(operator).mint(whale.address, STAKE_AMOUNT),
-        share.connect(whale).approve(boardroom.address, STAKE_AMOUNT),
+        cash.connect(operator).mint(whale.address, STAKE_AMOUNT),
+        cash.connect(whale).approve(boardroom.address, STAKE_AMOUNT),
 
-        share.connect(operator).mint(abuser.address, STAKE_AMOUNT),
-        share.connect(abuser).approve(boardroom.address, STAKE_AMOUNT),
+        cash.connect(operator).mint(abuser.address, STAKE_AMOUNT),
+        cash.connect(abuser).approve(boardroom.address, STAKE_AMOUNT),
       ]);
       await boardroom.connect(whale).stake(STAKE_AMOUNT);
     });
 
-    it('should claim devidends', async () => {
+    it('Should claim devidends', async () => {
       await cash.connect(operator).mint(operator.address, SEIGNIORAGE_AMOUNT);
       await cash
         .connect(operator)
@@ -195,7 +228,7 @@ describe('Boardroom', () => {
       expect(await boardroom.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
     });
 
-    it('should claim devidends correctly even after other person stakes after snapshot', async () => {
+    it('Should claim devidends correctly even after other person stakes after snapshot', async () => {
       await cash.connect(operator).mint(operator.address, SEIGNIORAGE_AMOUNT);
       await cash
         .connect(operator)
