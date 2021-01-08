@@ -9,16 +9,21 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-wit
 import { ParamType } from 'ethers/lib/utils';
 import { encodeParameters } from '../scripts/utils';
 
+
 chai.use(solidity);
+
 
 const DAY = 86400;
 const ETH = utils.parseEther('1');
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000';
+const BOARDROOM_LOCK_DURATION = 5 * 60;
+
 
 async function latestBlocktime(provider: Provider): Promise<number> {
   const { timestamp } = await provider.getBlock('latest');
   return timestamp;
 }
+
 
 describe('Timelock', () => {
   const { provider } = ethers;
@@ -29,45 +34,65 @@ describe('Timelock', () => {
   before('setup accounts', async () => {
     [operator, abuser] = await ethers.getSigners();
   });
-
+  
+  let UniswapV2Factory: ContractFactory;
+  let UniswapV2Router02: ContractFactory;
+  let BondRedemtionOracle: ContractFactory;
   let ARTHB: ContractFactory;
   let ARTH: ContractFactory;
-  let Share: ContractFactory;
+  let MAHA: ContractFactory;
   let Timelock: ContractFactory;
   let Treasury: ContractFactory;
-  let Boardroom: ContractFactory;
+  let ARTHBoardroom: ContractFactory;
+  let ARTHLiquidityBoardroom: ContractFactory;
 
   before('fetch contract factories', async () => {
+    UniswapV2Factory = await ethers.getContractFactory('UniswapV2Factory');
+    UniswapV2Router02 = await ethers.getContractFactory('UniswapV2Router02');
+    BondRedemtionOracle = await ethers.getContractFactory('BondRedemtionOracle');
     ARTHB = await ethers.getContractFactory('ARTHB');
     ARTH = await ethers.getContractFactory('ARTH');
-    Share = await ethers.getContractFactory('Share');
+    MAHA = await ethers.getContractFactory('MahaToken');
     Timelock = await ethers.getContractFactory('Timelock');
     Treasury = await ethers.getContractFactory('Treasury');
-    Boardroom = await ethers.getContractFactory('Boardroom');
+    ARTHBoardroom = await ethers.getContractFactory('ArthBoardroom');
+    ARTHLiquidityBoardroom = await ethers.getContractFactory('ArthLiquidityBoardroom');
   });
-
+ 
+  let uniswap: Contract;
+  let uniswapRouter: Contract;
+  let bondRedemtionOracle: Contract;
   let bond: Contract;
   let cash: Contract;
   let share: Contract;
   let timelock: Contract;
   let treasury: Contract;
-  let boardroom: Contract;
+  let arthBoardroom: Contract;
+  let arthLiquidityBoardroom: Contract;
 
   let startTime: number;
 
-  beforeEach('deploy contracts', async () => {
+  beforeEach('Deploy contracts', async () => {
+    uniswap = await UniswapV2Factory.connect(operator).deploy(operator.address);
+    uniswapRouter = await UniswapV2Router02.connect(operator).deploy(uniswap.resolvedAddress, operator.address);
     bond = await ARTHB.connect(operator).deploy();
     cash = await ARTH.connect(operator).deploy();
-    share = await Share.connect(operator).deploy();
+    share = await MAHA.connect(operator).deploy();
     timelock = await Timelock.connect(operator).deploy(
       operator.address,
       2 * DAY
     );
 
-    boardroom = await Boardroom.connect(operator).deploy(
+    arthBoardroom = await ARTHBoardroom.connect(operator).deploy(
       cash.address,
-      share.address
+      BOARDROOM_LOCK_DURATION
     );
+
+    arthLiquidityBoardroom = await ARTHLiquidityBoardroom.connect(operator).deploy(
+      cash.address,
+      dai_arth_lpt_oracle,
+      BOARDROOM_LOCK_DURATION
+    )
 
     treasury = await Treasury.connect(operator).deploy(
       cash.address,

@@ -4,7 +4,9 @@ import { solidity } from 'ethereum-waffle';
 import { Contract, ContractFactory, BigNumber, utils } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address';
 
+
 chai.use(solidity);
+
 
 describe('Tokens', () => {
   const ETH = utils.parseEther('1');
@@ -15,18 +17,18 @@ describe('Tokens', () => {
 
   let operator: SignerWithAddress;
 
-  before('setup accounts', async () => {
+  before('Setup accounts', async () => {
     [operator] = await ethers.getSigners();
   });
 
   let ARTHB: ContractFactory;
   let ARTH: ContractFactory;
-  let Share: ContractFactory;
+  let MAHA: ContractFactory;
 
-  before('fetch contract factories', async () => {
+  before('Fetch contract factories', async () => {
     ARTHB = await ethers.getContractFactory('ARTHB');
     ARTH = await ethers.getContractFactory('ARTH');
-    Share = await ethers.getContractFactory('Share');
+    MAHA = await ethers.getContractFactory('MahaToken');
   });
 
   describe('ARTHB', () => {
@@ -36,7 +38,7 @@ describe('Tokens', () => {
       token = await ARTHB.connect(operator).deploy();
     });
 
-    it('mint', async () => {
+    it('Mint', async () => {
       const mintAmount = ETH.mul(2);
       await expect(token.connect(operator).mint(operator.address, mintAmount))
         .to.emit(token, 'Transfer')
@@ -44,14 +46,14 @@ describe('Tokens', () => {
       expect(await token.balanceOf(operator.address)).to.eq(mintAmount);
     });
 
-    it('burn', async () => {
+    it('Burn', async () => {
       await expect(token.connect(operator).burn(ETH))
         .to.emit(token, 'Transfer')
         .withArgs(operator.address, ZERO_ADDR, ETH);
       expect(await token.balanceOf(operator.address)).to.eq(ETH);
     });
 
-    it('burnFrom', async () => {
+    it('Burn From', async () => {
       await expect(token.connect(operator).approve(operator.address, ETH));
       await expect(token.connect(operator).burnFrom(operator.address, ETH))
         .to.emit(token, 'Transfer')
@@ -63,25 +65,25 @@ describe('Tokens', () => {
   describe('ARTH', () => {
     let token: Contract;
 
-    before('deploy token', async () => {
+    before('Deploy token', async () => {
       token = await ARTH.connect(operator).deploy();
     });
 
-    it('mint', async () => {
+    it('Mint', async () => {
       await expect(token.connect(operator).mint(operator.address, ETH))
         .to.emit(token, 'Transfer')
         .withArgs(ZERO_ADDR, operator.address, ETH);
       expect(await token.balanceOf(operator.address)).to.eq(ETH.mul(2));
     });
 
-    it('burn', async () => {
+    it('Burn', async () => {
       await expect(token.connect(operator).burn(ETH))
         .to.emit(token, 'Transfer')
         .withArgs(operator.address, ZERO_ADDR, ETH);
       expect(await token.balanceOf(operator.address)).to.eq(ETH);
     });
 
-    it('burnFrom', async () => {
+    it('Burn From', async () => {
       await expect(token.connect(operator).approve(operator.address, ETH));
       await expect(token.connect(operator).burnFrom(operator.address, ETH))
         .to.emit(token, 'Transfer')
@@ -90,28 +92,28 @@ describe('Tokens', () => {
     });
   });
 
-  describe('Share', () => {
+  describe('MAHA', () => {
     let token: Contract;
 
-    before('deploy token', async () => {
-      token = await Share.connect(operator).deploy();
+    before('Deploy token', async () => {
+      token = await MAHA.connect(operator).deploy();
     });
 
-    it('mint', async () => {
+    it('Mint', async () => {
       await expect(token.connect(operator).mint(operator.address, ETH))
         .to.emit(token, 'Transfer')
         .withArgs(ZERO_ADDR, operator.address, ETH);
       expect(await token.balanceOf(operator.address)).to.eq(ETH.mul(2));
     });
 
-    it('burn', async () => {
+    it('Burn', async () => {
       await expect(token.connect(operator).burn(ETH))
         .to.emit(token, 'Transfer')
         .withArgs(operator.address, ZERO_ADDR, ETH);
       expect(await token.balanceOf(operator.address)).to.eq(ETH);
     });
 
-    it('burnFrom', async () => {
+    it('Burn From', async () => {
       await expect(token.connect(operator).approve(operator.address, ETH));
       await expect(token.connect(operator).burnFrom(operator.address, ETH))
         .to.emit(token, 'Transfer')
