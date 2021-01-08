@@ -20,7 +20,6 @@ async function migration(deployer, network, accounts) {
   accounts[0] = process.env.WALLET_KEY;
 
   // Set starttime for different networks.
-
   const POOL_START_DATE = Math.floor(Date.now() / 1000);
   const startTime = POOL_START_DATE;
   if (network === 'mainnet') {

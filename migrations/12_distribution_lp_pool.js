@@ -1,5 +1,8 @@
-const { POOL_START_DATE } = require('./pools');
-const { DAIARTHLPToken_MAHA_POOL_LOCK_DURATION, knownContracts } = require('./config');
+const { 
+  POOL_START_DATE, 
+  DAIARTHLPToken_MAHA_POOL_LOCK_DURATION, 
+  knownContracts 
+} = require('./config');
 
 
 const ARTH = artifacts.require('ARTH');

@@ -1,5 +1,7 @@
 const { BigNumber } = require("ethers");
 
+const { DAY } = require('./config');
+
 
 const ArthLiquidityBoardroom = artifacts.require('ArthLiquidityBoardroom');
 const ArthBoardroom = artifacts.require('ArthBoardroom');
@@ -7,9 +9,6 @@ const Treasury = artifacts.require('Treasury');
 const ARTH = artifacts.require('ARTH');
 const ARTHB = artifacts.require('ARTHB');
 const Timelock = artifacts.require('Timelock');
-
-
-const DAY = 86400;
 
 
 /**

@@ -1,7 +1,6 @@
 const { knownContracts } = require('./config');
 
 
-
 const ARTH = artifacts.require('ARTH');
 const MockDai = artifacts.require('MockDai');
 const UniswapV2Router02 = artifacts.require('UniswapV2Router02');

@@ -16,7 +16,7 @@ function distributionPoolContracts() {
 
 
 // Deployment and ABI will be generated for contracts listed on here.
-// The deployment thus can be used on basiscash-frontend.
+// The deployment thus can be used on frontend.
 const exportedContracts = [
   'ARTH',
   'ARTHB',

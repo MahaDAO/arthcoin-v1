@@ -1,5 +1,5 @@
-const { knownContracts } = require('./config');
-const { arthPools, POOL_START_DATE } = require('./pools');
+const { arthPools } = require('./pools');
+const { knownContracts, POOL_START_DATE } = require('./config');
 
 
 /**
