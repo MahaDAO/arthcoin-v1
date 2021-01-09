@@ -13,6 +13,7 @@ contract SwapETHForTOKEN is Operator {
     address public cash;
     address public bond;
     address public oracle;
+    address public rewardRate;
     address public uniswapRouter;
 
     constructor (
@@ -21,11 +22,13 @@ contract SwapETHForTOKEN is Operator {
         address bond_,
         address oracle_,
         address uniswapRouter_,
+        uint256 rewardRate_
     ) public {
         dai = dai_;
         cash = cash_;
         bond = bond_;
         oracle = oracle_;
+        rewardRate = rewardRate_;
         uniswapRouter = uniswapRouter_;
     }
 
@@ -65,6 +68,16 @@ contract SwapETHForTOKEN is Operator {
         oracle = newOracle;
     }
 
+    function changeRewardRate (uint256 newRewardRate) 
+        public 
+        onlyOperator 
+    {
+        require(rewardRate >= 0);
+        require(rewardRate <= 100);
+
+        rewardRate = newRewardRate;
+    }
+
     function changeEntities (
         address newCash, 
         address newBond, 
@@ -91,8 +104,9 @@ contract SwapETHForTOKEN is Operator {
         uint256 tokenToETHPrice = IGMUOracle(oracle).getPrice();
         uint256 expectedTokenAmount = amount.div(tokenToETHPrice);
         
-        // TODO: mint bond tokens.
-        
+        uint256 rewardAmount = daiAmount.mul(rewardRate).div(100);
+        IERC20(bond).mint(msg.sender, rewardAmount);
+
         address[] memory path = new address[](2);
         path[0] = address(dai);
         path[1] = address(cash);
