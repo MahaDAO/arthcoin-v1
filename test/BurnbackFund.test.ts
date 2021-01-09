@@ -45,10 +45,11 @@ describe('BurnbackFund', () => {
 
   let fund: Contract;
   let token: Contract;
-
+  
   beforeEach('Deploy contract', async () => {
     fund = await BurnbackFund.connect(operator).deploy();
     token = await MockDAI.connect(operator).deploy();
+    
   });
 
   describe('With timelock', () => {
@@ -60,7 +61,8 @@ describe('BurnbackFund', () => {
         operator.address,
         2 * DAY
       );
-      await fund.connect(operator).transferOperator(timelock.address);
+
+      // await fund.connect(operator).transferOperator(timelock.address);
       await fund.connect(operator).transferOwnership(timelock.address);
     });
 

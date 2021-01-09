@@ -60,7 +60,8 @@ describe('DevelopmentFund', () => {
         operator.address,
         2 * DAY
       );
-      await fund.connect(operator).transferOperator(timelock.address);
+
+      // await fund.connect(operator).transferOperator(timelock.address);
       await fund.connect(operator).transferOwnership(timelock.address);
     });
 
