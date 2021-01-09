@@ -2,45 +2,49 @@
 
 pragma solidity ^0.6.0;
 
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol'
 
 import './owner/Operator.sol';
 import './interfaces/IGMUOracle.sol';
 
 contract SwapETHForTOKEN is Operator {
-    address public uniswapRouter;
-    address public incentiveToken;
-    address public tokenForSwap;
+    address public dai;
+    address public cash;
+    address public bond;
     address public oracle;
+    address public uniswapRouter;
 
     constructor (
-        address uniswapRouter_, 
-        address incentiveToken_, 
-        address tokenForSwap_,
-        address oracle_
+        address dai_,
+        address cash_,
+        address bond_,
+        address oracle_,
+        address uniswapRouter_,
     ) public {
+        dai = dai_;
+        cash = cash_;
+        bond = bond_;
+        oracle = oracle_;
         uniswapRouter = uniswapRouter_;
-        incentiveToken = incentiveToken_;
-        tokenForSwap = tokenForSwap_;
-        oracle = oracle;
     }
 
-    function changeIncentiveToken (address newIncentiveToken) 
+    function changeBondToken (address newBond) 
         public 
         onlyOperator 
     {
-        require(newIncentiveToken != address(0));
+        require(newBondToken != address(0));
 
-        incentiveToken = newIncentiveToken;
+        bond = newBond;
     }
 
-    function changeTokenForSwap (address newTokenForSwap) 
+    function changeCashToken (address newCash) 
         public 
         onlyOperator 
     {
-        require(newTokenForSwap != address(0));
+        require(newCash != address(0));
 
-        tokenForSwap = newTokenForSwap;
+        cash = newCash;
     }
 
     function changeUniSwapRouter (address newUniswapRouter) 
@@ -62,41 +66,40 @@ contract SwapETHForTOKEN is Operator {
     }
 
     function changeEntities (
-        address newUniswapRouter, 
-        address newIncentiveToken, 
-        address newTokenForSwap,
-        address newOracle
+        address newCash, 
+        address newBond, 
+        address newOracle,
+        address newUniswapRouter
     ) 
         public 
         onlyOperator 
     {
+        require(newCash != address(0));
+        require(newBond != address(0));
         require(newOracle != address(0));
-        require(newIncentiveToken != address(0));
-        require(newTokenForSwap != address(0));
         require(newUniswapRouter != address(0));
 
-        uniswapRouter = newUniswapRouter;
-        incentiveToken = newIncentiveToken;
-        tokenForSwap = newTokenForSwap;
+        cash = newCash;
+        bond = newBond;
         oracle = newOracle;
+        uniswapRouter = newUniswapRouter;
     }
 
-    function swap(uint256 amount) returns (uint[]) {
+    function swap(uint256 daiAmount) returns (uint[]) {
         require(amount > 0);
         
         uint256 tokenToETHPrice = IGMUOracle(oracle).getPrice();
         uint256 expectedTokenAmount = amount.div(tokenToETHPrice);
         
         // TODO: mint bond tokens.
-
+        
         address[] memory path = new address[](2);
-        path[0] = address(DAI);
-        path[1] = UniswapV2Router02.WETH();
+        path[0] = address(dai);
+        path[1] = address(cash);
 
-
-        uint[] memory result = IUniswapV2Router02(uniswapRouter).swapETHForExactTokens(
-            expectedTokenAmount,
-            amount, 
+        uint[] memory result = IUniswapV2Router02(uniswapRouter).swapExactTokensForTokens(
+            daiAmount,
+            daiAmount, 
             path, 
             msg.sender, 
             block.timestamp
