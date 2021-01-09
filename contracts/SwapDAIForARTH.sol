@@ -118,7 +118,9 @@ contract SwapETHForTOKEN is Operator {
             msg.sender, 
             block.timestamp
         );
-
+        
+        // TODO: Burn bought back arth.
+        
         return result;
     }
 }
