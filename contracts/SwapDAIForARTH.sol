@@ -119,8 +119,8 @@ contract SwapETHForTOKEN is Operator {
         path[1] = address(cash);
 
         uint[] memory result = IUniswapV2Router02(uniswapRouter).swapExactTokensForTokens(
-            expectedCashAmount,
-            daiAmount, 
+            daiAmount,
+            expectedCashAmount, 
             path, 
             msg.sender, 
             block.timestamp
