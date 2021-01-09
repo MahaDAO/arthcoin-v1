@@ -48,16 +48,17 @@ module.exports = async (deployer, network, accounts) => {
     await treasury.transferOperator(timelock.address);
     await treasury.transferOwnership(timelock.address);
   } else if (process.env.METAMASK_WALLET) {
+    console.log('transfering operator and owenrship of boardroom/treasury to metamask wallets')
     await arthLiquidityBoardroom.transferOwnership(process.env.METAMASK_WALLET);
     await arthBoardroom.transferOwnership(process.env.METAMASK_WALLET);
     await treasury.transferOperator(process.env.METAMASK_WALLET);
     await treasury.transferOwnership(process.env.METAMASK_WALLET);
 
     if (network === 'development') {
+      console.log('sending 1 eth to the metamask wallet')
       const amountToSend = web3.utils.toWei("1", "ether"); // Convert to wei value
       web3.eth.sendTransaction({ from: accounts[0], to: process.env.METAMASK_WALLET, value: String(amountToSend) });
     }
-
   }
 
   console.log(`Transferred the operator role from the deployer (${accounts[0]}) to Treasury (${Treasury.address})`);

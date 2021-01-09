@@ -30,7 +30,7 @@ const exportedContracts = [
   'BurnbackFund',
   'DevelopmentFund',
   'Treasury',
-  ...distributionPoolContracts(),
+  // ...distributionPoolContracts(),
 ];
 
 
