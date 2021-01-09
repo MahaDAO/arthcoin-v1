@@ -19,12 +19,14 @@ async function migration(deployer, network, accounts) {
   accounts[0] = process.env.WALLET_KEY;
 
   // Set starttime for different networks.
-  const POOL_START_DATE = Math.floor(Date.now() / 1000);
-  const startTime = POOL_START_DATE;
+  let POOL_START_DATE = Math.floor(Date.now() / 1000);
+  let TREASURY_PERIOD = 12 * 60 * 60;
+
   if (network === 'mainnet') {
-    startTime += 5 * DAY;
+    POOL_START_DATE += 5 * DAY;
+  } else {
+    TREASURY_PERIOD = 60 * 60;
   }
-  const TREASURY_PERIOD = 10 * 60;
 
 
   console.log('Deploying treasury.')
@@ -41,7 +43,7 @@ async function migration(deployer, network, accounts) {
     DevelopmentFund.address,
     BurnbackFund.address,
     GMUOracle.address,
-    startTime,
+    POOL_START_DATE,
     TREASURY_PERIOD
   );
 }

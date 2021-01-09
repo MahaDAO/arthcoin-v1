@@ -1,5 +1,5 @@
-const { INITIAL_ARTH_FOR_POOLS } = require('./config');
-const { arthPools } = require('./pools');
+const { INITIAL_ARTH_FOR_POOLS } = require('../config');
+const { arthPools } = require('../pools');
 
 
 const ARTH = artifacts.require('ARTH')
@@ -10,7 +10,7 @@ const InitialCashDistributor = artifacts.require('InitialCashDistributor');
  * Main migrations
  */
 module.exports = async (deployer, network, accounts) => {
-  // return
+  return
   // Set the main account, you'll be using accross all the files for various
   // important activities to your desired address in the .env file.
   accounts[0] = process.env.WALLET_KEY;
