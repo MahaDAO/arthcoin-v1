@@ -6,7 +6,7 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol'
 
 import './owner/Operator.sol';
-import './interfaces/IGMUOracle.sol';
+import './interfaces/IOracle.sol';
 
 contract SwapETHForTOKEN is Operator {
     address public dai;
@@ -101,8 +101,15 @@ contract SwapETHForTOKEN is Operator {
     function swap(uint256 daiAmount) returns (uint[]) {
         require(amount > 0);
         
-        uint256 tokenToETHPrice = IGMUOracle(oracle).getPrice();
-        uint256 expectedTokenAmount = amount.div(tokenToETHPrice);
+        // Get price of dai.
+        uint256 daiPrice = IOracle(oracle).consult(dai.address, 1);
+        // Get price of cash.
+        uint256 cashPrice = IOracle(oracle).consult(cash.address, 1);
+        
+        // Eg. Let's say 1 dai(d) = 10 usd and 1 cash(c) = 20 usd.
+        // Then taking c/d = 20/10 = 2.
+        // Then c = 2d.
+        uint256 expectedCashAmount = cashPrice.div(daiPrice);
         
         uint256 rewardAmount = daiAmount.mul(rewardRate).div(100);
         IERC20(bond).mint(msg.sender, rewardAmount);
@@ -112,7 +119,7 @@ contract SwapETHForTOKEN is Operator {
         path[1] = address(cash);
 
         uint[] memory result = IUniswapV2Router02(uniswapRouter).swapExactTokensForTokens(
-            daiAmount,
+            expectedCashAmount,
             daiAmount, 
             path, 
             msg.sender, 

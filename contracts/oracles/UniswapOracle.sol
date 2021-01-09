@@ -94,7 +94,7 @@ contract UniswapOracle is Epoch {
         emit Updated(price0Cumulative, price1Cumulative);
     }
 
-    // note this will always return 0 before update has been called successfully for the first time.
+    // Note this will always return 0 before update has been called successfully for the first time.
     function consult(address token, uint256 amountIn)
         external
         view
