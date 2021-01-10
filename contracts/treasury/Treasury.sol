@@ -6,18 +6,19 @@ import '@openzeppelin/contracts/math/Math.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
+import '@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol';
 
-import './interfaces/IOracle.sol';
-import './interfaces/IBoardroom.sol';
-import './interfaces/IBasisAsset.sol';
-import './interfaces/ISimpleERCFund.sol';
-import './lib/Babylonian.sol';
-import './lib/FixedPoint.sol';
-import './lib/Safe112.sol';
-import './owner/Operator.sol';
-import './utils/Epoch.sol';
-import './utils/ContractGuard.sol';
-import './interfaces/IGMUOracle.sol';
+import '../interfaces/IOracle.sol';
+import '../interfaces/IBoardroom.sol';
+import '../interfaces/IBasisAsset.sol';
+import '../interfaces/ISimpleERCFund.sol';
+import '../lib/Babylonian.sol';
+import '../lib/FixedPoint.sol';
+import '../lib/Safe112.sol';
+import '../owner/Operator.sol';
+import '../utils/Epoch.sol';
+import '../utils/ContractGuard.sol';
+import '../interfaces/IGMUOracle.sol';
 
 /**
  * @title Basis ARTH Treasury contract
@@ -38,6 +39,7 @@ contract Treasury is ContractGuard, Epoch {
     bool public initialized = false;
 
     // ========== CORE
+    address public dai;
     address public cash;
     address public bond;
     address public share;
@@ -67,6 +69,7 @@ contract Treasury is ContractGuard, Epoch {
     /* ========== CONSTRUCTOR ========== */
 
     constructor(
+        address _dai,
         address _cash,
         address _bond,
         address _share,
@@ -76,12 +79,12 @@ contract Treasury is ContractGuard, Epoch {
         address _arthLiquidityBoardroom,
         address _arthBoardroom,
         address _fund,
-        address _burnbackFund,
         address _uniswapRouter,
         address _gmuOracle,
         uint256 _startTime,
         uint256 _period
     ) public Epoch(_period, _startTime, 0) {
+        dai = _dai;
         cash = _cash;
         bond = _bond;
         share = _share;
@@ -92,7 +95,6 @@ contract Treasury is ContractGuard, Epoch {
         arthLiquidityBoardroom = _arthLiquidityBoardroom;
         arthBoardroom = _arthBoardroom;
         ecosystemFund = _fund;
-        burnbackFund = _burnbackFund;
         uniswapRouter = _uniswapRouter;
 
         cashTargetPrice = IGMUOracle(gmuOracle).getPrice();
@@ -173,7 +175,6 @@ contract Treasury is ContractGuard, Epoch {
     }
 
     function getCashPriceCeiling() public view returns (uint256) {
-        uint256 cashTargetPrice = IGMUOracle(gmuOracle).getPrice();
         return cashTargetPrice + uint256(5).mul(cashTargetPrice).div(10**2);
     }
 
@@ -251,15 +252,20 @@ contract Treasury is ContractGuard, Epoch {
         bondDepletionFloor = uint256(1000).mul(cashTargetPrice);
     }
 
-    function buyBonds(uint256 amount, uint256 targetPrice)
+    function buyBonds(uint256 amountInDai, uint256 targetPrice)
         external
         onlyOneBlock
         checkMigration
         checkStartTime
         checkOperator
+        returns (uint256)
     {
-        require(amount > 0, 'Treasury: cannot purchase bonds with zero amount');
-
+        require(
+            amountInDai > 0,
+            'Treasury: cannot purchase bonds with zero amount'
+        );
+        // Update the price to latest before using.
+        _updateCashPrice();
         uint256 bondPrice = _getCashPrice(bondOracle);
 
         cashTargetPrice = getGMUOraclePrice();
@@ -270,11 +276,45 @@ contract Treasury is ContractGuard, Epoch {
             'Treasury: cashPrice not eligible for bond purchase'
         );
 
-        IBasisAsset(cash).burnFrom(msg.sender, amount);
-        IBasisAsset(bond).mint(msg.sender, amount.mul(1e18).div(bondPrice));
-        _updateCashPrice();
+        IBasisAsset(cash).burnFrom(msg.sender, amountInDai);
+        IBasisAsset(bond).mint(
+            msg.sender,
+            amountInDai.mul(1e18).div(bondPrice)
+        );
 
-        emit BoughtBonds(msg.sender, amount);
+        // Get price of dai and cash.
+
+        // Eg. Let's say 1 dai(d) = 10 usd and 1 cash(c) = 20 usd.
+        // Then taking c/d = 20/10 = 2.
+        // Then c = 2d.
+        // Then say x amount of dai is 2 * x amount of cash. Where 2 is c/d
+        address[] memory path = new address[](2);
+        path[0] = address(dai);
+        path[1] = address(cash);
+
+        uint256[] memory amountsOut =
+            IUniswapV2Router02(uniswapRouter).getAmountsOut(amountInDai, path);
+        uint256 expectedCashAmount = amountsOut[1];
+
+        // uint256 rewardAmount = daiAmount.mul(rewardRate).div(100);
+
+        uint256[] memory output =
+            IUniswapV2Router02(uniswapRouter).swapExactTokensForTokens(
+                amountInDai,
+                expectedCashAmount,
+                path,
+                msg.sender,
+                block.timestamp
+            );
+
+        // Burn bought back cash and mint bonds.
+        uint256 boughtBackARTH = output[1];
+        IBasisAsset(cash).burnFrom(msg.sender, boughtBackARTH);
+        // TODO: Set the minting amount according to bond price.
+        IBasisAsset(bond).mint(msg.sender, boughtBackARTH);
+
+        emit BoughtBonds(msg.sender, expectedCashAmount);
+        return boughtBackARTH;
     }
 
     function redeemBonds(uint256 amount, uint256 targetPrice)
