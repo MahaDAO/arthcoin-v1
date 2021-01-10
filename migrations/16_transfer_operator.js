@@ -58,7 +58,6 @@ module.exports = async (deployer, network, accounts) => {
     await arthBoardroom.transferOwnership(process.env.METAMASK_WALLET);
     await treasury.transferOperator(process.env.METAMASK_WALLET);
     await treasury.transferOwnership(process.env.METAMASK_WALLET);
-    await treasury.transferOwnership(process.env.METAMASK_WALLET);
     await gmuOracle.transferOwnership(process.env.METAMASK_WALLET);
     await mahaOracle.transferOwnership(process.env.METAMASK_WALLET);
 
