@@ -186,10 +186,6 @@ contract Treasury is ContractGuard, Epoch {
         return IGMUOracle(gmuOracle).getPrice();
     }
 
-    function getMAHAUSDOraclePrice() public view returns (uint256) {
-        return IGMUOracle(mahausdOracle).getPrice();
-    }
-
     function getSeigniorageOraclePrice() public view returns (uint256) {
         return _getCashPrice(seigniorageOracle);
     }
@@ -307,7 +303,7 @@ contract Treasury is ContractGuard, Epoch {
 
         uint256 stabilityFeeAmount = amount.mul(stabilityFee).div(100);
         uint256 stabilityFeeValue =
-            stabilityFeeAmount.mul(getMAHAUSDOraclePrice());
+            IOracle(mahausdOracle).consult(share, stabilityFeeAmount);
 
         // check balances
         require(
