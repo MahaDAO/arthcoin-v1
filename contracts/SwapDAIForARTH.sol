@@ -4,10 +4,10 @@ pragma solidity ^0.6.0;
 
 import '@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol';
 import '@openzeppelin/contracts/math/SafeMath.sol';
+
 import './lib/FixedPoint.sol';
 import './owner/Operator.sol';
 import './interfaces/IBasisAsset.sol';
-
 import './interfaces/IOracle.sol';
 
 contract SwapETHForTOKEN is Operator {
@@ -88,23 +88,23 @@ contract SwapETHForTOKEN is Operator {
     function swap(uint256 daiAmount) public {
         require(daiAmount > 0);
 
-        // Get price of dai.
+        // Update the price to latest before using.
+        IOracle(oracle).update();
+
+        // Get price of dai and cash.
         uint256 daiPrice = IOracle(oracle).consult(dai, 1);
-        // Get price of cash.
         uint256 cashPrice = IOracle(oracle).consult(cash, 1);
 
         // Eg. Let's say 1 dai(d) = 10 usd and 1 cash(c) = 20 usd.
         // Then taking c/d = 20/10 = 2.
         // Then c = 2d.
-        uint256 expectedCashAmount = cashPrice.div(daiPrice);
-
-        uint256 rewardAmount = daiAmount.mul(rewardRate).div(100);
-        IBasisAsset(bond).mint(msg.sender, rewardAmount);
+        // Then say x amount of dai is 2 * x cash.
+        uint256 expectedCashAmount = daiAmount.mul(cashPrice).div(daiPrice);
+        // uint256 rewardAmount = daiAmount.mul(rewardRate).div(100);
 
         address[] memory path = new address[](2);
         path[0] = address(dai);
         path[1] = address(cash);
-
         IUniswapV2Router02(uniswapRouter).swapExactTokensForTokens(
             daiAmount,
             expectedCashAmount,
@@ -113,7 +113,10 @@ contract SwapETHForTOKEN is Operator {
             block.timestamp
         );
 
-        // TODO: Burn bought back arth.
+        // Burn bought back cash and mint bond.
+        IBasisAsset(cash).burnFrom(msg.sender, expectedCashAmount);
+        // TODO: Set the minting amount according to bond price.
+        IBasisAsset(bond).mint(msg.sender, expectedCashAmount);
     }
 
     // function buybackCashAndMintBond(uint256 daiAmount, uint256 bondDiscount) returns (uint[]) {
