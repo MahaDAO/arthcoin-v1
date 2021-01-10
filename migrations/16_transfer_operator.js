@@ -7,6 +7,8 @@ const ArthLiquidityBoardroom = artifacts.require('ArthLiquidityBoardroom');
 const ArthBoardroom = artifacts.require('ArthBoardroom');
 const Treasury = artifacts.require('Treasury');
 const ARTH = artifacts.require('ARTH');
+const MAHAUSDOracle = artifacts.require('MAHAUSDOracle');
+const GMUOracle = artifacts.require('GMUOracle');
 const ARTHB = artifacts.require('ARTHB');
 const Timelock = artifacts.require('Timelock');
 
@@ -22,6 +24,9 @@ module.exports = async (deployer, network, accounts) => {
   const cash = await ARTH.deployed();
   const bond = await ARTHB.deployed();
   const treasury = await Treasury.deployed();
+  const mahaOracle = await MAHAUSDOracle.deployed();
+  const gmuOracle = await GMUOracle.deployed();
+
   const arthLiquidityBoardroom = await ArthLiquidityBoardroom.deployed();
   const arthBoardroom = await ArthBoardroom.deployed();
 
@@ -53,6 +58,9 @@ module.exports = async (deployer, network, accounts) => {
     await arthBoardroom.transferOwnership(process.env.METAMASK_WALLET);
     await treasury.transferOperator(process.env.METAMASK_WALLET);
     await treasury.transferOwnership(process.env.METAMASK_WALLET);
+    await treasury.transferOwnership(process.env.METAMASK_WALLET);
+    await gmuOracle.transferOwnership(process.env.METAMASK_WALLET);
+    await mahaOracle.transferOwnership(process.env.METAMASK_WALLET);
 
     if (network === 'development') {
       console.log('sending 1 eth to the metamask wallet')
