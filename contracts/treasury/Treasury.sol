@@ -306,12 +306,12 @@ contract Treasury is ContractGuard, Epoch {
             );
 
         // Burn bought back cash and mint bonds.
-        uint256 boughtBackARTH = output[1];
+        uint256 boughtBackARTH = Math.min(output[1], expectedCashAmount);
         IBasisAsset(cash).burnFrom(msg.sender, boughtBackARTH);
         // TODO: Set the minting amount according to bond price.
         IBasisAsset(bond).mint(msg.sender, boughtBackARTH);
 
-        emit BoughtBonds(msg.sender, expectedCashAmount);
+        emit BoughtBonds(msg.sender, boughtBackARTH);
         return boughtBackARTH;
     }
 
