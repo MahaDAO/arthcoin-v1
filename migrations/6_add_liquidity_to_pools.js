@@ -53,6 +53,8 @@ async function migration(deployer, network, accounts) {
   )
 
   if (network !== 'mainnet') {
+    console.log('\nAdding liquidity to MAHA-DAI pool');
+
     // depoly MAHA-DAI and ARTHB-DAI pools as well
     const hundredKBn = web3.utils.toBN(10 ** 5);
     const hundredK = web3.utils.toBN(10 ** 18).mul(hundredKBn).toString();
@@ -67,6 +69,7 @@ async function migration(deployer, network, accounts) {
       deadline()
     )
 
+    console.log('\nAdding liquidity to MAHA-DAI pool');
     await uniswapRouter.addLiquidity(
       share.address,
       dai.address,
@@ -78,6 +81,7 @@ async function migration(deployer, network, accounts) {
       deadline()
     )
 
+    console.log('\nAdding liquidity to ARTHB-DAI pool');
     await uniswapRouter.addLiquidity(
       bond.address,
       dai.address,

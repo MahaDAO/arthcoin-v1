@@ -27,7 +27,6 @@ const exportedContracts = [
   'SeigniorageOracle',
   'MAHAUSDOracle',
   'BondRedemtionOracle',
-  'BurnbackFund',
   'DevelopmentFund',
   'Treasury',
   // ...distributionPoolContracts(),

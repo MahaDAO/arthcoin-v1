@@ -38,8 +38,8 @@ async function migration(deployer, network, accounts) {
       const mil = web3.utils.toBN(10 ** 5)
       await cash.mint(process.env.METAMASK_WALLET, web3.utils.toBN(10 ** 18).mul(mil).toString());
       await mahaToken.mint(process.env.METAMASK_WALLET, web3.utils.toBN(10 ** 18).mul(mil).toString());
+      await bond.mint(process.env.METAMASK_WALLET, web3.utils.toBN(10 ** 18).mul(mil).toString());
       await dai.transfer(process.env.METAMASK_WALLET, web3.utils.toBN(10 ** 18).mul(mil).toString());
-      await bond.transfer(process.env.METAMASK_WALLET, web3.utils.toBN(10 ** 18).mul(mil).toString());
     }
   }
 

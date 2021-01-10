@@ -10,7 +10,7 @@ contract MockDai is ERC20Burnable, Operator {
      * @notice Constructs the Basis ARTH ERC-20 contract.
      */
     constructor() public ERC20('DAI', 'DAI') {
-        _mint(msg.sender, 10000000 * 10**18);
+        _mint(msg.sender, 1000000000 * 10**18);
     }
 
     /**
