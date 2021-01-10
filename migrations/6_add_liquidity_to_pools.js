@@ -5,7 +5,6 @@ const ARTH = artifacts.require('ARTH');
 const ARTHB = artifacts.require('ARTHB');
 const MockDai = artifacts.require('MockDai');
 const MahaToken = artifacts.require('MahaToken');
-const MockDai = artifacts.require('MockDai');
 const UniswapV2Router02 = artifacts.require('UniswapV2Router02');
 
 
@@ -55,7 +54,8 @@ async function migration(deployer, network, accounts) {
 
   if (network !== 'mainnet') {
     // depoly MAHA-DAI and ARTHB-DAI pools as well
-    const hundredK = web3.utils.toBN(100000 * 1e18).toString();
+    const hundredKBn = web3.utils.toBN(10 ** 5);
+    const hundredK = web3.utils.toBN(10 ** 18).mul(hundredKBn).toString();
     await uniswapRouter.addLiquidity(
       cash.address,
       dai.address,

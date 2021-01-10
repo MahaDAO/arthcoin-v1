@@ -27,16 +27,18 @@ async function migration(deployer, network, accounts) {
   if (network !== 'mainnet') {
     // Mint 1mn maha tokens to self if not on mainnet.
     console.log('Minting MAHA tokens.')
-    await mahaToken.mint(accounts[0], web3.utils.toBN(10 ** 18).mul(1000000).toString());
-    await cash.mint(accounts[0], web3.utils.toBN(10 ** 18).mul(1000000).toString());
-    await bond.mint(accounts[0], web3.utils.toBN(10 ** 18).mul(1000000).toString());
+    const mil = web3.utils.toBN(10 ** 6)
+    await mahaToken.mint(accounts[0], web3.utils.toBN(10 ** 18).mul(mil).toString());
+    await cash.mint(accounts[0], web3.utils.toBN(10 ** 18).mul(mil).toString());
+    await bond.mint(accounts[0], web3.utils.toBN(10 ** 18).mul(mil).toString());
 
     // Mint some tokens to the metamask wallet holder in dev.
     if (process.env.METAMASK_WALLET) {
       console.log('sending some dummy tokens; 100k')
-      await cash.mint(process.env.METAMASK_WALLET, web3.utils.toBN(10 ** 18).mul(100000).toString());
-      await mahaToken.mint(process.env.METAMASK_WALLET, web3.utils.toBN(10 ** 18).mul(100000).toString());
-      await dai.transfer(process.env.METAMASK_WALLET, web3.utils.toBN(10 ** 18).mul(100000).toString());
+      const mil = web3.utils.toBN(10 ** 5)
+      await cash.mint(process.env.METAMASK_WALLET, web3.utils.toBN(10 ** 18).mul(mil).toString());
+      await mahaToken.mint(process.env.METAMASK_WALLET, web3.utils.toBN(10 ** 18).mul(mil).toString());
+      await dai.transfer(process.env.METAMASK_WALLET, web3.utils.toBN(10 ** 18).mul(mil).toString());
     }
   }
 

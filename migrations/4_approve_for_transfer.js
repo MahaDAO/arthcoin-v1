@@ -43,7 +43,8 @@ async function migration(deployer, network, accounts) {
     : await UniswapV2Router02.deployed();
 
   console.log('Approving Uniswap on tokens for liquidity');
-  const max = web3.utils.toBN(10 ** 18).muln(10000).toString();
+  const mil = web3.utils.toBN(10 ** 7)
+  const max = web3.utils.toBN(10 ** 18).mul(mil).toString();
 
   await Promise.all([
     approveIfNot(cash, accounts[0], uniswapRouter.address, max),
