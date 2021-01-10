@@ -92,13 +92,13 @@ contract SwapETHForTOKEN is Operator {
         IOracle(oracle).update();
 
         // Get price of dai and cash.
-        uint256 daiPrice = IOracle(oracle).consult(dai, 1);
-        uint256 cashPrice = IOracle(oracle).consult(cash, 1);
+        uint256 daiPrice = IOracle(oracle).consult(dai, 1).div(1e18);
+        uint256 cashPrice = IOracle(oracle).consult(cash, 1).div(1e18);
 
         // Eg. Let's say 1 dai(d) = 10 usd and 1 cash(c) = 20 usd.
         // Then taking c/d = 20/10 = 2.
         // Then c = 2d.
-        // Then say x amount of dai is 2 * x cash.
+        // Then say x amount of dai is 2 * x amount of cash. Where 2 is c/d
         uint256 expectedCashAmount = daiAmount.mul(cashPrice).div(daiPrice);
         // uint256 rewardAmount = daiAmount.mul(rewardRate).div(100);
 
@@ -116,7 +116,7 @@ contract SwapETHForTOKEN is Operator {
         // Burn bought back cash and mint bond.
         IBasisAsset(cash).burnFrom(msg.sender, expectedCashAmount);
         // TODO: Set the minting amount according to bond price.
-        IBasisAsset(bond).mint(msg.sender, expectedCashAmount);
+        IBasisAsset(bond).mint(msg.sender, expectedCashAmount.div(1));
     }
 
     // function buybackCashAndMintBond(uint256 daiAmount, uint256 bondDiscount) returns (uint[]) {
