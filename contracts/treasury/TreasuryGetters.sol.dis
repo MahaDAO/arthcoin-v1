@@ -24,7 +24,7 @@ import './interfaces/IGMUOracle.sol';
  * @notice Monetary policy logic to adjust supplies of basis cash assets
  * @author Summer Smith & Rick Sanchez
  */
-contract Treasury is ContractGuard, Epoch {
+contract TreasuryGetters is ContractGuard, Epoch {
     using FixedPoint for *;
     using SafeERC20 for IERC20;
     using Address for address;
@@ -43,6 +43,7 @@ contract Treasury is ContractGuard, Epoch {
     address public share;
     address public gmuOracle;
     address public mahausdOracle;
+    address public uniswapRouter;
 
     address public arthLiquidityBoardroom;
     address public arthBoardroom;
@@ -78,6 +79,7 @@ contract Treasury is ContractGuard, Epoch {
         address _arthBoardroom,
         address _fund,
         address _burnbackFund,
+        address _uniswapRouter,
         address _gmuOracle,
         uint256 _startTime,
         uint256 _period
@@ -93,6 +95,7 @@ contract Treasury is ContractGuard, Epoch {
         arthBoardroom = _arthBoardroom;
         developmentFund = _fund;
         burnbackFund = _burnbackFund;
+        uniswapRouter = _uniswapRouter;
 
         cashTargetPrice = IGMUOracle(gmuOracle).getPrice();
         initialCashPriceOne = cashTargetPrice;
@@ -109,7 +112,6 @@ contract Treasury is ContractGuard, Epoch {
 
     modifier checkMigration {
         require(!migrated, 'Treasury: migrated');
-
         _;
     }
 
@@ -121,8 +123,54 @@ contract Treasury is ContractGuard, Epoch {
                 Operator(arthBoardroom).operator() == address(this),
             'Treasury: need more permission'
         );
-
         _;
+    }
+
+    function setStabilityFee(uint256 _stabilityFee) public onlyOwner {
+        require(_stabilityFee > 0, 'Treasury: fee < 0');
+        require(_stabilityFee < 100, 'Treasury: fee >= 0');
+        stabilityFee = _stabilityFee;
+
+        emit StabilityFeeChanged(stabilityFee, _stabilityFee);
+    }
+
+    function setFund(address newFund, uint256 rate) public onlyOwner {
+        developmentFund = newFund;
+        fundAllocationRate = rate;
+
+        emit ContributionPoolChanged(msg.sender, newFund);
+        emit ContributionPoolRateChanged(msg.sender, rate);
+    }
+
+    function setBurnback(address newFund, uint256 rate) public onlyOwner {
+        burnbackFund = newFund;
+        burnbackAllocationRate = rate;
+
+        emit BurnBackPoolChanged(msg.sender, newFund);
+        emit BurnBackPoolRateChanged(msg.sender, rate);
+    }
+
+    function setArthBoardroom(address newFund, uint256 rate) public onlyOwner {
+        require(rate + arthLiquidityBoardroomAllocationRate == 100);
+
+        arthBoardroom = newFund;
+        arthBoardroomAllocationRate = rate;
+
+        emit ArthBoardroomChanged(msg.sender, newFund);
+        emit ArthBoardroomRateChanged(msg.sender, rate);
+    }
+
+    function setArthLiquidityBoardroom(address newFund, uint256 rate)
+        public
+        onlyOwner
+    {
+        require(rate + arthBoardroomAllocationRate == 100);
+
+        arthLiquidityBoardroom = newFund;
+        arthLiquidityBoardroomAllocationRate = rate;
+
+        emit ArthLiquidityBoardroomChanged(msg.sender, newFund);
+        emit ArthLiquidityBoardroomRateChanged(msg.sender, rate);
     }
 
     /* ========== VIEW FUNCTIONS ========== */
@@ -195,53 +243,6 @@ contract Treasury is ContractGuard, Epoch {
 
         migrated = true;
         emit Migration(target);
-    }
-
-    function setStabilityFee(uint256 _stabilityFee) public onlyOwner {
-        require(_stabilityFee > 0, 'Treasury: fee < 0');
-        require(_stabilityFee < 100, 'Treasury: fee >= 0');
-        stabilityFee = _stabilityFee;
-
-        emit StabilityFeeChanged(stabilityFee, _stabilityFee);
-    }
-
-    function setFund(address newFund, uint256 rate) public onlyOwner {
-        developmentFund = newFund;
-        fundAllocationRate = rate;
-
-        emit ContributionPoolChanged(msg.sender, newFund);
-        emit ContributionPoolRateChanged(msg.sender, rate);
-    }
-
-    function setBurnback(address newFund, uint256 rate) public onlyOwner {
-        burnbackFund = newFund;
-        burnbackAllocationRate = rate;
-
-        emit BurnBackPoolChanged(msg.sender, newFund);
-        emit BurnBackPoolRateChanged(msg.sender, rate);
-    }
-
-    function setArthBoardroom(address newFund, uint256 rate) public onlyOwner {
-        require(rate + arthLiquidityBoardroomAllocationRate == 100);
-
-        arthBoardroom = newFund;
-        arthBoardroomAllocationRate = rate;
-
-        emit ArthBoardroomChanged(msg.sender, newFund);
-        emit ArthBoardroomRateChanged(msg.sender, rate);
-    }
-
-    function setArthLiquidityBoardroom(address newFund, uint256 rate)
-        public
-        onlyOwner
-    {
-        require(rate + arthBoardroomAllocationRate == 100);
-
-        arthLiquidityBoardroom = newFund;
-        arthLiquidityBoardroomAllocationRate = rate;
-
-        emit ArthLiquidityBoardroomChanged(msg.sender, newFund);
-        emit ArthLiquidityBoardroomRateChanged(msg.sender, rate);
     }
 
     /* ========== MUTABLE FUNCTIONS ========== */
