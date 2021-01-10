@@ -1,15 +1,18 @@
+const knownContracts = require('./known-contracts');
+
 const ARTH = artifacts.require('ARTH');
 const ARTHB = artifacts.require('ARTHB');
-const MahaToken = artifacts.require('MahaToken');
-const DevelopmentFund = artifacts.require('DevelopmentFund');
-const BurnbackFund = artifacts.require('BurnbackFund');
-const BondRedemtionOracle = artifacts.require('BondRedemtionOracle');
-const Treasury = artifacts.require('Treasury');
-const ArthLiquidityBoardroom = artifacts.require('ArthLiquidityBoardroom');
 const ArthBoardroom = artifacts.require('ArthBoardroom');
+const ArthLiquidityBoardroom = artifacts.require('ArthLiquidityBoardroom');
+const BondRedemtionOracle = artifacts.require('BondRedemtionOracle');
+const DevelopmentFund = artifacts.require('DevelopmentFund');
 const GMUOracle = artifacts.require('GMUOracle');
+const MahaToken = artifacts.require('MahaToken');
 const MAHAUSDOracle = artifacts.require('MAHAUSDOracle');
+const MockDai = artifacts.require('MockDai');
 const SeigniorageOracle = artifacts.require('SeigniorageOracle');
+const Treasury = artifacts.require('Treasury');
+const UniswapV2Router02 = artifacts.require('UniswapV2Router02');
 
 
 async function migration(deployer, network, accounts) {
@@ -17,6 +20,14 @@ async function migration(deployer, network, accounts) {
   // various important activities to your desired address in the .env
   // file.
   accounts[0] = process.env.WALLET_KEY;
+
+  const dai = network === 'mainnet'
+    ? await IERC20.at(knownContracts.DAI[network])
+    : await MockDai.deployed();
+
+  const uniswapRouter = network === 'mainnet' || network === 'ropsten'
+    ? await UniswapV2Router02.at(knownContracts.UniswapV2Router02[network])
+    : await UniswapV2Router02.deployed();
 
   // Set starttime for different networks.
   let POOL_START_DATE = Math.floor(Date.now() / 1000);
@@ -28,10 +39,10 @@ async function migration(deployer, network, accounts) {
     TREASURY_PERIOD = 60 * 60;
   }
 
-
   console.log('Deploying treasury.')
   await deployer.deploy(
     Treasury,
+    dai.address,
     ARTH.address,
     ARTHB.address,
     MahaToken.address,
@@ -41,7 +52,7 @@ async function migration(deployer, network, accounts) {
     ArthLiquidityBoardroom.address,
     ArthBoardroom.address,
     DevelopmentFund.address,
-    BurnbackFund.address,
+    uniswapRouter.address,
     GMUOracle.address,
     POOL_START_DATE,
     TREASURY_PERIOD

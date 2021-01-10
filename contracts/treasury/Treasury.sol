@@ -268,8 +268,6 @@ contract Treasury is ContractGuard, Epoch {
         _updateCashPrice();
         uint256 bondPrice = _getCashPrice(bondOracle);
 
-        cashTargetPrice = getGMUOraclePrice();
-
         require(bondPrice == targetPrice, 'Treasury: cash price moved');
         require(
             bondPrice < cashTargetPrice, // price < $1
