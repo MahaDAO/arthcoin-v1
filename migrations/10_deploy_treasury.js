@@ -1,4 +1,5 @@
 const knownContracts = require('./known-contracts');
+const ethers = require('ethers')
 
 const ARTH = artifacts.require('ARTH');
 const ARTHB = artifacts.require('ARTHB');
@@ -14,6 +15,16 @@ const SeigniorageOracle = artifacts.require('SeigniorageOracle');
 const Treasury = artifacts.require('Treasury');
 const UniswapV2Router02 = artifacts.require('UniswapV2Router02');
 
+async function approveIfNot(token, owner, spender, amount) {
+  const allowance = await token.allowance(owner, spender);
+
+  if (web3.utils.toBN(allowance).gte(web3.utils.toBN(amount))) {
+    return;
+  }
+
+  await token.approve(spender, amount);
+  console.log(` - Approved ${token.symbol ? (await token.symbol()) : token.address}`);
+}
 
 async function migration(deployer, network, accounts) {
   // Set the main account, you'll be using accross all the files for

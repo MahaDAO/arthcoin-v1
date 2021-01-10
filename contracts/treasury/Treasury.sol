@@ -264,6 +264,7 @@ contract Treasury is ContractGuard, Epoch {
             amountInDai > 0,
             'Treasury: cannot purchase bonds with zero amount'
         );
+
         // Update the price to latest before using.
         _updateCashPrice();
         uint256 bondPrice = _getCashPrice(bondOracle);
@@ -273,14 +274,6 @@ contract Treasury is ContractGuard, Epoch {
             bondPrice < cashTargetPrice, // price < $1
             'Treasury: cashPrice not eligible for bond purchase'
         );
-
-        IBasisAsset(cash).burnFrom(msg.sender, amountInDai);
-        IBasisAsset(bond).mint(
-            msg.sender,
-            amountInDai.mul(1e18).div(bondPrice)
-        );
-
-        // Get price of dai and cash.
 
         // Eg. Let's say 1 dai(d) = 10 usd and 1 cash(c) = 20 usd.
         // Then taking c/d = 20/10 = 2.
@@ -294,8 +287,13 @@ contract Treasury is ContractGuard, Epoch {
             IUniswapV2Router02(uniswapRouter).getAmountsOut(amountInDai, path);
         uint256 expectedCashAmount = amountsOut[1];
 
-        // uint256 rewardAmount = daiAmount.mul(rewardRate).div(100);
+        // do some checks
 
+        // 1. Transfer Dai
+        IERC20(dai).transferFrom(msg.sender, address(this), amountInDai);
+        IERC20(dai).approve(uniswapRouter, amountInDai);
+
+        // 2. swap dai for ARTH from uniswap
         uint256[] memory output =
             IUniswapV2Router02(uniswapRouter).swapExactTokensForTokens(
                 amountInDai,
@@ -305,25 +303,24 @@ contract Treasury is ContractGuard, Epoch {
                 block.timestamp
             );
 
-        // Burn bought back cash and mint bonds.
+        // 3. Burn bought back cash and mint bonds.
+        // TODO: Set the minting amount according to bond price.
         uint256 boughtBackARTH = Math.min(output[1], expectedCashAmount);
         IBasisAsset(cash).burnFrom(msg.sender, boughtBackARTH);
-        // TODO: Set the minting amount according to bond price.
         IBasisAsset(bond).mint(msg.sender, boughtBackARTH);
 
         emit BoughtBonds(msg.sender, boughtBackARTH);
         return boughtBackARTH;
     }
 
-    function redeemBonds(uint256 amount, uint256 targetPrice)
-        external
-        onlyOneBlock
-        checkMigration
-        checkStartTime
-        checkOperator
-    {
+    function redeemBonds(
+        uint256 amount,
+        uint256 targetPrice,
+        bool sellForDai
+    ) external onlyOneBlock checkMigration checkStartTime checkOperator {
         require(amount > 0, 'Treasury: cannot redeem bonds with zero amount');
 
+        _updateCashPrice();
         uint256 cashPrice = _getCashPrice(bondOracle);
         require(cashPrice == targetPrice, 'Treasury: cash price moved');
         require(
@@ -354,6 +351,7 @@ contract Treasury is ContractGuard, Epoch {
             'Treasury: not enough MAHA allowance'
         );
 
+        // charge the stability fee
         IERC20(share).safeTransferFrom(
             msg.sender,
             address(this),
@@ -361,8 +359,31 @@ contract Treasury is ContractGuard, Epoch {
         );
 
         IBasisAsset(bond).burnFrom(msg.sender, amount);
-        IERC20(cash).safeTransfer(msg.sender, amount);
-        _updateCashPrice();
+
+        // sell the ARTH for Dai right away
+        if (sellForDai) {
+            IERC20(cash).safeTransfer(address(this), amount);
+
+            address[] memory path = new address[](2);
+            path[0] = address(cash);
+            path[1] = address(dai);
+
+            uint256[] memory amountsOut =
+                IUniswapV2Router02(uniswapRouter).getAmountsOut(amount, path);
+            uint256 expectedDaiAmount = amountsOut[1];
+
+            IERC20(cash).approve(uniswapRouter, amount);
+            IUniswapV2Router02(uniswapRouter).swapExactTokensForTokens(
+                amount,
+                expectedDaiAmount,
+                path,
+                msg.sender,
+                block.timestamp
+            );
+        } else {
+            // or just hand over the ARTH directly
+            IERC20(cash).safeTransfer(msg.sender, amount);
+        }
 
         emit RedeemedBonds(msg.sender, amount);
     }
