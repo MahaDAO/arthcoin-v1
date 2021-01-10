@@ -322,7 +322,7 @@ contract Treasury is ContractGuard, Epoch {
         require(
             IERC20(share).allowance(msg.sender, address(this)) >=
                 stabilityFeeValue,
-            'Treasury: not enough MAHA balance'
+            'Treasury: not enough MAHA allowance'
         );
 
         IERC20(share).safeTransferFrom(
