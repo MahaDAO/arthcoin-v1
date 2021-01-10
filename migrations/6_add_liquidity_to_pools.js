@@ -2,6 +2,9 @@ const knownContracts = require('./known-contracts');
 
 
 const ARTH = artifacts.require('ARTH');
+const ARTHB = artifacts.require('ARTHB');
+const MockDai = artifacts.require('MockDai');
+const MahaToken = artifacts.require('MahaToken');
 const MockDai = artifacts.require('MockDai');
 const UniswapV2Router02 = artifacts.require('UniswapV2Router02');
 
@@ -26,6 +29,8 @@ async function migration(deployer, network, accounts) {
 
   // Fetch the deployed ARTH token.
   const cash = await ARTH.deployed();
+  const share = await MahaToken.deployed();
+  const bond = await ARTHB.deployed();
 
   // Fetch deployed uniswap router.
   const uniswapRouter = network === 'mainnet' || network === 'ropsten'
@@ -47,6 +52,43 @@ async function migration(deployer, network, accounts) {
     accounts[0],
     deadline()
   )
+
+  if (network !== 'mainnet') {
+    // depoly MAHA-DAI and ARTHB-DAI pools as well
+    const hundredK = web3.utils.toBN(100000 * 1e18).toString();
+    await uniswapRouter.addLiquidity(
+      cash.address,
+      dai.address,
+      hundredK,
+      hundredK,
+      hundredK,
+      hundredK,
+      accounts[0],
+      deadline()
+    )
+
+    await uniswapRouter.addLiquidity(
+      share.address,
+      dai.address,
+      hundredK,
+      hundredK,
+      hundredK,
+      hundredK,
+      accounts[0],
+      deadline()
+    )
+
+    await uniswapRouter.addLiquidity(
+      bond.address,
+      dai.address,
+      hundredK,
+      hundredK,
+      hundredK,
+      hundredK,
+      accounts[0],
+      deadline()
+    )
+  }
 }
 
 

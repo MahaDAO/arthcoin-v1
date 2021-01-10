@@ -48,6 +48,7 @@ async function migration(deployer, network, accounts) {
   await Promise.all([
     approveIfNot(cash, accounts[0], uniswapRouter.address, max),
     approveIfNot(mahaToken, accounts[0], uniswapRouter.address, max),
+    approveIfNot(bond, accounts[0], uniswapRouter.address, max),
     approveIfNot(dai, accounts[0], uniswapRouter.address, max),
   ]);
 }
