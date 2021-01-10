@@ -418,12 +418,12 @@ contract Treasury is ContractGuard, Epoch {
         uint256 ecosystemReserve = _allocateToEcosystemFund(seigniorage);
         seigniorage = seigniorage.sub(ecosystemReserve);
 
-        // keep 90% of the funds to bond token holders; and send the remaing for rewards
+        // keep 90% of the funds to bond token holders; and send the remaining to the boardroom
         uint256 allocatedForTreasury = seigniorage.mul(90).div(100);
         uint256 treasuryReserve = _allocateToBondHolers(allocatedForTreasury);
         seigniorage = seigniorage.sub(treasuryReserve);
 
-        // allocate everything else to theboardroom
+        // allocate everything else to the boardroom
         _allocateToBoardrooms(seigniorage);
     }
 
