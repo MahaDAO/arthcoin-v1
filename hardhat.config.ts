@@ -3,10 +3,14 @@ import '@nomiclabs/hardhat-etherscan';
 import 'hardhat-gas-reporter';
 import 'solidity-coverage';
 
+
 export default {
-  default: 'hardhat',
+  default: 'development',
   networks: {
     hardhat: {},
+    development: {
+      url: "http://localhost:7545"
+    }
   },
   solidity: {
     version: '0.6.12',
