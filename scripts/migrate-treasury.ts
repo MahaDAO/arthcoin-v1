@@ -120,10 +120,20 @@ async function main() {
       },
     ];
     
+    // Queue transactions.
     for await (const queue of calldatas) {
       const tx = await timelock
         .connect(operator)
         .queueTransaction(...queue.calldata, override);
+        
+      await wait(ethers, tx.hash, `\ntimelock.queueTransaction => ${queue.desc}`);
+    }
+
+    // Execute them transactions.
+    for await (const queue of calldatas) {
+      const tx = await timelock
+        .connect(operator)
+        .executeTransaction(...queue.calldata, override);
         
       await wait(ethers, tx.hash, `\ntimelock.queueTransaction => ${queue.desc}`);
     }
