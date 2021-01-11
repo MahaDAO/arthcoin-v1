@@ -232,8 +232,8 @@ contract Treasury is ContractGuard, Epoch {
         IERC20(share).transfer(target, IERC20(share).balanceOf(address(this)));
 
         // do for boardrooms now
-        Operator(arthLiquidityBoardroom).transferOperator(target);
-        Operator(arthBoardroom).transferOwnership(target);
+        // Operator(arthLiquidityBoardroom).transferOperator(target);
+        // Operator(arthBoardroom).transferOwnership(target);
 
         migrated = true;
         emit Migration(target);
