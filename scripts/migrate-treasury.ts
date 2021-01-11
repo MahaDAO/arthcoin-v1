@@ -2,7 +2,7 @@ import { network, ethers } from 'hardhat';
 
 require('dotenv').config();
 
-import { wait } from './utils';
+import { encodeParameters, wait } from './utils';
 
 
 
@@ -94,7 +94,11 @@ async function main() {
           treasury.address,
           0,
           'migrate(address)',
-          '0x00000000000000000000000067A883D6F84A2D307D8F587B638E2F172EF2117A',
+          encodeParameters(
+            ethers,
+            ['address'],
+            [newTreasury.address]
+          ),
           Math.floor(Date.now() / 1000),
         ],
       },
@@ -104,7 +108,11 @@ async function main() {
           arthBoardroom.address,
           0,
           'transferOperator(address)',
-          '0x0000000000000000000000004E153D084C28F20411D6EA01F7A18E0EC45E19D3',
+          encodeParameters(
+            ethers,
+            ['address'],
+            [newTreasury.address]
+          ),
           Math.floor(Date.now() / 1000),
         ],
       },
@@ -114,7 +122,11 @@ async function main() {
           arthLiquidityBoardroom.address,
           0,
           'transferOperator(address)',
-          '0x00000000000000000000000067A883D6F84A2D307D8F587B638E2F172EF2117A',
+          encodeParameters(
+            ethers,
+            ['address'],
+            [newTreasury.address]
+          ),
           Math.floor(Date.now() / 1000),
         ],
       },
@@ -130,6 +142,7 @@ async function main() {
     }
 
     // Execute them transactions.
+    // NOTE: operate has to be accounts[0] used while migrations and deploying.
     for await (const queue of calldatas) {
       const tx = await timelock
         .connect(operator)
