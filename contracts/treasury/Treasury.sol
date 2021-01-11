@@ -55,11 +55,13 @@ contract Treasury is ContractGuard, Epoch {
     address public seigniorageOracle;
 
     // ========== PARAMS
-    uint256 public initialCashPriceOne;
+    uint256 public initialCashPriceOne = 1;
     uint256 public cashPriceCeiling;
-    uint256 public cashTargetPrice;
+    uint256 public cashTargetPrice = 1;
     uint256 public bondDepletionFloor;
     uint256 public accumulatedSeigniorage = 0;
+
+    uint256 public bondPremiumOutOf100 = 25;
 
     uint256 public ecosystemFundAllocationRate = 2;
     uint256 public arthLiquidityBoardroomAllocationRate = 40; // In %.
@@ -138,8 +140,7 @@ contract Treasury is ContractGuard, Epoch {
         ecosystemFund = newFund;
         ecosystemFundAllocationRate = rate;
 
-        emit ContributionPoolChanged(msg.sender, newFund);
-        emit ContributionPoolRateChanged(msg.sender, rate);
+        emit ContributionPoolChanged(newFund, rate);
     }
 
     function setArthBoardroom(address newFund, uint256 rate) public onlyOwner {
@@ -148,8 +149,7 @@ contract Treasury is ContractGuard, Epoch {
         arthBoardroom = newFund;
         arthBoardroomAllocationRate = rate;
 
-        emit ArthBoardroomChanged(msg.sender, newFund);
-        emit ArthBoardroomRateChanged(msg.sender, rate);
+        emit ArthBoardroomChanged(newFund, rate);
     }
 
     function setArthLiquidityBoardroom(address newFund, uint256 rate)
@@ -161,8 +161,7 @@ contract Treasury is ContractGuard, Epoch {
         arthLiquidityBoardroom = newFund;
         arthLiquidityBoardroomAllocationRate = rate;
 
-        emit ArthLiquidityBoardroomChanged(msg.sender, newFund);
-        emit ArthLiquidityBoardroomRateChanged(msg.sender, rate);
+        emit ArthLiquidityBoardroomChanged(newFund, rate);
     }
 
     /* ========== VIEW FUNCTIONS ========== */
@@ -231,6 +230,10 @@ contract Treasury is ContractGuard, Epoch {
         // Operator(share).transferOperator(target);
         // Operator(share).transferOwnership(target);
         IERC20(share).transfer(target, IERC20(share).balanceOf(address(this)));
+
+        // do for boardrooms now
+        Operator(arthLiquidityBoardroom).transferOperator(target);
+        Operator(arthBoardroom).transferOwnership(target);
 
         migrated = true;
         emit Migration(target);
@@ -305,6 +308,7 @@ contract Treasury is ContractGuard, Epoch {
 
         // 3. Burn bought back cash and mint bonds.
         // TODO: Set the minting amount according to bond price.
+        // TODO: calculate premium basis size of the trade
         uint256 boughtBackARTH = Math.min(output[1], expectedCashAmount);
         IBasisAsset(cash).burnFrom(msg.sender, boughtBackARTH);
         IBasisAsset(bond).mint(msg.sender, boughtBackARTH);
@@ -372,7 +376,7 @@ contract Treasury is ContractGuard, Epoch {
                 IUniswapV2Router02(uniswapRouter).getAmountsOut(amount, path);
             uint256 expectedDaiAmount = amountsOut[1];
 
-            IERC20(cash).approve(uniswapRouter, amount);
+            IERC20(cash).safeApprove(uniswapRouter, amount);
             IUniswapV2Router02(uniswapRouter).swapExactTokensForTokens(
                 amount,
                 expectedDaiAmount,
@@ -499,21 +503,9 @@ contract Treasury is ContractGuard, Epoch {
     // GOV
     event Initialized(address indexed executor, uint256 at);
     event Migration(address indexed target);
-    event ContributionPoolChanged(address indexed operator, address newFund);
-    event ContributionPoolRateChanged(
-        address indexed operator,
-        uint256 newRate
-    );
-    event ArthBoardroomChanged(address indexed operator, address newFund);
-    event ArthBoardroomRateChanged(address indexed operator, uint256 newRate);
-    event ArthLiquidityBoardroomChanged(
-        address indexed operator,
-        address newFund
-    );
-    event ArthLiquidityBoardroomRateChanged(
-        address indexed operator,
-        uint256 newRate
-    );
+    event ContributionPoolChanged(address newFund, uint256 newRate);
+    event ArthBoardroomChanged(address newFund, uint256 newRate);
+    event ArthLiquidityBoardroomChanged(address newFund, uint256 newRate);
 
     // CORE
     event RedeemedBonds(address indexed from, uint256 amount);
