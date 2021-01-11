@@ -2,10 +2,18 @@ import { network, ethers } from 'hardhat';
 
 require('dotenv').config();
 
+import { wait } from './utils';
+
+
 
 async function main() {
   // Fetch the provider.
   const { provider } = ethers;
+
+  const estimateGasPrice = await provider.getGasPrice();
+  const gasPrice = estimateGasPrice.mul(3).div(2);
+  console.log(`Gas Price: ${ethers.utils.formatUnits(gasPrice, 'gwei')} gwei`);
+  const override = { gasPrice };
 
   // Fetch the wallet accounts.
   const [operator, account] = await ethers.getSigners();
@@ -76,6 +84,49 @@ async function main() {
         await arthLiquidityBoardroom.operator()
       })`
     )
+  } else {
+    const timelock = await ethers.getContractAt('Timelock', deployements.Timelock.address);
+
+    const calldatas = [
+      {
+        desc: 'treasury.migrate',
+        calldata: [
+          treasury.address,
+          0,
+          'migrate(address)',
+          '0x00000000000000000000000067A883D6F84A2D307D8F587B638E2F172EF2117A',
+          Math.floor(Date.now() / 1000),
+        ],
+      },
+      {
+        desc: 'arthBoardroom.transferOperator',
+        calldata: [
+          arthBoardroom.address,
+          0,
+          'transferOperator(address)',
+          '0x0000000000000000000000004E153D084C28F20411D6EA01F7A18E0EC45E19D3',
+          Math.floor(Date.now() / 1000),
+        ],
+      },
+      {
+        desc: 'arthLiquidityBoardroom.trasnferOperator',
+        calldata: [
+          arthLiquidityBoardroom.address,
+          0,
+          'transferOperator(address)',
+          '0x00000000000000000000000067A883D6F84A2D307D8F587B638E2F172EF2117A',
+          Math.floor(Date.now() / 1000),
+        ],
+      },
+    ];
+    
+    for await (const queue of calldatas) {
+      const tx = await timelock
+        .connect(operator)
+        .queueTransaction(...queue.calldata, override);
+        
+      await wait(ethers, tx.hash, `\ntimelock.queueTransaction => ${queue.desc}`);
+    }
   }
 }
 
