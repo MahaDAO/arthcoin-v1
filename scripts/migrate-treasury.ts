@@ -20,7 +20,7 @@ async function main() {
 
   // Fetch already deployed contracts.
   const deployements = require(`../build/deployments.${network.name}.json`);
-  
+
   // Fetch contract factories.
   const Treasury = await ethers.getContractFactory('Treasury');
 
@@ -72,7 +72,7 @@ async function main() {
     console.log(`\nBond details: `)
     console.log(` - Bond old operator was address(${oldBondOperator})`)
     console.log(` - Bond new operator is at address(${await bond.operator()})`)
-  
+
     console.log(`\nArth boardroom details: `)
     console.log(` - Arth boardroom old operator was address(${oldArthBoardroomOperator})`)
     console.log(` - Arth boardroom new operator is at address(${await arthBoardroom.operator()})`)
@@ -80,8 +80,7 @@ async function main() {
     console.log(`\nArth liquidity boardroom details: `)
     console.log(` - Arth liquidity boardroom old operator was address(${oldArthLiquidityBoardroomOperator})`)
     console.log(
-      ` - Arth liquidity boardroom new operator is at address(${
-        await arthLiquidityBoardroom.operator()
+      ` - Arth liquidity boardroom new operator is at address(${await arthLiquidityBoardroom.operator()
       })`
     )
   } else {
@@ -131,23 +130,23 @@ async function main() {
         ],
       },
     ];
-    
+
     // Queue transactions.
     for await (const queue of calldatas) {
       const tx = await timelock
         .connect(operator)
         .queueTransaction(...queue.calldata, override);
-        
+
       await wait(ethers, tx.hash, `\ntimelock.queueTransaction => ${queue.desc}`);
     }
 
     // Execute them transactions.
-    // NOTE: operate has to be accounts[0] used while migrations and deploying.
+    // NOTE: Operate has to be accounts[0] used while migrations and deploying.
     for await (const queue of calldatas) {
       const tx = await timelock
         .connect(operator)
         .executeTransaction(...queue.calldata, override);
-        
+
       await wait(ethers, tx.hash, `\ntimelock.queueTransaction => ${queue.desc}`);
     }
   }
