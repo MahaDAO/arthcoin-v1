@@ -46,6 +46,8 @@ async function main() {
   const oldArthBoardroomOperator = await arthBoardroom.operator();
   const oldArthLiquidityBoardroomOperator = await arthLiquidityBoardroom.operator();
 
+  // NOTE: In case of mainnet, the ownership of treaury and boardroom and possibly some other smart contracts
+  // is with the Timelock smart contract.
   if (network.name !== 'mainnet' && process.env.METAMASK_WALLET) {
     await treasury.connect(account).migrate(newTreasury.address);
     await arthBoardroom.connect(account).transferOperator(newTreasury.address);
