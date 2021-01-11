@@ -266,7 +266,6 @@ contract Treasury is ContractGuard, Epoch {
         );
 
         // Update the price to latest before using.
-        _updateCashPrice();
         uint256 bondPrice = _getCashPrice(bondOracle);
 
         require(bondPrice == targetPrice, 'Treasury: cash price moved');
@@ -309,6 +308,8 @@ contract Treasury is ContractGuard, Epoch {
         IBasisAsset(cash).burnFrom(msg.sender, boughtBackARTH);
         IBasisAsset(bond).mint(msg.sender, boughtBackARTH);
 
+        _updateCashPrice();
+
         emit BoughtBonds(msg.sender, boughtBackARTH);
         return boughtBackARTH;
     }
@@ -320,7 +321,6 @@ contract Treasury is ContractGuard, Epoch {
     ) external onlyOneBlock checkMigration checkStartTime checkOperator {
         require(amount > 0, 'Treasury: cannot redeem bonds with zero amount');
 
-        _updateCashPrice();
         uint256 cashPrice = _getCashPrice(bondOracle);
         require(cashPrice == targetPrice, 'Treasury: cash price moved');
         require(
@@ -384,6 +384,8 @@ contract Treasury is ContractGuard, Epoch {
             // or just hand over the ARTH directly
             IERC20(cash).safeTransfer(msg.sender, amount);
         }
+
+        _updateCashPrice();
 
         emit RedeemedBonds(msg.sender, amount);
     }
