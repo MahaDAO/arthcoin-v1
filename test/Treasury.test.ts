@@ -111,6 +111,8 @@ describe('Treasury', () => {
     share = await MAHA.connect(operator).deploy();
     dai = await DAI.connect(operator).deploy();
 
+    startTime = BigNumber.from(await latestBlocktime(provider)).add(DAY);
+
     uniswap = await Factory.connect(operator).deploy(operator.address);
     uniswapRouter = await Router.connect(operator).deploy(uniswap.address, operator.address);
 
@@ -174,7 +176,7 @@ describe('Treasury', () => {
       developmentFund.address,
       uniswapRouter.address,
       gmuOracle.address,
-      Math.floor(Date.now() / 1000),
+      startTime,
       5 * 60
     );
   });
@@ -298,21 +300,21 @@ describe('Treasury', () => {
   });
 
   describe('Seigniorage', () => {
-    describe('#allocateSeigniorage', () => {
+    describe('#AllocateSeigniorage', () => {
       beforeEach('Transfer permissions', async () => {
         await bond.mint(operator.address, INITIAL_BAB_AMOUNT);
         await cash.mint(operator.address, INITIAL_BAC_AMOUNT);
         await cash.mint(treasury.address, INITIAL_BAC_AMOUNT);
         await share.mint(operator.address, INITIAL_BAS_AMOUNT);
 
-        for await (const contract of [cash, bond, share, arthBoardroom, arthLiquidityBoardroom]) {
+        for await (const contract of [cash, bond, arthBoardroom, arthLiquidityBoardroom]) {
           await contract.connect(operator).transferOperator(treasury.address);
         }
       });
 
       describe('After migration', () => {
         it('Should fail if contract migrated', async () => {
-          for await (const contract of [cash, bond, share]) {
+          for await (const contract of [cash, bond]) {
             await contract
               .connect(operator)
               .transferOwnership(treasury.address);
@@ -337,7 +339,7 @@ describe('Treasury', () => {
 
       describe('After startTime', () => {
         beforeEach('Advance blocktime', async () => {
-          // wait til first epoch
+          // Wait til first epoch
           await advanceTimeAndBlock(
             provider,
             startTime.sub(await latestBlocktime(provider)).toNumber()
@@ -496,7 +498,7 @@ describe('Treasury', () => {
     beforeEach('Transfer permissions', async () => {
       await cash.mint(operator.address, INITIAL_BAC_AMOUNT);
       await bond.mint(operator.address, INITIAL_BAB_AMOUNT);
-      for await (const contract of [cash, bond, share, arthBoardroom, arthLiquidityBoardroom]) {
+      for await (const contract of [cash, bond, arthBoardroom, arthLiquidityBoardroom]) {
         await contract.connect(operator).transferOperator(treasury.address);
       }
     });
