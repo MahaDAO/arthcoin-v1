@@ -4,6 +4,9 @@ import { solidity } from 'ethereum-waffle';
 import { Contract, ContractFactory, BigNumber, utils } from 'ethers';
 import { Provider } from '@ethersproject/providers';
 
+import UniswapV2Factory from '@uniswap/v2-core/build/UniswapV2Factory.json';
+import UniswapV2Router from '@uniswap/v2-periphery/build/UniswapV2Router02.json';
+
 import { advanceTimeAndBlock } from './shared/utilities';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address';
 import { ParamType } from 'ethers/lib/utils';
@@ -34,7 +37,7 @@ describe('Timelock', () => {
   before('setup accounts', async () => {
     [operator, abuser] = await ethers.getSigners();
   });
-  
+
   // Core.
   let ARTHB: ContractFactory;
   let ARTH: ContractFactory;
@@ -44,15 +47,21 @@ describe('Timelock', () => {
   let DevelopmentFund: ContractFactory;
   let ArthBoardroom: ContractFactory;
   let ArthLiquidityBoardroom: ContractFactory;
-  const TREASURY_PERIOD = 10 * 60;
   let BondRedemtionOracle: ContractFactory;
   let SeigniorageOracle: ContractFactory;
   let GMUOracle: ContractFactory;
   let MAHAUSDOracle: ContractFactory;
-  let UniswapV2Factory: ContractFactory;
-  let UniswapV2Router02: ContractFactory;
   let DAI: ContractFactory
   let Timelock: ContractFactory;
+
+  let Factory = new ContractFactory(
+    UniswapV2Factory.abi,
+    UniswapV2Factory.bytecode
+  );
+  let Router = new ContractFactory(
+    UniswapV2Router.abi,
+    UniswapV2Router.bytecode
+  );
 
   before('fetch contract factories', async () => {
     ARTHB = await ethers.getContractFactory('ARTHB');
@@ -67,12 +76,10 @@ describe('Timelock', () => {
     SeigniorageOracle = await ethers.getContractFactory('SeigniorageOracle');
     GMUOracle = await ethers.getContractFactory('GMUOracle');
     MAHAUSDOracle = await ethers.getContractFactory('MAHAUSDOracle');
-    UniswapV2Factory = await ethers.getContractFactory('UniswapV2Factory');
-    UniswapV2Router02 = await ethers.getContractFactory('UniswapV2Router02');
     DAI = await ethers.getContractFactory('MockDai');
     Timelock = await ethers.getContractFactory('Timelock');
   });
- 
+
   let bond: Contract;
   let cash: Contract;
   let share: Contract;
@@ -97,9 +104,9 @@ describe('Timelock', () => {
     share = await MAHA.connect(operator).deploy();
     dai = await DAI.connect(operator).deploy();
 
-    uniswap = await UniswapV2Factory.connect(operator).deploy(operator.address);
-    uniswapRouter = await UniswapV2Router02.connect(operator).deploy(uniswap.address, operator.address);
-    
+    uniswap = await Factory.connect(operator).deploy(operator.address);
+    uniswapRouter = await Router.connect(operator).deploy(uniswap.address, operator.address);
+
     await cash.connect(operator).approve(operator.address, ETH.mul(10));
     await share.connect(operator).approve(operator.address, ETH.mul(10));
     await bond.connect(operator).approve(operator.address, ETH.mul(10));
@@ -108,8 +115,8 @@ describe('Timelock', () => {
     await share.connect(operator).mint(operator.address, ETH.mul(10));
 
     await uniswapRouter.connect(operator).addLiquidity(
-      cash.address, 
-      dai.address, 
+      cash.address,
+      dai.address,
       ETH.mul(10),
       ETH.mul(10),
       ETH.mul(10),
@@ -117,10 +124,10 @@ describe('Timelock', () => {
       operator.address,
       Math.floor(Date.now() / 1000) + 30 * 60
     )
-    
+
     burnbackFund = await BurnbackFund.connect(operator).deploy();
     await developmentFund.connect(operator).deploy();
-    
+
     bondRedemtionOracle = await BondRedemtionOracle.connect(operator).deploy(
       uniswap.address,
       cash.address,
@@ -147,7 +154,7 @@ describe('Timelock', () => {
       dai_arth_lpt,
       5 * 60
     );
-    
+
     startTime = await latestBlocktime(provider);
 
     treasury = await Treasury.connect(operator).deploy(
@@ -165,7 +172,7 @@ describe('Timelock', () => {
       Math.floor(Date.now() / 1000),
       5 * 60
     )
-    
+
     await burnbackFund.connect(operator).transferOperator(treasury.address);
     await developmentFund.connect(operator).transferOperator(treasury.address);
     await cash.connect(operator).transferOperator(treasury.address);
@@ -184,7 +191,7 @@ describe('Timelock', () => {
     }
     await treasury.connect(operator).transferOperator(timelock.address);
     await treasury.connect(operator).transferOwnership(timelock.address);
-    
+
     await arthBoardroom.connect(operator).transferOperator(treasury.address);
     await arthBoardroom.connect(operator).transferOwnership(timelock.address);
 
