@@ -105,7 +105,7 @@ describe('Treasury', () => {
   let uniswap: Contract;
   let uniswapRouter: Contract;
 
-  beforeEach('deploy contracts', async () => {
+  beforeEach('Deploy contracts', async () => {
     cash = await ARTH.connect(operator).deploy();
     bond = await ARTHB.connect(operator).deploy();
     share = await MAHA.connect(operator).deploy();
@@ -181,27 +181,29 @@ describe('Treasury', () => {
     );
   });
 
+  let newTreasury: Contract;
+
+  beforeEach('Deploy new treasury', async () => {
+    newTreasury = await Treasury.connect(operator).deploy(
+      dai.address,
+      cash.address,
+      bond.address,
+      share.address,
+      bondRedemtionOracle.address,
+      mahausdOracle.address,
+      seigniorageOracle.address,
+      arthLiquidityBoardroom.address,
+      arthBoardroom.address,
+      developmentFund.address,
+      uniswapRouter.address,
+      gmuOracle.address,
+      Math.floor(Date.now() / 1000),
+      5 * 60
+    );
+  });
+
   describe('Governance', () => {
-    let newTreasury: Contract;
-
     beforeEach('Deploy new treasury', async () => {
-      newTreasury = await Treasury.connect(operator).deploy(
-        dai.address,
-        cash.address,
-        bond.address,
-        share.address,
-        bondRedemtionOracle.address,
-        mahausdOracle.address,
-        seigniorageOracle.address,
-        arthLiquidityBoardroom.address,
-        arthBoardroom.address,
-        developmentFund.address,
-        uniswapRouter.address,
-        gmuOracle.address,
-        Math.floor(Date.now() / 1000),
-        5 * 60
-      );
-
       await share.connect(operator).mint(treasury.address, ETH);
 
       for await (const token of [cash, bond]) {
@@ -435,7 +437,7 @@ describe('Treasury', () => {
 
         it('Should funded even fails to call update function in oracle', async () => {
           const cashPrice = ETH.mul(106).div(100);
-          await gmuOracle.setPrice(cashPrice);
+          await seigniorageOracle.update();
 
           await expect(treasury.allocateSeigniorage()).to.emit(
             treasury,
@@ -473,7 +475,7 @@ describe('Treasury', () => {
             const cashPrice = ETH.mul(106).div(100);
             await gmuOracle.setPrice(cashPrice);
 
-            for await (const target of [cash, bond, share, arthBoardroom, arthLiquidityBoardroom]) {
+            for await (const target of [cash, bond, arthBoardroom, arthLiquidityBoardroom]) {
               await target.connect(operator).transferOperator(ant.address);
               await expect(treasury.allocateSeigniorage()).to.revertedWith(
                 'Treasury: need more permission'
@@ -505,17 +507,18 @@ describe('Treasury', () => {
 
     describe('After migration', () => {
       it('Should fail if contract migrated', async () => {
-        for await (const contract of [cash, bond, share]) {
+        for await (const contract of [cash, bond]) {
           await contract.connect(operator).transferOwnership(treasury.address);
         }
 
-        await treasury.connect(operator).migrate(operator.address);
+        await treasury.connect(operator).migrate(newTreasury.address);
         expect(await treasury.migrated()).to.be.true;
 
-        await expect(treasury.buyBonds(ETH, ETH)).to.revertedWith(
+        await expect(treasury.buyBonds(ETH, ETH.mul(106).div(100))).to.revertedWith(
           'Treasury: migrated'
         );
-        await expect(treasury.redeemBonds(ETH, ETH)).to.revertedWith(
+
+        await expect(treasury.redeemBonds(ETH, ETH.mul(106).div(100), true)).to.revertedWith(
           'Treasury: migrated'
         );
       });
@@ -526,7 +529,7 @@ describe('Treasury', () => {
         await expect(treasury.buyBonds(ETH, ETH)).to.revertedWith(
           'Epoch: not started yet'
         );
-        await expect(treasury.redeemBonds(ETH, ETH)).to.revertedWith(
+        await expect(treasury.redeemBonds(ETH, ETH, true)).to.revertedWith(
           'Epoch: not started yet'
         );
       });
@@ -541,9 +544,10 @@ describe('Treasury', () => {
         );
       });
 
-      describe('#buyBonds', () => {
+      describe('#BuyBonds', () => {
         it('Should work if cash price below $1', async () => {
           const cashPrice = ETH.mul(99).div(100); // $0.99
+
           await gmuOracle.setPrice(cashPrice);
           await cash.connect(operator).transfer(ant.address, ETH);
           await cash.connect(ant).approve(treasury.address, ETH);

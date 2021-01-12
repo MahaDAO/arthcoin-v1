@@ -263,6 +263,7 @@ contract Treasury is ContractGuard, Epoch {
         checkOperator
         returns (uint256)
     {
+        require(!migrated, 'Treasury: migrated');
         require(
             amountInDai > 0,
             'Treasury: cannot purchase bonds with zero amount'
@@ -322,6 +323,7 @@ contract Treasury is ContractGuard, Epoch {
         uint256 targetPrice,
         bool sellForDai
     ) external onlyOneBlock checkMigration checkStartTime checkOperator {
+        require(!migrated, 'Treasury: migrated');
         require(amount > 0, 'Treasury: cannot redeem bonds with zero amount');
 
         _updateCashPrice();
