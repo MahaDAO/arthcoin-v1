@@ -107,26 +107,26 @@ describe('Timelock', () => {
     uniswap = await Factory.connect(operator).deploy(operator.address);
     uniswapRouter = await Router.connect(operator).deploy(uniswap.address, operator.address);
 
-    await cash.connect(operator).approve(operator.address, ETH.mul(10));
-    await share.connect(operator).approve(operator.address, ETH.mul(10));
-    await bond.connect(operator).approve(operator.address, ETH.mul(10));
-    await dai.connect(operator).approve(operator.address, ETH.mul(10));
+    await cash.connect(operator).approve(uniswapRouter.address, ETH.mul(10000));
+    await share.connect(operator).approve(uniswapRouter.address, ETH.mul(10000));
+    await bond.connect(operator).approve(uniswapRouter.address, ETH.mul(10000));
+    await dai.connect(operator).approve(uniswapRouter.address, ETH.mul(10000));
 
     await share.connect(operator).mint(operator.address, ETH.mul(10));
 
     await uniswapRouter.connect(operator).addLiquidity(
       cash.address,
       dai.address,
-      ETH.mul(10),
-      ETH.mul(10),
-      ETH.mul(10),
-      ETH.mul(10),
+      ETH.mul(1),
+      ETH.mul(1),
+      ETH.mul(1),
+      ETH.mul(1),
       operator.address,
-      Math.floor(Date.now() / 1000) + 30 * 60
+      BigNumber.from(await latestBlocktime(provider)).add(DAY)
     )
 
-    burnbackFund = await BurnbackFund.connect(operator).deploy();
-    await developmentFund.connect(operator).deploy();
+    // burnbackFund = await BurnbackFund.connect(operator).deploy();
+    developmentFund = await DevelopmentFund.connect(operator).deploy();
 
     bondRedemtionOracle = await BondRedemtionOracle.connect(operator).deploy(
       uniswap.address,
@@ -158,6 +158,7 @@ describe('Timelock', () => {
     startTime = await latestBlocktime(provider);
 
     treasury = await Treasury.connect(operator).deploy(
+      dai.address,
       cash.address,
       bond.address,
       share.address,
@@ -167,14 +168,14 @@ describe('Timelock', () => {
       arthLiquidityBoardroom.address,
       arthBoardroom.address,
       developmentFund.address,
-      burnbackFund.address,
+      uniswapRouter.address,
       gmuOracle.address,
       Math.floor(Date.now() / 1000),
       5 * 60
-    )
+    );
 
-    await burnbackFund.connect(operator).transferOperator(treasury.address);
-    await developmentFund.connect(operator).transferOperator(treasury.address);
+    // await burnbackFund.connect(operator).transferOperator(treasury.address);
+    // await developmentFund.connect(operator).transferOperator(treasury.address);
     await cash.connect(operator).transferOperator(treasury.address);
     await bond.connect(operator).transferOperator(treasury.address);
     await arthBoardroom.connect(operator).transferOperator(treasury.address);
@@ -199,8 +200,8 @@ describe('Timelock', () => {
     await arthLiquidityBoardroom.connect(operator).transferOwnership(timelock.address);
   });
 
-  describe('#transferOperator', async () => {
-    it('Should work correctly', async () => {
+  describe('#TransferOperator', async () => {
+    it('Should work correctly for arth boardroom', async () => {
       const eta = (await latestBlocktime(provider)) + 2 * DAY + 30;
       const signature = 'transferOperator(address)';
       const data = encodeParameters(ethers, ['address'], [operator.address]);
@@ -232,7 +233,7 @@ describe('Timelock', () => {
       expect(await arthBoardroom.operator()).to.eq(operator.address);
     });
 
-    it('Should work correctly', async () => {
+    it('Should work correctly for arth liquidity boardroom', async () => {
       const eta = (await latestBlocktime(provider)) + 2 * DAY + 30;
       const signature = 'transferOperator(address)';
       const data = encodeParameters(ethers, ['address'], [operator.address]);
@@ -265,11 +266,12 @@ describe('Timelock', () => {
     });
   });
 
-  describe('#migrate', async () => {
+  describe('#Migrate', async () => {
     let newTreasury: Contract;
 
     beforeEach('Deploy new treasury', async () => {
       newTreasury = await Treasury.connect(operator).deploy(
+        dai.address,
         cash.address,
         bond.address,
         share.address,
@@ -279,7 +281,7 @@ describe('Timelock', () => {
         arthLiquidityBoardroom.address,
         arthBoardroom.address,
         developmentFund.address,
-        burnbackFund.address,
+        uniswapRouter.address,
         gmuOracle.address,
         Math.floor(Date.now() / 1000),
         5 * 60
