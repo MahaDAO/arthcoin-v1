@@ -50,6 +50,7 @@ describe('Timelock', () => {
   let SeigniorageOracle: ContractFactory;
   let GMUOracle: ContractFactory;
   let MAHAUSDOracle: ContractFactory;
+  let MAHAOracle: ContractFactory;
   let DAI: ContractFactory
   let Timelock: ContractFactory;
 
@@ -74,6 +75,7 @@ describe('Timelock', () => {
     SeigniorageOracle = await ethers.getContractFactory('SeigniorageOracle');
     GMUOracle = await ethers.getContractFactory('GMUOracle');
     MAHAUSDOracle = await ethers.getContractFactory('MAHAUSDOracle');
+    MAHAOracle = await ethers.getContractFactory('MAHAOracle');
     DAI = await ethers.getContractFactory('MockDai');
     Timelock = await ethers.getContractFactory('Timelock');
   });
@@ -89,6 +91,7 @@ describe('Timelock', () => {
   let developmentFund: Contract;
   let gmuOracle: Contract;
   let mahausdOracle: Contract;
+  let mahaOracle: Contract;
   let treasury: Contract;
   let uniswap: Contract;
   let uniswapRouter: Contract;
@@ -139,6 +142,14 @@ describe('Timelock', () => {
       Math.floor(Date.now() / 1000)
     );
 
+    mahaOracle = await MAHAOracle.connect(operator).deploy(
+      uniswap.address,
+      share.address,
+      dai.address,
+      5 * 60,
+      Math.floor(Date.now() / 1000)
+    );
+
     gmuOracle = await GMUOracle.connect(operator).deploy('GMU', ETH);
     mahausdOracle = await MAHAUSDOracle.connect(operator).deploy('MAHA', ETH);
 
@@ -156,7 +167,7 @@ describe('Timelock', () => {
       bond.address,
       share.address,
       bondRedemtionOracle.address,
-      mahausdOracle.address,
+      mahaOracle.address, // mahausdOracle.address,
       seigniorageOracle.address,
       arthLiquidityBoardroom.address,
       arthBoardroom.address,
