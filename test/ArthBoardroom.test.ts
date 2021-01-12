@@ -9,20 +9,21 @@ chai.use(solidity);
 
 
 describe('ArthBoardroom', () => {
-  const DAY = 86400;
+  // const DAY = 86400;
+
   const BOARDROOM_LOCK_PERIOD = 5 * 60;
   const ETH = utils.parseEther('1');
   const ZERO = BigNumber.from(0);
   const STAKE_AMOUNT = ETH.mul(5000);
   const SEIGNIORAGE_AMOUNT = ETH.mul(10000);
 
-  const { provider } = ethers;
+  // const { provider } = ethers;
 
   let operator: SignerWithAddress;
   let whale: SignerWithAddress;
   let abuser: SignerWithAddress;
 
-  before('provider & accounts setting', async () => {
+  before('Provider & accounts setting', async () => {
     [operator, whale, abuser] = await ethers.getSigners();
   });
 
@@ -45,7 +46,7 @@ describe('ArthBoardroom', () => {
     );
   });
 
-  describe('#stake', () => {
+  describe('#Stake', () => {
     it('Should work correctly', async () => {
       await Promise.all([
         cash.connect(operator).mint(whale.address, STAKE_AMOUNT),
@@ -72,33 +73,34 @@ describe('ArthBoardroom', () => {
     });
   });
 
-  describe('#withdraw', async () => {
-    beforeEach('Stake', async () => {
+  describe('#Withdraw', async () => {
+    beforeEach('Should be able to stake', async () => {
       await Promise.all([
         cash.connect(operator).mint(whale.address, STAKE_AMOUNT),
         cash.connect(whale).approve(boardroom.address, STAKE_AMOUNT),
       ]);
+
       await boardroom.connect(whale).stake(STAKE_AMOUNT);
     });
 
-    it('Should not work correctly', async () => {
-        try {
-          await expect(boardroom.connect(whale).withdraw(STAKE_AMOUNT))
-            .to.emit(boardroom, 'Withdrawn')
-            .withArgs(whale.address, STAKE_AMOUNT);
+    it('Should not be able to withdraw before withdrawal duration is satisifed', async () => {
+      try {
+        await expect(boardroom.connect(whale).withdraw(STAKE_AMOUNT))
+          .to.emit(boardroom, 'Withdrawn')
+          .withArgs(whale.address, STAKE_AMOUNT);
 
-          expect(await cash.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
-          expect(await boardroom.balanceOf(whale.address)).to.eq(ZERO);
+        expect(await cash.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
+        expect(await boardroom.balanceOf(whale.address)).to.eq(ZERO);
 
-          return false;
-        } catch (e) {
-          return true;
-        }
+        return false;
+      } catch (e) {
+        return true;
+      }
     });
 
-    await new Promise(resolve => setTimeout(resolve, 1000 *  BOARDROOM_LOCK_PERIOD));
+    await new Promise(resolve => setTimeout(resolve, 1000 * BOARDROOM_LOCK_PERIOD));
 
-    it('Should work correctly', async () => {
+    it('Should work correctly now', async () => {
       await expect(boardroom.connect(whale).withdraw(STAKE_AMOUNT))
         .to.emit(boardroom, 'Withdrawn')
         .withArgs(whale.address, STAKE_AMOUNT);
@@ -128,8 +130,8 @@ describe('ArthBoardroom', () => {
     });
   });
 
-  describe('#exit', async () => {
-    beforeEach('Stake', async () => {
+  describe('#Exit', async () => {
+    beforeEach('Should be able to stake', async () => {
       await Promise.all([
         cash.connect(operator).mint(whale.address, STAKE_AMOUNT),
         cash.connect(whale).approve(boardroom.address, STAKE_AMOUNT),
@@ -138,23 +140,23 @@ describe('ArthBoardroom', () => {
       await boardroom.connect(whale).stake(STAKE_AMOUNT);
     });
 
-    it('Should not work correctly', async () => {
+    it('Should not be able to withdraw before withdrawal duration is satisifed', async () => {
       try {
         await expect(boardroom.connect(whale).exit())
-        .to.emit(boardroom, 'Withdrawn')
-        .withArgs(whale.address, STAKE_AMOUNT);
+          .to.emit(boardroom, 'Withdrawn')
+          .withArgs(whale.address, STAKE_AMOUNT);
 
         expect(await cash.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
         expect(await boardroom.balanceOf(whale.address)).to.eq(ZERO);
         expect(false);
-      } catch(e) {
+      } catch (e) {
         expect(true);
       }
     });
 
-    await new Promise(resolve => setTimeout(resolve, 1000 *  BOARDROOM_LOCK_PERIOD));
+    await new Promise(resolve => setTimeout(resolve, 1000 * BOARDROOM_LOCK_PERIOD));
 
-    it('Should work correctly', async () => {
+    it('Should work correctly now', async () => {
       await expect(boardroom.connect(whale).exit())
         .to.emit(boardroom, 'Withdrawn')
         .withArgs(whale.address, STAKE_AMOUNT);
@@ -164,8 +166,8 @@ describe('ArthBoardroom', () => {
     });
   });
 
-  describe('#allocateSeigniorage', () => {
-    beforeEach('Stake', async () => {
+  describe('#AllocateSeigniorage', () => {
+    beforeEach('Should be able to stake', async () => {
       await Promise.all([
         cash.connect(operator).mint(whale.address, STAKE_AMOUNT),
         cash.connect(whale).approve(boardroom.address, STAKE_AMOUNT),
@@ -203,8 +205,8 @@ describe('ArthBoardroom', () => {
     });
   });
 
-  describe('#claimDividends', () => {
-    beforeEach('Stake', async () => {
+  describe('#ClaimDividends', () => {
+    beforeEach('Should be able to stake', async () => {
       await Promise.all([
         cash.connect(operator).mint(whale.address, STAKE_AMOUNT),
         cash.connect(whale).approve(boardroom.address, STAKE_AMOUNT),
@@ -212,6 +214,7 @@ describe('ArthBoardroom', () => {
         cash.connect(operator).mint(abuser.address, STAKE_AMOUNT),
         cash.connect(abuser).approve(boardroom.address, STAKE_AMOUNT),
       ]);
+
       await boardroom.connect(whale).stake(STAKE_AMOUNT);
     });
 
