@@ -259,12 +259,12 @@ describe('Timelock', () => {
         expect(await token.operator()).to.eq(newTreasury.address);
       }
 
-      expect(await latestBlocktime(provider)).to.lt(startTime);
+      // expect(await latestBlocktime(provider)).to.lt(startTime);
 
-      await advanceTimeAndBlock(
-        provider,
-        Number(startTime) - (await latestBlocktime(provider))
-      );
+      // await advanceTimeAndBlock(
+      //   provider,
+      //   Number(startTime) - (await latestBlocktime(provider))
+      // );
     });
   });
 
