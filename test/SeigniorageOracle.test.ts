@@ -16,7 +16,7 @@ chai.use(solidity);
 
 async function latestBlocktime(provider: Provider): Promise<number> {
   const { timestamp } = await provider.getBlock('latest');
-  
+
   return timestamp;
 }
 
@@ -44,7 +44,7 @@ async function addLiquidity(
 }
 
 
-describe('GMUOracle', () => {
+describe('SeigniorageOracle', () => {
   const MINUTE = 60;
   const DAY = 86400;
   const ETH = utils.parseEther('1');
@@ -119,26 +119,27 @@ describe('GMUOracle', () => {
     );
   });
 
-  describe('#update', async () => {
+  describe('#Update', async () => {
     it('Should works correctly', async () => {
       await advanceTimeAndBlock(
         provider,
         oracleStartTime.sub(await latestBlocktime(provider)).toNumber() - MINUTE
       );
 
-      // epoch 0
+      // Epoch 0.
       await expect(oracle.update()).to.revertedWith('Epoch: not allowed');
       expect(await oracle.nextEpochPoint()).to.eq(oracleStartTime);
       expect(await oracle.getCurrentEpoch()).to.eq(BigNumber.from(0));
 
       await advanceTimeAndBlock(provider, 2 * MINUTE);
 
-      // epoch 1
+      // Epoch 1.
       await expect(oracle.update()).to.emit(oracle, 'Updated');
 
       expect(await oracle.nextEpochPoint()).to.eq(oracleStartTime.add(DAY));
       expect(await oracle.getCurrentEpoch()).to.eq(BigNumber.from(1));
-      // check double update
+
+      // Check double update.
       await expect(oracle.update()).to.revertedWith('Epoch: not allowed');
     });
   });
