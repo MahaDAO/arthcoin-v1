@@ -176,20 +176,23 @@ describe('Timelock', () => {
 
     // await burnbackFund.connect(operator).transferOperator(treasury.address);
     // await developmentFund.connect(operator).transferOperator(treasury.address);
-    await cash.connect(operator).transferOperator(treasury.address);
-    await bond.connect(operator).transferOperator(treasury.address);
-    await arthBoardroom.connect(operator).transferOperator(treasury.address);
-    await arthLiquidityBoardroom.connect(operator).transferOperator(treasury.address);
+    // await cash.connect(operator).transferOperator(treasury.address);
+    // await bond.connect(operator).transferOperator(treasury.address);
+    // await arthBoardroom.connect(operator).transferOperator(treasury.address);
+    // await arthLiquidityBoardroom.connect(operator).transferOperator(treasury.address);
     timelock = await Timelock.connect(operator).deploy(
       operator.address,
       2 * DAY
     );
 
-    for await (const token of [cash, bond, share]) {
+    await share.connect(operator).mint(treasury.address, ETH);
+
+    for await (const token of [cash, bond]) {
       await token.connect(operator).mint(treasury.address, ETH);
       await token.connect(operator).transferOperator(treasury.address);
       await token.connect(operator).transferOwnership(treasury.address);
     }
+
     await treasury.connect(operator).transferOperator(timelock.address);
     await treasury.connect(operator).transferOwnership(timelock.address);
 
@@ -198,6 +201,71 @@ describe('Timelock', () => {
 
     await arthLiquidityBoardroom.connect(operator).transferOperator(treasury.address);
     await arthLiquidityBoardroom.connect(operator).transferOwnership(timelock.address);
+  });
+
+  describe('#Migrate', async () => {
+    let newTreasury: Contract;
+
+    beforeEach('Deploy new treasury', async () => {
+      newTreasury = await Treasury.connect(operator).deploy(
+        dai.address,
+        cash.address,
+        bond.address,
+        share.address,
+        bondRedemtionOracle.address,
+        mahausdOracle.address,
+        seigniorageOracle.address,
+        arthLiquidityBoardroom.address,
+        arthBoardroom.address,
+        developmentFund.address,
+        uniswapRouter.address,
+        gmuOracle.address,
+        Math.floor(Date.now() / 1000),
+        5 * 60
+      );
+    });
+
+    it('Should work correctly', async () => {
+      const eta = (await latestBlocktime(provider)) + 2 * DAY + 30;
+      const signature = 'migrate(address)';
+      const data = encodeParameters(ethers, ['address'], [newTreasury.address]);
+      const calldata = [treasury.address, 0, signature, data, eta];
+      const txHash = ethers.utils.keccak256(
+        encodeParameters(
+          ethers,
+          ['address', 'uint256', 'string', 'bytes', 'uint256'],
+          calldata
+        )
+      );
+
+      await expect(timelock.connect(operator).queueTransaction(...calldata))
+        .to.emit(timelock, 'QueueTransaction')
+        .withArgs(txHash, ...calldata);
+
+      await advanceTimeAndBlock(
+        provider,
+        eta - (await latestBlocktime(provider))
+      );
+
+      await expect(timelock.connect(operator).executeTransaction(...calldata))
+        .to.emit(timelock, 'ExecuteTransaction')
+        .withArgs(txHash, ...calldata)
+        .to.emit(treasury, 'Migration')
+        .withArgs(newTreasury.address);
+
+      for await (const token of [cash, bond]) {
+        expect(await token.balanceOf(newTreasury.address)).to.eq(ETH);
+        expect(await token.owner()).to.eq(newTreasury.address);
+        expect(await token.operator()).to.eq(newTreasury.address);
+      }
+
+      expect(await latestBlocktime(provider)).to.lt(startTime);
+
+      await advanceTimeAndBlock(
+        provider,
+        Number(startTime) - (await latestBlocktime(provider))
+      );
+    });
   });
 
   describe('#TransferOperator', async () => {
@@ -263,71 +331,6 @@ describe('Timelock', () => {
         .withArgs(ZERO_ADDR, operator.address);
 
       expect(await arthLiquidityBoardroom.operator()).to.eq(operator.address);
-    });
-  });
-
-  describe('#Migrate', async () => {
-    let newTreasury: Contract;
-
-    beforeEach('Deploy new treasury', async () => {
-      newTreasury = await Treasury.connect(operator).deploy(
-        dai.address,
-        cash.address,
-        bond.address,
-        share.address,
-        bondRedemtionOracle.address,
-        mahausdOracle.address,
-        seigniorageOracle.address,
-        arthLiquidityBoardroom.address,
-        arthBoardroom.address,
-        developmentFund.address,
-        uniswapRouter.address,
-        gmuOracle.address,
-        Math.floor(Date.now() / 1000),
-        5 * 60
-      );
-    });
-
-    it('Should work correctly', async () => {
-      const eta = (await latestBlocktime(provider)) + 2 * DAY + 30;
-      const signature = 'migrate(address)';
-      const data = encodeParameters(ethers, ['address'], [newTreasury.address]);
-      const calldata = [treasury.address, 0, signature, data, eta];
-      const txHash = ethers.utils.keccak256(
-        encodeParameters(
-          ethers,
-          ['address', 'uint256', 'string', 'bytes', 'uint256'],
-          calldata
-        )
-      );
-
-      await expect(timelock.connect(operator).queueTransaction(...calldata))
-        .to.emit(timelock, 'QueueTransaction')
-        .withArgs(txHash, ...calldata);
-
-      await advanceTimeAndBlock(
-        provider,
-        eta - (await latestBlocktime(provider))
-      );
-
-      await expect(timelock.connect(operator).executeTransaction(...calldata))
-        .to.emit(timelock, 'ExecuteTransaction')
-        .withArgs(txHash, ...calldata)
-        .to.emit(treasury, 'Migration')
-        .withArgs(newTreasury.address);
-
-      for await (const token of [cash, bond, share]) {
-        expect(await token.balanceOf(newTreasury.address)).to.eq(ETH);
-        expect(await token.owner()).to.eq(newTreasury.address);
-        expect(await token.operator()).to.eq(newTreasury.address);
-      }
-
-      expect(await latestBlocktime(provider)).to.lt(startTime);
-
-      await advanceTimeAndBlock(
-        provider,
-        Number(startTime) - (await latestBlocktime(provider))
-      );
     });
   });
 });
