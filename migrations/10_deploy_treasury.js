@@ -1,5 +1,5 @@
 const knownContracts = require('./known-contracts');
-const ethers = require('ethers')
+const ethers = require('ethers');
 
 const ARTH = artifacts.require('ARTH');
 const ARTHB = artifacts.require('ARTHB');
@@ -9,6 +9,7 @@ const BondRedemtionOracle = artifacts.require('BondRedemtionOracle');
 const DevelopmentFund = artifacts.require('DevelopmentFund');
 const GMUOracle = artifacts.require('GMUOracle');
 const MahaToken = artifacts.require('MahaToken');
+const MAHAOracle = artifacts.require("MAHAOracle");
 const MAHAUSDOracle = artifacts.require('MAHAUSDOracle');
 const MockDai = artifacts.require('MockDai');
 const SeigniorageOracle = artifacts.require('SeigniorageOracle');
@@ -58,7 +59,7 @@ async function migration(deployer, network, accounts) {
     ARTHB.address,
     MahaToken.address,
     BondRedemtionOracle.address,
-    MAHAUSDOracle.address,
+    MAHAOracle.address, // MAHAUSDOracle.address,
     SeigniorageOracle.address,
     ArthLiquidityBoardroom.address,
     ArthBoardroom.address,

@@ -3,8 +3,10 @@ const { POOL_START_DATE, DAY } = require('./config');
 
 
 const ARTH = artifacts.require('ARTH');
+const MAHA = artifacts.require('MahaToken');
 const MockDai = artifacts.require('MockDai');
 const GMUOracle = artifacts.require('GMUOracle');
+const MAHAOracle = artifacts.require("MAHAOracle");
 const MAHAUSDOracle = artifacts.require('MAHAUSDOracle');
 const UniswapV2Factory = artifacts.require('UniswapV2Factory');
 const SeigniorageOracle = artifacts.require('SeigniorageOracle');
@@ -29,6 +31,7 @@ async function migration(deployer, network, accounts) {
 
   const ORACLE_PERIOD = 5 * 60;
   const BOND_ORACLE_PERIOD = ORACLE_PERIOD;
+  const MAHA_ORACLE_PERIOD = ORACLE_PERIOD;
   const SEIGNIORAGE_ORACLE_PERIOD = ORACLE_PERIOD;
 
   // Deploy dai or fetch deployed dai.
@@ -37,8 +40,9 @@ async function migration(deployer, network, accounts) {
     ? await IERC20.at(knownContracts.DAI[network])
     : await MockDai.deployed();
 
-  // Fetching deployed ARTH.
+  // Fetching deployed ARTH & MAHA.
   const cash = await ARTH.deployed();
+  const share = await MAHA.deployed();
 
   // Fetch the deployed uniswap contract.
   const uniswap = network === 'mainnet' || network === 'ropsten'
@@ -67,13 +71,24 @@ async function migration(deployer, network, accounts) {
     startTime
   );
 
+  // Deploy maha-dai oracle.
+  console.log('Deploying mahadai oracle.')
+  await deployer.deploy(
+    MAHAOracle,
+    uniswap.address,
+    share.address,
+    dai.address,
+    MAHA_ORACLE_PERIOD, // In hours for dev deployment purpose.
+    startTime
+  );
+
   // Deploy the GMU oracle.
   console.log('Deploying GMU oracle.')
   await deployer.deploy(GMUOracle, 'GMU', GMU_ORACLE_START_PRICE);
 
   // Deploy MAHAUSD oracle.
-  console.log('Deploying MAHAUSD oracle.')
-  await deployer.deploy(MAHAUSDOracle, 'MAHA-USD', MAHAUSD_ORACLE_START_PRICE);
+  // console.log('Deploying MAHAUSD oracle.')
+  // await deployer.deploy(MAHAUSDOracle, 'MAHA-USD', MAHAUSD_ORACLE_START_PRICE);
 }
 
 

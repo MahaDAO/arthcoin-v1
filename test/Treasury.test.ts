@@ -537,7 +537,7 @@ describe('Treasury', () => {
 
     describe('After startTime', () => {
       beforeEach('Advance blocktime', async () => {
-        // wait til first epoch
+        // Wait til first epoch.
         await advanceTimeAndBlock(
           provider,
           startTime.sub(await latestBlocktime(provider)).toNumber()
@@ -596,7 +596,7 @@ describe('Treasury', () => {
         });
       });
 
-      describe('#redeemBonds', () => {
+      describe('#RedeemBonds', () => {
         beforeEach('Allocate seigniorage to treasury', async () => {
           const cashPrice = ETH.mul(106).div(100);
           await gmuOracle.setPrice(cashPrice);
