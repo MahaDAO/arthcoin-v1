@@ -63,7 +63,7 @@ describe('Timelock', () => {
     UniswapV2Router.bytecode
   );
 
-  before('fetch contract factories', async () => {
+  before('Fetch contract factories', async () => {
     ARTHB = await ethers.getContractFactory('ARTHB');
     ARTH = await ethers.getContractFactory('ARTH');
     MAHA = await ethers.getContractFactory('MahaToken');
@@ -88,12 +88,10 @@ describe('Timelock', () => {
   let seigniorageOracle: Contract;
   let arthBoardroom: Contract;
   let arthLiquidityBoardroom: Contract;
-  let burnbackFund: Contract;
   let developmentFund: Contract;
   let gmuOracle: Contract;
   let mahausdOracle: Contract;
   let treasury: Contract;
-  let startTime: Number;
   let uniswap: Contract;
   let uniswapRouter: Contract;
   let timelock: Contract;
@@ -154,8 +152,6 @@ describe('Timelock', () => {
       dai_arth_lpt,
       5 * 60
     );
-
-    startTime = await latestBlocktime(provider);
 
     treasury = await Treasury.connect(operator).deploy(
       dai.address,
