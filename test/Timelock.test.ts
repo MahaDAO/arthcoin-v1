@@ -43,7 +43,6 @@ describe('Timelock', () => {
   let ARTH: ContractFactory;
   let MAHA: ContractFactory;
   let Treasury: ContractFactory;
-  let BurnbackFund: ContractFactory;
   let DevelopmentFund: ContractFactory;
   let ArthBoardroom: ContractFactory;
   let ArthLiquidityBoardroom: ContractFactory;
@@ -68,7 +67,6 @@ describe('Timelock', () => {
     ARTH = await ethers.getContractFactory('ARTH');
     MAHA = await ethers.getContractFactory('MahaToken');
     Treasury = await ethers.getContractFactory('Treasury');
-    BurnbackFund = await ethers.getContractFactory('BurnbackFund');
     DevelopmentFund = await ethers.getContractFactory('DevelopmentFund');
     ArthBoardroom = await ethers.getContractFactory('ArthBoardroom');
     ArthLiquidityBoardroom = await ethers.getContractFactory('ArthLiquidityBoardroom');
@@ -123,7 +121,6 @@ describe('Timelock', () => {
       BigNumber.from(await latestBlocktime(provider)).add(DAY)
     )
 
-    // burnbackFund = await BurnbackFund.connect(operator).deploy();
     developmentFund = await DevelopmentFund.connect(operator).deploy();
 
     bondRedemtionOracle = await BondRedemtionOracle.connect(operator).deploy(
@@ -170,7 +167,6 @@ describe('Timelock', () => {
       5 * 60
     );
 
-    // await burnbackFund.connect(operator).transferOperator(treasury.address);
     // await developmentFund.connect(operator).transferOperator(treasury.address);
     // await cash.connect(operator).transferOperator(treasury.address);
     // await bond.connect(operator).transferOperator(treasury.address);
