@@ -22,9 +22,9 @@ import '../interfaces/IGMUOracle.sol';
 import './TreasurySetters.sol';
 
 /**
- * @title Basis ARTH Treasury contract
+ * @title ARTH Treasury contract
  * @notice Monetary policy logic to adjust supplies of basis cash assets
- * @author Summer Smith & Rick Sanchez
+ * @author Steven Enamakel & Yash Agarwal. Original code written by Summer Smith & Rick Sanchez
  */
 contract Treasury is TreasurySetters {
     constructor(
@@ -43,37 +43,32 @@ contract Treasury is TreasurySetters {
         uint256 _startTime,
         uint256 _period
     ) public Epoch(_period, _startTime, 0) {
+        // tokens
         dai = _dai;
         cash = _cash;
         bond = _bond;
         share = _share;
+
+        // oracles
         bondOracle = _bondOracle;
         mahausdOracle = _mahausdOracle;
         seigniorageOracle = _seigniorageOracle;
         gmuOracle = _gmuOracle;
+
+        // funds
         arthLiquidityBoardroom = _arthLiquidityBoardroom;
         arthBoardroom = _arthBoardroom;
         ecosystemFund = _fund;
+
         uniswapRouter = _uniswapRouter;
 
-        cashTargetPrice = IGMUOracle(gmuOracle).getPrice();
-        initialCashPriceOne = cashTargetPrice;
-
-        // Set the ceiling price to be 5% above the inital price.
-        cashPriceCeiling =
-            initialCashPriceOne +
-            uint256(5).mul(initialCashPriceOne).div(10**2);
-
-        bondDepletionFloor = uint256(1000).mul(initialCashPriceOne);
+        _updateCashPrice();
     }
 
     /* ========== GOVERNANCE ========== */
 
     function initialize() public checkOperator {
         require(!initialized, 'Treasury: initialized');
-
-        // burn all of it's balance
-        IBasisAsset(cash).burn(IERC20(cash).balanceOf(address(this)));
 
         // set accumulatedSeigniorage to it's balance
         accumulatedSeigniorage = IERC20(cash).balanceOf(address(this));
@@ -110,14 +105,12 @@ contract Treasury is TreasurySetters {
         checkOperator
         returns (uint256)
     {
-        require(!migrated, 'Treasury: migrated');
         require(
             amountInDai > 0,
             'Treasury: cannot purchase bonds with zero amount'
         );
 
         // Update the price to latest before using.
-        _updateCashPrice();
         uint256 bondPrice = _getCashPrice(bondOracle);
 
         require(bondPrice == targetPrice, 'Treasury: cash price moved');
@@ -126,10 +119,8 @@ contract Treasury is TreasurySetters {
             'Treasury: cashPrice not eligible for bond purchase'
         );
 
-        // Eg. Let's say 1 dai(d) = 10 usd and 1 cash(c) = 20 usd.
-        // Then taking c/d = 20/10 = 2.
-        // Then c = 2d.
-        // Then say x amount of dai is 2 * x amount of cash. Where 2 is c/d
+        // Find the expected amount recieved when swapping the following
+        // tokens on uniswap.
         address[] memory path = new address[](2);
         path[0] = address(dai);
         path[1] = address(cash);
@@ -138,13 +129,15 @@ contract Treasury is TreasurySetters {
             IUniswapV2Router02(uniswapRouter).getAmountsOut(amountInDai, path);
         uint256 expectedCashAmount = amountsOut[1];
 
-        // do some checks
+        // 1. Take Dai from the user
+        IERC20(dai).safeTransferFrom(msg.sender, address(this), amountInDai);
 
-        // 1. Transfer Dai
-        IERC20(dai).transferFrom(msg.sender, address(this), amountInDai);
-        IERC20(dai).approve(uniswapRouter, amountInDai);
+        // 2. Approve dai for trade on uniswap
+        IERC20(dai).safeApprove(uniswapRouter, amountInDai);
 
-        // 2. swap dai for ARTH from uniswap
+        // 2. Swap dai for ARTH from uniswap and send the ARTH to the sender
+        // we send the ARTH back to the sender just in case there is some slippage
+        // in our calculations and we end up with more ARTH than what is needed.
         uint256[] memory output =
             IUniswapV2Router02(uniswapRouter).swapExactTokensForTokens(
                 amountInDai,
@@ -154,35 +147,44 @@ contract Treasury is TreasurySetters {
                 block.timestamp
             );
 
-        // 3. Burn bought back cash and mint bonds.
+        // we understand how much ARTH was bought back as without this, we
+        // could witness a flash loan attack. (given that the minted amount of ARTHB
+        // minted is based how much ARTH was received)
+        uint256 boughtBackARTH = Math.min(output[1], expectedCashAmount);
+
+        // 3. Burn bought ARTH cash and mint bonds at the discounted price.
         // TODO: Set the minting amount according to bond price.
         // TODO: calculate premium basis size of the trade
-        uint256 boughtBackARTH = Math.min(output[1], expectedCashAmount);
         IBasisAsset(cash).burnFrom(msg.sender, boughtBackARTH);
-        IBasisAsset(bond).mint(msg.sender, boughtBackARTH);
+        IBasisAsset(bond).mint(
+            msg.sender,
+            boughtBackARTH.mul(100).div(bondDiscountOutOf100)
+        );
 
+        _updateCashPrice();
         emit BoughtBonds(msg.sender, boughtBackARTH);
         return boughtBackARTH;
     }
 
+    /**
+     * Redeeming bonds happen when
+     */
     function redeemBonds(
         uint256 amount,
         uint256 targetPrice,
         bool sellForDai
     ) external onlyOneBlock checkMigration checkStartTime checkOperator {
-        require(!migrated, 'Treasury: migrated');
         require(amount > 0, 'Treasury: cannot redeem bonds with zero amount');
 
-        _updateCashPrice();
         uint256 cashPrice = _getCashPrice(bondOracle);
-        require(cashPrice == targetPrice, 'Treasury: cash price moved');
+        require(cashPrice == targetPrice, 'Treasury: cash price has moved');
         require(
             cashPrice > cashPriceCeiling, // price > $1.05
-            'Treasury: cashPrice not eligible for bond purchase'
+            'Treasury: cashPrice less than ceiling'
         );
         require(
             IERC20(cash).balanceOf(address(this)) >= amount,
-            'Treasury: treasury has no more budget'
+            'Treasury: treasury has not enough budget'
         );
 
         accumulatedSeigniorage = accumulatedSeigniorage.sub(
@@ -227,6 +229,7 @@ contract Treasury is TreasurySetters {
             IERC20(cash).safeTransfer(msg.sender, amount);
         }
 
+        _updateCashPrice();
         emit RedeemedBonds(msg.sender, amount);
     }
 
@@ -290,6 +293,10 @@ contract Treasury is TreasurySetters {
         return 0;
     }
 
+    /**
+     * Updates the cash price from the various oracles.
+     * TODO: this function needs to be optimised for gas
+     */
     function _updateCashPrice() internal {
         try IOracle(bondOracle).update() {} catch {}
         try IOracle(seigniorageOracle).update() {} catch {}
@@ -304,6 +311,10 @@ contract Treasury is TreasurySetters {
         bondDepletionFloor = uint256(1000).mul(cashTargetPrice);
     }
 
+    /**
+     * Helper function to allocate seigniorage to bond token holders. Seigniorage
+     * before the boardrooms get paid.
+     */
     function _allocateToBondHolers(uint256 seigniorage)
         internal
         returns (uint256)
@@ -326,6 +337,10 @@ contract Treasury is TreasurySetters {
         return 0;
     }
 
+    /**
+     * Helper function to allocate seigniorage to boardooms. Seigniorage is allocated
+     * after bond token holders have been paid first.
+     */
     function _allocateToBoardrooms(uint256 boardroomReserve) internal {
         if (boardroomReserve <= 0) return;
 
