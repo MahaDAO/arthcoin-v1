@@ -12,6 +12,8 @@ import '../interfaces/IBoardroom.sol';
 import '../interfaces/IBasisAsset.sol';
 import '../interfaces/ISimpleERCFund.sol';
 import '../lib/Babylonian.sol';
+import '../curve/Curve.sol';
+
 import '../lib/FixedPoint.sol';
 import '../lib/Safe112.sol';
 import '../owner/Operator.sol';
@@ -29,10 +31,6 @@ abstract contract TreasuryGetters is TreasuryState {
         return stabilityFee;
     }
 
-    function getCashPriceCeiling() public view returns (uint256) {
-        return cashTargetPrice + uint256(5).mul(cashTargetPrice).div(10**2);
-    }
-
     function getBondOraclePrice() public view returns (uint256) {
         return _getCashPrice(bondOracle);
     }
@@ -47,6 +45,14 @@ abstract contract TreasuryGetters is TreasuryState {
 
     function getSeigniorageOraclePrice() public view returns (uint256) {
         return _getCashPrice(seigniorageOracle);
+    }
+
+    function circulatingSupply() public view returns (uint256) {
+        return IERC20(cash).totalSupply().sub(accumulatedSeigniorage);
+    }
+
+    function getCeilingPrice() public view returns (uint256) {
+        return ICurve(curve).calcCeiling(circulatingSupply());
     }
 
     function _getCashPrice(address oracle) internal view returns (uint256) {

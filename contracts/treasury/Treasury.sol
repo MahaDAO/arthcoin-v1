@@ -8,16 +8,18 @@ import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
 import '@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol';
 
-import '../interfaces/IOracle.sol';
-import '../interfaces/IBoardroom.sol';
-import '../interfaces/IBasisAsset.sol';
-import '../interfaces/ISimpleERCFund.sol';
-import '../lib/Babylonian.sol';
-import '../lib/FixedPoint.sol';
-import '../lib/Safe112.sol';
-import '../owner/Operator.sol';
-import '../utils/Epoch.sol';
-import '../utils/ContractGuard.sol';
+import {ICurve} from '../curve/Curve.sol';
+import {IOracle} from '../interfaces/IOracle.sol';
+import {IBoardroom} from '../interfaces/IBoardroom.sol';
+import {IBasisAsset} from '../interfaces/IBasisAsset.sol';
+import {ISimpleERCFund} from '../interfaces/ISimpleERCFund.sol';
+import {Babylonian} from '../lib/Babylonian.sol';
+import {FixedPoint} from '../lib/FixedPoint.sol';
+import {Safe112} from '../lib/Safe112.sol';
+import {Operator} from '../owner/Operator.sol';
+import {Epoch} from '../utils/Epoch.sol';
+import {ContractGuard} from '../utils/ContractGuard.sol';
+
 import '../interfaces/IGMUOracle.sol';
 import './TreasurySetters.sol';
 
@@ -39,6 +41,7 @@ contract Treasury is TreasurySetters {
         address _arthBoardroom,
         address _fund,
         address _uniswapRouter,
+        address _curve,
         address _gmuOracle,
         uint256 _startTime,
         uint256 _period
@@ -60,12 +63,18 @@ contract Treasury is TreasurySetters {
         arthBoardroom = _arthBoardroom;
         ecosystemFund = _fund;
 
+        // others
         uniswapRouter = _uniswapRouter;
+        curve = _curve;
 
         _updateCashPrice();
     }
 
-    /* ========== GOVERNANCE ========== */
+    modifier updatePrice {
+        _;
+
+        _updateCashPrice();
+    }
 
     function initialize() public checkOperator {
         require(!initialized, 'Treasury: initialized');
@@ -111,13 +120,15 @@ contract Treasury is TreasurySetters {
         );
 
         // Update the price to latest before using.
-        uint256 bondPrice = _getCashPrice(bondOracle);
+        uint256 cash1hPrice = _getCashPrice(bondOracle);
 
-        require(bondPrice == targetPrice, 'Treasury: cash price moved');
+        require(cash1hPrice <= targetPrice, 'Treasury: cash price moved');
         require(
-            bondPrice < cashTargetPrice, // price < $1
+            cash1hPrice < cashTargetPrice, // price < $1
             'Treasury: cashPrice not eligible for bond purchase'
         );
+
+        _updateConversionLimit(cash1hPrice);
 
         // Find the expected amount recieved when swapping the following
         // tokens on uniswap.
@@ -135,7 +146,7 @@ contract Treasury is TreasurySetters {
         // 2. Approve dai for trade on uniswap
         IERC20(dai).safeApprove(uniswapRouter, amountInDai);
 
-        // 2. Swap dai for ARTH from uniswap and send the ARTH to the sender
+        // 3. Swap dai for ARTH from uniswap and send the ARTH to the sender
         // we send the ARTH back to the sender just in case there is some slippage
         // in our calculations and we end up with more ARTH than what is needed.
         uint256[] memory output =
@@ -147,10 +158,21 @@ contract Treasury is TreasurySetters {
                 block.timestamp
             );
 
-        // we understand how much ARTH was bought back as without this, we
+        // we do this to understand how much ARTH was bought back as without this, we
         // could witness a flash loan attack. (given that the minted amount of ARTHB
         // minted is based how much ARTH was received)
         uint256 boughtBackARTH = Math.min(output[1], expectedCashAmount);
+
+        // basis the amount of ARTH being bought back; understand how much of it
+        // can we convert to bond tokens by looking at
+        boughtBackARTH = Math.min(
+            boughtBackARTH,
+            cashConversionLimit.sub(accumulatedBonds)
+        );
+
+        accumulatedBonds = accumulatedBonds.add(boughtBackARTH);
+
+        require(boughtBackARTH == 0, 'No more bonds to be redeemed');
 
         // 3. Burn bought ARTH cash and mint bonds at the discounted price.
         // TODO: Set the minting amount according to bond price.
@@ -161,7 +183,6 @@ contract Treasury is TreasurySetters {
             boughtBackARTH.mul(100).div(bondDiscountOutOf100)
         );
 
-        _updateCashPrice();
         emit BoughtBonds(msg.sender, boughtBackARTH);
         return boughtBackARTH;
     }
@@ -169,17 +190,19 @@ contract Treasury is TreasurySetters {
     /**
      * Redeeming bonds happen when
      */
-    function redeemBonds(
-        uint256 amount,
-        uint256 targetPrice,
-        bool sellForDai
-    ) external onlyOneBlock checkMigration checkStartTime checkOperator {
+    function redeemBonds(uint256 amount, bool sellForDai)
+        external
+        onlyOneBlock
+        checkMigration
+        checkStartTime
+        checkOperator
+        updatePrice
+    {
         require(amount > 0, 'Treasury: cannot redeem bonds with zero amount');
 
         uint256 cashPrice = _getCashPrice(bondOracle);
-        require(cashPrice == targetPrice, 'Treasury: cash price has moved');
         require(
-            cashPrice > cashPriceCeiling, // price > $1.05
+            cashPrice > getCeilingPrice(), // price > $1.05
             'Treasury: cashPrice less than ceiling'
         );
         require(
@@ -229,7 +252,6 @@ contract Treasury is TreasurySetters {
             IERC20(cash).safeTransfer(msg.sender, amount);
         }
 
-        _updateCashPrice();
         emit RedeemedBonds(msg.sender, amount);
     }
 
@@ -247,8 +269,7 @@ contract Treasury is TreasurySetters {
         // send 1000 ARTH reward to the person advancing the epoch to compensate for gas
         IBasisAsset(cash).mint(msg.sender, uint256(1000).mul(1e18));
 
-        if (cashPrice <= cashPriceCeiling) {
-            // TODO: allocate bonds budget over here
+        if (cashPrice <= getCeilingPrice()) {
             return; // just advance epoch instead revert
         }
 
@@ -301,18 +322,17 @@ contract Treasury is TreasurySetters {
         if (Epoch(bondOracle).callable()) {
             try IOracle(bondOracle).update() {} catch {}
         }
+
         if (Epoch(seigniorageOracle).callable()) {
             try IOracle(seigniorageOracle).update() {} catch {}
         }
 
+        // TODO: do the same for the gmu oracle as well
+        // if (Epoch(seigniorageOracle).callable()) {
+        //     try IOracle(seigniorageOracle).update() {} catch {}
+        // }
+
         cashTargetPrice = IGMUOracle(gmuOracle).getPrice();
-
-        // Set the ceiling price to be 5% above the target price.
-        cashPriceCeiling =
-            cashTargetPrice +
-            uint256(5).mul(cashTargetPrice).div(10**2);
-
-        bondDepletionFloor = uint256(1000).mul(cashTargetPrice);
     }
 
     /**
@@ -372,6 +392,18 @@ contract Treasury is TreasurySetters {
             IERC20(cash).safeApprove(arthBoardroom, arthBoardroomReserve);
             IBoardroom(arthBoardroom).allocateSeigniorage(arthBoardroomReserve);
             emit PoolFunded(arthBoardroom, arthBoardroomReserve);
+        }
+    }
+
+    function _updateConversionLimit(uint256 cashPrice) internal {
+        uint256 currentEpoch = Epoch(bondOracle).getLastEpoch(); // lastest update time
+        if (lastBondOracleEpoch != currentEpoch) {
+            uint256 percentage =
+                cashTargetPrice.sub(cashPrice).mul(1e18).div(cashTargetPrice);
+            cashConversionLimit = circulatingSupply().mul(percentage).div(1e18);
+            accumulatedBonds = 0;
+
+            lastBondOracleEpoch = currentEpoch;
         }
     }
 

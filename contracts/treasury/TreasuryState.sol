@@ -41,11 +41,17 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     address public seigniorageOracle;
 
     // ========== PARAMS
-    uint256 public initialCashPriceOne = 1;
-    uint256 public cashPriceCeiling;
+    // uint256 public initialCashPriceOne = 1;
+    // uint256 public cashPriceCeiling;
     uint256 public cashTargetPrice = 1;
-    uint256 public bondDepletionFloor;
+    // uint256 public bondDepletionFloor;
+
+    // these govern how much bond tokens are issued
+    address public curve;
+    uint256 public lastBondOracleEpoch = 0;
+    uint256 public cashConversionLimit = 0;
     uint256 public accumulatedSeigniorage = 0;
+    uint256 public accumulatedBonds = 0;
 
     // the bond discount controls how much discount bond holders will be getting
     // when the purcahse the bonds. This discount is realised when the bond
