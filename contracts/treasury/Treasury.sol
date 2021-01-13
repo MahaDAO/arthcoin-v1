@@ -404,7 +404,7 @@ contract Treasury is TreasurySetters {
      * where 1hTWAP is the 1h TWAP of the $ARTH price and “Circ $ARTH is
      * the Circulating $ARTH supply. The cap will last for one hour; after
      * an hour a new TWAP will be calculated and the cap is reset based on
-     * the new TWAP value.
+     * next 12h epoch.
      */
     function _updateConversionLimit(uint256 cashPrice) internal {
         uint256 currentEpoch = Epoch(seigniorageOracle).getLastEpoch(); // lastest update time
