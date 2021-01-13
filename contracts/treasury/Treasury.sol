@@ -19,57 +19,14 @@ import '../owner/Operator.sol';
 import '../utils/Epoch.sol';
 import '../utils/ContractGuard.sol';
 import '../interfaces/IGMUOracle.sol';
+import './TreasurySetters.sol';
 
 /**
  * @title Basis ARTH Treasury contract
  * @notice Monetary policy logic to adjust supplies of basis cash assets
  * @author Summer Smith & Rick Sanchez
  */
-contract Treasury is ContractGuard, Epoch {
-    using FixedPoint for *;
-    using SafeERC20 for IERC20;
-    using Address for address;
-    using SafeMath for uint256;
-    using Safe112 for uint112;
-
-    /* ========== STATE VARIABLES ========== */
-
-    // ========== FLAGS
-    bool public migrated = false;
-    bool public initialized = false;
-
-    // ========== CORE
-    address public dai;
-    address public cash;
-    address public bond;
-    address public share;
-    address public gmuOracle;
-    address public mahausdOracle;
-    address public uniswapRouter;
-
-    address public arthLiquidityBoardroom;
-    address public arthBoardroom;
-    address public ecosystemFund;
-
-    address public bondOracle;
-    address public seigniorageOracle;
-
-    // ========== PARAMS
-    uint256 public initialCashPriceOne = 1;
-    uint256 public cashPriceCeiling;
-    uint256 public cashTargetPrice = 1;
-    uint256 public bondDepletionFloor;
-    uint256 public accumulatedSeigniorage = 0;
-
-    uint256 public bondPremiumOutOf100 = 25;
-
-    uint256 public ecosystemFundAllocationRate = 2;
-    uint256 public arthLiquidityBoardroomAllocationRate = 40; // In %.
-    uint256 public arthBoardroomAllocationRate = 60; // IN %.
-    uint256 public stabilityFee = 1; // IN %;
-
-    /* ========== CONSTRUCTOR ========== */
-
+contract Treasury is TreasurySetters {
     constructor(
         address _dai,
         address _cash,
@@ -110,94 +67,6 @@ contract Treasury is ContractGuard, Epoch {
         bondDepletionFloor = uint256(1000).mul(initialCashPriceOne);
     }
 
-    /* =================== Modifier =================== */
-
-    modifier checkMigration {
-        require(!migrated, 'Treasury: migrated');
-        _;
-    }
-
-    modifier checkOperator {
-        require(
-            IBasisAsset(cash).operator() == address(this) &&
-                IBasisAsset(bond).operator() == address(this) &&
-                Operator(arthLiquidityBoardroom).operator() == address(this) &&
-                Operator(arthBoardroom).operator() == address(this),
-            'Treasury: need more permission'
-        );
-        _;
-    }
-
-    function setStabilityFee(uint256 _stabilityFee) public onlyOwner {
-        require(_stabilityFee > 0, 'Treasury: fee < 0');
-        require(_stabilityFee < 100, 'Treasury: fee >= 0');
-        stabilityFee = _stabilityFee;
-
-        emit StabilityFeeChanged(stabilityFee, _stabilityFee);
-    }
-
-    function setFund(address newFund, uint256 rate) public onlyOwner {
-        ecosystemFund = newFund;
-        ecosystemFundAllocationRate = rate;
-
-        emit ContributionPoolChanged(newFund, rate);
-    }
-
-    function setArthBoardroom(address newFund, uint256 rate) public onlyOwner {
-        require(rate + arthLiquidityBoardroomAllocationRate == 100);
-
-        arthBoardroom = newFund;
-        arthBoardroomAllocationRate = rate;
-
-        emit ArthBoardroomChanged(newFund, rate);
-    }
-
-    function setArthLiquidityBoardroom(address newFund, uint256 rate)
-        public
-        onlyOwner
-    {
-        require(rate + arthBoardroomAllocationRate == 100);
-
-        arthLiquidityBoardroom = newFund;
-        arthLiquidityBoardroomAllocationRate = rate;
-
-        emit ArthLiquidityBoardroomChanged(newFund, rate);
-    }
-
-    /* ========== VIEW FUNCTIONS ========== */
-    function getReserve() public view returns (uint256) {
-        return accumulatedSeigniorage;
-    }
-
-    function getStabilityFee() public view returns (uint256) {
-        return stabilityFee;
-    }
-
-    function getCashPriceCeiling() public view returns (uint256) {
-        return cashTargetPrice + uint256(5).mul(cashTargetPrice).div(10**2);
-    }
-
-    // oracle
-    function getBondOraclePrice() public view returns (uint256) {
-        return _getCashPrice(bondOracle);
-    }
-
-    function getGMUOraclePrice() public view returns (uint256) {
-        return IGMUOracle(gmuOracle).getPrice();
-    }
-
-    function getSeigniorageOraclePrice() public view returns (uint256) {
-        return _getCashPrice(seigniorageOracle);
-    }
-
-    function _getCashPrice(address oracle) internal view returns (uint256) {
-        try IOracle(oracle).consult(cash, 1e18) returns (uint256 price) {
-            return price;
-        } catch {
-            revert('Treasury: failed to consult cash price from the oracle');
-        }
-    }
-
     /* ========== GOVERNANCE ========== */
 
     function initialize() public checkOperator {
@@ -227,32 +96,10 @@ contract Treasury is ContractGuard, Epoch {
         IERC20(bond).transfer(target, IERC20(bond).balanceOf(address(this)));
 
         // share - disabled ownership and operator functions as MAHA tokens don't have these
-        // Operator(share).transferOperator(target);
-        // Operator(share).transferOwnership(target);
         IERC20(share).transfer(target, IERC20(share).balanceOf(address(this)));
-
-        // do for boardrooms now
-        // Operator(arthLiquidityBoardroom).transferOperator(target);
-        // Operator(arthBoardroom).transferOwnership(target);
 
         migrated = true;
         emit Migration(target);
-    }
-
-    /* ========== MUTABLE FUNCTIONS ========== */
-
-    function _updateCashPrice() internal {
-        try IOracle(bondOracle).update() {} catch {}
-        try IOracle(seigniorageOracle).update() {} catch {}
-
-        cashTargetPrice = IGMUOracle(gmuOracle).getPrice();
-
-        // Set the ceiling price to be 5% above the target price.
-        cashPriceCeiling =
-            cashTargetPrice +
-            uint256(5).mul(cashTargetPrice).div(10**2);
-
-        bondDepletionFloor = uint256(1000).mul(cashTargetPrice);
     }
 
     function buyBonds(uint256 amountInDai, uint256 targetPrice)
@@ -346,17 +193,6 @@ contract Treasury is ContractGuard, Epoch {
         uint256 stabilityFeeValue =
             IOracle(mahausdOracle).consult(share, stabilityFeeAmount);
 
-        // check balances
-        require(
-            IERC20(share).balanceOf(msg.sender) >= stabilityFeeValue,
-            'Treasury: not enough MAHA balance'
-        );
-        require(
-            IERC20(share).allowance(msg.sender, address(this)) >=
-                stabilityFeeValue,
-            'Treasury: not enough MAHA allowance'
-        );
-
         // charge the stability fee
         IERC20(share).safeTransferFrom(
             msg.sender,
@@ -409,6 +245,7 @@ contract Treasury is ContractGuard, Epoch {
         IBasisAsset(cash).mint(msg.sender, uint256(1000).mul(1e18));
 
         if (cashPrice <= cashPriceCeiling) {
+            // TODO: allocate bonds budget over here
             return; // just advance epoch instead revert
         }
 
@@ -446,11 +283,25 @@ contract Treasury is ContractGuard, Epoch {
                 ecosystemReserve,
                 'Treasury: Ecosystem Seigniorage Allocation'
             );
-            emit ContributionPoolFunded(now, ecosystemReserve);
+            emit PoolFunded(ecosystemFund, ecosystemReserve);
             return ecosystemReserve;
         }
 
         return 0;
+    }
+
+    function _updateCashPrice() internal {
+        try IOracle(bondOracle).update() {} catch {}
+        try IOracle(seigniorageOracle).update() {} catch {}
+
+        cashTargetPrice = IGMUOracle(gmuOracle).getPrice();
+
+        // Set the ceiling price to be 5% above the target price.
+        cashPriceCeiling =
+            cashTargetPrice +
+            uint256(5).mul(cashTargetPrice).div(10**2);
+
+        bondDepletionFloor = uint256(1000).mul(cashTargetPrice);
     }
 
     function _allocateToBondHolers(uint256 seigniorage)
@@ -492,28 +343,24 @@ contract Treasury is ContractGuard, Epoch {
             IBoardroom(arthLiquidityBoardroom).allocateSeigniorage(
                 arthLiquidityBoardroomReserve
             );
-            emit BoardroomFunded(now, arthLiquidityBoardroomReserve);
+            emit PoolFunded(
+                arthLiquidityBoardroom,
+                arthLiquidityBoardroomReserve
+            );
         }
 
         if (arthBoardroomReserve > 0) {
             IERC20(cash).safeApprove(arthBoardroom, arthBoardroomReserve);
             IBoardroom(arthBoardroom).allocateSeigniorage(arthBoardroomReserve);
-            emit BoardroomFunded(now, arthBoardroomReserve);
+            emit PoolFunded(arthBoardroom, arthBoardroomReserve);
         }
     }
 
     // GOV
     event Initialized(address indexed executor, uint256 at);
     event Migration(address indexed target);
-    event ContributionPoolChanged(address newFund, uint256 newRate);
-    event ArthBoardroomChanged(address newFund, uint256 newRate);
-    event ArthLiquidityBoardroomChanged(address newFund, uint256 newRate);
-
-    // CORE
     event RedeemedBonds(address indexed from, uint256 amount);
     event BoughtBonds(address indexed from, uint256 amount);
     event TreasuryFunded(uint256 timestamp, uint256 seigniorage);
-    event BoardroomFunded(uint256 timestamp, uint256 seigniorage);
-    event ContributionPoolFunded(uint256 timestamp, uint256 seigniorage);
-    event StabilityFeeChanged(uint256 old, uint256 newRate);
+    event PoolFunded(address indexed pool, uint256 seigniorage);
 }
