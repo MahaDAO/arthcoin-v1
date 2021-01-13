@@ -112,6 +112,7 @@ contract Treasury is TreasurySetters {
         checkMigration
         checkStartTime
         checkOperator
+        updatePrice
         returns (uint256)
     {
         require(
@@ -181,7 +182,7 @@ contract Treasury is TreasurySetters {
         IBasisAsset(cash).burnFrom(msg.sender, cashToConvert);
         IBasisAsset(bond).mint(
             msg.sender,
-            cashToConvert.mul(100).div(uint256(100).bondDiscountOutOf100)
+            cashToConvert.mul(1e18).div(cash1hPrice)
         );
 
         emit BoughtBonds(msg.sender, boughtBackARTH);
@@ -230,8 +231,6 @@ contract Treasury is TreasurySetters {
 
         // sell the ARTH for Dai right away
         if (sellForDai) {
-            IERC20(cash).safeTransfer(address(this), amount);
-
             address[] memory path = new address[](2);
             path[0] = address(cash);
             path[1] = address(dai);
@@ -265,12 +264,12 @@ contract Treasury is TreasurySetters {
         checkOperator
     {
         _updateCashPrice();
-        uint256 cashPrice = _getCashPrice(seigniorageOracle);
+        uint256 cash12hPrice = getSeigniorageOraclePrice();
 
         // send 1000 ARTH reward to the person advancing the epoch to compensate for gas
         IBasisAsset(cash).mint(msg.sender, uint256(1000).mul(1e18));
 
-        if (cashPrice <= getCeilingPrice()) {
+        if (cash12hPrice <= getCeilingPrice()) {
             return; // just advance epoch instead revert
         }
 
@@ -278,7 +277,10 @@ contract Treasury is TreasurySetters {
         uint256 cashSupply =
             IERC20(cash).totalSupply().sub(accumulatedSeigniorage);
 
-        uint256 percentage = cashPrice.sub(cashTargetPrice);
+        // calculate how much seigniorage should be minted basis deviation from target price
+        uint256 percentage =
+            (cash12hPrice.sub(cashTargetPrice)).mul(1e18).div(cashTargetPrice);
+
         uint256 seigniorage = cashSupply.mul(percentage).div(1e18);
         IBasisAsset(cash).mint(address(this), seigniorage);
 
@@ -406,12 +408,15 @@ contract Treasury is TreasurySetters {
      * an hour a new TWAP will be calculated and the cap is reset based on
      * next 12h epoch.
      */
-    function _updateConversionLimit(uint256 cashPrice) internal {
-        uint256 currentEpoch = Epoch(seigniorageOracle).getLastEpoch(); // lastest update time
+    function _updateConversionLimit(uint256 cash24hrPrice) internal {
+        uint256 currentEpoch = get12hourEpoch(); // lastest update time
+
         if (lastConversionLimitEpoch != currentEpoch) {
             // understand how much % deviation do we have from target price
             uint256 percentage =
-                cashTargetPrice.sub(cashPrice).mul(1e18).div(cashTargetPrice);
+                cashTargetPrice.sub(cash24hrPrice).mul(1e18).div(
+                    cashTargetPrice
+                );
 
             // accordingly set the new conversion limit to be that % from the
             // current circulating supply of ARTH
@@ -422,6 +427,7 @@ contract Treasury is TreasurySetters {
             // reset this counter so that new bonds can now be minted...
             accumulatedBonds = 0;
 
+            // update epoch counter
             lastConversionLimitEpoch = currentEpoch;
         }
     }

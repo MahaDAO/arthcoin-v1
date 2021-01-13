@@ -55,6 +55,14 @@ abstract contract TreasuryGetters is TreasuryState {
         return ICurve(curve).calcCeiling(arthCirculatingSupply());
     }
 
+    function get1hourEpoch() public view returns (uint256) {
+        return Epoch(bondOracle).getLastEpoch();
+    }
+
+    function get12hourEpoch() public view returns (uint256) {
+        return Epoch(seigniorageOracle).getLastEpoch();
+    }
+
     function _getCashPrice(address oracle) internal view returns (uint256) {
         try IOracle(oracle).consult(cash, 1e18) returns (uint256 price) {
             return price;
