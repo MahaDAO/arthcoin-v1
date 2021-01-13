@@ -164,23 +164,24 @@ contract Treasury is TreasurySetters {
         uint256 boughtBackARTH = Math.min(output[1], expectedCashAmount);
 
         // basis the amount of ARTH being bought back; understand how much of it
-        // can we convert to bond tokens by looking at
-        boughtBackARTH = Math.min(
-            boughtBackARTH,
-            cashConversionLimit.sub(accumulatedBonds)
-        );
+        // can we convert to bond tokens by looking at the conversion limits
+        uint256 cashToConvert =
+            Math.min(
+                boughtBackARTH,
+                cashToBondConversionLimit.sub(accumulatedBonds)
+            );
 
+        // if all good then
+        require(cashToConvert != 0, 'No more bonds to be redeemed');
         accumulatedBonds = accumulatedBonds.add(boughtBackARTH);
-
-        require(boughtBackARTH == 0, 'No more bonds to be redeemed');
 
         // 3. Burn bought ARTH cash and mint bonds at the discounted price.
         // TODO: Set the minting amount according to bond price.
         // TODO: calculate premium basis size of the trade
-        IBasisAsset(cash).burnFrom(msg.sender, boughtBackARTH);
+        IBasisAsset(cash).burnFrom(msg.sender, cashToConvert);
         IBasisAsset(bond).mint(
             msg.sender,
-            boughtBackARTH.mul(100).div(bondDiscountOutOf100)
+            cashToConvert.mul(100).div(uint256(100).bondDiscountOutOf100)
         );
 
         emit BoughtBonds(msg.sender, boughtBackARTH);
@@ -395,15 +396,33 @@ contract Treasury is TreasurySetters {
         }
     }
 
+    /**
+     * This function calculates how much bonds should be minted given an epoch
+     * https://github.com/Basis-Cash/basiscash-protocol/issues/27
+     *
+     * The cap will be of the following size: ($1-1hTWAP)*(Circ $BAC),
+     * where 1hTWAP is the 1h TWAP of the $ARTH price and “Circ $ARTH is
+     * the Circulating $ARTH supply. The cap will last for one hour; after
+     * an hour a new TWAP will be calculated and the cap is reset based on
+     * the new TWAP value.
+     */
     function _updateConversionLimit(uint256 cashPrice) internal {
-        uint256 currentEpoch = Epoch(bondOracle).getLastEpoch(); // lastest update time
-        if (lastBondOracleEpoch != currentEpoch) {
+        uint256 currentEpoch = Epoch(seigniorageOracle).getLastEpoch(); // lastest update time
+        if (lastConversionLimitEpoch != currentEpoch) {
+            // understand how much % deviation do we have from target price
             uint256 percentage =
                 cashTargetPrice.sub(cashPrice).mul(1e18).div(cashTargetPrice);
-            cashConversionLimit = circulatingSupply().mul(percentage).div(1e18);
+
+            // accordingly set the new conversion limit to be that % from the
+            // current circulating supply of ARTH
+            cashToBondConversionLimit = arthCirculatingSupply()
+                .mul(percentage)
+                .div(1e18);
+
+            // reset this counter so that new bonds can now be minted...
             accumulatedBonds = 0;
 
-            lastBondOracleEpoch = currentEpoch;
+            lastConversionLimitEpoch = currentEpoch;
         }
     }
 

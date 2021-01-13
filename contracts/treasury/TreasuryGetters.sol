@@ -47,12 +47,12 @@ abstract contract TreasuryGetters is TreasuryState {
         return _getCashPrice(seigniorageOracle);
     }
 
-    function circulatingSupply() public view returns (uint256) {
+    function arthCirculatingSupply() public view returns (uint256) {
         return IERC20(cash).totalSupply().sub(accumulatedSeigniorage);
     }
 
     function getCeilingPrice() public view returns (uint256) {
-        return ICurve(curve).calcCeiling(circulatingSupply());
+        return ICurve(curve).calcCeiling(arthCirculatingSupply());
     }
 
     function _getCashPrice(address oracle) internal view returns (uint256) {

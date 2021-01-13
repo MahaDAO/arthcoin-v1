@@ -29,16 +29,17 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     address public cash;
     address public bond;
     address public share;
-    address public gmuOracle;
-    address public mahausdOracle;
     address public uniswapRouter;
 
     address public arthLiquidityBoardroom;
     address public arthBoardroom;
     address public ecosystemFund;
 
+    // oracles
     address public bondOracle;
     address public seigniorageOracle;
+    address public gmuOracle;
+    address public mahausdOracle;
 
     // ========== PARAMS
     // uint256 public initialCashPriceOne = 1;
@@ -48,8 +49,8 @@ abstract contract TreasuryState is ContractGuard, Epoch {
 
     // these govern how much bond tokens are issued
     address public curve;
-    uint256 public lastBondOracleEpoch = 0;
-    uint256 public cashConversionLimit = 0;
+    uint256 public lastConversionLimitEpoch = 0;
+    uint256 public cashToBondConversionLimit = 0;
     uint256 public accumulatedSeigniorage = 0;
     uint256 public accumulatedBonds = 0;
 
