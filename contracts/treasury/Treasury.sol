@@ -298,8 +298,12 @@ contract Treasury is TreasurySetters {
      * TODO: this function needs to be optimised for gas
      */
     function _updateCashPrice() internal {
-        try IOracle(bondOracle).update() {} catch {}
-        try IOracle(seigniorageOracle).update() {} catch {}
+        if (Epoch(bondOracle).callable()) {
+            try IOracle(bondOracle).update() {} catch {}
+        }
+        if (Epoch(seigniorageOracle).callable()) {
+            try IOracle(seigniorageOracle).update() {} catch {}
+        }
 
         cashTargetPrice = IGMUOracle(gmuOracle).getPrice();
 

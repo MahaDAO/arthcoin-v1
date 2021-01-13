@@ -35,5 +35,9 @@ contract MockOracle is IOracle {
         return price.mul(amountIn).div(1e18);
     }
 
+    function callable() public pure returns (bool) {
+        return true;
+    }
+
     event Updated(uint256 price0CumulativeLast, uint256 price1CumulativeLast);
 }
