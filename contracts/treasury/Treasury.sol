@@ -121,15 +121,13 @@ contract Treasury is TreasurySetters {
         );
 
         // Update the price to latest before using.
-        uint256 cash1hPrice = _getCashPrice(bondOracle);
+        uint256 cash1hPrice = getBondOraclePrice();
 
         require(cash1hPrice <= targetPrice, 'Treasury: cash price moved');
         require(
             cash1hPrice < cashTargetPrice, // price < $1
             'Treasury: cashPrice not eligible for bond purchase'
         );
-
-        _updateConversionLimit(cash1hPrice);
 
         // Find the expected amount recieved when swapping the following
         // tokens on uniswap.
@@ -162,31 +160,29 @@ contract Treasury is TreasurySetters {
         // we do this to understand how much ARTH was bought back as without this, we
         // could witness a flash loan attack. (given that the minted amount of ARTHB
         // minted is based how much ARTH was received)
-        uint256 boughtBackARTH = Math.min(output[1], expectedCashAmount);
+        uint256 boughtBackCash = Math.min(output[1], expectedCashAmount);
 
         // basis the amount of ARTH being bought back; understand how much of it
         // can we convert to bond tokens by looking at the conversion limits
         uint256 cashToConvert =
             Math.min(
-                boughtBackARTH,
+                boughtBackCash,
                 cashToBondConversionLimit.sub(accumulatedBonds)
             );
 
-        // if all good then
-        require(cashToConvert != 0, 'No more bonds to be redeemed');
-        accumulatedBonds = accumulatedBonds.add(boughtBackARTH);
+        // if all good then mint ARTHB, burn ARTH and update the counters
+        require(cashToConvert >= 0, 'No more bonds to be redeemed');
+        uint256 bondsToIssue = cashToConvert.mul(1e18).div(cash1hPrice);
+        accumulatedBonds = accumulatedBonds.add(bondsToIssue);
 
         // 3. Burn bought ARTH cash and mint bonds at the discounted price.
         // TODO: Set the minting amount according to bond price.
         // TODO: calculate premium basis size of the trade
         IBasisAsset(cash).burnFrom(msg.sender, cashToConvert);
-        IBasisAsset(bond).mint(
-            msg.sender,
-            cashToConvert.mul(1e18).div(cash1hPrice)
-        );
+        IBasisAsset(bond).mint(msg.sender, bondsToIssue);
 
-        emit BoughtBonds(msg.sender, boughtBackARTH);
-        return boughtBackARTH;
+        emit BoughtBonds(msg.sender, amountInDai, cashToConvert, bondsToIssue);
+        return bondsToIssue;
     }
 
     /**
@@ -268,6 +264,9 @@ contract Treasury is TreasurySetters {
 
         // send 1000 ARTH reward to the person advancing the epoch to compensate for gas
         IBasisAsset(cash).mint(msg.sender, uint256(1000).mul(1e18));
+
+        // update the bond limits
+        _updateConversionLimit(cash12hPrice);
 
         if (cash12hPrice <= getCeilingPrice()) {
             return; // just advance epoch instead revert
@@ -409,34 +408,30 @@ contract Treasury is TreasurySetters {
      * next 12h epoch.
      */
     function _updateConversionLimit(uint256 cash24hrPrice) internal {
-        uint256 currentEpoch = get12hourEpoch(); // lastest update time
+        // understand how much % deviation do we have from target price
+        uint256 percentage =
+            cashTargetPrice.sub(cash24hrPrice).mul(1e18).div(cashTargetPrice);
 
-        if (lastConversionLimitEpoch != currentEpoch) {
-            // understand how much % deviation do we have from target price
-            uint256 percentage =
-                cashTargetPrice.sub(cash24hrPrice).mul(1e18).div(
-                    cashTargetPrice
-                );
+        // accordingly set the new conversion limit to be that % from the
+        // current circulating supply of ARTH
+        cashToBondConversionLimit = arthCirculatingSupply().mul(percentage).div(
+            1e18
+        );
 
-            // accordingly set the new conversion limit to be that % from the
-            // current circulating supply of ARTH
-            cashToBondConversionLimit = arthCirculatingSupply()
-                .mul(percentage)
-                .div(1e18);
-
-            // reset this counter so that new bonds can now be minted...
-            accumulatedBonds = 0;
-
-            // update epoch counter
-            lastConversionLimitEpoch = currentEpoch;
-        }
+        // reset this counter so that new bonds can now be minted...
+        accumulatedBonds = 0;
     }
 
     // GOV
     event Initialized(address indexed executor, uint256 at);
     event Migration(address indexed target);
     event RedeemedBonds(address indexed from, uint256 amount);
-    event BoughtBonds(address indexed from, uint256 amount);
+    event BoughtBonds(
+        address indexed from,
+        uint256 amountDaiIn,
+        uint256 amountBurnt,
+        uint256 bondsIssued
+    );
     event TreasuryFunded(uint256 timestamp, uint256 seigniorage);
     event PoolFunded(address indexed pool, uint256 seigniorage);
 }

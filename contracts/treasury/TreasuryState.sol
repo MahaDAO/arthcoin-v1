@@ -46,7 +46,6 @@ abstract contract TreasuryState is ContractGuard, Epoch {
 
     // these govern how much bond tokens are issued
     address public curve;
-    uint256 public lastConversionLimitEpoch = 0;
     uint256 public cashToBondConversionLimit = 0;
     uint256 public accumulatedSeigniorage = 0;
     uint256 public accumulatedBonds = 0;
