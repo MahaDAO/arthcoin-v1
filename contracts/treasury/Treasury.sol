@@ -227,14 +227,17 @@ contract Treasury is TreasurySetters {
 
         // sell the ARTH for Dai right away
         if (sellForDai) {
+            // calculate how much DAI will we get from Uniswap by selling ARTH
             address[] memory path = new address[](2);
             path[0] = address(cash);
             path[1] = address(dai);
-
             uint256[] memory amountsOut =
                 IUniswapV2Router02(uniswapRouter).getAmountsOut(amount, path);
             uint256 expectedDaiAmount = amountsOut[1];
 
+            // TODO: write some checkes over here
+
+            // send it!
             IERC20(cash).safeApprove(uniswapRouter, amount);
             IUniswapV2Router02(uniswapRouter).swapExactTokensForTokens(
                 amount,
