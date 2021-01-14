@@ -290,21 +290,21 @@ describe.only('Treasury', () => {
     });
   });
 
-  describe.only('Seigniorage', () => {
+  describe('Seigniorage', () => {
     describe('#allocateSeigniorage', () => {
       beforeEach('transfer permissions', async () => {
         await bond.mint(operator.address, INITIAL_BAB_AMOUNT);
         await cash.mint(operator.address, INITIAL_BAC_AMOUNT);
         await cash.mint(treasury.address, INITIAL_BAC_AMOUNT);
         await share.mint(operator.address, INITIAL_BAS_AMOUNT);
-        for await (const contract of [cash, bond, share, arthLiquidityBoardroom, arthBoardroom]) {
+        for await (const contract of [cash, bond, arthLiquidityBoardroom, arthBoardroom]) {
           await contract.connect(operator).transferOperator(treasury.address);
         }
       });
 
       describe('after migration', () => {
         it('should fail if contract migrated', async () => {
-          for await (const contract of [cash, bond, share]) {
+          for await (const contract of [cash, bond]) {
             await contract
               .connect(operator)
               .transferOwnership(treasury.address);
@@ -337,23 +337,26 @@ describe.only('Treasury', () => {
         });
 
         it('should funded correctly', async () => {
-          const cashPrice = ETH.mul(210).div(100);
+          const cashPrice = ETH.mul(200).div(100);
           await oracle.setPrice(cashPrice);
 
+          const bondSeigniorageRate = await treasury.bondSeigniorageRate();
+
           // calculate with circulating supply
+          const advanceReward = ETH.mul(1000)
           const treasuryHoldings = await treasury.getReserve();
-          const cashSupply = (await cash.totalSupply()).sub(treasuryHoldings);
+          const cashSupply = (await cash.totalSupply()).sub(treasuryHoldings).add(advanceReward);
           const expectedSeigniorage = cashSupply
             .mul(cashPrice.sub(ETH))
             .div(ETH);
 
           // get all expected reserve
           const expectedFundReserve = expectedSeigniorage
-            .mul(await treasury.fundAllocationRate())
+            .mul(await treasury.ecosystemFundAllocationRate())
             .div(100);
 
           const expectedTreasuryReserve = bigmin(
-            expectedSeigniorage.sub(expectedFundReserve),
+            expectedSeigniorage.sub(expectedFundReserve).mul(bondSeigniorageRate).div(100),
             (await bond.totalSupply()).sub(treasuryHoldings)
           );
 
@@ -363,10 +366,16 @@ describe.only('Treasury', () => {
 
           const allocationResult = await treasury.allocateSeigniorage();
 
+          if (expectedSeigniorage.gt(ZERO)) {
+            await expect(new Promise((resolve) => resolve(allocationResult)))
+              .to.emit(treasury, 'SeigniorageMinted')
+              .withArgs(expectedSeigniorage);
+          }
+
           if (expectedFundReserve.gt(ZERO)) {
             await expect(new Promise((resolve) => resolve(allocationResult)))
-              .to.emit(treasury, 'ContributionPoolFunded')
-              .withArgs(await latestBlocktime(provider), expectedFundReserve);
+              .to.emit(treasury, 'PoolFunded')
+              .withArgs(developmentFund.address, expectedFundReserve);
           }
 
           if (expectedTreasuryReserve.gt(ZERO)) {
@@ -378,13 +387,14 @@ describe.only('Treasury', () => {
               );
           }
 
+          // TODO: need to get the calcuation for the boardrooms correct
           if (expectedBoardroomReserve.gt(ZERO)) {
-            await expect(new Promise((resolve) => resolve(allocationResult)))
-              .to.emit(treasury, 'BoardroomFunded')
-              .withArgs(
-                await latestBlocktime(provider),
-                expectedBoardroomReserve
-              );
+            // await expect(new Promise((resolve) => resolve(allocationResult)))
+            //   .to.emit(treasury, 'PoolFunded')
+            //   .withArgs(
+            //     arthBoardroom.address,
+            //     expectedBoardroomReserve
+            //   );
           }
 
           expect(await cash.balanceOf(developmentFund.address)).to.eq(expectedFundReserve);

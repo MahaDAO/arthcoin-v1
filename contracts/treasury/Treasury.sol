@@ -277,16 +277,13 @@ contract Treasury is TreasurySetters {
             return; // just advance epoch instead revert
         }
 
-        // circulating supply
-        uint256 cashSupply =
-            IERC20(cash).totalSupply().sub(accumulatedSeigniorage);
-
         // calculate how much seigniorage should be minted basis deviation from target price
         uint256 percentage =
             (cash12hPrice.sub(cashTargetPrice)).mul(1e18).div(cashTargetPrice);
 
-        uint256 seigniorage = cashSupply.mul(percentage).div(1e18);
+        uint256 seigniorage = arthCirculatingSupply().mul(percentage).div(1e18);
         IBasisAsset(cash).mint(address(this), seigniorage);
+        emit SeigniorageMinted(seigniorage);
 
         // send funds to the community development fund
         uint256 ecosystemReserve = _allocateToEcosystemFund(seigniorage);
@@ -414,18 +411,31 @@ contract Treasury is TreasurySetters {
      * next 12h epoch.
      */
     function _updateConversionLimit(uint256 cash24hrPrice) internal {
-        // understand how much % deviation do we have from target price
-        uint256 percentage =
-            cashTargetPrice.sub(cash24hrPrice).mul(1e18).div(cashTargetPrice);
-
-        // accordingly set the new conversion limit to be that % from the
-        // current circulating supply of ARTH
-        cashToBondConversionLimit = arthCirculatingSupply().mul(percentage).div(
-            1e18
-        );
-
         // reset this counter so that new bonds can now be minted...
         accumulatedBonds = 0;
+
+        // check if we are in expansion or in contraction mode
+        if (cash24hrPrice > cashTargetPrice) {
+            // dont do anything if we are in expansion mode
+            cashToBondConversionLimit = 0;
+        } else {
+            // in contraction mode; set a limit to how many bonds are there
+
+            // understand how much % deviation do we have from target price
+            // if target price is 2.5$ and we are at 2$; then percentage
+            uint256 percentage =
+                cashTargetPrice.sub(cash24hrPrice).mul(1e18).div(
+                    cashTargetPrice
+                );
+
+            // accordingly set the new conversion limit to be that % from the
+            // current circulating supply of ARTH
+            cashToBondConversionLimit = arthCirculatingSupply()
+                .mul(percentage)
+                .div(1e18);
+
+            emit BondsAllocated(cashToBondConversionLimit);
+        }
     }
 
     // GOV
@@ -438,6 +448,9 @@ contract Treasury is TreasurySetters {
         uint256 amountBurnt,
         uint256 bondsIssued
     );
+    event Log(uint256 data);
     event TreasuryFunded(uint256 timestamp, uint256 seigniorage);
+    event SeigniorageMinted(uint256 seigniorage);
+    event BondsAllocated(uint256 limit);
     event PoolFunded(address indexed pool, uint256 seigniorage);
 }

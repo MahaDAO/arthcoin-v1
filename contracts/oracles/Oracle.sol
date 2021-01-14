@@ -10,7 +10,7 @@ import '../interfaces/IGMUOracle.sol';
 contract Oracle is Ownable, IGMUOracle {
     using SafeMath for uint256;
 
-    uint256 public price;
+    uint256 public price = 1e18;
     string public name;
 
     constructor(string memory _name, uint256 _price) public {
