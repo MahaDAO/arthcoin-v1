@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 import '@nomiclabs/hardhat-ethers';
 import '@nomiclabs/hardhat-etherscan';
 import 'hardhat-gas-reporter';
@@ -11,6 +13,10 @@ export default {
   default: 'development',
   networks: {
     hardhat: {},
+    ropsten: {
+      url: `https://ropsten.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
+      accounts: [`0x${process.env.WALLET_SECRET_KEY}`]
+    },
     development: {
       url: "http://localhost:7545",
       accounts: [process.env.WALLET_SECRET_KEY, process.env.METAMASK_WALLET_SECRET]
@@ -38,6 +44,6 @@ export default {
   etherscan: {
     // Your API key for Etherscan
     // Obtain one at https://etherscan.io/
-    apiKey: '<api-key>',
+    apiKey: process.env.ETHERSCAN_API_KEY
   },
 };

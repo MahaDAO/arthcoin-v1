@@ -251,6 +251,8 @@ contract Treasury is TreasurySetters {
             IERC20(cash).safeTransfer(msg.sender, amount);
         }
 
+        _updateCashPrice();
+
         emit RedeemedBonds(msg.sender, amount);
     }
 
