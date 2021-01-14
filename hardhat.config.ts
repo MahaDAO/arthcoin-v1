@@ -1,12 +1,19 @@
+require('dotenv').config();
+
 import '@nomiclabs/hardhat-ethers';
 import '@nomiclabs/hardhat-etherscan';
 import 'hardhat-gas-reporter';
 import 'solidity-coverage';
 
+
 export default {
-  default: 'hardhat',
+  default: 'ropsten',
   networks: {
     hardhat: {},
+    ropsten: {
+      url: `https://ropsten.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
+      accounts: [`0x${process.env.WALLET_SECRET_KEY}`]
+    }
   },
   solidity: {
     version: '0.6.12',
@@ -30,6 +37,6 @@ export default {
   etherscan: {
     // Your API key for Etherscan
     // Obtain one at https://etherscan.io/
-    apiKey: '<api-key>',
+    apiKey: process.env.ETHERSCAN_API_KEY
   },
 };
