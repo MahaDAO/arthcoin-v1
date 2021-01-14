@@ -8,7 +8,7 @@ import '../owner/Operator.sol';
 contract Epoch is Operator {
     using SafeMath for uint256;
 
-    uint256 private period;
+    uint256 private period = 1;
     uint256 private startTime;
     uint256 private lastExecutedAt;
 

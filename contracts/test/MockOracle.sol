@@ -9,7 +9,7 @@ contract MockOracle is IOracle {
     using SafeMath for uint256;
 
     uint256 epoch;
-    uint256 period;
+    uint256 period = 1;
 
     uint256 public price;
     bool public error;
