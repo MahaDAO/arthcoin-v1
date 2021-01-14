@@ -3,6 +3,7 @@ pragma solidity ^0.6.0;
 import '@openzeppelin/contracts/math/SafeMath.sol';
 
 import '../interfaces/IOracle.sol';
+import '../lib/UniswapV2Library.sol';
 
 contract MockOracle is IOracle {
     using SafeMath for uint256;
@@ -20,6 +21,10 @@ contract MockOracle is IOracle {
     }
 
     // epoch
+    function callable() public pure returns (bool) {
+        return true;
+    }
+
     function setEpoch(uint256 _epoch) public {
         epoch = _epoch;
     }
@@ -77,6 +82,14 @@ contract MockOracle is IOracle {
         returns (uint256)
     {
         return price.mul(amountIn).div(1e18);
+    }
+
+    function pairFor(
+        address factory,
+        address tokenA,
+        address tokenB
+    ) external pure returns (address lpt) {
+        return UniswapV2Library.pairFor(factory, tokenA, tokenB);
     }
 
     event Updated(uint256 price0CumulativeLast, uint256 price1CumulativeLast);

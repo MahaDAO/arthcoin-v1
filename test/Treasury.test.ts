@@ -40,7 +40,7 @@ function bigmin(a: BigNumber, b: BigNumber): BigNumber {
 }
 
 
-describe('Treasury', () => {
+describe.only('Treasury', () => {
   const { provider } = ethers;
 
   let operator: SignerWithAddress;
@@ -58,12 +58,14 @@ describe('Treasury', () => {
   let DevelopmentFund: ContractFactory;
   let ArthBoardroom: ContractFactory;
   let ArthLiquidityBoardroom: ContractFactory;
-  const TREASURY_PERIOD = 10 * 60;
   let BondRedemtionOracle: ContractFactory;
   let SeigniorageOracle: ContractFactory;
   let GMUOracle: ContractFactory;
+  let MockOracle: ContractFactory;
   let MAHAUSDOracle: ContractFactory;
   let DAI: ContractFactory;
+  let MockCurve: ContractFactory;
+
 
   let Factory = new ContractFactory(
     UniswapV2Factory.abi,
@@ -82,8 +84,8 @@ describe('Treasury', () => {
     DevelopmentFund = await ethers.getContractFactory('DevelopmentFund');
     ArthBoardroom = await ethers.getContractFactory('ArthBoardroom');
     ArthLiquidityBoardroom = await ethers.getContractFactory('ArthLiquidityBoardroom');
-    BondRedemtionOracle = await ethers.getContractFactory('BondRedemtionOracle');
-    SeigniorageOracle = await ethers.getContractFactory('SeigniorageOracle');
+    MockCurve = await ethers.getContractFactory('MockCurve');
+    MockOracle = await ethers.getContractFactory('MockOracle');
     GMUOracle = await ethers.getContractFactory('GMUOracle');
     MAHAUSDOracle = await ethers.getContractFactory('MAHAUSDOracle');
     DAI = await ethers.getContractFactory('MockDai');
@@ -93,8 +95,9 @@ describe('Treasury', () => {
   let cash: Contract;
   let share: Contract;
   let dai: Contract;
-  let bondRedemtionOracle: Contract;
-  let seigniorageOracle: Contract;
+  let curve: Contract;
+
+  let oracle: Contract;
   let arthBoardroom: Contract;
   let arthLiquidityBoardroom: Contract;
   let developmentFund: Contract;
@@ -110,6 +113,13 @@ describe('Treasury', () => {
     bond = await ARTHB.connect(operator).deploy();
     share = await MAHA.connect(operator).deploy();
     dai = await DAI.connect(operator).deploy();
+    curve = await MockCurve.connect(operator).deploy(
+      utils.parseEther('1.05'),
+      0,
+      0,
+      0,
+      0
+    );
 
     startTime = BigNumber.from(await latestBlocktime(provider)).add(DAY);
 
@@ -136,27 +146,13 @@ describe('Treasury', () => {
 
     developmentFund = await DevelopmentFund.connect(operator).deploy();
 
-    bondRedemtionOracle = await BondRedemtionOracle.connect(operator).deploy(
-      uniswap.address,
-      cash.address,
-      dai.address,
-      5 * 60,
-      Math.floor(Date.now() / 1000)
-    );
-
-    seigniorageOracle = await SeigniorageOracle.connect(operator).deploy(
-      uniswap.address,
-      cash.address,
-      dai.address,
-      5 * 60,
-      Math.floor(Date.now() / 1000)
-    );
+    oracle = await MockOracle.connect(operator).deploy();
 
     gmuOracle = await GMUOracle.connect(operator).deploy('GMU', ETH);
     mahausdOracle = await MAHAUSDOracle.connect(operator).deploy('MAHA', ETH);
 
     arthBoardroom = await ArthBoardroom.connect(operator).deploy(cash.address, 5 * 60);
-    const dai_arth_lpt = await await bondRedemtionOracle.pairFor(uniswap.address, cash.address, dai.address);
+    const dai_arth_lpt = await await oracle.pairFor(uniswap.address, cash.address, dai.address);
     arthLiquidityBoardroom = await ArthLiquidityBoardroom.connect(operator).deploy(
       cash.address,
       dai_arth_lpt,
@@ -168,13 +164,14 @@ describe('Treasury', () => {
       cash.address,
       bond.address,
       share.address,
-      bondRedemtionOracle.address,
+      oracle.address,
       mahausdOracle.address,
-      seigniorageOracle.address,
+      oracle.address,
       arthLiquidityBoardroom.address,
       arthBoardroom.address,
       developmentFund.address,
       uniswapRouter.address,
+      curve.address,
       gmuOracle.address,
       startTime,
       5 * 60
@@ -189,15 +186,16 @@ describe('Treasury', () => {
       cash.address,
       bond.address,
       share.address,
-      bondRedemtionOracle.address,
+      oracle.address,
       mahausdOracle.address,
-      seigniorageOracle.address,
+      oracle.address,
       arthLiquidityBoardroom.address,
       arthBoardroom.address,
       developmentFund.address,
       uniswapRouter.address,
+      curve.address,
       gmuOracle.address,
-      Math.floor(Date.now() / 1000),
+      BigNumber.from(await latestBlocktime(provider)).add(DAY),
       5 * 60
     );
   });
@@ -221,13 +219,12 @@ describe('Treasury', () => {
         await arthBoardroom.connect(operator).transferOperator(newTreasury.address);
         await arthLiquidityBoardroom.connect(operator).transferOperator(newTreasury.address);
 
-        await expect(newTreasury.initialize())
-          .to.emit(newTreasury, 'Initialized')
-          .to.emit(cash, 'Transfer')
-          .withArgs(newTreasury.address, ZERO_ADDR, ETH)
-          .to.emit(cash, 'Transfer');
+        await expect(newTreasury.initialize()).to.emit(
+          newTreasury,
+          'Initialized'
+        );
 
-        expect(await newTreasury.getReserve()).to.eq(ZERO);
+        expect(await newTreasury.getReserve()).to.eq(ETH);
       });
 
       it('Should fail if newTreasury is not the operator of core arth boardroom contract', async () => {
@@ -437,7 +434,7 @@ describe('Treasury', () => {
 
         it('Should funded even fails to call update function in oracle', async () => {
           const cashPrice = ETH.mul(106).div(100);
-          await seigniorageOracle.update();
+          await oracle.update();
 
           await expect(treasury.allocateSeigniorage()).to.emit(
             treasury,
