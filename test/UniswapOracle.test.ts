@@ -8,18 +8,9 @@ import UniswapV2Router from '@uniswap/v2-periphery/build/UniswapV2Router02.json'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address';
 import { Provider } from '@ethersproject/providers';
 
-import { advanceTimeAndBlock } from './shared/utilities';
-
+import { advanceTimeAndBlock, latestBlocktime } from './shared/utilities';
 
 chai.use(solidity);
-
-
-async function latestBlocktime(provider: Provider): Promise<number> {
-  const { timestamp } = await provider.getBlock('latest');
-
-  return timestamp;
-}
-
 
 async function addLiquidity(
   provider: Provider,
@@ -43,8 +34,7 @@ async function addLiquidity(
     );
 }
 
-
-describe('SeigniorageOracle', () => {
+describe('UniswapOracle', () => {
   const MINUTE = 60;
   const DAY = 86400;
   const ETH = utils.parseEther('1');
@@ -54,16 +44,16 @@ describe('SeigniorageOracle', () => {
   let operator: SignerWithAddress;
   let whale: SignerWithAddress;
 
-  before('Setup accounts', async () => {
+  before('setup accounts', async () => {
     [operator, whale] = await ethers.getSigners();
   });
 
-  let ARTH: ContractFactory;
-  let MAHA: ContractFactory;
-  let SeigniorageOracle: ContractFactory;
+  let Cash: ContractFactory;
+  let Share: ContractFactory;
+  let UniswapOracle: ContractFactory;
   let MockDAI: ContractFactory;
 
-  // Uniswap.
+  // uniswap
   let Factory = new ContractFactory(
     UniswapV2Factory.abi,
     UniswapV2Factory.bytecode
@@ -73,17 +63,17 @@ describe('SeigniorageOracle', () => {
     UniswapV2Router.bytecode
   );
 
-  before('Fetch contract factories', async () => {
-    ARTH = await ethers.getContractFactory('ARTH');
-    MAHA = await ethers.getContractFactory('MahaToken');
-    SeigniorageOracle = await ethers.getContractFactory('SeigniorageOracle');
+  before('fetch contract factories', async () => {
+    Cash = await ethers.getContractFactory('ARTH');
+    Share = await ethers.getContractFactory('MahaToken');
+    UniswapOracle = await ethers.getContractFactory('UniswapOracle');
     MockDAI = await ethers.getContractFactory('MockDai');
   });
 
   let factory: Contract;
   let router: Contract;
 
-  before('Deploy uniswap', async () => {
+  before('deploy uniswap', async () => {
     factory = await Factory.connect(operator).deploy(operator.address);
     router = await Router.connect(operator).deploy(
       factory.address,
@@ -97,10 +87,10 @@ describe('SeigniorageOracle', () => {
   let oracle: Contract;
   let oracleStartTime: BigNumber;
 
-  beforeEach('Deploy contracts', async () => {
+  beforeEach('deploy contracts', async () => {
     dai = await MockDAI.connect(operator).deploy();
-    cash = await ARTH.connect(operator).deploy();
-    share = await MAHA.connect(operator).deploy();
+    cash = await Cash.connect(operator).deploy();
+    share = await Share.connect(operator).deploy();
 
     await dai.connect(operator).mint(operator.address, ETH.mul(2));
     await dai.connect(operator).approve(router.address, ETH.mul(2));
@@ -110,7 +100,7 @@ describe('SeigniorageOracle', () => {
     await addLiquidity(provider, operator, router, cash, dai, ETH);
 
     oracleStartTime = BigNumber.from(await latestBlocktime(provider)).add(DAY);
-    oracle = await SeigniorageOracle.connect(operator).deploy(
+    oracle = await UniswapOracle.connect(operator).deploy(
       factory.address,
       cash.address,
       dai.address,
@@ -119,27 +109,26 @@ describe('SeigniorageOracle', () => {
     );
   });
 
-  describe('#Update', async () => {
-    it('Should works correctly', async () => {
+  describe('#update', async () => {
+    it('should works correctly', async () => {
       await advanceTimeAndBlock(
         provider,
         oracleStartTime.sub(await latestBlocktime(provider)).toNumber() - MINUTE
       );
 
-      // Epoch 0.
-      await expect(oracle.update()).to.revertedWith('Epoch: not allowed');
+      // epoch 0
+      await expect(oracle.update()).to.revertedWith('Epoch: not started yet');
       expect(await oracle.nextEpochPoint()).to.eq(oracleStartTime);
       expect(await oracle.getCurrentEpoch()).to.eq(BigNumber.from(0));
 
       await advanceTimeAndBlock(provider, 2 * MINUTE);
 
-      // Epoch 1.
+      // epoch 1
       await expect(oracle.update()).to.emit(oracle, 'Updated');
 
       expect(await oracle.nextEpochPoint()).to.eq(oracleStartTime.add(DAY));
-      expect(await oracle.getCurrentEpoch()).to.eq(BigNumber.from(1));
-
-      // Check double update.
+      expect(await oracle.getCurrentEpoch()).to.eq(BigNumber.from(0));
+      // check double update
       await expect(oracle.update()).to.revertedWith('Epoch: not allowed');
     });
   });
