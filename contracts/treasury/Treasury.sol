@@ -253,7 +253,7 @@ contract Treasury is TreasurySetters {
 
         _updateCashPrice();
 
-        emit RedeemedBonds(msg.sender, amount);
+        emit RedeemedBonds(msg.sender, amount, sellForDai);
     }
 
     function allocateSeigniorage()
@@ -293,7 +293,8 @@ contract Treasury is TreasurySetters {
         seigniorage = seigniorage.sub(ecosystemReserve);
 
         // keep 90% of the funds to bond token holders; and send the remaining to the boardroom
-        uint256 allocatedForTreasury = seigniorage.mul(90).div(100);
+        uint256 allocatedForTreasury =
+            seigniorage.mul(bondSeigniorageRate).div(100);
         uint256 treasuryReserve = _allocateToBondHolers(allocatedForTreasury);
         seigniorage = seigniorage.sub(treasuryReserve);
 
@@ -430,7 +431,7 @@ contract Treasury is TreasurySetters {
     // GOV
     event Initialized(address indexed executor, uint256 at);
     event Migration(address indexed target);
-    event RedeemedBonds(address indexed from, uint256 amount);
+    event RedeemedBonds(address indexed from, uint256 amount, bool sellForDai);
     event BoughtBonds(
         address indexed from,
         uint256 amountDaiIn,

@@ -40,6 +40,15 @@ abstract contract TreasurySetters is TreasuryGetters {
         emit EcosystemFundChanged(newFund, rate);
     }
 
+    function setBondSeigniorageRate(uint256 rate) public onlyOwner {
+        require(rate >= 0, 'Treasury: rate < 0');
+        require(rate <= 100, 'Treasury: rate >= 0');
+
+        bondSeigniorageRate = rate;
+
+        emit BondSeigniorageRateChanged(rate);
+    }
+
     function setArthBoardroom(address newFund, uint256 rate) public onlyOwner {
         require(rate >= 0, 'Treasury: rate < 0');
         require(rate < 100, 'Treasury: rate >= 0');
@@ -95,4 +104,5 @@ abstract contract TreasurySetters is TreasuryGetters {
     event ArthBoardroomChanged(address newFund, uint256 newRate);
     event ArthLiquidityBoardroomChanged(address newFund, uint256 newRate);
     event StabilityFeeChanged(uint256 old, uint256 newRate);
+    event BondSeigniorageRateChanged(uint256 newRate);
 }
