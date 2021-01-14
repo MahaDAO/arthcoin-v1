@@ -56,15 +56,13 @@ describe.only('Treasury', () => {
   let MAHA: ContractFactory;
   let Treasury: ContractFactory;
   let DevelopmentFund: ContractFactory;
-  let ArthBoardroom: ContractFactory;
-  let ArthLiquidityBoardroom: ContractFactory;
-  let BondRedemtionOracle: ContractFactory;
-  let SeigniorageOracle: ContractFactory;
+  let MockBoardroom: ContractFactory;
   let GMUOracle: ContractFactory;
   let MockOracle: ContractFactory;
   let MAHAUSDOracle: ContractFactory;
   let DAI: ContractFactory;
   let MockCurve: ContractFactory;
+  let period: number = 5 * 60
 
 
   let Factory = new ContractFactory(
@@ -82,8 +80,7 @@ describe.only('Treasury', () => {
     MAHA = await ethers.getContractFactory('MahaToken');
     Treasury = await ethers.getContractFactory('Treasury');
     DevelopmentFund = await ethers.getContractFactory('DevelopmentFund');
-    ArthBoardroom = await ethers.getContractFactory('ArthBoardroom');
-    ArthLiquidityBoardroom = await ethers.getContractFactory('ArthLiquidityBoardroom');
+    MockBoardroom = await ethers.getContractFactory('MockBoardroom');
     MockCurve = await ethers.getContractFactory('MockCurve');
     MockOracle = await ethers.getContractFactory('MockOracle');
     GMUOracle = await ethers.getContractFactory('GMUOracle');
@@ -151,13 +148,8 @@ describe.only('Treasury', () => {
     gmuOracle = await GMUOracle.connect(operator).deploy('GMU', ETH);
     mahausdOracle = await MAHAUSDOracle.connect(operator).deploy('MAHA', ETH);
 
-    arthBoardroom = await ArthBoardroom.connect(operator).deploy(cash.address, 5 * 60);
-    const dai_arth_lpt = await await oracle.pairFor(uniswap.address, cash.address, dai.address);
-    arthLiquidityBoardroom = await ArthLiquidityBoardroom.connect(operator).deploy(
-      cash.address,
-      dai_arth_lpt,
-      5 * 60
-    );
+    arthBoardroom = await MockBoardroom.connect(operator).deploy(cash.address);
+    arthLiquidityBoardroom = await MockBoardroom.connect(operator).deploy(cash.address);
 
     treasury = await Treasury.connect(operator).deploy(
       dai.address,
@@ -174,7 +166,7 @@ describe.only('Treasury', () => {
       curve.address,
       gmuOracle.address,
       startTime,
-      5 * 60
+      period
     );
   });
 
@@ -195,8 +187,8 @@ describe.only('Treasury', () => {
       uniswapRouter.address,
       curve.address,
       gmuOracle.address,
-      BigNumber.from(await latestBlocktime(provider)).add(DAY),
-      5 * 60
+      startTime,
+      period
     );
   });
 
@@ -298,22 +290,21 @@ describe.only('Treasury', () => {
     });
   });
 
-  describe('Seigniorage', () => {
-    describe('#AllocateSeigniorage', () => {
-      beforeEach('Transfer permissions', async () => {
+  describe.only('Seigniorage', () => {
+    describe('#allocateSeigniorage', () => {
+      beforeEach('transfer permissions', async () => {
         await bond.mint(operator.address, INITIAL_BAB_AMOUNT);
         await cash.mint(operator.address, INITIAL_BAC_AMOUNT);
         await cash.mint(treasury.address, INITIAL_BAC_AMOUNT);
         await share.mint(operator.address, INITIAL_BAS_AMOUNT);
-
-        for await (const contract of [cash, bond, arthBoardroom, arthLiquidityBoardroom]) {
+        for await (const contract of [cash, bond, share, arthLiquidityBoardroom, arthBoardroom]) {
           await contract.connect(operator).transferOperator(treasury.address);
         }
       });
 
-      describe('After migration', () => {
-        it('Should fail if contract migrated', async () => {
-          for await (const contract of [cash, bond]) {
+      describe('after migration', () => {
+        it('should fail if contract migrated', async () => {
+          for await (const contract of [cash, bond, share]) {
             await contract
               .connect(operator)
               .transferOwnership(treasury.address);
@@ -328,69 +319,54 @@ describe.only('Treasury', () => {
         });
       });
 
-      describe('Before startTime', () => {
-        it('Should fail if not started yet', async () => {
+      describe('before startTime', () => {
+        it('should fail if not started yet', async () => {
           await expect(treasury.allocateSeigniorage()).to.revertedWith(
             'Epoch: not started yet'
           );
         });
       });
 
-      describe('After startTime', () => {
-        beforeEach('Advance blocktime', async () => {
-          // Wait til first epoch
+      describe('after startTime', () => {
+        beforeEach('advance blocktime', async () => {
+          // wait til first epoch
           await advanceTimeAndBlock(
             provider,
             startTime.sub(await latestBlocktime(provider)).toNumber()
           );
         });
 
-        it('Should funded correctly', async () => {
+        it('should funded correctly', async () => {
           const cashPrice = ETH.mul(210).div(100);
-          await gmuOracle.setPrice(cashPrice);
+          await oracle.setPrice(cashPrice);
 
-          const cashTargetPrice = await treasury.cashTargetPrice();
-
-          // Calculate with circulating supply.
+          // calculate with circulating supply
           const treasuryHoldings = await treasury.getReserve();
           const cashSupply = (await cash.totalSupply()).sub(treasuryHoldings);
-          const percentage = cashPrice.sub(cashTargetPrice);
-          const expectedSeigniorage = cashSupply.mul(percentage).div(1e18);
+          const expectedSeigniorage = cashSupply
+            .mul(cashPrice.sub(ETH))
+            .div(ETH);
 
-          // To track updates to seigniorage.
-          let updatedExpectedSeigniorage = expectedSeigniorage;
+          // get all expected reserve
+          const expectedFundReserve = expectedSeigniorage
+            .mul(await treasury.fundAllocationRate())
+            .div(100);
 
-          // Get expected funds reserve.
-          const ecosystemFundReserve = expectedSeigniorage.mul(await treasury.ecosystemFundAllocationRate()).div(100);
-          updatedExpectedSeigniorage = updatedExpectedSeigniorage.sub(ecosystemFundReserve);
-
-          // Get all expected treasury reserve and update the expected seigniorage value.
-          const allocatedForTreasury = updatedExpectedSeigniorage.mul(90).div(100);
-          const seigniorageForBoardroom = updatedExpectedSeigniorage.sub(allocatedForTreasury);
           const expectedTreasuryReserve = bigmin(
-            allocatedForTreasury,
+            expectedSeigniorage.sub(expectedFundReserve),
             (await bond.totalSupply()).sub(treasuryHoldings)
           );
-          updatedExpectedSeigniorage = updatedExpectedSeigniorage.add(expectedTreasuryReserve);
 
-          // Get all expected boardroom reserve and update the expected seigniorage value.
-          const expectedArthBoardroomReserve = seigniorageForBoardroom
-            .mul(await treasury.arthLiquidityBoardroomAllocationRate())
-            .div(100);
-          const expectedArthLiquidityBoardroomReserve = seigniorageForBoardroom
-            .mul(await treasury.arthBoardroomAllocationRate())
-            .div(100);
-          updatedExpectedSeigniorage = updatedExpectedSeigniorage
-            .sub(expectedArthBoardroomReserve)
-            .sub(expectedArthLiquidityBoardroomReserve);
+          const expectedBoardroomReserve = expectedSeigniorage
+            .sub(expectedFundReserve)
+            .sub(expectedTreasuryReserve);
 
-          // Get the new treasury seigniorage allocation.
           const allocationResult = await treasury.allocateSeigniorage();
 
-          if (ecosystemFundReserve.gt(ZERO)) {
+          if (expectedFundReserve.gt(ZERO)) {
             await expect(new Promise((resolve) => resolve(allocationResult)))
               .to.emit(treasury, 'ContributionPoolFunded')
-              .withArgs(await latestBlocktime(provider), ecosystemFundReserve);
+              .withArgs(await latestBlocktime(provider), expectedFundReserve);
           }
 
           if (expectedTreasuryReserve.gt(ZERO)) {
@@ -402,39 +378,26 @@ describe.only('Treasury', () => {
               );
           }
 
-          if (expectedArthBoardroomReserve.gt(ZERO)) {
+          if (expectedBoardroomReserve.gt(ZERO)) {
             await expect(new Promise((resolve) => resolve(allocationResult)))
               .to.emit(treasury, 'BoardroomFunded')
               .withArgs(
                 await latestBlocktime(provider),
-                expectedArthBoardroomReserve
+                expectedBoardroomReserve
               );
           }
 
-          if (expectedArthLiquidityBoardroomReserve.gt(ZERO)) {
-            await expect(new Promise((resolve) => resolve(allocationResult)))
-              .to.emit(treasury, 'BoardroomFunded')
-              .withArgs(
-                await latestBlocktime(provider),
-                expectedArthLiquidityBoardroomReserve
-              );
-          }
-
-          expect(await cash.balanceOf(developmentFund.address)).to.eq(ecosystemFundReserve);
-
+          expect(await cash.balanceOf(developmentFund.address)).to.eq(expectedFundReserve);
           expect(await treasury.getReserve()).to.eq(expectedTreasuryReserve);
-
-          expect(await cash.balanceOf(arthBoardroom.address)).to.eq(
-            expectedArthBoardroomReserve
-          );
-          expect(await cash.balanceOf(arthLiquidityBoardroom.address)).to.eq(
-            expectedArthLiquidityBoardroomReserve
-          );
+          // expect(await cash.balanceOf(boardroom.address)).to.eq(
+          //   expectedBoardroomReserve
+          // );
         });
 
-        it('Should funded even fails to call update function in oracle', async () => {
+        it('should funded even fails to call update function in oracle', async () => {
           const cashPrice = ETH.mul(106).div(100);
-          await oracle.update();
+          await oracle.setRevert(true);
+          await oracle.setPrice(cashPrice);
 
           await expect(treasury.allocateSeigniorage()).to.emit(
             treasury,
@@ -442,37 +405,40 @@ describe.only('Treasury', () => {
           );
         });
 
-        it('Should move to next epoch after allocation', async () => {
+        it('should move to next epoch after allocation', async () => {
           const cashPrice1 = ETH.mul(106).div(100);
-          await gmuOracle.setPrice(cashPrice1);
+          await oracle.setPrice(cashPrice1);
 
-          expect(await treasury.getCurrentEpoch()).to.eq(BigNumber.from(0));
+          expect(await treasury.getNextEpoch()).to.eq(0);
+          expect(await treasury.getLastEpoch()).to.eq(0);
           expect(await treasury.nextEpochPoint()).to.eq(startTime);
 
           await treasury.allocateSeigniorage();
-          expect(await treasury.getCurrentEpoch()).to.eq(BigNumber.from(1));
+          expect(await treasury.getNextEpoch()).to.eq(1);
+          expect(await treasury.getLastEpoch()).to.eq(0);
           expect(await treasury.nextEpochPoint()).to.eq(startTime.add(DAY));
 
           await advanceTimeAndBlock(
             provider,
             Number(await treasury.nextEpochPoint()) -
-            (await latestBlocktime(provider))
+              (await latestBlocktime(provider))
           );
 
           const cashPrice2 = ETH.mul(104).div(100);
-          await gmuOracle.setPrice(cashPrice2);
+          await oracle.setPrice(cashPrice2);
 
           await treasury.allocateSeigniorage();
-          expect(await treasury.getCurrentEpoch()).to.eq(BigNumber.from(2));
+          expect(await treasury.getNextEpoch()).to.eq(2);
+          expect(await treasury.getLastEpoch()).to.eq(1);
           expect(await treasury.nextEpochPoint()).to.eq(startTime.add(DAY * 2));
         });
 
-        describe('Should fail', () => {
-          it('If treasury is not the operator of core contract', async () => {
+        describe('should fail', () => {
+          it('if treasury is not the operator of core contract', async () => {
             const cashPrice = ETH.mul(106).div(100);
-            await gmuOracle.setPrice(cashPrice);
+            await oracle.setPrice(cashPrice);
 
-            for await (const target of [cash, bond, arthBoardroom, arthLiquidityBoardroom]) {
+            for await (const target of [cash, bond, share, arthBoardroom, arthLiquidityBoardroom]) {
               await target.connect(operator).transferOperator(ant.address);
               await expect(treasury.allocateSeigniorage()).to.revertedWith(
                 'Treasury: need more permission'
@@ -480,9 +446,9 @@ describe.only('Treasury', () => {
             }
           });
 
-          it('If seigniorage already allocated in this epoch', async () => {
+          it('if seigniorage already allocated in this epoch', async () => {
             const cashPrice = ETH.mul(106).div(100);
-            await gmuOracle.setPrice(cashPrice);
+            await oracle.setPrice(cashPrice);
             await treasury.allocateSeigniorage();
             await expect(treasury.allocateSeigniorage()).to.revertedWith(
               'Epoch: not allowed'

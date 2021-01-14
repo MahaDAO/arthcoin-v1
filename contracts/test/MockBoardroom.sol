@@ -1,5 +1,3 @@
-// SPDX-License-Identifier: MIT
-
 pragma solidity ^0.6.0;
 
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
@@ -29,9 +27,7 @@ contract MockBoardroom is IBoardroom, Operator {
         onlyOperator
     {
         require(amount > 0, 'Boardroom: Cannot allocate 0');
-
         cash.safeTransferFrom(msg.sender, address(this), amount);
-
         emit RewardAdded(msg.sender, amount);
     }
 

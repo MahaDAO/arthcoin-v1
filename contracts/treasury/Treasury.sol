@@ -86,7 +86,7 @@ contract Treasury is TreasurySetters {
         emit Initialized(msg.sender, block.number);
     }
 
-    function migrate(address target) public onlyOperator {
+    function migrate(address target) public onlyOperator checkOperator {
         require(!migrated, 'Treasury: migrated');
 
         // cash
