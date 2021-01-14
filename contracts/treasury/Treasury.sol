@@ -214,7 +214,7 @@ contract Treasury is TreasurySetters {
 
         uint256 stabilityFeeAmount = amount.mul(stabilityFee).div(100);
         uint256 stabilityFeeValue =
-            IOracle(mahausdOracle).consult(share, stabilityFeeAmount);
+            IGMUOracle(mahausdOracle).consult(stabilityFeeAmount);
 
         // charge the stability fee
         IERC20(share).safeTransferFrom(
