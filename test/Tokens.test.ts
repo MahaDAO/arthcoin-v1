@@ -16,9 +16,10 @@ describe('Tokens', () => {
   const { provider } = ethers;
 
   let operator: SignerWithAddress;
+  let whale: SignerWithAddress;
 
   before('Setup accounts', async () => {
-    [operator] = await ethers.getSigners();
+    [operator, whale] = await ethers.getSigners();
   });
 
   let ARTHB: ContractFactory;
@@ -100,9 +101,9 @@ describe('Tokens', () => {
     });
 
     it('Mint', async () => {
-      await expect(token.connect(operator).mint(operator.address, ETH))
+      await expect(token.connect(operator).mint(operator.address, ETH.mul(2)))
         .to.emit(token, 'Transfer')
-        .withArgs(ZERO_ADDR, operator.address, ETH);
+        .withArgs(ZERO_ADDR, operator.address, ETH.mul(2));
       expect(await token.balanceOf(operator.address)).to.eq(ETH.mul(2));
     });
 
@@ -114,8 +115,8 @@ describe('Tokens', () => {
     });
 
     it('Burn From', async () => {
-      await expect(token.connect(operator).approve(operator.address, ETH));
-      await expect(token.connect(operator).burnFrom(operator.address, ETH))
+      await expect(token.connect(operator).approve(whale.address, ETH));
+      await expect(token.connect(whale).burnFrom(operator.address, ETH))
         .to.emit(token, 'Transfer')
         .withArgs(operator.address, ZERO_ADDR, ETH);
       expect(await token.balanceOf(operator.address)).to.eq(ZERO);

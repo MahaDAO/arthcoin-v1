@@ -6,13 +6,20 @@ import 'hardhat-gas-reporter';
 import 'solidity-coverage';
 
 
+require('dotenv').config();
+
+
 export default {
-  default: 'ropsten',
+  default: 'development',
   networks: {
     hardhat: {},
     ropsten: {
       url: `https://ropsten.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
       accounts: [`0x${process.env.WALLET_SECRET_KEY}`]
+    },
+    development: {
+      url: "http://localhost:7545",
+      accounts: [process.env.WALLET_SECRET_KEY, process.env.METAMASK_WALLET_SECRET]
     }
   },
   solidity: {

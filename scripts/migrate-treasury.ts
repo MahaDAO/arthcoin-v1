@@ -1,322 +1,161 @@
 import { network, ethers } from 'hardhat';
-import { ParamType, keccak256 } from 'ethers/lib/utils';
 
-import {
-  DAI,
-  ORACLE_START_DATE,
-  TREASURY_START_DATE,
-  UNI_FACTORY,
-} from '../deploy.config';
+require('dotenv').config();
 
-const knownContracts = require('../migrations/known-contracts.js')
-import OLD from '../deployments/1.json';
 import { encodeParameters, wait } from './utils';
 
-const MINUTE = 60;
-const HOUR = 60 * MINUTE;
-const DAY = 24 * HOUR;
+
 
 async function main() {
-  if (network.name !== 'ropsten') {
-    throw new Error('wrong network');
-  }
-
+  // Fetch the provider.
   const { provider } = ethers;
-  const [operator] = await ethers.getSigners();
 
   const estimateGasPrice = await provider.getGasPrice();
   const gasPrice = estimateGasPrice.mul(3).div(2);
+  console.log(`Gas Price: ${ethers.utils.formatUnits(gasPrice, 'gwei')} gwei`);
   const override = { gasPrice };
 
-  // Fetch existing contracts
-  // === token
-  const cash = await ethers.getContractAt('ARTH', OLD.ARTH.address);
-  const bond = await ethers.getContractAt('ARTHB', OLD.ARTHB.address);
-  const dai = await ethers.getContractAt('IERC20', '0x760AE87bBCEFa2CF76B6E0F9bCe80c1408764936');
-  const share = await ethers.getContractAt('MahaToken', OLD.MahaToken.address);
+  // Fetch the wallet accounts.
+  const [operator, account] = await ethers.getSigners();
 
-  const bondRedemtionOracle = await ethers.getContractAt('BondRedemtionOracle', OLD.BondRedemtionOracle.address);
-  const mahausdOracle = await ethers.getContractAt('MAHAUSDOracle', OLD.MAHAUSDOracle.address);
-  const seigniorageOracle = await ethers.getContractAt('SeigniorageOracle', OLD.SeigniorageOracle.address);
-  const arthLiquidityBoardroom = await ethers.getContractAt('ArthLiquidityBoardroom', OLD.ArthLiquidityBoardroom.address);
-  const arthBoardroom = await ethers.getContractAt('ArthBoardroom', OLD.ArthBoardroom.address);
-  const developmentFund = await ethers.getContractAt('DevelopmentFund', OLD.DevelopmentFund.address);
-  const gmuOracle = await ethers.getContractAt('GMUOracle', OLD.GMUOracle.address);
+  // Fetch already deployed contracts.
+  const deployements = require(`../build/deployments.${network.name}.json`);
 
-  const oldTreasury = await ethers.getContractAt('Treasury', OLD.Treasury.address);
-
-
+  // Fetch contract factories.
   const Treasury = await ethers.getContractFactory('Treasury');
 
+  // Fetch existing contracts.
+  const cash = await ethers.getContractAt('ARTH', deployements.ARTH.address);
+  const bond = await ethers.getContractAt('ARTHB', deployements.ARTHB.address);
+  const treasury = await ethers.getContractAt('Treasury', deployements.Treasury.address);
+  const arthBoardroom = await ethers.getContractAt('ArthBoardroom', deployements.ArthBoardroom.address);
+  const arthLiquidityBoardroom = await ethers.getContractAt('ArthLiquidityBoardroom', deployements.ArthBoardroom.address);
 
-  if (operator.address !== (await oldTreasury.owner())) {
-    throw new Error(`Invalid admin ${operator.address}`);
-  }
-  console.log(`Admin verified ${operator.address}`);
-
-  console.log('Deploying new treasury.')
-
-
-  const POOL_START_DATE = Math.floor(Date.now() / 1000);
-  const TREASURY_PERIOD = 60 * 60;
-
-  const d = encodeParameters(ethers, [
-    'address',
-    'address',
-    'address',
-    'address',
-    'address',
-    'address',
-    'address',
-    'address',
-    'address',
-    'address',
-    'address',
-    'address',
-    'uint256',
-    'uint256 ',
-  ],
-    [
-      dai.address,
-      cash.address,
-      bond.address,
-      share.address,
-      bondRedemtionOracle.address,
-      mahausdOracle.address,
-      seigniorageOracle.address,
-      arthLiquidityBoardroom.address,
-      arthBoardroom.address,
-      developmentFund.address,
-      knownContracts.UniswapV2Router02[network.name],
-      gmuOracle.address,
-      POOL_START_DATE,
-      TREASURY_PERIOD,
-    ])
-
-  console.log(d)
-  console.log([
-    dai.address,
-    cash.address,
-    bond.address,
-    share.address,
-    bondRedemtionOracle.address,
-    mahausdOracle.address,
-    seigniorageOracle.address,
-    arthLiquidityBoardroom.address,
-    arthBoardroom.address,
-    developmentFund.address,
-    knownContracts.UniswapV2Router02[network.name],
-    gmuOracle.address,
-    POOL_START_DATE,
-    TREASURY_PERIOD,
-  ])
+  // Deploy new treasury.
   const newTreasury = await Treasury.connect(operator).deploy(
-    dai.address,
-    cash.address,
-    bond.address,
-    share.address,
-    bondRedemtionOracle.address,
-    mahausdOracle.address,
-    seigniorageOracle.address,
-    arthLiquidityBoardroom.address,
-    arthBoardroom.address,
-    developmentFund.address,
-    knownContracts.UniswapV2Router02[network.name],
-    gmuOracle.address,
-    POOL_START_DATE,
-    TREASURY_PERIOD,
-    override
+    await treasury.dai(),
+    await treasury.cash(),
+    await treasury.bond(),
+    await treasury.share(),
+    await treasury.bondOracle(),
+    await treasury.mahausdOracle(),
+    await treasury.seigniorageOracle(),
+    await treasury.arthLiquidityBoardroom(),
+    await treasury.arthBoardroom(),
+    await treasury.ecosystemFund(),
+    await treasury.uniswapRouter(),
+    await treasury.gmuOracle(),
+    Math.floor(Date.now() / 1000), // TODO: Replace with .env file key and values.
+    5 * 60 // TODO: Replace with .env file key and values.
   );
 
-  console.log('newTreasury at', newTreasury.address)
+  const oldCashOperator = await cash.operator();
+  const oldBondOperator = await bond.operator();
+  const oldArthBoardroomOperator = await arthBoardroom.operator();
+  const oldArthLiquidityBoardroomOperator = await arthLiquidityBoardroom.operator();
 
-  return
-  // await deployer.deploy(
-  //   Treasury,
-  //   dai.address,
-  //   ARTH.address,
-  //   ARTHB.address,
-  //   MahaToken.address,
-  //   BondRedemtionOracle.address,
-  //   MAHAUSDOracle.address,
-  //   SeigniorageOracle.address,
-  //   ArthLiquidityBoardroom.address,
-  //   ArthBoardroom.address,
-  //   DevelopmentFund.address,
-  //   uniswapRouter.address,
-  //   GMUOracle.address,
-  //   POOL_START_DATE,
-  //   TREASURY_PERIOD
-  // );
-  // const Oracle = await ethers.getContractFactory('Oracle');
-  // const Treasury = await ethers.getContractFactory('Treasury');
-  // // const Boardroom = await ethers.getContractFactory('Boardroom');
-  // const SimpleFund = await ethers.getContractFactory('SimpleERCFund');
+  // NOTE: In case of mainnet, the ownership of treaury and boardroom and possibly some other smart contracts
+  // is with the Timelock smart contract.
+  if (network.name !== 'mainnet' && process.env.METAMASK_WALLET) {
+    await treasury.connect(account).migrate(newTreasury.address);
+    await arthBoardroom.connect(account).transferOperator(newTreasury.address);
+    await arthLiquidityBoardroom.connect(account).transferOperator(newTreasury.address);
 
-  // let tx;
+    console.log(`\nTreasury details: `)
+    console.log(` - Old treasury was at address(${treasury.address})`)
+    console.log(` - New treasury was at address(${newTreasury.address})`)
 
-  // console.log('\n===================================================\n');
+    console.log(`\nCash details: `)
+    console.log(` - Cash old operator was address(${oldCashOperator})`)
+    console.log(` - Cash new operator is at address(${await cash.operator()})`)
 
-  // console.log('=> Deploy\n');
+    console.log(`\nBond details: `)
+    console.log(` - Bond old operator was address(${oldBondOperator})`)
+    console.log(` - Bond new operator is at address(${await bond.operator()})`)
 
-  // const simpleFund = await SimpleFund.connect(operator).deploy();
-  // await wait(
-  //   ethers,
-  //   simpleFund.deployTransaction.hash,
-  //   `\nDeploy fund contract => ${simpleFund.address}`
-  // );
+    console.log(`\nArth boardroom details: `)
+    console.log(` - Arth boardroom old operator was address(${oldArthBoardroomOperator})`)
+    console.log(` - Arth boardroom new operator is at address(${await arthBoardroom.operator()})`)
 
+    console.log(`\nArth liquidity boardroom details: `)
+    console.log(` - Arth liquidity boardroom old operator was address(${oldArthLiquidityBoardroomOperator})`)
+    console.log(
+      ` - Arth liquidity boardroom new operator is at address(${await arthLiquidityBoardroom.operator()
+      })`
+    )
+  } else {
+    const timelock = await ethers.getContractAt('Timelock', deployements.Timelock.address);
 
-  // const newTreasury = await Treasury.connect(operator).deploy(
-  //   cash.address,
-  //   bond.address,
-  //   share.address,
-  //   bondOracle.address,
-  //   seigniorageOracle.address,
-  //   boardroom.address,
-  //   simpleFund.address,
-  //   TREASURY_START_DATE,
-  //   override
-  // );
+    const calldatas = [
+      {
+        desc: 'treasury.migrate',
+        calldata: [
+          treasury.address,
+          0,
+          'migrate(address)',
+          encodeParameters(
+            ethers,
+            ['address'],
+            [newTreasury.address]
+          ),
+          Math.floor(Date.now() / 1000),
+        ],
+      },
+      {
+        desc: 'arthBoardroom.transferOperator',
+        calldata: [
+          arthBoardroom.address,
+          0,
+          'transferOperator(address)',
+          encodeParameters(
+            ethers,
+            ['address'],
+            [newTreasury.address]
+          ),
+          Math.floor(Date.now() / 1000),
+        ],
+      },
+      {
+        desc: 'arthLiquidityBoardroom.trasnferOperator',
+        calldata: [
+          arthLiquidityBoardroom.address,
+          0,
+          'transferOperator(address)',
+          encodeParameters(
+            ethers,
+            ['address'],
+            [newTreasury.address]
+          ),
+          Math.floor(Date.now() / 1000),
+        ],
+      },
+    ];
 
-  // await wait(
-  //   ethers,
-  //   newTreasury.deployTransaction.hash,
-  //   `\nDeploy new Treasury => ${newTreasury.address}`
-  // );
+    // Queue transactions.
+    for await (const queue of calldatas) {
+      const tx = await timelock
+        .connect(operator)
+        .queueTransaction(...queue.calldata, override);
 
-  // console.log('\n===================================================\n');
+      await wait(ethers, tx.hash, `\ntimelock.queueTransaction => ${queue.desc}`);
+    }
 
-  // console.log('=> RBAC\n');
+    // Execute them transactions.
+    // NOTE: Operate has to be accounts[0] used while migrations and deploying.
+    for await (const queue of calldatas) {
+      const tx = await timelock
+        .connect(operator)
+        .executeTransaction(...queue.calldata, override);
 
-  // // tx = await newBoardroom
-  // //   .connect(operator)
-  // //   .transferOperator(newTreasury.address, override);
-  // // await wait(tx.hash, 'boardroom.transferOperator');
-
-  // // tx = await newBoardroom
-  // //   .connect(operator)
-  // //   .transferOwnership(timelock.address, override);
-  // // await wait(tx.hash, 'boardroom.transferOwnership');
-
-  // tx = await simpleFund
-  //   .connect(operator)
-  //   .transferOperator(timelock.address, override);
-  // await wait(ethers, tx.hash, 'fund.transferOperator');
-
-  // tx = await simpleFund
-  //   .connect(operator)
-  //   .transferOwnership(timelock.address, override);
-  // await wait(ethers, tx.hash, 'fund.transferOwnership');
-
-  // tx = await newTreasury
-  //   .connect(operator)
-  //   .transferOperator(timelock.address, override);
-  // await wait(ethers, tx.hash, 'treasury.transferOperator');
-
-  // tx = await newTreasury
-  //   .connect(operator)
-  //   .transferOwnership(timelock.address, override);
-  // await wait(ethers, tx.hash, 'treasury.transferOwnership');
-
-  // console.log('\n===================================================\n');
-
-  // console.log('=> Migration\n');
-
-  // let eta;
-  // let calldata;
-  // let txHash;
-
-  // // 1. transfer operator to old treasury
-  // eta = Math.round(new Date().getTime() / 1000) + 2 * DAY + 60;
-  // calldata = [
-  //   boardroom.address,
-  //   0,
-  //   'transferOperator(address)',
-  //   encodeParameters(ethers, ['address'], [oldTreasury.address]),
-  //   eta,
-  // ];
-  // txHash = keccak256(
-  //   encodeParameters(
-  //     ethers,
-  //     ['address', 'uint256', 'string', 'bytes', 'uint256'],
-  //     calldata
-  //   )
-  // );
-
-  // tx = await timelock.connect(operator).queueTransaction(...calldata, override);
-  // await wait(
-  //   ethers,
-  //   tx.hash,
-  //   `\n1. timelock.queueTransaction (boardroom.transferOperator) => txHash: ${txHash}`
-  // );
-  // console.log(`Tx execution ETA: ${eta}`);
-
-  // if (!(await timelock.connect(operator).queuedTransactions(txHash))) {
-  //   throw new Error('wtf');
-  // }
-
-  // // 2. migrate treasury
-  // eta = Math.round(new Date().getTime() / 1000) + 2 * DAY + 60;
-  // calldata = [
-  //   oldTreasury.address,
-  //   0,
-  //   'migrate(address)',
-  //   encodeParameters(ethers, ['address'], [newTreasury.address]),
-  //   eta,
-  // ];
-  // txHash = keccak256(
-  //   encodeParameters(
-  //     ethers,
-  //     ['address', 'uint256', 'string', 'bytes', 'uint256'],
-  //     calldata
-  //   )
-  // );
-
-
-  // console.log(`Tx execution ETA: ${eta}`);
-
-  // if (!(await timelock.connect(operator).queuedTransactions(txHash))) {
-  //   throw new Error('wtf');
-  // }
-
-  // // 3. transfer operator to new treasury
-  // eta = Math.round(new Date().getTime() / 1000) + 2 * DAY + 60;
-  // calldata = [
-  //   boardroom.address,
-  //   0,
-  //   'transferOperator(address)',
-  //   encodeParameters(ethers, ['address'], [newTreasury.address]),
-  //   eta,
-  // ];
-  // txHash = keccak256(
-  //   encodeParameters(
-  //     ethers,
-  //     ['address', 'uint256', 'string', 'bytes', 'uint256'],
-  //     calldata
-  //   )
-  // );
-
-  // tx = await timelock.connect(operator).queueTransaction(...calldata, override);
-  // await wait(
-  //   ethers,
-  //   tx.hash,
-  //   `\n3. timelock.queueTransaction (boardroom.transferOperator) => txHash: ${txHash}`
-  // );
-  // console.log(`Tx execution ETA: ${eta}`);
-
-  // if (!(await timelock.connect(operator).queuedTransactions(txHash))) {
-  //   throw new Error('wtf');
-  // }
-
-  // console.log('OK!');
-
-  // console.log('\n===================================================\n');
+      await wait(ethers, tx.hash, `\ntimelock.queueTransaction => ${queue.desc}`);
+    }
+  }
 }
+
 
 main()
   .then(() => process.exit(0))
-  .catch((error) => {
+  .catch(error => {
     console.error(error);
     process.exit(1);
   });

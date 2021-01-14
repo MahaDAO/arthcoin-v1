@@ -28,9 +28,10 @@ describe('DevelopmentFund', () => {
   const { provider } = ethers;
 
   let operator: SignerWithAddress;
+  let whale: SignerWithAddress;
 
   before('Setup accounts', async () => {
-    [operator] = await ethers.getSigners();
+    [operator, whale] = await ethers.getSigners();
   });
 
   let DevelopmentFund: ContractFactory;
@@ -55,6 +56,7 @@ describe('DevelopmentFund', () => {
     let timelock: Contract;
 
     beforeEach('Deploy timelock', async () => {
+
       await token.connect(operator).mint(fund.address, utils.parseEther('100'));
       timelock = await Timelock.connect(operator).deploy(
         operator.address,
@@ -65,14 +67,15 @@ describe('DevelopmentFund', () => {
       await fund.connect(operator).transferOwnership(timelock.address);
     });
 
-    it('#withdraw', async () => {
+    it('#Withdraw', async () => {
       const eta = (await latestBlocktime(provider)) + 2 * DAY + 30;
       const signature = 'withdraw(address,uint256,address,string)';
       const data = encodeParameters(
         ethers,
         ['address', 'uint256', 'address', 'string'],
-        [token.address, utils.parseEther('100'), operator.address, 'TEST']
+        [token.address, utils.parseEther('100'), whale.address, 'TEST']
       );
+
       const calldata = [fund.address, 0, signature, data, eta];
       const txHash = ethers.utils.keccak256(
         encodeParameters(
@@ -97,13 +100,13 @@ describe('DevelopmentFund', () => {
         .to.emit(fund, 'Withdrawal')
         .withArgs(
           timelock.address,
-          operator.address,
+          whale.address,
           await latestBlocktime(provider),
           'TEST'
         );
 
-      expect(await token.balanceOf(operator.address)).to.eq(
-        utils.parseEther('10100')
+      expect(await token.balanceOf(whale.address)).to.eq(
+        utils.parseEther('100')
       );
     });
   });

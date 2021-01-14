@@ -1,0 +1,93 @@
+// SPDX-License-Identifier: MIT
+
+pragma solidity ^0.6.0;
+
+import '@openzeppelin/contracts/math/Math.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
+import '../lib/FixedPoint.sol';
+import '../lib/Safe112.sol';
+import '../owner/Operator.sol';
+import '../utils/Epoch.sol';
+import '../utils/ContractGuard.sol';
+
+abstract contract TreasuryState is ContractGuard, Epoch {
+    using FixedPoint for *;
+    using SafeERC20 for IERC20;
+    using Address for address;
+    using SafeMath for uint256;
+    using Safe112 for uint112;
+
+    /* ========== STATE VARIABLES ========== */
+
+    // ========== FLAGS
+    bool public migrated = false;
+    bool public initialized = false;
+
+    // ========== CORE
+    address public dai;
+    address public cash;
+    address public bond;
+    address public share;
+    address public uniswapRouter;
+
+    address public arthLiquidityBoardroom;
+    address public arthBoardroom;
+    address public ecosystemFund;
+
+    // oracles
+    address public bondOracle;
+    address public seigniorageOracle;
+    address public gmuOracle;
+    address public mahausdOracle;
+
+    // cash price tracking vars
+    uint256 public cashTargetPrice = 1e18;
+
+    // these govern how much bond tokens are issued
+    address public curve;
+    uint256 public cashToBondConversionLimit = 0;
+    uint256 public accumulatedSeigniorage = 0;
+    uint256 public accumulatedBonds = 0;
+
+    // the bond discount controls how much discount bond holders will be getting
+    // when the purcahse the bonds. This discount is realised when the bond
+    // is being redeemed.
+    uint256 public bondDiscountOutOf100 = 25;
+
+    // the ecosystem fund recieves seigniorage before anybody else; this
+    // value decides how much of the new seigniorage is sent to this fund.
+    uint256 public ecosystemFundAllocationRate = 2; // in %
+
+    // we decide how much allocation to give to the boardrooms. there
+    // are currently two boardrooms; one for ARTH holders and the other for
+    // ARTH liqudity providers
+    //
+    // TODO: make one for maha holders and one for the various community pools
+    uint256 public arthLiquidityBoardroomAllocationRate = 60; // In %.
+    uint256 public arthBoardroomAllocationRate = 40; // IN %.
+
+    // stability fee is a special fee charged by the protocol in MAHA tokens
+    // whenever a person is going to redeem his/her bonds. the fee is charged
+    // basis how much ARTHB is being redeemed.
+    //
+    // eg: a 1% fee means that while redeeming 100 ARTHB, 1 ARTH worth of MAHA is
+    // deducted to pay for stability fees.
+    uint256 public stabilityFee = 1; // IN %;
+
+    modifier checkMigration {
+        require(!migrated, 'Treasury: migrated');
+        _;
+    }
+
+    modifier checkOperator {
+        require(
+            Operator(cash).operator() == address(this) &&
+                Operator(bond).operator() == address(this) &&
+                Operator(arthLiquidityBoardroom).operator() == address(this) &&
+                Operator(arthBoardroom).operator() == address(this),
+            'Treasury: need more permission'
+        );
+        _;
+    }
+}

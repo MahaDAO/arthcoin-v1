@@ -59,7 +59,7 @@ module.exports = async (deployer, network, accounts) => {
     await treasury.transferOperator(process.env.METAMASK_WALLET);
     await treasury.transferOwnership(process.env.METAMASK_WALLET);
     await gmuOracle.transferOwnership(process.env.METAMASK_WALLET);
-    await mahaOracle.transferOwnership(process.env.METAMASK_WALLET);
+    // await mahaOracle.transferOwnership(process.env.METAMASK_WALLET);
 
     if (network === 'development') {
       console.log('sending 1 eth to the metamask wallet')
