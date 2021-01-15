@@ -524,7 +524,7 @@ describe.only('Treasury', () => {
         );
       });
 
-      describe.only('#buyBonds', () => {
+      describe('#buyBonds', () => {
         it('should work if cash price below $1', async () => {
           const cashPrice = ETH.mul(99).div(100); // $0.99
           await oracle.setPrice(cashPrice);
@@ -664,7 +664,8 @@ describe.only('Treasury', () => {
         //   expect(status.acc).to.eq(0);
         // });
       });
-      describe('#redeemBonds', () => {
+
+      describe.only('#redeemBonds', () => {
         beforeEach('allocate seigniorage to treasury', async () => {
           const cashPrice = ETH.mul(106).div(100);
           await oracle.setPrice(cashPrice);
@@ -682,15 +683,18 @@ describe.only('Treasury', () => {
 
           await bond.connect(operator).transfer(ant.address, ETH);
           await bond.connect(ant).approve(treasury.address, ETH);
-          await expect(treasury.connect(ant).redeemBonds(ETH))
+          await share.connect(ant).approve(treasury.address, ETH);
+          await share.connect(operator).mint(ant.address, ETH);
+
+          await expect(treasury.connect(ant).redeemBonds(ETH, false))
             .to.emit(treasury, 'RedeemedBonds')
-            .withArgs(ant.address, ETH);
+            .withArgs(ant.address, ETH, false);
 
           expect(await bond.balanceOf(ant.address)).to.eq(ZERO); // 1:1
           expect(await cash.balanceOf(ant.address)).to.eq(ETH);
         });
 
-        it("should drain over seigniorage and even contract's budget", async () => {
+        it.only("should drain over seigniorage and even contract's budget", async () => {
           const cashPrice = ETH.mul(106).div(100);
           await oracle.setPrice(cashPrice);
 
@@ -699,7 +703,10 @@ describe.only('Treasury', () => {
           const treasuryBalance = await cash.balanceOf(treasury.address);
           await bond.connect(operator).transfer(ant.address, treasuryBalance);
           await bond.connect(ant).approve(treasury.address, treasuryBalance);
-          await treasury.connect(ant).redeemBonds(treasuryBalance);
+          await share.connect(ant).approve(treasury.address, ETH);
+          await share.connect(operator).mint(ant.address, ETH.mul(1000));
+
+          await treasury.connect(ant).redeemBonds(treasuryBalance, false);
 
           expect(await bond.balanceOf(ant.address)).to.eq(ZERO);
           expect(await cash.balanceOf(ant.address)).to.eq(treasuryBalance); // 1:1
