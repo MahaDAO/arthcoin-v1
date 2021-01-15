@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.6.0;
 
 import '@openzeppelin/contracts/math/SafeMath.sol';
@@ -70,18 +71,8 @@ contract MockOracle is IOracle {
         error = _error;
     }
 
-    function update() external override {
-        require(!error, 'Oracle: mocked error');
-        emit Updated(0, 0);
-    }
-
-    function consult(address, uint256 amountIn)
-        external
-        view
-        override
-        returns (uint256)
-    {
-        return price.mul(amountIn).div(1e18);
+    function getPrice() external view override returns (uint256) {
+        return price;
     }
 
     function pairFor(

@@ -9,12 +9,12 @@ import '../../lib/FixedPoint.sol';
 import '../../lib/UniswapV2Library.sol';
 import '../../lib/UniswapV2OracleLibrary.sol';
 import '../../utils/Epoch.sol';
-import '../../interfaces/IOracle.sol';
+import '../../interfaces/IMultiUniswapOracle.sol';
 
 import '@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol';
 
 // A simple oracle that finds the price of 1 unit of an asset from Uniswap; after following a route
-contract MultiUniswapOracle is IOracle, Epoch {
+contract MultiUniswapOracle is IMultiUniswapOracle, Epoch {
     using FixedPoint for *;
     using SafeMath for uint256;
 

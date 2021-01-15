@@ -18,7 +18,6 @@ import '../lib/Safe112.sol';
 import '../owner/Operator.sol';
 import '../utils/Epoch.sol';
 import '../utils/ContractGuard.sol';
-import '../interfaces/IGMUOracle.sol';
 import './TreasuryGetters.sol';
 
 abstract contract TreasurySetters is TreasuryGetters {

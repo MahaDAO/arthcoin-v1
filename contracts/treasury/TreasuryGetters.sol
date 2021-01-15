@@ -38,8 +38,8 @@ abstract contract TreasuryGetters is TreasuryState {
         return IOracle(gmuOracle).getPrice();
     }
 
-    function getMahaArthOraclePrice() public view returns (uint256) {
-        return IOracle(mahaArthOracle).getPrice();
+    function getArthMahaOraclePrice() public view returns (uint256) {
+        return IOracle(arthMahaOracle).getPrice();
     }
 
     function getSeigniorageOraclePrice() public view returns (uint256) {

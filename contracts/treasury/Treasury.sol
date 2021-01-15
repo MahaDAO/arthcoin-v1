@@ -10,6 +10,7 @@ import '@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol';
 
 import {ICurve} from '../curve/Curve.sol';
 import {IOracle} from '../interfaces/IOracle.sol';
+import {IMultiUniswapOracle} from '../interfaces/IMultiUniswapOracle.sol';
 import {IBoardroom} from '../interfaces/IBoardroom.sol';
 import {IBasisAsset} from '../interfaces/IBasisAsset.sol';
 import {ISimpleERCFund} from '../interfaces/ISimpleERCFund.sol';
@@ -20,7 +21,6 @@ import {Operator} from '../owner/Operator.sol';
 import {Epoch} from '../utils/Epoch.sol';
 import {ContractGuard} from '../utils/ContractGuard.sol';
 
-import '../interfaces/IGMUOracle.sol';
 import './TreasurySetters.sol';
 
 /**
@@ -35,7 +35,7 @@ contract Treasury is TreasurySetters {
         address _bond,
         address _share,
         address _bondOracle,
-        address _mahaArthOracle,
+        address _arthMahaOracle,
         address _seigniorageOracle,
         address _arthLiquidityBoardroom,
         address _arthBoardroom,
@@ -54,7 +54,7 @@ contract Treasury is TreasurySetters {
 
         // oracles
         bondOracle = _bondOracle;
-        mahaArthOracle = _mahaArthOracle;
+        arthMahaOracle = _arthMahaOracle;
         seigniorageOracle = _seigniorageOracle;
         gmuOracle = _gmuOracle;
 
@@ -212,16 +212,19 @@ contract Treasury is TreasurySetters {
             Math.min(accumulatedSeigniorage, amount)
         );
 
-        uint256 stabilityFeeAmount = amount.mul(stabilityFee).div(100);
-        uint256 stabilityFeeValue =
-            IOracle(mahausdOracle).consult(cash, stabilityFeeAmount);
+        // charge stabilty fees in MAHA
+        if (stabilityFee > 0) {
+            uint256 stabilityFeeAmount = amount.mul(stabilityFee).div(100);
+            uint256 stabilityFeeValue =
+                getArthMahaOraclePrice().mul(stabilityFeeAmount).div(1e18);
 
-        // charge the stability fee
-        IERC20(share).safeTransferFrom(
-            msg.sender,
-            address(this),
-            stabilityFeeValue
-        );
+            // charge the stability fee
+            IERC20(share).safeTransferFrom(
+                msg.sender,
+                address(this),
+                stabilityFeeValue
+            );
+        }
 
         IBasisAsset(bond).burnFrom(msg.sender, amount);
 
@@ -325,11 +328,11 @@ contract Treasury is TreasurySetters {
      */
     function _updateCashPrice() internal {
         if (Epoch(bondOracle).callable()) {
-            try IOracle(bondOracle).update() {} catch {}
+            try IMultiUniswapOracle(bondOracle).update() {} catch {}
         }
 
         if (Epoch(seigniorageOracle).callable()) {
-            try IOracle(seigniorageOracle).update() {} catch {}
+            try IMultiUniswapOracle(seigniorageOracle).update() {} catch {}
         }
 
         // TODO: do the same for the gmu oracle as well
@@ -337,7 +340,7 @@ contract Treasury is TreasurySetters {
         //     try IOracle(seigniorageOracle).update() {} catch {}
         // }
 
-        cashTargetPrice = IGMUOracle(gmuOracle).getPrice();
+        cashTargetPrice = IOracle(gmuOracle).getPrice();
     }
 
     /**
