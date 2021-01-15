@@ -34,7 +34,7 @@ async function addLiquidity(
     );
 }
 
-describe('UniswapOracle', () => {
+describe.skip('UniswapOracle', () => {
   const MINUTE = 60;
   const DAY = 86400;
   const ETH = utils.parseEther('1');

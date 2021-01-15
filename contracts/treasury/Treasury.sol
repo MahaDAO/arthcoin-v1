@@ -224,6 +224,8 @@ contract Treasury is TreasurySetters {
                 address(this),
                 stabilityFeeValue
             );
+
+            emit StabilityFeesCharged(msg.sender, stabilityFeeValue);
         }
 
         IBasisAsset(bond).burnFrom(msg.sender, amount);
@@ -267,7 +269,7 @@ contract Treasury is TreasurySetters {
         checkEpoch
         checkOperator
     {
-        _updateCashPrice();
+        // _updateCashPrice();
         uint256 cash12hPrice = getSeigniorageOraclePrice();
 
         // send 1000 ARTH reward to the person advancing the epoch to compensate for gas
@@ -456,4 +458,5 @@ contract Treasury is TreasurySetters {
     event SeigniorageMinted(uint256 seigniorage);
     event BondsAllocated(uint256 limit);
     event PoolFunded(address indexed pool, uint256 seigniorage);
+    event StabilityFeesCharged(address indexed from, uint256 stabilityFeeValue);
 }

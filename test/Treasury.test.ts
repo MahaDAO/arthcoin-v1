@@ -40,7 +40,7 @@ function bigmin(a: BigNumber, b: BigNumber): BigNumber {
 }
 
 
-describe.only('Treasury', () => {
+describe('Treasury', () => {
   const { provider } = ethers;
 
   let operator: SignerWithAddress;
@@ -57,9 +57,7 @@ describe.only('Treasury', () => {
   let Treasury: ContractFactory;
   let DevelopmentFund: ContractFactory;
   let MockBoardroom: ContractFactory;
-  let GMUOracle: ContractFactory;
   let MockOracle: ContractFactory;
-  let MAHAUSDOracle: ContractFactory;
   let DAI: ContractFactory;
   let MockCurve: ContractFactory;
   let period: number = 5 * 60
@@ -83,8 +81,6 @@ describe.only('Treasury', () => {
     MockBoardroom = await ethers.getContractFactory('MockBoardroom');
     MockCurve = await ethers.getContractFactory('MockCurve');
     MockOracle = await ethers.getContractFactory('MockOracle');
-    GMUOracle = await ethers.getContractFactory('GMUOracle');
-    MAHAUSDOracle = await ethers.getContractFactory('MAHAUSDOracle');
     DAI = await ethers.getContractFactory('MockDai');
   });
 
@@ -99,7 +95,7 @@ describe.only('Treasury', () => {
   let arthLiquidityBoardroom: Contract;
   let developmentFund: Contract;
   let gmuOracle: Contract;
-  let mahausdOracle: Contract;
+  let arthMahaOracle: Contract;
   let treasury: Contract;
   let startTime: BigNumber;
   let uniswap: Contract;
@@ -147,8 +143,8 @@ describe.only('Treasury', () => {
 
     oracle = await MockOracle.connect(operator).deploy();
 
-    gmuOracle = await GMUOracle.connect(operator).deploy('GMU', ETH);
-    mahausdOracle = await MAHAUSDOracle.connect(operator).deploy('MAHA', ETH);
+    gmuOracle = await MockOracle.connect(operator).deploy();
+    arthMahaOracle = await MockOracle.connect(operator).deploy();
 
     arthBoardroom = await MockBoardroom.connect(operator).deploy(cash.address);
     arthLiquidityBoardroom = await MockBoardroom.connect(operator).deploy(cash.address);
@@ -159,7 +155,7 @@ describe.only('Treasury', () => {
       bond.address,
       share.address,
       oracle.address,
-      mahausdOracle.address,
+      arthMahaOracle.address,
       oracle.address,
       arthLiquidityBoardroom.address,
       arthBoardroom.address,
@@ -181,7 +177,7 @@ describe.only('Treasury', () => {
       bond.address,
       share.address,
       oracle.address,
-      mahausdOracle.address,
+      arthMahaOracle.address,
       oracle.address,
       arthLiquidityBoardroom.address,
       arthBoardroom.address,
@@ -488,7 +484,7 @@ describe.only('Treasury', () => {
 
     describe('after migration', () => {
       it('should fail if contract migrated', async () => {
-        for await (const contract of [cash, bond, share]) {
+        for await (const contract of [cash, bond]) {
           await contract.connect(operator).transferOwnership(treasury.address);
         }
 
@@ -498,7 +494,7 @@ describe.only('Treasury', () => {
         await expect(treasury.buyBonds(ETH, ETH)).to.revertedWith(
           'Treasury: migrated'
         );
-        await expect(treasury.redeemBonds(ETH)).to.revertedWith(
+        await expect(treasury.redeemBonds(ETH, false)).to.revertedWith(
           'Treasury: migrated'
         );
       });
@@ -509,7 +505,7 @@ describe.only('Treasury', () => {
         await expect(treasury.buyBonds(ETH, ETH)).to.revertedWith(
           'Epoch: not started yet'
         );
-        await expect(treasury.redeemBonds(ETH)).to.revertedWith(
+        await expect(treasury.redeemBonds(ETH, false)).to.revertedWith(
           'Epoch: not started yet'
         );
       });
@@ -665,7 +661,7 @@ describe.only('Treasury', () => {
         // });
       });
 
-      describe.only('#redeemBonds', () => {
+      describe('#redeemBonds', () => {
         beforeEach('allocate seigniorage to treasury', async () => {
           const cashPrice = ETH.mul(106).div(100);
           await oracle.setPrice(cashPrice);
@@ -686,15 +682,22 @@ describe.only('Treasury', () => {
           await share.connect(ant).approve(treasury.address, ETH);
           await share.connect(operator).mint(ant.address, ETH);
 
-          await expect(treasury.connect(ant).redeemBonds(ETH, false))
+          const result = treasury.connect(ant).redeemBonds(ETH, false);
+
+
+          await expect(new Promise((resolve) => resolve(result)))
             .to.emit(treasury, 'RedeemedBonds')
             .withArgs(ant.address, ETH, false);
+
+          await expect(new Promise((resolve) => resolve(result)))
+            .to.emit(treasury, 'StabilityFeesCharged')
+            .withArgs(ant.address, ETH.mul(1).div(100));
 
           expect(await bond.balanceOf(ant.address)).to.eq(ZERO); // 1:1
           expect(await cash.balanceOf(ant.address)).to.eq(ETH);
         });
 
-        it.only("should drain over seigniorage and even contract's budget", async () => {
+        it("should drain over seigniorage and even contract's budget", async () => {
           const cashPrice = ETH.mul(106).div(100);
           await oracle.setPrice(cashPrice);
 
@@ -703,8 +706,9 @@ describe.only('Treasury', () => {
           const treasuryBalance = await cash.balanceOf(treasury.address);
           await bond.connect(operator).transfer(ant.address, treasuryBalance);
           await bond.connect(ant).approve(treasury.address, treasuryBalance);
-          await share.connect(ant).approve(treasury.address, ETH);
+          await share.connect(ant).approve(treasury.address, ETH.mul(1000));
           await share.connect(operator).mint(ant.address, ETH.mul(1000));
+
 
           await treasury.connect(ant).redeemBonds(treasuryBalance, false);
 
@@ -716,7 +720,7 @@ describe.only('Treasury', () => {
           const cashPrice = ETH.mul(106).div(100);
           await oracle.setPrice(cashPrice);
 
-          await expect(treasury.connect(ant).redeemBonds(ZERO)).to.revertedWith(
+          await expect(treasury.connect(ant).redeemBonds(ZERO, false)).to.revertedWith(
             'Treasury: cannot redeem bonds with zero amount'
           );
         });
@@ -727,8 +731,8 @@ describe.only('Treasury', () => {
 
           await bond.connect(operator).transfer(ant.address, ETH);
           await bond.connect(ant).approve(treasury.address, ETH);
-          await expect(treasury.connect(ant).redeemBonds(ETH)).to.revertedWith(
-            'Treasury: cashPrice not eligible for bond purchase'
+          await expect(treasury.connect(ant).redeemBonds(ETH, false)).to.revertedWith(
+            'Treasury: cashPrice less than ceiling'
           );
         });
 
@@ -742,8 +746,8 @@ describe.only('Treasury', () => {
           await bond.connect(ant).approve(treasury.address, redeemAmount);
 
           await expect(
-            treasury.connect(ant).redeemBonds(redeemAmount)
-          ).to.revertedWith('Treasury: treasury has no more budget');
+            treasury.connect(ant).redeemBonds(redeemAmount, false)
+          ).to.revertedWith('Treasury: treasury has not enough budget');
         });
       });
     });

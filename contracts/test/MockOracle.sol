@@ -12,7 +12,7 @@ contract MockOracle is IOracle {
     uint256 epoch;
     uint256 period = 1;
 
-    uint256 public price;
+    uint256 public price = 1e18;
     bool public error;
 
     uint256 startTime;
