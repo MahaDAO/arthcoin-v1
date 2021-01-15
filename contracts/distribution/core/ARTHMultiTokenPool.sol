@@ -25,7 +25,6 @@ contract ARTHMultiTokenPool is IMultiRewardDistributionRecipient {
     mapping(address => uint256) public rewardRate;
     mapping(address => uint256) public rewardPerTokenStored;
     mapping(address => uint256) private _totalSupply;
-    mapping(address => mapping(address => uint256)) private _balances;
 
     mapping(address => mapping(address => uint256))
         public userRewardPerTokenPaid;
@@ -86,7 +85,16 @@ contract ARTHMultiTokenPool is IMultiRewardDistributionRecipient {
         checkToken(token)
         returns (uint256)
     {
-        return _balances[token][account];
+        return deposits[token][account];
+    }
+
+    function registerTokens(
+        address[] memory tokens,
+        uint256[] memory _maxAmountsPerToken
+    ) public onlyOwner {
+        for (uint256 i = 0; i < tokens.length; i++) {
+            registerToken(tokens[i], _maxAmountsPerToken[i]);
+        }
     }
 
     function registerToken(address token, uint256 _maxAmountPerToken)

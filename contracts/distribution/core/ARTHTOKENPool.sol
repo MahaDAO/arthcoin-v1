@@ -2,100 +2,72 @@
 
 pragma solidity ^0.6.0;
 
-/**
- * Submitted for verification at Etherscan.io on 2020-07-17
- */
-
-/*
-   ____            __   __        __   _
-  / __/__ __ ___  / /_ / /  ___  / /_ (_)__ __
- _\ \ / // // _ \/ __// _ \/ -_)/ __// / \ \ /
-/___/ \_, //_//_/\__//_//_/\__/ \__//_/ /_\_\
-     /___/
-* Synthetix: BASISCASHRewards.sol
-*
-* Docs: https://docs.synthetix.io/
-*
-*
-* MIT License
-* ===========
-*
-* Copyright (c) 2020 Synthetix
-*
-* Permission is hereby granted, free of charge, to any person obtaining a copy
-* of this software and associated documentation files (the "Software"), to deal
-* in the Software without restriction, including without limitation the rights
-* to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-* copies of the Software, and to permit persons to whom the Software is
-* furnished to do so, subject to the following conditions:
-*
-* The above copyright notice and this permission notice shall be included in all
-* copies or substantial portions of the Software.
-*
-* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-* IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-* AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-*/
-
 import '@openzeppelin/contracts/math/Math.sol';
 import '@openzeppelin/contracts/math/SafeMath.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/utils/Address.sol';
 import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 
-import '../interfaces/IRewardDistributionRecipient.sol';
-import '../token/LPTokenWrapper.sol';
+import '../../interfaces/IRewardDistributionRecipient.sol';
+import '../../StakingTimelock.sol';
 
-contract DAIMAHALPTokenSharePool is
-    LPTokenWrapper,
-    IRewardDistributionRecipient
-{
-    IERC20 public basisShare;
-    uint256 public DURATION = 365 days;
+contract ARTHTOKENPool is IRewardDistributionRecipient {
+    using SafeMath for uint256;
+    using SafeERC20 for IERC20;
+    IERC20 public token0;
+    IERC20 public token1;
+
+    uint256 public DURATION = 5 days;
 
     uint256 public starttime;
     uint256 public periodFinish = 0;
     uint256 public rewardRate = 0;
     uint256 public lastUpdateTime;
     uint256 public rewardPerTokenStored;
+
     mapping(address => uint256) public userRewardPerTokenPaid;
     mapping(address => uint256) public rewards;
+    mapping(address => uint256) public deposits;
 
     event RewardAdded(uint256 reward);
     event Staked(address indexed user, uint256 amount);
     event Withdrawn(address indexed user, uint256 amount);
     event RewardPaid(address indexed user, uint256 reward);
 
+    uint256 private _totalSupply;
+
     constructor(
-        address basisShare_,
-        address lptoken_,
-        uint256 starttime_,
-        uint256 duration_
-    ) public StakingTimelock(duration_) {
-        basisShare = IERC20(basisShare_);
-        lpt = IERC20(lptoken_);
+        address token0_,
+        address token1_,
+        uint256 starttime_
+    ) public {
+        token0 = IERC20(token0_);
+        token1 = IERC20(token1_);
         starttime = starttime_;
     }
 
     modifier checkStart() {
-        require(
-            block.timestamp >= starttime,
-            'DAIMAHALPTokenSharePool: not start'
-        );
+        require(block.timestamp >= starttime, 'ARTHTOKENPool: not start');
         _;
     }
 
     modifier updateReward(address account) {
         rewardPerTokenStored = rewardPerToken();
         lastUpdateTime = lastTimeRewardApplicable();
+
         if (account != address(0)) {
             rewards[account] = earned(account);
             userRewardPerTokenPaid[account] = rewardPerTokenStored;
         }
         _;
+    }
+
+    function balanceOf(address account) public view returns (uint256) {
+        return deposits[account];
+    }
+
+    function totalSupply() public view returns (uint256) {
+        return _totalSupply;
     }
 
     function lastTimeRewardApplicable() public view returns (uint256) {
@@ -106,6 +78,7 @@ contract DAIMAHALPTokenSharePool is
         if (totalSupply() == 0) {
             return rewardPerTokenStored;
         }
+
         return
             rewardPerTokenStored.add(
                 lastTimeRewardApplicable()
@@ -124,26 +97,35 @@ contract DAIMAHALPTokenSharePool is
                 .add(rewards[account]);
     }
 
-    // stake visibility is public as overriding LPTokenWrapper's stake() function
-    function stake(uint256 amount)
-        public
-        override
-        updateReward(msg.sender)
-        checkStart
-    {
-        require(amount > 0, 'DAIMAHALPTokenSharePool: Cannot stake 0');
-        super.stake(amount);
+    // Stake visibility is public as overriding LPTokenWrapper's stake() function.
+    function stake(uint256 amount) public updateReward(msg.sender) checkStart {
+        require(amount > 0, 'ARTHTOKENIPool: Cannot stake 0');
+
+        uint256 newDeposit = deposits[msg.sender].add(amount);
+        _totalSupply = _totalSupply.add(amount);
+
+        require(
+            newDeposit <= 20000e18,
+            'ARTHTOKENPool: deposit amount exceeds maximum 20000'
+        );
+
+        token1.safeTransferFrom(msg.sender, address(this), amount);
+        deposits[msg.sender] = newDeposit;
         emit Staked(msg.sender, amount);
     }
 
     function withdraw(uint256 amount)
         public
-        override
         updateReward(msg.sender)
         checkStart
     {
-        require(amount > 0, 'DAIMAHALPTokenSharePool: Cannot withdraw 0');
-        super.withdraw(amount);
+        require(amount > 0, 'ARTHTOKENPool: Cannot withdraw 0');
+
+        _totalSupply = _totalSupply.sub(amount);
+        deposits[msg.sender] = deposits[msg.sender].sub(amount);
+
+        token1.safeTransfer(msg.sender, amount);
+
         emit Withdrawn(msg.sender, amount);
     }
 
@@ -154,9 +136,11 @@ contract DAIMAHALPTokenSharePool is
 
     function getReward() public updateReward(msg.sender) checkStart {
         uint256 reward = earned(msg.sender);
+
         if (reward > 0) {
             rewards[msg.sender] = 0;
-            basisShare.safeTransfer(msg.sender, reward);
+            token0.safeTransfer(msg.sender, reward);
+
             emit RewardPaid(msg.sender, reward);
         }
     }
@@ -173,15 +157,19 @@ contract DAIMAHALPTokenSharePool is
             } else {
                 uint256 remaining = periodFinish.sub(block.timestamp);
                 uint256 leftover = remaining.mul(rewardRate);
+
                 rewardRate = reward.add(leftover).div(DURATION);
             }
+
             lastUpdateTime = block.timestamp;
             periodFinish = block.timestamp.add(DURATION);
+
             emit RewardAdded(reward);
         } else {
             rewardRate = reward.div(DURATION);
             lastUpdateTime = starttime;
             periodFinish = starttime.add(DURATION);
+
             emit RewardAdded(reward);
         }
     }
