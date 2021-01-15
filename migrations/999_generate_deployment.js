@@ -6,29 +6,31 @@ const util = require('util');
 const writeFile = util.promisify(fs.writeFile);
 
 
-function distributionPoolContracts() {
-  return fs.readdirSync(path.resolve(__dirname, '../contracts/distribution'))
-    .filter(filename => filename.endsWith('Pool.sol'))
-    .filter(filename => !filename.includes('DAIMAHALPTokenSharePool'))
-    .filter(filename => filename !== 'ARTHTOKENPool.sol')
-    .map(filename => filename.replace('.sol', ''));
-}
-
-
 // Deployment and ABI will be generated for contracts listed on here.
 // The deployment thus can be used on frontend.
 const exportedContracts = [
   'ARTH',
   'ARTHB',
   'MahaToken',
-  'ArthLiquidityBoardroom',
-  'ArthBoardroom',
+
+  // oracles
   'GMUOracle',
   'SeigniorageOracle',
-  'MAHAOracle', // 'MAHAUSDOracle',
+  'ArthMahaOracle', // 'MAHAUSDOracle',
   'BondRedemtionOracle',
+
+  // boardroom
+  'ArthLiquidityBoardroom',
+  'ArthBoardroom',
+
   'DevelopmentFund',
   'Treasury',
+
+  // pools
+  'ARTHMahaEthLPPool',
+  'ARTHMahaPool',
+  'InitialCashDistributor',
+  'ARTHMultiTokenPool',
   // ...distributionPoolContracts(),
 ];
 

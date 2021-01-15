@@ -11,7 +11,7 @@ import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import '../../interfaces/IRewardDistributionRecipient.sol';
 import '../../StakingTimelock.sol';
 
-contract ARTHTOKENPool is IRewardDistributionRecipient {
+contract ARTHTokenPool is IRewardDistributionRecipient {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
     IERC20 public token0;

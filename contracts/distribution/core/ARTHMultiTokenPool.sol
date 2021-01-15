@@ -167,6 +167,7 @@ contract ARTHMultiTokenPool is IMultiRewardDistributionRecipient {
             'ARTHMultiTokenPool: deposit amount exceeds maximum 20000'
         );
 
+        IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
         deposits[token][msg.sender] = newDeposit;
 
         emit Staked(msg.sender, token, amount);
@@ -179,6 +180,7 @@ contract ARTHMultiTokenPool is IMultiRewardDistributionRecipient {
     {
         require(amount > 0, 'ARTHMultiTokenPool: Cannot withdraw 0');
         deposits[token][msg.sender] = deposits[token][msg.sender].sub(amount);
+        IERC20(token).safeTransfer(msg.sender, amount);
         emit Withdrawn(msg.sender, token, amount);
     }
 
