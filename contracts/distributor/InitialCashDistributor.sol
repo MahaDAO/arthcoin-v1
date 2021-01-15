@@ -2,36 +2,9 @@
 
 pragma solidity ^0.6.0;
 
-import '../distribution/ARTHBACPool.sol';
-import '../distribution/ARTHBALPool.sol';
-import '../distribution/ARTHBASPool.sol';
-import '../distribution/ARTHBNBPool.sol';
-import '../distribution/ARTHBUSDPool.sol';
-import '../distribution/ARTHCOMPPool.sol';
-import '../distribution/ARTHCREAMPool.sol';
-import '../distribution/ARTHDAIPool.sol';
-import '../distribution/ARTHDOTPool.sol';
-import '../distribution/ARTHDSDPool.sol';
-import '../distribution/ARTHESDPool.sol';
-import '../distribution/ARTHFRAXPool.sol';
-import '../distribution/ARTHFTTPool.sol';
-import '../distribution/ARTHHTPool.sol';
-import '../distribution/ARTHKCSPool.sol';
-import '../distribution/ARTHDAIPool.sol';
-import '../distribution/ARTHLEOPool.sol';
-import '../distribution/ARTHLINKPool.sol';
-import '../distribution/ARTHMAHAPool.sol';
-import '../distribution/ARTHMATICPool.sol';
-import '../distribution/ARTHMICPool.sol';
-import '../distribution/ARTHMISPool.sol';
-import '../distribution/ARTHMKRPool.sol';
-import '../distribution/ARTHRSRPool.sol';
-import '../distribution/ARTHSUSDPool.sol';
-import '../distribution/ARTHSUSHIPool.sol';
-import '../distribution/ARTHUSDCPool.sol';
-import '../distribution/ARTHUSDTPool.sol';
-import '../distribution/ARTHyCRVPool.sol';
-import '../distribution/ARTHYFIPool.sol';
+import '@openzeppelin/contracts/math/SafeMath.sol';
+import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '../interfaces/IMultiRewardDistributionRecipient.sol';
 import '../interfaces/IDistributor.sol';
 
 contract InitialCashDistributor is IDistributor {
@@ -42,18 +15,30 @@ contract InitialCashDistributor is IDistributor {
     bool public once = true;
 
     IERC20 public cash;
-    IRewardDistributionRecipient[] public pools;
+    IERC20 mahaToken;
+    IERC20 mahaLpToken;
+
+    IMultiRewardDistributionRecipient public pool;
+
+    address[] public tokens;
     uint256 public totalInitialBalance;
 
     constructor(
         IERC20 _cash,
-        IRewardDistributionRecipient[] memory _pools,
+        IERC20 _mahaToken,
+        IERC20 _mahaLpToken,
+        address[] memory _tokens,
+        IMultiRewardDistributionRecipient _pool,
         uint256 _totalInitialBalance
     ) public {
-        require(_pools.length != 0, 'a list of ARTH pools are required');
+        require(tokens.length != 0, 'a list of ARTH pools are required');
 
         cash = _cash;
-        pools = _pools;
+        mahaToken = _mahaToken;
+        mahaLpToken = _mahaLpToken;
+
+        tokens = _tokens;
+        pool = _pool;
         totalInitialBalance = _totalInitialBalance;
     }
 
@@ -63,15 +48,13 @@ contract InitialCashDistributor is IDistributor {
             'InitialCashDistributor: you cannot run this function twice'
         );
 
-        // TODO: give special allocation to maha pools
+        for (uint256 i = 0; i < tokens.length; i++) {
+            uint256 amount = totalInitialBalance.div(tokens.length);
 
-        for (uint256 i = 0; i < pools.length; i++) {
-            uint256 amount = totalInitialBalance.div(pools.length);
+            cash.transfer(address(pool), totalInitialBalance);
+            pool.notifyRewardAmount(tokens[i], amount);
 
-            cash.transfer(address(pools[i]), amount);
-            pools[i].notifyRewardAmount(amount);
-
-            emit Distributed(address(pools[i]), amount);
+            emit Distributed(address(tokens[i]), amount);
         }
 
         once = false;
