@@ -271,12 +271,13 @@ contract Treasury is TreasurySetters {
     {
         // _updateCashPrice();
         uint256 cash12hPrice = getSeigniorageOraclePrice();
+        uint256 cash1hPrice = getBondOraclePrice();
 
         // send 1000 ARTH reward to the person advancing the epoch to compensate for gas
         IBasisAsset(cash).mint(msg.sender, uint256(1000).mul(1e18));
 
         // update the bond limits
-        _updateConversionLimit(cash12hPrice);
+        _updateConversionLimit(cash1hPrice);
 
         if (cash12hPrice <= getCeilingPrice()) {
             return; // just advance epoch instead revert
@@ -415,12 +416,12 @@ contract Treasury is TreasurySetters {
      * an hour a new TWAP will be calculated and the cap is reset based on
      * next 12h epoch.
      */
-    function _updateConversionLimit(uint256 cash24hrPrice) internal {
+    function _updateConversionLimit(uint256 cash1hPrice) internal {
         // reset this counter so that new bonds can now be minted...
         accumulatedBonds = 0;
 
         // check if we are in expansion or in contraction mode
-        if (cash24hrPrice > cashTargetPrice) {
+        if (cash1hPrice > cashTargetPrice) {
             // dont do anything if we are in expansion mode
             cashToBondConversionLimit = 0;
         } else {
@@ -429,9 +430,7 @@ contract Treasury is TreasurySetters {
             // understand how much % deviation do we have from target price
             // if target price is 2.5$ and we are at 2$; then percentage
             uint256 percentage =
-                cashTargetPrice.sub(cash24hrPrice).mul(1e18).div(
-                    cashTargetPrice
-                );
+                cashTargetPrice.sub(cash1hPrice).mul(1e18).div(cashTargetPrice);
 
             // accordingly set the new conversion limit to be that % from the
             // current circulating supply of ARTH
