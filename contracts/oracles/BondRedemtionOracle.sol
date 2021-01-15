@@ -9,7 +9,7 @@ import './core/MultiUniswapOracle.sol';
 // longer period.
 contract BondRedemtionOracle is MultiUniswapOracle {
     constructor(
-        address _factory,
+        address _router,
         address _cash,
         address _dai,
         uint256 _period,
@@ -17,7 +17,7 @@ contract BondRedemtionOracle is MultiUniswapOracle {
     )
         public
         MultiUniswapOracle(
-            _factory,
+            _router,
             _cash,
             _dai,
             address(0),

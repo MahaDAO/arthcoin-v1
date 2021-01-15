@@ -6,11 +6,11 @@ import '@openzeppelin/contracts/math/Math.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
-import '@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol';
 
 import {ICurve} from '../curve/Curve.sol';
 import {IOracle} from '../interfaces/IOracle.sol';
 import {IMultiUniswapOracle} from '../interfaces/IMultiUniswapOracle.sol';
+import {IUniswapV2Router02} from '../interfaces/IUniswapV2Router02.sol';
 import {IBoardroom} from '../interfaces/IBoardroom.sol';
 import {IBasisAsset} from '../interfaces/IBasisAsset.sol';
 import {ISimpleERCFund} from '../interfaces/ISimpleERCFund.sol';

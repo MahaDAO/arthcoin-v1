@@ -6,8 +6,8 @@ import '@openzeppelin/contracts/math/Math.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
-import '@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol';
 
+import {IUniswapV2Router02} from '../interfaces/IUniswapV2Router02.sol';
 import '../interfaces/IOracle.sol';
 import '../interfaces/IBoardroom.sol';
 import '../interfaces/IBasisAsset.sol';
