@@ -46,11 +46,9 @@ describe('Timelock', () => {
   let DevelopmentFund: ContractFactory;
   let ArthBoardroom: ContractFactory;
   let ArthLiquidityBoardroom: ContractFactory;
-  let BondRedemtionOracle: ContractFactory;
-  let SeigniorageOracle: ContractFactory;
-  let GMUOracle: ContractFactory;
-  let ArthMahaOracle: ContractFactory;
-  let DAI: ContractFactory
+  let Oracle: ContractFactory;
+  let Curve: ContractFactory;
+  let DAI: ContractFactory;
   let Timelock: ContractFactory;
 
   let Factory = new ContractFactory(
@@ -70,14 +68,13 @@ describe('Timelock', () => {
     DevelopmentFund = await ethers.getContractFactory('DevelopmentFund');
     ArthBoardroom = await ethers.getContractFactory('ArthBoardroom');
     ArthLiquidityBoardroom = await ethers.getContractFactory('ArthLiquidityBoardroom');
-    BondRedemtionOracle = await ethers.getContractFactory('BondRedemtionOracle');
-    SeigniorageOracle = await ethers.getContractFactory('SeigniorageOracle');
-    GMUOracle = await ethers.getContractFactory('GMUOracle');
-    ArthMahaOracle = await ethers.getContractFactory('ArthMahaTestnetOracle');
+    Oracle = await ethers.getContractFactory('MockOracle');
+    Curve = await ethers.getContractFactory('MockCurve');
     DAI = await ethers.getContractFactory('MockDai');
     Timelock = await ethers.getContractFactory('Timelock');
   });
 
+  let startTime: BigNumber
   let bond: Contract;
   let cash: Contract;
   let share: Contract;
@@ -88,8 +85,8 @@ describe('Timelock', () => {
   let arthLiquidityBoardroom: Contract;
   let developmentFund: Contract;
   let gmuOracle: Contract;
+  let curve: Contract;
   let arthMahaOracle: Contract;
-  let mahaOracle: Contract;
   let treasury: Contract;
   let uniswap: Contract;
   let uniswapRouter: Contract;
@@ -100,6 +97,8 @@ describe('Timelock', () => {
     bond = await ARTHB.connect(operator).deploy();
     share = await MAHA.connect(operator).deploy();
     dai = await DAI.connect(operator).deploy();
+
+    startTime = BigNumber.from(await latestBlocktime(provider)).add(DAY);
 
     uniswap = await Factory.connect(operator).deploy(operator.address);
     uniswapRouter = await Router.connect(operator).deploy(uniswap.address, operator.address);
@@ -123,39 +122,24 @@ describe('Timelock', () => {
     )
 
     developmentFund = await DevelopmentFund.connect(operator).deploy();
-
-    bondRedemtionOracle = await BondRedemtionOracle.connect(operator).deploy(
-      uniswapRouter.address,
-      cash.address,
-      dai.address,
-      5 * 60,
-      Math.floor(Date.now() / 1000)
+    curve = await Curve.connect(operator).deploy(
+      utils.parseEther('1.05'),
+      0,
+      0,
+      0,
+      0
     );
+    bondRedemtionOracle = await Oracle.connect(operator).deploy();
+    seigniorageOracle = await Oracle.connect(operator).deploy();
+    gmuOracle = await Oracle.connect(operator).deploy();
+    arthMahaOracle = await Oracle.connect(operator).deploy();
 
-    seigniorageOracle = await SeigniorageOracle.connect(operator).deploy(
-      uniswapRouter.address,
-      cash.address,
-      dai.address,
-      5 * 60,
-      Math.floor(Date.now() / 1000)
-    );
-
-    gmuOracle = await GMUOracle.connect(operator).deploy(ETH);
-    arthMahaOracle = await ArthMahaOracle.connect(operator).deploy(
-      uniswapRouter.address,
-      cash.address,
-      dai.address,
-      share.address,
-      5 * 60,
-      Math.floor(Date.now() / 1000)
-    );
-
-    arthBoardroom = await ArthBoardroom.connect(operator).deploy(cash.address, 5 * 60);
+    arthBoardroom = await ArthBoardroom.connect(operator).deploy(cash.address, startTime);
     const dai_arth_lpt = await await bondRedemtionOracle.pairFor(uniswap.address, cash.address, dai.address);
     arthLiquidityBoardroom = await ArthLiquidityBoardroom.connect(operator).deploy(
       cash.address,
       dai_arth_lpt,
-      5 * 60
+      startTime
     );
 
     treasury = await Treasury.connect(operator).deploy(
@@ -164,14 +148,15 @@ describe('Timelock', () => {
       bond.address,
       share.address,
       bondRedemtionOracle.address,
-      mahaOracle.address, // mahausdOracle.address,
+      arthMahaOracle.address,
       seigniorageOracle.address,
       arthLiquidityBoardroom.address,
       arthBoardroom.address,
       developmentFund.address,
       uniswapRouter.address,
+      curve.address,
       gmuOracle.address,
-      Math.floor(Date.now() / 1000),
+      startTime,
       5 * 60
     );
 
@@ -219,8 +204,9 @@ describe('Timelock', () => {
         arthBoardroom.address,
         developmentFund.address,
         uniswapRouter.address,
+        curve.address,
         gmuOracle.address,
-        Math.floor(Date.now() / 1000),
+        startTime,
         5 * 60
       );
     });
