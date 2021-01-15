@@ -16,7 +16,7 @@ const exportedContracts = [
   // oracles
   'GMUOracle',
   'SeigniorageOracle',
-  'ArthMahaOracle', // 'MAHAUSDOracle',
+  'ArthMahaTestnetOracle',
   'BondRedemtionOracle',
 
   // boardroom

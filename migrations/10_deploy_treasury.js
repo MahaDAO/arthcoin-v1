@@ -1,5 +1,5 @@
+const { BigNumber } = require('ethers');
 const knownContracts = require('./known-contracts');
-const ethers = require('ethers');
 
 const ARTH = artifacts.require('ARTH');
 const ARTHB = artifacts.require('ARTHB');
@@ -9,23 +9,13 @@ const BondRedemtionOracle = artifacts.require('BondRedemtionOracle');
 const DevelopmentFund = artifacts.require('DevelopmentFund');
 const GMUOracle = artifacts.require('GMUOracle');
 const MahaToken = artifacts.require('MahaToken');
-const MAHAOracle = artifacts.require("MAHAOracle");
-const MAHAUSDOracle = artifacts.require('MAHAUSDOracle');
+const MAHAOracle = artifacts.require("ArthMahaTestnetOracle");
 const MockDai = artifacts.require('MockDai');
 const SeigniorageOracle = artifacts.require('SeigniorageOracle');
 const Treasury = artifacts.require('Treasury');
 const UniswapV2Router02 = artifacts.require('UniswapV2Router02');
+const Curve = artifacts.require('MockCurve');
 
-async function approveIfNot(token, owner, spender, amount) {
-  const allowance = await token.allowance(owner, spender);
-
-  if (web3.utils.toBN(allowance).gte(web3.utils.toBN(amount))) {
-    return;
-  }
-
-  await token.approve(spender, amount);
-  console.log(` - Approved ${token.symbol ? (await token.symbol()) : token.address}`);
-}
 
 async function migration(deployer, network, accounts) {
   // Set the main account, you'll be using accross all the files for
@@ -42,7 +32,7 @@ async function migration(deployer, network, accounts) {
     : await UniswapV2Router02.deployed();
 
   // Set starttime for different networks.
-  let POOL_START_DATE = Math.floor(Date.now() / 1000);
+  let POOL_START_DATE = Math.floor(Date.now() / 1000) + 60;
   let TREASURY_PERIOD = 12 * 60 * 60;
 
   if (network === 'mainnet') {
@@ -50,6 +40,16 @@ async function migration(deployer, network, accounts) {
   } else {
     TREASURY_PERIOD = 60 * 60;
   }
+
+  const decimals = BigNumber.from(10).pow(18)
+  await deployer.deploy(Curve,
+    BigNumber.from(105).mul(decimals).div(100),
+    0,
+    0,
+    0,
+    0
+  );
+
 
   console.log('Deploying treasury.')
   await deployer.deploy(
@@ -59,13 +59,14 @@ async function migration(deployer, network, accounts) {
     ARTHB.address,
     MahaToken.address,
     BondRedemtionOracle.address,
-    MAHAOracle.address, // MAHAUSDOracle.address,
+    MAHAOracle.address,
     SeigniorageOracle.address,
     ArthLiquidityBoardroom.address,
     ArthBoardroom.address,
     DevelopmentFund.address,
     uniswapRouter.address,
     GMUOracle.address,
+    Curve.address,
     POOL_START_DATE,
     TREASURY_PERIOD
   );

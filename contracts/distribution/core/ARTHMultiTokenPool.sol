@@ -99,7 +99,7 @@ contract ARTHMultiTokenPool is IMultiRewardDistributionRecipient {
 
     function registerToken(address token, uint256 _maxAmountPerToken)
         public
-        onlyRewardDistribution
+        onlyOwner
     {
         rewardRate[token] = 0;
         periodFinish[token] = 0;

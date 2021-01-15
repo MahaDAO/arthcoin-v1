@@ -18,27 +18,27 @@ async function migration(deployer, network, accounts) {
   // various important activities to your desired address in the .env
   // file.
   accounts[0] = process.env.WALLET_KEY;
-  
+
   // Deploy dai or fetch deployed dai.
   console.log(`Fetching dai on ${network} network.`);
   const dai = network === 'mainnet'
     ? await IERC20.at(knownContracts.DAI[network])
     : await MockDai.deployed();
-  
+
   // Fetching deployed ARTH.
   const cash = await ARTH.deployed();
-  
+
   // Fetch the bond oracle.
   const bondRedemtionOralce = await BondRedemtionOracle.deployed();
-  
+
   // Fetch the deployed uniswap.
   const uniswap = network === 'mainnet' || network === 'ropsten'
     ? await UniswapV2Factory.at(knownContracts.UniswapV2Factory[network])
-    : await UniswapV2Factory.deployed()
+    : await UniswapV2Factory.deployed();
 
   // Get the oracle pair of ARTH-DAI.
   const dai_arth_lpt = await bondRedemtionOralce.pairFor(uniswap.address, cash.address, dai.address);
-  
+
   // Deploy ARTH-DAI liquidity boardroom.
   await deployer.deploy(ArthLiquidityBoardroom, cash.address, dai_arth_lpt, ARTH_LIQUIDITY_BOARDROOM_LOCK_DURATION);
 

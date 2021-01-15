@@ -87,5 +87,13 @@ contract MultiUniswapOracle is IMultiUniswapOracle, Epoch {
         return price;
     }
 
+    function pairFor(
+        address factory,
+        address tokenA,
+        address tokenB
+    ) external pure returns (address lpt) {
+        return UniswapV2Library.pairFor(factory, tokenA, tokenB);
+    }
+
     event Updated(uint256 price);
 }

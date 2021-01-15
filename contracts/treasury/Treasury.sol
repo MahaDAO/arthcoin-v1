@@ -67,7 +67,7 @@ contract Treasury is TreasurySetters {
         uniswapRouter = _uniswapRouter;
         curve = _curve;
 
-        _updateCashPrice();
+        // _updateCashPrice();
     }
 
     modifier updatePrice {
@@ -269,7 +269,7 @@ contract Treasury is TreasurySetters {
         checkEpoch
         checkOperator
     {
-        // _updateCashPrice();
+        _updateCashPrice();
         uint256 cash12hPrice = getSeigniorageOraclePrice();
         uint256 cash1hPrice = getBondOraclePrice();
 

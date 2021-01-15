@@ -6,9 +6,9 @@ const ARTH = artifacts.require('ARTH');
 const MAHA = artifacts.require('MahaToken');
 const MockDai = artifacts.require('MockDai');
 const GMUOracle = artifacts.require('GMUOracle');
-const MAHAOracle = artifacts.require("MAHAOracle");
-const MAHAUSDOracle = artifacts.require('MAHAUSDOracle');
-const UniswapV2Factory = artifacts.require('UniswapV2Factory');
+const UniswapV2Router02 = artifacts.require('UniswapV2Router02');
+
+const ArthMahaOracle = artifacts.require("ArthMahaTestnetOracle");
 const SeigniorageOracle = artifacts.require('SeigniorageOracle');
 const BondRedemtionOracle = artifacts.require('BondRedemtionOracle');
 
@@ -20,18 +20,16 @@ async function migration(deployer, network, accounts) {
   accounts[0] = process.env.WALLET_KEY;
 
   // Set starttime for different networks.
-  const startTime = POOL_START_DATE;
+  let startTime = POOL_START_DATE + 1000;
   if (network === 'mainnet') {
     startTime += 5 * DAY;
   }
 
   const ORACLE_START_PRICE = web3.utils.toBN(1e18).toString();
   const GMU_ORACLE_START_PRICE = ORACLE_START_PRICE;
-  const MAHAUSD_ORACLE_START_PRICE = ORACLE_START_PRICE;
 
   const ORACLE_PERIOD = 5 * 60;
   const BOND_ORACLE_PERIOD = ORACLE_PERIOD;
-  const MAHA_ORACLE_PERIOD = ORACLE_PERIOD;
   const SEIGNIORAGE_ORACLE_PERIOD = ORACLE_PERIOD;
 
   // Deploy dai or fetch deployed dai.
@@ -46,17 +44,17 @@ async function migration(deployer, network, accounts) {
 
   // Fetch the deployed uniswap contract.
   const uniswap = network === 'mainnet' || network === 'ropsten'
-    ? await UniswapV2Factory.at(knownContracts.UniswapV2Factory[network])
-    : await UniswapV2Factory.deployed()
+    ? await UniswapV2Router02.at(knownContracts.UniswapV2Router02[network])
+    : await UniswapV2Router02.deployed();
 
   // Deploy oracle for the pair between ARTH and Dai.
-  console.log('Deploying bond oracle.')
+  console.log('Deploying bond oracle.');
   await deployer.deploy(
     BondRedemtionOracle,
     uniswap.address,
-    cash.address, // NOTE YA: I guess bond oracle is for dai - cash pool.
+    cash.address,
     dai.address,
-    BOND_ORACLE_PERIOD, // In hours for dev deployment purpose.
+    BOND_ORACLE_PERIOD,
     startTime
   );
 
@@ -74,21 +72,18 @@ async function migration(deployer, network, accounts) {
   // Deploy maha-dai oracle.
   console.log('Deploying mahadai oracle.')
   await deployer.deploy(
-    MAHAOracle,
+    ArthMahaOracle,
     uniswap.address,
-    share.address,
+    cash.address,
     dai.address,
-    MAHA_ORACLE_PERIOD, // In hours for dev deployment purpose.
+    share.address,
+    BOND_ORACLE_PERIOD, // In hours for dev deployment purpose.
     startTime
   );
 
   // Deploy the GMU oracle.
   console.log('Deploying GMU oracle.')
-  await deployer.deploy(GMUOracle, 'GMU', GMU_ORACLE_START_PRICE);
-
-  // Deploy MAHAUSD oracle.
-  // console.log('Deploying MAHAUSD oracle.')
-  // await deployer.deploy(MAHAUSDOracle, 'MAHA-USD', MAHAUSD_ORACLE_START_PRICE);
+  await deployer.deploy(GMUOracle, GMU_ORACLE_START_PRICE);
 }
 
 
