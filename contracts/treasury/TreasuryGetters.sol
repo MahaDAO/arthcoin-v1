@@ -19,7 +19,6 @@ import '../lib/Safe112.sol';
 import '../owner/Operator.sol';
 import '../utils/Epoch.sol';
 import '../utils/ContractGuard.sol';
-import '../interfaces/IGMUOracle.sol';
 import './TreasuryState.sol';
 
 abstract contract TreasuryGetters is TreasuryState {
@@ -36,11 +35,11 @@ abstract contract TreasuryGetters is TreasuryState {
     }
 
     function getGMUOraclePrice() public view returns (uint256) {
-        return IGMUOracle(gmuOracle).getPrice();
+        return IOracle(gmuOracle).getPrice();
     }
 
-    function getMAHAUSDOraclePrice() public view returns (uint256) {
-        return IGMUOracle(mahausdOracle).getPrice();
+    function getMahaArthOraclePrice() public view returns (uint256) {
+        return IOracle(mahaArthOracle).getPrice();
     }
 
     function getSeigniorageOraclePrice() public view returns (uint256) {
@@ -60,7 +59,7 @@ abstract contract TreasuryGetters is TreasuryState {
     }
 
     function _getCashPrice(address oracle) internal view returns (uint256) {
-        try IOracle(oracle).consult(cash, 1e18) returns (uint256 price) {
+        try IOracle(oracle).getPrice() returns (uint256 price) {
             return price;
         } catch {
             revert('Treasury: failed to consult cash price from the oracle');

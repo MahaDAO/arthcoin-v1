@@ -2,11 +2,11 @@
 
 pragma solidity ^0.6.0;
 
-import './Oracle.sol';
+import './core/SimpleOracle.sol';
 
-contract GMUOracle is Oracle {
+contract GMUOracle is SimpleOracle {
     constructor(string memory _name, uint256 _price)
         public
-        Oracle(_name, _price)
+        SimpleOracle(_name, _price)
     {}
 }

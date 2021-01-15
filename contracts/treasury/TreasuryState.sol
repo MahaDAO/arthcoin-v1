@@ -39,7 +39,7 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     address public bondOracle;
     address public seigniorageOracle;
     address public gmuOracle;
-    address public mahausdOracle;
+    address public mahaArthOracle;
 
     // cash price tracking vars
     uint256 public cashTargetPrice = 1e18;

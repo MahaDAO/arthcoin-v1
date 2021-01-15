@@ -35,7 +35,7 @@ contract Treasury is TreasurySetters {
         address _bond,
         address _share,
         address _bondOracle,
-        address _mahausdOracle,
+        address _mahaArthOracle,
         address _seigniorageOracle,
         address _arthLiquidityBoardroom,
         address _arthBoardroom,
@@ -54,7 +54,7 @@ contract Treasury is TreasurySetters {
 
         // oracles
         bondOracle = _bondOracle;
-        mahausdOracle = _mahausdOracle;
+        mahaArthOracle = _mahaArthOracle;
         seigniorageOracle = _seigniorageOracle;
         gmuOracle = _gmuOracle;
 
@@ -214,7 +214,7 @@ contract Treasury is TreasurySetters {
 
         uint256 stabilityFeeAmount = amount.mul(stabilityFee).div(100);
         uint256 stabilityFeeValue =
-            IGMUOracle(mahausdOracle).consult(stabilityFeeAmount);
+            IOracle(mahausdOracle).consult(cash, stabilityFeeAmount);
 
         // charge the stability fee
         IERC20(share).safeTransferFrom(
