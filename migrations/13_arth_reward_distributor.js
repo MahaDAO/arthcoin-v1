@@ -46,6 +46,7 @@ module.exports = async (deployer, network, accounts) => {
   cash.mint(ARTHMahaPool.address, BigNumber.from(150000).mul(decimals))
   cash.mint(ARTHMahaEthLPPool.address, BigNumber.from(150000).mul(decimals))
 
+
   await distributor.distribute();
   console.log(`Deposited ARTH to all community pools.`);
 }

@@ -6,6 +6,7 @@ const ARTHB = artifacts.require('ARTHB');
 const MockDai = artifacts.require('MockDai');
 const MahaToken = artifacts.require('MahaToken');
 const UniswapV2Router02 = artifacts.require('UniswapV2Router02');
+const IERC20 = artifacts.require('IERC20');
 
 
 function deadline() {

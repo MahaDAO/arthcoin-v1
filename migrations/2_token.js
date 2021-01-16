@@ -22,6 +22,11 @@ const migration = async (deployer, network, accounts) => {
   await deployer.deploy(ARTH);
   await deployer.deploy(ARTHB);
 
+
+  const cash = await ARTH.deployed();
+  console.log('Minting 1 ARTH token.')
+  await cash.mint(accounts[0], web3.utils.toBN(10 ** 18).toString());
+
   if (network !== 'mainnet') {
     await deployer.deploy(MahaToken);
 

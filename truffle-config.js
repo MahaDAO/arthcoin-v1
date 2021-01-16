@@ -55,18 +55,20 @@ module.exports = {
     mainnet: {
       provider: function () {
         return new HDWalletProvider(
-          [process.env.WALLET_SECRET_KEY],
-          `https://mainnet.infura.io/v3/${process.env.INFURA_PROJECT_ID}`
+          [process.env.METAMASK_WALLET_SECRET],
+          process.env.API_URL
         )
       },
       network_id: 1,
+      skipDryRun: true,
+      confirmation: 2,
       gasPrice: 90 * 1000000000,
       gas: 6721975, // Any network (default: none)
     },
     kovan: {
       provider: function () {
         return new HDWalletProvider(
-          [process.env.WALLET_SECRET_KEY],
+          [process.env.METAMASK_WALLET_SECRET],
           `https://kovan.infura.io/v3/${process.env.INFURA_PROJECT_ID}`
         )
       },

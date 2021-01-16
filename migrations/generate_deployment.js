@@ -16,7 +16,7 @@ const writeFile = util.promisify(fs.writeFile);
 const exportedContracts = [
   'ARTH',
   'ARTHB',
-  'MahaToken',
+  // 'MahaToken',
 
   // // oracles
   // 'GMUOracle',
@@ -25,8 +25,8 @@ const exportedContracts = [
   // 'BondRedemtionOracle',
 
   // boardroom
-  'ArthLiquidityBoardroom',
-  'ArthBoardroom',
+  // 'ArthLiquidityBoardroom',
+  // 'ArthBoardroom',
 
   // 'DevelopmentFund',
   // 'Treasury',
@@ -62,7 +62,7 @@ const IERC20 = artifacts.require('IERC20');
  * Main migrations
  */
 module.exports = async (callback) => {
-  const network = 'development';
+  const network = 'mainnet';
 
   // Set the main account, you'll be using accross all the files for various
   // important activities to your desired address in the .env file.
@@ -86,6 +86,10 @@ module.exports = async (callback) => {
       ? await MahaToken.at(knownContracts.MahaToken[network])
       : await MahaToken.deployed();
 
+    deployments.MahaToken = {
+      address: mahaToken.address,
+      abi: mahaToken.abi
+    }
 
     const dai_arth_lpt = getCreate2Address(
       FACTORY_ADDRESS,

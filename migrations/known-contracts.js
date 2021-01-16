@@ -51,20 +51,20 @@ module.exports = {
     mainnet: '0x2ba592f78db6436527729929aaf6c908497cb200',
   },
   CURVE: {
-    mainnet: '0x2ba592f78db6436527729929aaf6c908497cb200',
+    mainnet: '0xd533a949740bb3306d119cc777fa900ba034cd52',
   },
   DSD: {
     mainnet: '0xbd2f0cd039e0bfcf88901c98c0bfac5ab27566e3',
   },
   MAHA_ETH_LP: {
-    mainnet: '0xbd2f0cd039e0bfcf88901c98c0bfac5ab27566e3',
+    mainnet: '0xc0897d6ba893e31f42f658eead777aa15b8f824d',
   },
   ESD: {
     mainnet: '0x36f3fd68e7325a35eb768f1aedaae9ea0689d723',
     ropsten: '0x8da4b92647c7ffeafda80d41799a7cad5a6f12ec',
   },
   FRAX: {
-    mainnet: '0x853d955acef822db058eb8505911ed77f175b99e',
+    mainnet: '0x3432b6a60d23ca0dfca7761b7ab56459d9c964d0',
   },
   FTT: {
     mainnet: '0x50d1c9771902476076ecfc8b2a83ad6b9355a4c9',
@@ -96,7 +96,7 @@ module.exports = {
     mainnet: '0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0',
   },
   SHARE: {
-    mainnet: '0x368b3a58b5f49392e5c9e4c998cb0bb966752e51',
+    mainnet: '0x39795344cbcc76cc3fb94b9d1b15c23c2070c66d',
   },
   MIS: {
     mainnet: '0x4b4d2e899658fb59b1d518b68fe836b100ee8958',

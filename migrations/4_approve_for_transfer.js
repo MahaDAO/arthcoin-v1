@@ -3,6 +3,8 @@ const knownContracts = require('./known-contracts');
 
 const ARTH = artifacts.require('ARTH');
 const ARTHB = artifacts.require('ARTHB');
+const IERC20 = artifacts.require('IERC20');
+
 const MockDai = artifacts.require('MockDai');
 const MahaToken = artifacts.require('MahaToken');
 const UniswapV2Router02 = artifacts.require('UniswapV2Router02');
@@ -15,6 +17,7 @@ async function approveIfNot(token, owner, spender, amount) {
     return;
   }
 
+  console.log(` - Approving ${token.symbol ? (await token.symbol()) : token.address}`);
   await token.approve(spender, amount);
   console.log(` - Approved ${token.symbol ? (await token.symbol()) : token.address}`);
 }
@@ -50,8 +53,8 @@ async function migration(deployer, network, accounts) {
 
   await Promise.all([
     approveIfNot(cash, accounts[0], uniswapRouter.address, max),
-    approveIfNot(mahaToken, accounts[0], uniswapRouter.address, max),
-    approveIfNot(bond, accounts[0], uniswapRouter.address, max),
+    // approveIfNot(mahaToken, accounts[0], uniswapRouter.address, max),
+    // approveIfNot(bond, accounts[0], uniswapRouter.address, max),
     approveIfNot(dai, accounts[0], uniswapRouter.address, max),
   ]);
 }
