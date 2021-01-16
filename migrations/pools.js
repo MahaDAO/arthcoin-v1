@@ -4,7 +4,7 @@ const INITIAL_BAS_FOR_DAI_BAC = 750000;
 const INITIAL_BAS_FOR_DAI_BAS = 250000;
 
 // const POOL_START_DATE = Date.parse('2020-11-30T00:00:00Z') / 1000;
-const POOL_START_DATE = Date.parse('2021-01-16T00:00:00Z') / 1000; // plus 8 hours is our time zone
+const POOL_START_DATE = Math.floor(new Date("Fri Jan 16 2021 13:00:10 GMT+0000").getTime() / 1000)
 // const POOL_START_DATE = Date.parse('2020-12-25T08:00:00Z') / 1000; // plus 8 hours is our time zone
 
 // const bacPools = [

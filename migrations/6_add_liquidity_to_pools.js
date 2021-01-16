@@ -28,7 +28,6 @@ async function migration(deployer, network, accounts) {
 
   // Fetch the deployed ARTH token.
   const cash = await ARTH.deployed();
-  const share = await MahaToken.deployed();
   const bond = await ARTHB.deployed();
 
   // Fetch deployed uniswap router.
@@ -53,6 +52,7 @@ async function migration(deployer, network, accounts) {
   )
 
   if (network !== 'mainnet') {
+    const share = await MahaToken.deployed();
     console.log('\nAdding liquidity to MAHA-DAI pool');
 
     // depoly MAHA-DAI and ARTHB-DAI pools as well

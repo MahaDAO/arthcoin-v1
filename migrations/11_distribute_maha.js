@@ -4,6 +4,7 @@ const { getCreate2Address } = require('@ethersproject/address')
 
 const knownContracts = require('./known-contracts');
 const { POOL_START_DATE } = require('./pools');
+const { BigNumber } = require('ethers');
 
 const Arth = artifacts.require('Arth');
 const MahaToken = artifacts.require('MahaToken');
@@ -45,4 +46,11 @@ module.exports = async (deployer, network, accounts) => {
   await deployer.deploy(MAHADAIARTHLPTokenPool, mahaToken.address, dai_arth_lpt, POOL_START_DATE);
   await deployer.deploy(MAHAMAHAETHLPTokenPool, mahaToken.address, maha_eth_lpt, POOL_START_DATE);
   await deployer.deploy(MAHAARTHPool, mahaToken.address, arth.address, POOL_START_DATE);
+
+  if (network !== 'mainnet') {
+    const decimals = BigNumber.from(10).pow(18)
+    mahaToken.mint(MAHADAIARTHLPTokenPool.address, BigNumber.from(4000).mul(decimals))
+    mahaToken.mint(MAHAMAHAETHLPTokenPool.address, BigNumber.from(4000).mul(decimals))
+    mahaToken.mint(MAHAARTHPool.address, BigNumber.from(2000).mul(decimals))
+  }
 };

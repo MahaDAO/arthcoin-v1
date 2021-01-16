@@ -52,6 +52,17 @@ module.exports = {
       gasPrice: 5 * 1000000000,
       gas: 6721975, // Any network (default: none)
     },
+    mainnet: {
+      provider: function () {
+        return new HDWalletProvider(
+          [process.env.WALLET_SECRET_KEY],
+          `https://mainnet.infura.io/v3/${process.env.INFURA_PROJECT_ID}`
+        )
+      },
+      network_id: 1,
+      gasPrice: 90 * 1000000000,
+      gas: 6721975, // Any network (default: none)
+    },
     kovan: {
       provider: function () {
         return new HDWalletProvider(
@@ -67,7 +78,7 @@ module.exports = {
       skipDryRun: true,
       provider: function () {
         return new HDWalletProvider(
-          [process.env.WALLET_SECRET_KEY],
+          [process.env.METAMASK_WALLET_SECRET],
           `https://ropsten.infura.io/v3/${process.env.INFURA_PROJECT_ID}`
         )
       },

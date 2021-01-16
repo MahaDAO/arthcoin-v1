@@ -29,10 +29,14 @@ async function migration(deployer, network, accounts) {
 
   if (network !== 'mainnet') {
     // Mint 1mn maha tokens to self if not on mainnet.
-    console.log('Minting MAHA tokens.')
     const mil = web3.utils.toBN(10 ** 6)
+    console.log('Minting MAHA tokens.')
     await mahaToken.mint(accounts[0], web3.utils.toBN(10 ** 18).mul(mil).toString());
+
+    console.log('Minting ARTH tokens.')
     await cash.mint(accounts[0], web3.utils.toBN(10 ** 18).mul(mil).toString());
+
+    console.log('Minting ARTHB tokens.')
     await bond.mint(accounts[0], web3.utils.toBN(10 ** 18).mul(mil).toString());
 
     // Mint some tokens to the metamask wallet holder in dev.
