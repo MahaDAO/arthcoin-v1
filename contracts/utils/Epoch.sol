@@ -21,7 +21,7 @@ contract Epoch is Operator {
         uint256 _startTime,
         uint256 _startEpoch
     ) public {
-        require(_startTime > block.timestamp, 'Epoch: invalid start time');
+        // require(_startTime > block.timestamp, 'Epoch: invalid start time');
         period = _period;
         startTime = _startTime;
         lastExecutedAt = startTime.add(_startEpoch.mul(period));
