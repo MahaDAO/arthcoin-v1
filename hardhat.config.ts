@@ -1,12 +1,10 @@
-require('dotenv').config();
-
 import '@nomiclabs/hardhat-ethers';
 import '@nomiclabs/hardhat-etherscan';
 import 'hardhat-gas-reporter';
 import 'solidity-coverage';
 
 export default {
-  default: 'development',
+  default: 'ropsten',
   networks: {
     hardhat: {},
     mainnet: {
@@ -15,7 +13,7 @@ export default {
     },
     ropsten: {
       url: `https://ropsten.infura.io/v3/${process.env.INFURA_PROJECT_ID}`,
-      accounts: [`0x${process.env.WALLET_SECRET_KEY}`]
+      accounts: [`0x${process.env.METAMASK_WALLET_SECRET}`]
     },
     development: {
       url: "http://localhost:7545",
