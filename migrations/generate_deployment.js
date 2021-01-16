@@ -99,8 +99,9 @@ module.exports = async (callback) => {
       INIT_CODE_HASH
     );
 
-    console.log('dai_arth_lpt at', dai_arth_lpt)
-    console.log('maha_dai_lpt at', maha_dai_lpt)
+    console.log('dai at', dai.address);
+    console.log('dai_arth_lpt at', dai_arth_lpt);
+    console.log('maha_dai_lpt at', maha_dai_lpt);
 
     for (const name of exportedContracts) {
       const contract = artifacts.require(name);
