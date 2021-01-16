@@ -21,8 +21,11 @@ async function migration(deployer, network, accounts) {
 
   // Fetch deployed tokens.
   const cash = await ARTH.deployed();
-  const mahaToken = await MahaToken.deployed();
   const bond = await ARTHB.deployed();
+
+  const mahaToken = network === 'mainnet'
+    ? await MahaToken.at(knownContracts.MahaToken[network])
+    : await MahaToken.deployed();
 
   if (network !== 'mainnet') {
     // Mint 1mn maha tokens to self if not on mainnet.

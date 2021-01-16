@@ -34,7 +34,6 @@ async function migration(deployer, network, accounts) {
 
   // Fetch deployed tokens.
   const cash = await ARTH.deployed();
-  const mahaToken = await MahaToken.deployed();
   const bond = await ARTHB.deployed();
 
   // Fetch deployed uniswap router.
@@ -42,7 +41,10 @@ async function migration(deployer, network, accounts) {
     ? await UniswapV2Router02.at(knownContracts.UniswapV2Router02[network])
     : await UniswapV2Router02.deployed();
 
-  console.log('Approving Uniswap on tokens for liquidity');
+  const mahaToken = network === 'mainnet'
+    ? await MahaToken.at(knownContracts.MahaToken[network])
+    : await MahaToken.deployed();
+
   const mil = web3.utils.toBN(10 ** 7)
   const max = web3.utils.toBN(10 ** 18).mul(mil).toString();
 

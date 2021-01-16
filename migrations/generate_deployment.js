@@ -6,6 +6,11 @@ const util = require('util');
 const writeFile = util.promisify(fs.writeFile);
 
 
+function distributionPoolContracts() {
+  return fs.readdirSync(path.resolve(__dirname, '../contracts/distribution'))
+    .filter(filename => filename.endsWith('Pool.sol'))
+    .map(filename => filename.replace('.sol', ''));
+}
 // Deployment and ABI will be generated for contracts listed on here.
 // The deployment thus can be used on frontend.
 const exportedContracts = [
@@ -13,24 +18,37 @@ const exportedContracts = [
   'ARTHB',
   'MahaToken',
 
-  // oracles
-  'GMUOracle',
-  'SeigniorageOracle',
-  'ArthMahaTestnetOracle',
-  'BondRedemtionOracle',
+  // // oracles
+  // 'GMUOracle',
+  // 'SeigniorageOracle',
+  // 'ArthMahaTestnetOracle',
+  // 'BondRedemtionOracle',
 
   // boardroom
   'ArthLiquidityBoardroom',
   'ArthBoardroom',
 
-  'DevelopmentFund',
-  'Treasury',
+  // 'DevelopmentFund',
+  // 'Treasury',
 
-  // pools
-  'ARTHMahaEthLPPool',
-  'ARTHMahaPool',
-  'InitialCashDistributor',
-  'ARTHMultiTokenPool',
+  "ARTHBASPool",
+  "ARTHMKRPool",
+  "ARTHSHAREPool",
+  "ARTHCOMPool",
+  "ARTHESDPool",
+  "ARTHMahaEthLPPool",
+  "ARTHSUSHIPool",
+  "ARTHCURVEPool",
+  "ARTHFRAXPool",
+  "ARTHMahaPool",
+  "ARTHYFIPool",
+  "ARTHDSDPool",
+  "ARTHMATICPool",
+  "ARTHRSRPool",
+
+  'MAHAARTHPool',
+  'MAHADAIARTHLPTokenPool',
+  'MAHAMAHAETHLPTokenPool'
   // ...distributionPoolContracts(),
 ];
 

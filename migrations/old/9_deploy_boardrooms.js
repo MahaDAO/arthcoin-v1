@@ -1,8 +1,8 @@
 const {
   ARTH_LIQUIDITY_BOARDROOM_LOCK_DURATION,
   ARTH_BOARDROOM_LOCK_DURATION
-} = require('./config');
-const knownContracts = require('./known-contracts');
+} = require('../config');
+const knownContracts = require('../known-contracts');
 
 
 const ARTH = artifacts.require('ARTH');

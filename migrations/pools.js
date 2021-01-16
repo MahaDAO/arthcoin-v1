@@ -1,22 +1,56 @@
-const arthCommunityPools = [
-  {name: "MATIC", amount: 10000, address: '0xD421B87F74E7dEB898Bd601B8f8a150b70d7aced'},
-  // {name: "DSD", amount: 10000, address: '0xD421B87F74E7dEB898Bd601B8f8a150b70d7ace1'},
-  // {name: "ESD", amount: 10000, address: '0xD421B87F74E7dEB898Bd601B8f8a150b70d7ace2'},
-  // {name: "YFI", amount: 10000, address: '0xD421B87F74E7dEB898Bd601B8f8a150b70d7ace3'},
-  // {name: "COMP", amount: 10000, address: '0xD421B87F74E7dEB898Bd601B8f8a150b70d7ace4'},
-  // {name: "CURVE", amount: 10000, address: '0xD421B87F74E7dEB898Bd601B8f8a150b70d7ace5'},
-  // {name: "BAS", amount: 10000, address: '0xD421B87F74E7dEB898Bd601B8f8a150b70d7ace6'},
-  // {name: "RSR", amount: 10000, address: '0xD421B87F74E7dEB898Bd601B8f8a150b70d7ace7'},
-  // {name: "MAKER", amount: 10000, address: '0xD421B87F74E7dEB898Bd601B8f8a150b70d7ace8'},
-  // {name: "CURVE", amount: 10000, address: '0xD421B87F74E7dEB898Bd601B8f8a150b70d7ace9'},
-  // {name: "DOT", amount: 10000, address: '0xD421B87F74E7dEB898Bd601B8f8a150b70d7aceA'},
-  // {name: "FRAX", amount: 10000, address: '0xD421B87F74E7dEB898Bd601B8f8a150b70d7aceb'},
-  // {name: "SHARE", amount: 10000, address: '0xD421B87F74E7dEB898Bd601B8f8a150b70d7acec'},
-  // {name: "SUSHI", amount: 10000, address: '0xD421B87F74E7dEB898Bd601B8f8a150b70d7aced'},
+// https://docs.basis.cash/mechanisms/yield-farming
+const INITIAL_BAC_FOR_POOLS = 500000;
+const INITIAL_BAS_FOR_DAI_BAC = 750000;
+const INITIAL_BAS_FOR_DAI_BAS = 250000;
+
+// const POOL_START_DATE = Date.parse('2020-11-30T00:00:00Z') / 1000;
+const POOL_START_DATE = Date.parse('2021-01-16T00:00:00Z') / 1000; // plus 8 hours is our time zone
+// const POOL_START_DATE = Date.parse('2020-12-25T08:00:00Z') / 1000; // plus 8 hours is our time zone
+
+// const bacPools = [
+//   { contractName: "ARTHBASPool", token: 'BAS' },
+//   { contractName: "ARTHMKRPool", token: 'MKR' },
+//   { contractName: "ARTHSHAREPool", token: 'SHARE' },
+//   { contractName: "ARTHCOMPool", token: 'COMP' },
+//   { contractName: "ARTHESDPool", token: 'ESD' },
+//   { contractName: "ARTHMahaEthLPPool", token: 'MAHA_ETH_LP' },
+//   { contractName: "ARTHSUSHIPool", token: 'SUSHI' },
+//   { contractName: "ARTHCURVEPool", token: 'CURVE' },
+//   { contractName: "ARTHFRAXPool", token: 'FRAX' },
+//   { contractName: "ARTHMahaPool", token: 'MAHA' },
+//   { contractName: "ARTHYFIPool", token: 'YFI' },
+//   { contractName: "ARTHDSDPool", token: 'DSD' },
+//   { contractName: "ARTHMATICPool", token: 'MATIC' },
+//   { contractName: "ARTHRSRPool", token: 'RSR' },
+// ];
+
+const bacPools = [
+  { contractName: "ARTHBASPool", token: 'BAS' },
+  { contractName: "ARTHMKRPool", token: 'MKR' },
+  { contractName: "ARTHSHAREPool", token: 'SHARE' },
+  { contractName: "ARTHCOMPool", token: 'COMP' },
+  { contractName: "ARTHESDPool", token: 'ESD' },
+  { contractName: "ARTHMahaEthLPPool", token: 'MAHA_ETH_LP' },
+  { contractName: "ARTHSUSHIPool", token: 'SUSHI' },
+  { contractName: "ARTHCURVEPool", token: 'CURVE' },
+  { contractName: "ARTHFRAXPool", token: 'FRAX' },
+  { contractName: "ARTHMahaPool", token: 'MAHA' },
+  { contractName: "ARTHYFIPool", token: 'YFI' },
+  { contractName: "ARTHDSDPool", token: 'DSD' },
+  { contractName: "ARTHMATICPool", token: 'MATIC' },
+  { contractName: "ARTHRSRPool", token: 'RSR' },
 ];
 
-
+const basPools = {
+  DAIARTH: { contractName: 'DAIARTHLPTokenSharePool', token: 'DAI_ARTH-LPv2' },
+  // DAIMIS: { contractName: 'DAIARTHLPTokenSharePool', token: 'ETH_MAHA-LPv2' },
+}
 
 module.exports = {
-  arthCommunityPools
+  POOL_START_DATE,
+  INITIAL_BAC_FOR_POOLS,
+  INITIAL_BAS_FOR_DAI_BAC,
+  INITIAL_BAS_FOR_DAI_BAS,
+  bacPools,
+  basPools,
 };
