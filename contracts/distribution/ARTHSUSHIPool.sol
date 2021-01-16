@@ -82,6 +82,9 @@ contract SUSHIWrapper {
     function stake(uint256 amount) public virtual {
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
+
+        require(_totalSupply <= 3881988e18, 'deposit amount exceeds maximum');
+
         sushi.safeTransferFrom(msg.sender, address(this), amount);
     }
 

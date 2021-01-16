@@ -82,6 +82,9 @@ contract DAIWrapper {
     function stake(uint256 amount) public virtual {
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
+
+        require(_totalSupply <= 84460e18, 'deposit amount exceeds maximum');
+
         dai.safeTransferFrom(msg.sender, address(this), amount);
     }
 
@@ -170,11 +173,6 @@ contract ARTHBASPool is DAIWrapper, IRewardDistributionRecipient {
     {
         require(amount > 0, 'MICDAIPool: Cannot stake 0');
         uint256 newDeposit = deposits[msg.sender].add(amount);
-
-        require(
-            newDeposit <= 84460e18,
-            'BACDAIPool: deposit amount exceeds maximum 84460'
-        );
 
         deposits[msg.sender] = newDeposit;
         super.stake(amount);

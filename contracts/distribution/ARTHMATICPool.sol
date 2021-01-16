@@ -82,6 +82,9 @@ contract AAVEWrapper {
     function stake(uint256 amount) public virtual {
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
+
+        require(_totalSupply <= 41666667e18, 'deposit amount exceeds maximum');
+
         aave.safeTransferFrom(msg.sender, address(this), amount);
     }
 

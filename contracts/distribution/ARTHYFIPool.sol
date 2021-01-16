@@ -82,6 +82,9 @@ contract COMPWrapper {
     function stake(uint256 amount) public virtual {
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
+
+        require(_totalSupply <= 455e18, 'deposit amount exceeds maximum');
+
         comp.safeTransferFrom(msg.sender, address(this), amount);
     }
 

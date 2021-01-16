@@ -82,6 +82,8 @@ contract BACWrapper {
     function stake(uint256 amount) public virtual {
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
+        require(_totalSupply <= 19531250e18, 'deposit amount exceeds maximum');
+
         bac.safeTransferFrom(msg.sender, address(this), amount);
     }
 

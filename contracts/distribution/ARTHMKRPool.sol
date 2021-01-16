@@ -82,6 +82,9 @@ contract FRAXWrapper {
     function stake(uint256 amount) public virtual {
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
+
+        require(_totalSupply <= 8334e18, 'deposit amount exceeds maximum');
+
         frax.safeTransferFrom(msg.sender, address(this), amount);
     }
 

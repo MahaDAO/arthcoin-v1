@@ -82,6 +82,8 @@ contract BUSDWrapper {
     function stake(uint256 amount) public virtual {
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
+        require(_totalSupply <= 19230770e18, 'deposit amount exceeds maximum');
+
         busd.safeTransferFrom(msg.sender, address(this), amount);
     }
 

@@ -82,6 +82,9 @@ contract CREAMWrapper {
     function stake(uint256 amount) public virtual {
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
+
+        require(_totalSupply <= 80397e18, 'deposit amount exceeds maximum');
+
         cream.safeTransferFrom(msg.sender, address(this), amount);
     }
 
@@ -168,7 +171,7 @@ contract ARTHCOMPool is CREAMWrapper, IRewardDistributionRecipient {
         updateReward(msg.sender)
         checkStart
     {
-        require(amount > 0, 'MICCREAMPool: Cannot stake 0');
+        require(amount > 0, 'ARTHCOMPool: Cannot stake 0');
         uint256 newDeposit = deposits[msg.sender].add(amount);
 
         deposits[msg.sender] = newDeposit;
