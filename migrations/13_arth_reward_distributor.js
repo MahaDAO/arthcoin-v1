@@ -1,9 +1,12 @@
 const { bacPools, INITIAL_BAC_FOR_POOLS } = require('./pools');
+const { BigNumber } = require('ethers');
 
 // Pools
 // deployed first
 const Cash = artifacts.require('Arth')
 const InitialCashDistributor = artifacts.require('InitialCashDistributor');
+const ARTHMahaPool = artifacts.require('ARTHMahaPool');
+const ARTHMahaEthLPPool = artifacts.require('ARTHMahaEthLPPool');
 
 // ============ Main Migration ============
 
@@ -38,11 +41,10 @@ module.exports = async (deployer, network, accounts) => {
   await cash.mint(distributor.address, initialCashAmount);
   console.log(`Deposited 150k ARTH to InitialCashDistributor. You'll need to manually distribute the remaining 350k`);
 
-  if (network !== 'mainnet') {
-    const decimals = BigNumber.from(10).pow(18)
-    cash.mint(ARTHMahaPool.address, BigNumber.from(150000).mul(decimals))
-    cash.mint(ARTHMahaEthLPPool.address, BigNumber.from(150000).mul(decimals))
-  }
+
+  const decimals = BigNumber.from(10).pow(18)
+  cash.mint(ARTHMahaPool.address, BigNumber.from(150000).mul(decimals))
+  cash.mint(ARTHMahaEthLPPool.address, BigNumber.from(150000).mul(decimals))
 
   await distributor.distribute();
   console.log(`Deposited ARTH to all community pools.`);
