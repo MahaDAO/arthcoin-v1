@@ -45,9 +45,9 @@ contract InitialShareDistributor is IDistributor {
         daiarthLPPool.notifyRewardAmount(daiarthInitialBalance);
         emit Distributed(address(daiarthLPPool), daiarthInitialBalance);
 
-        share.transfer(address(daimahaLPPool), daimahaInitialBalance);
-        daimahaLPPool.notifyRewardAmount(daimahaInitialBalance);
-        emit Distributed(address(daimahaLPPool), daimahaInitialBalance);
+        // share.transfer(address(daimahaLPPool), daimahaInitialBalance);
+        // daimahaLPPool.notifyRewardAmount(daimahaInitialBalance);
+        // emit Distributed(address(daimahaLPPool), daimahaInitialBalance);
 
         once = false;
     }

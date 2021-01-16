@@ -1,7 +1,6 @@
 pragma solidity ^0.6.0;
 
 import '../distribution/ARTHBASPool.sol';
-import '../distribution/ARTHDotPool.sol';
 import '../distribution/ARTHMKRPool.sol';
 import '../distribution/ARTHSHAREPool.sol';
 import '../distribution/ARTHCOMPool.sol';
