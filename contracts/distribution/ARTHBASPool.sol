@@ -172,8 +172,8 @@ contract ARTHBASPool is DAIWrapper, IRewardDistributionRecipient {
         uint256 newDeposit = deposits[msg.sender].add(amount);
 
         require(
-            newDeposit <= 20000e18,
-            'BACDAIPool: deposit amount exceeds maximum 20000'
+            newDeposit <= 84460e18,
+            'BACDAIPool: deposit amount exceeds maximum 84460'
         );
 
         deposits[msg.sender] = newDeposit;

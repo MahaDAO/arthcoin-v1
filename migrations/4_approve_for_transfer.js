@@ -45,7 +45,7 @@ async function migration(deployer, network, accounts) {
     ? await MahaToken.at(knownContracts.MahaToken[network])
     : await MahaToken.deployed();
 
-  const mil = web3.utils.toBN(10 ** 7)
+  const mil = web3.utils.toBN(10 ** 7);
   const max = web3.utils.toBN(10 ** 18).mul(mil).toString();
 
   await Promise.all([
