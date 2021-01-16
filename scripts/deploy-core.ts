@@ -48,7 +48,7 @@ async function main() {
   console.log(`Admin verified ${operator.address}`);
 
   const Oracle = await ethers.getContractFactory('Oracle');
-  const Treasury = await ethers.getContractFactory('Treasury');
+  const MAHADAIARTHLPTokenPool = await ethers.getContractFactory('MAHADAIARTHLPTokenPool');
   // const Boardroom = await ethers.getContractFactory('Boardroom');
   const SimpleFund = await ethers.getContractFactory('SimpleERCFund');
 

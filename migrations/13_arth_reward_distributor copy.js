@@ -34,6 +34,7 @@ module.exports = async (deployer, network, accounts) => {
 
   console.log(`Setting distributor to InitialCashDistributor (${distributor.address})`);
   for await (const poolInfo of pools) {
+    console.log('done for ', poolInfo)
     const pool = await poolInfo.deployed()
     await pool.setRewardDistribution(distributor.address);
   }
@@ -49,4 +50,11 @@ module.exports = async (deployer, network, accounts) => {
 
   await distributor.distribute();
   console.log(`Deposited ARTH to all community pools.`);
+
+
+  if (network === 'development') {
+    console.log('sending 1 eth to the metamask wallet')
+    const amountToSend = web3.utils.toWei("1", "ether"); // Convert to wei value
+    web3.eth.sendTransaction({ from: accounts[0], to: process.env.METAMASK_WALLET, value: String(amountToSend) });
+  }
 }

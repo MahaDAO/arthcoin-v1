@@ -70,29 +70,29 @@ async function migration(deployer, network, accounts) {
       deadline()
     )
 
-    console.log('\nAdding liquidity to MAHA-DAI pool');
-    await uniswapRouter.addLiquidity(
-      share.address,
-      dai.address,
-      hundredK,
-      hundredK,
-      hundredK,
-      hundredK,
-      accounts[0],
-      deadline()
-    )
+    // console.log('\nAdding liquidity to MAHA-DAI pool');
+    // await uniswapRouter.addLiquidity(
+    //   share.address,
+    //   dai.address,
+    //   hundredK,
+    //   hundredK,
+    //   hundredK,
+    //   hundredK,
+    //   accounts[0],
+    //   deadline()
+    // )
 
-    console.log('\nAdding liquidity to ARTHB-DAI pool');
-    await uniswapRouter.addLiquidity(
-      bond.address,
-      dai.address,
-      hundredK,
-      hundredK,
-      hundredK,
-      hundredK,
-      accounts[0],
-      deadline()
-    )
+    // console.log('\nAdding liquidity to ARTHB-DAI pool');
+    // await uniswapRouter.addLiquidity(
+    //   bond.address,
+    //   dai.address,
+    //   hundredK,
+    //   hundredK,
+    //   hundredK,
+    //   hundredK,
+    //   accounts[0],
+    //   deadline()
+    // )
   }
 }
 

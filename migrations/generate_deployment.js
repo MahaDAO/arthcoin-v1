@@ -14,8 +14,8 @@ const writeFile = util.promisify(fs.writeFile);
 // Deployment and ABI will be generated for contracts listed on here.
 // The deployment thus can be used on frontend.
 const exportedContracts = [
-  'ARTH',
-  'ARTHB',
+  // 'ARTH',
+  // 'ARTHB',
   // 'MahaToken',
 
   // // oracles
@@ -76,20 +76,20 @@ module.exports = async (callback) => {
       ? await IERC20.at(knownContracts.DAI[network])
       : await MockDai.deployed();
 
-    deployments.DAI = {
-      address: dai.address,
-      abi: dai.abi,
-    };
+    // deployments.DAI = {
+    //   address: dai.address,
+    //   abi: dai.abi,
+    // };
 
     const arth = await Arth.deployed();
     const mahaToken = network === 'mainnet'
       ? await MahaToken.at(knownContracts.MahaToken[network])
       : await MahaToken.deployed();
 
-    deployments.MahaToken = {
-      address: mahaToken.address,
-      abi: mahaToken.abi
-    }
+    // deployments.MahaToken = {
+    //   address: mahaToken.address,
+    //   abi: mahaToken.abi
+    // }
 
     const dai_arth_lpt = getCreate2Address(
       FACTORY_ADDRESS,
@@ -111,13 +111,15 @@ module.exports = async (callback) => {
       const contract = artifacts.require(name);
       deployments[name] = {
         address: contract.address,
-        abi: contract.abi,
+        // abi: contract.abi,
       };
     }
     const deploymentPath = path.resolve(__dirname, `../build/deployments.${network}.json`);
     await writeFile(deploymentPath, JSON.stringify(deployments, null, 2));
 
     console.log(`Exported deployments into ${deploymentPath}`);
+
+
   } catch (error) {
     console.log(error)
   }

@@ -97,7 +97,7 @@ contract DAIWrapper {
 
 contract ARTHBASPool is DAIWrapper, IRewardDistributionRecipient {
     IERC20 public mithCash;
-    uint256 public DURATION = 1 days;
+    uint256 public DURATION = 5 days;
 
     uint256 public starttime;
     uint256 public periodFinish = 0;

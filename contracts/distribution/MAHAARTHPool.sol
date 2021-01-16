@@ -85,7 +85,7 @@ contract MAHAARTHPool is LPTokenWrapper, IRewardDistributionRecipient {
         address basisShare_,
         address lptoken_,
         uint256 starttime_
-    ) public StakingTimelock(0) {
+    ) public {
         basisShare = IERC20(basisShare_);
         lpt = IERC20(lptoken_);
         starttime = starttime_;
