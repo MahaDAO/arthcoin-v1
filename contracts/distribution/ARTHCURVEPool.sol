@@ -62,37 +62,37 @@ import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 
 import '../interfaces/IRewardDistributionRecipient.sol';
 
-contract USDCWrapper {
+contract CRVWrapper {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
-    IERC20 public usdc;
+    IERC20 public crv;
 
     uint256 private _totalSupply;
     mapping(address => uint256) private _balances;
 
-    function totalSupply() public view returns (uint256) {
+    function totalSupply() public view virtual returns (uint256) {
         return _totalSupply;
     }
 
-    function balanceOf(address account) public view returns (uint256) {
+    function balanceOf(address account) public view virtual returns (uint256) {
         return _balances[account];
     }
 
     function stake(uint256 amount) public virtual {
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
-        usdc.safeTransferFrom(msg.sender, address(this), amount);
+        crv.safeTransferFrom(msg.sender, address(this), amount);
     }
 
     function withdraw(uint256 amount) public virtual {
         _totalSupply = _totalSupply.sub(amount);
         _balances[msg.sender] = _balances[msg.sender].sub(amount);
-        usdc.safeTransfer(msg.sender, amount);
+        crv.safeTransfer(msg.sender, amount);
     }
 }
 
-contract ARTHMahaEthLPPool is USDCWrapper, IRewardDistributionRecipient {
+contract ARTHCURVEPool is CRVWrapper, IRewardDistributionRecipient {
     IERC20 public mithCash;
     uint256 public DURATION = 5 days;
 
@@ -112,16 +112,16 @@ contract ARTHMahaEthLPPool is USDCWrapper, IRewardDistributionRecipient {
 
     constructor(
         address mithCash_,
-        address usdc_,
+        address crv_,
         uint256 starttime_
     ) public {
         mithCash = IERC20(mithCash_);
-        usdc = IERC20(usdc_);
+        crv = IERC20(crv_);
         starttime = starttime_;
     }
 
     modifier checkStart() {
-        require(block.timestamp >= starttime, 'MICUSDCPool: not start');
+        require(block.timestamp >= starttime, 'MICCRVPool: not start');
         _;
     }
 
@@ -168,7 +168,7 @@ contract ARTHMahaEthLPPool is USDCWrapper, IRewardDistributionRecipient {
         updateReward(msg.sender)
         checkStart
     {
-        require(amount > 0, 'MICUSDCPool: Cannot stake 0');
+        require(amount > 0, 'MICCRVPool: Cannot stake 0');
         uint256 newDeposit = deposits[msg.sender].add(amount);
 
         deposits[msg.sender] = newDeposit;
@@ -182,7 +182,7 @@ contract ARTHMahaEthLPPool is USDCWrapper, IRewardDistributionRecipient {
         updateReward(msg.sender)
         checkStart
     {
-        require(amount > 0, 'MICUSDCPool: Cannot withdraw 0');
+        require(amount > 0, 'MICCRVPool: Cannot withdraw 0');
         deposits[msg.sender] = deposits[msg.sender].sub(amount);
         super.withdraw(amount);
         emit Withdrawn(msg.sender, amount);

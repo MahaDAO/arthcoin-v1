@@ -62,11 +62,11 @@ import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 
 import '../interfaces/IRewardDistributionRecipient.sol';
 
-contract USDCWrapper {
+contract LINKWrapper {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
-    IERC20 public usdc;
+    IERC20 public link;
 
     uint256 private _totalSupply;
     mapping(address => uint256) private _balances;
@@ -82,17 +82,17 @@ contract USDCWrapper {
     function stake(uint256 amount) public virtual {
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
-        usdc.safeTransferFrom(msg.sender, address(this), amount);
+        link.safeTransferFrom(msg.sender, address(this), amount);
     }
 
     function withdraw(uint256 amount) public virtual {
         _totalSupply = _totalSupply.sub(amount);
         _balances[msg.sender] = _balances[msg.sender].sub(amount);
-        usdc.safeTransfer(msg.sender, amount);
+        link.safeTransfer(msg.sender, amount);
     }
 }
 
-contract ARTHMahaEthLPPool is USDCWrapper, IRewardDistributionRecipient {
+contract ARTHDotPool is LINKWrapper, IRewardDistributionRecipient {
     IERC20 public mithCash;
     uint256 public DURATION = 5 days;
 
@@ -112,16 +112,16 @@ contract ARTHMahaEthLPPool is USDCWrapper, IRewardDistributionRecipient {
 
     constructor(
         address mithCash_,
-        address usdc_,
+        address link_,
         uint256 starttime_
     ) public {
         mithCash = IERC20(mithCash_);
-        usdc = IERC20(usdc_);
+        link = IERC20(link_);
         starttime = starttime_;
     }
 
     modifier checkStart() {
-        require(block.timestamp >= starttime, 'MICUSDCPool: not start');
+        require(block.timestamp >= starttime, 'MICLINKPool: not start');
         _;
     }
 
@@ -168,7 +168,7 @@ contract ARTHMahaEthLPPool is USDCWrapper, IRewardDistributionRecipient {
         updateReward(msg.sender)
         checkStart
     {
-        require(amount > 0, 'MICUSDCPool: Cannot stake 0');
+        require(amount > 0, 'MICLINKPool: Cannot stake 0');
         uint256 newDeposit = deposits[msg.sender].add(amount);
 
         deposits[msg.sender] = newDeposit;
@@ -182,7 +182,7 @@ contract ARTHMahaEthLPPool is USDCWrapper, IRewardDistributionRecipient {
         updateReward(msg.sender)
         checkStart
     {
-        require(amount > 0, 'MICUSDCPool: Cannot withdraw 0');
+        require(amount > 0, 'MICLINKPool: Cannot withdraw 0');
         deposits[msg.sender] = deposits[msg.sender].sub(amount);
         super.withdraw(amount);
         emit Withdrawn(msg.sender, amount);
