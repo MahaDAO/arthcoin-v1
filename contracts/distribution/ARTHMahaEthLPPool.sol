@@ -2,7 +2,7 @@
 
 pragma solidity ^0.6.0;
 
-import './ARTHTOKENPool.sol';
+import './core/ARTHTOKENPool.sol';
 
 contract ARTHMAHAETHLPPool is ARTHTOKENPool {
     constructor(
