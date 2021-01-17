@@ -99,6 +99,14 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
         return Math.min(block.timestamp, periodFinish);
     }
 
+    function startPool() public onlyOwner {
+        starttime = block.timestamp;
+    }
+
+    function endPool() public onlyOwner {
+        periodFinish = block.timestamp;
+    }
+
     function rewardPerToken() public view returns (uint256) {
         if (totalSupply() == 0) {
             return rewardPerTokenStored;
