@@ -98,13 +98,13 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
 
     constructor(
         address cash_,
-        address dai_,
+        address token_,
         uint256 starttime_,
         uint256 maxPoolSize_,
         bool limitPoolSize_,
         string memory poolName_
     ) public {
-        token = IERC20(dai_);
+        token = IERC20(token_);
         maxPoolSize = maxPoolSize_;
         limitPoolSize_ = limitPoolSize_;
 
