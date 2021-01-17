@@ -114,7 +114,7 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
     }
 
     modifier checkStart() {
-        require(block.timestamp >= starttime, 'MICDAIPool: not start');
+        require(block.timestamp >= starttime, 'Pool: not started');
 
         _;
     }
@@ -193,7 +193,7 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
         updateReward(msg.sender)
         checkStart
     {
-        require(amount > 0, 'MICDAIPool: Cannot stake 0');
+        require(amount > 0, 'Pool: Cannot stake 0');
 
         uint256 newDeposit = deposits[msg.sender].add(amount);
         deposits[msg.sender] = newDeposit;
