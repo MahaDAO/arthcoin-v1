@@ -86,6 +86,48 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
     uint256 public periodFinish = 0;
     uint256 public DURATION = 5 days;
 
+    mapping(address => uint256) public rewards;
+    mapping(address => uint256) public deposits;
+    mapping(address => uint256) public userRewardPerTokenPaid;
+
+    event RewardAdded(uint256 reward);
+    event Staked(address indexed user, uint256 amount);
+    event Withdrawn(address indexed user, uint256 amount);
+    event RewardPaid(address indexed user, uint256 reward);
+
+    constructor(
+        address cash_,
+        address dai_,
+        uint256 starttime_,
+        uint256 maxPoolSize_,
+        bool limitPoolSize_
+    ) public {
+        token = IERC20(dai_);
+        maxPoolSize = maxPoolSize_;
+        limitPoolSize_ = limitPoolSize_;
+
+        cash = IERC20(cash_);
+        starttime = starttime_;
+    }
+
+    modifier checkStart() {
+        require(block.timestamp >= starttime, 'MICDAIPool: not start');
+
+        _;
+    }
+
+    modifier updateReward(address account) {
+        rewardPerTokenStored = rewardPerToken();
+        lastUpdateTime = lastTimeRewardApplicable();
+
+        if (account != address(0)) {
+            rewards[account] = earned(account);
+            userRewardPerTokenPaid[account] = rewardPerTokenStored;
+        }
+
+        _;
+    }
+
     function modifyStartTime(uint256 newStartTime) public onlyOwner {
         require(newStartTime >= 0, 'Pool: invalid start time');
 
@@ -112,43 +154,6 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
         require(newDuration >= 0, 'Pool: duration has to be positive');
 
         DURATION = newDuration;
-    }
-
-    mapping(address => uint256) public rewards;
-    mapping(address => uint256) public deposits;
-    mapping(address => uint256) public userRewardPerTokenPaid;
-
-    event RewardAdded(uint256 reward);
-    event Staked(address indexed user, uint256 amount);
-    event Withdrawn(address indexed user, uint256 amount);
-    event RewardPaid(address indexed user, uint256 reward);
-
-    constructor(
-        address cash_,
-        address dai_,
-        uint256 starttime_
-    ) public {
-        cash = IERC20(cash_);
-        token = IERC20(dai_);
-        starttime = starttime_;
-    }
-
-    modifier checkStart() {
-        require(block.timestamp >= starttime, 'MICDAIPool: not start');
-
-        _;
-    }
-
-    modifier updateReward(address account) {
-        rewardPerTokenStored = rewardPerToken();
-        lastUpdateTime = lastTimeRewardApplicable();
-
-        if (account != address(0)) {
-            rewards[account] = earned(account);
-            userRewardPerTokenPaid[account] = rewardPerTokenStored;
-        }
-
-        _;
     }
 
     function lastTimeRewardApplicable() public view returns (uint256) {
