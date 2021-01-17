@@ -78,6 +78,7 @@ contract TOKENWrapper is Ownable {
 contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
     IERC20 public cash;
 
+    string poolName;
     uint256 public starttime;
     uint256 public lastUpdateTime;
     uint256 public rewardPerTokenStored;
@@ -100,12 +101,14 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
         address dai_,
         uint256 starttime_,
         uint256 maxPoolSize_,
-        bool limitPoolSize_
+        bool limitPoolSize_,
+        string memory poolName_
     ) public {
         token = IERC20(dai_);
         maxPoolSize = maxPoolSize_;
         limitPoolSize_ = limitPoolSize_;
 
+        poolName = poolName_;
         cash = IERC20(cash_);
         starttime = starttime_;
     }
