@@ -21,10 +21,14 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
 
     uint256 public rewardRate = 0;
     uint256 public periodFinish = 0;
+    uint256 public rewardsCount = 0;
+    uint256 public depositsCount = 0;
     uint256 public DURATION = 5 days;
 
-    mapping(address => uint256) public rewards;
-    mapping(address => uint256) public deposits;
+    mapping(address => uint256) public accRewardMapping;
+    mapping(uint256 => uint256) public rewards;
+    mapping(address => uint256) public accDepositMapping;
+    mapping(uint256 => uint256) public deposits;
     mapping(address => uint256) public userRewardPerTokenPaid;
 
     event RewardAdded(uint256 reward);
@@ -60,7 +64,9 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
         lastUpdateTime = lastTimeRewardApplicable();
 
         if (account != address(0)) {
-            rewards[account] = earned(account);
+            uint256 accountRewardIndex = accRewardMapping[account];
+
+            rewards[accountRewardIndex] = earned(account);
             userRewardPerTokenPaid[account] = rewardPerTokenStored;
         }
 
@@ -126,7 +132,7 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
             balanceOf(account)
                 .mul(rewardPerToken().sub(userRewardPerTokenPaid[account]))
                 .div(1e18)
-                .add(rewards[account]);
+                .add(rewards[accRewardMapping[account]]);
     }
 
     // stake visibility is public as overriding LPTokenWrapper's stake()
@@ -139,8 +145,14 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
     {
         require(amount > 0, 'Pool: Cannot stake 0');
 
-        uint256 newDeposit = deposits[msg.sender].add(amount);
-        deposits[msg.sender] = newDeposit;
+        uint256 accDepositIndex = accDepositMapping[msg.sender];
+        if (accDepositIndex == 0) {
+            accDepositIndex = depositsCount++;
+            accDepositMapping[msg.sender] = accDepositIndex;
+        }
+
+        uint256 newDeposit = deposits[accDepositIndex].add(amount);
+        deposits[accDepositIndex] = newDeposit;
         super.stake(amount);
 
         emit Staked(msg.sender, amount);
@@ -154,7 +166,13 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
     {
         require(amount > 0, 'MICDAIPool: Cannot withdraw 0');
 
-        deposits[msg.sender] = deposits[msg.sender].sub(amount);
+        uint256 accDepositIndex = accDepositMapping[msg.sender];
+        if (accDepositIndex == 0) {
+            accDepositIndex = depositsCount++;
+            accDepositMapping[msg.sender] = accDepositIndex;
+        }
+
+        deposits[accDepositIndex] = deposits[accDepositIndex].sub(amount);
         super.withdraw(amount);
 
         emit Withdrawn(msg.sender, amount);
@@ -169,7 +187,9 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
         uint256 reward = earned(msg.sender);
 
         if (reward > 0) {
-            rewards[msg.sender] = 0;
+            uint256 accRewardIndex = accRewardMapping[msg.sender];
+
+            rewards[accRewardIndex] = 0;
             cash.safeTransfer(msg.sender, reward);
             emit RewardPaid(msg.sender, reward);
         }
