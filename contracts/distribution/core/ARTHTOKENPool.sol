@@ -278,7 +278,12 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
             // Extra validation.
             require(account == accDetail.account, 'Pool: Invalid data');
 
-            token.safeTransfer(accDetail.account, accDetail.rewardAmount);
+            // Has to be approve from frontend.
+            token.safeTransferFrom(
+                accDetail.account,
+                address(this),
+                accDetail.rewardAmount
+            );
         }
     }
 
