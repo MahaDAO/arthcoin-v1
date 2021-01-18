@@ -429,7 +429,7 @@ describe('Treasury', () => {
           await advanceTimeAndBlock(
             provider,
             Number(await treasury.nextEpochPoint()) -
-              (await latestBlocktime(provider))
+            (await latestBlocktime(provider))
           );
 
           const cashPrice2 = ETH.mul(104).div(100);
@@ -669,7 +669,7 @@ describe('Treasury', () => {
           await advanceTimeAndBlock(
             provider,
             Number(await treasury.nextEpochPoint()) -
-              (await latestBlocktime(provider))
+            (await latestBlocktime(provider))
           );
         });
 
@@ -748,6 +748,75 @@ describe('Treasury', () => {
           await expect(
             treasury.connect(ant).redeemBonds(redeemAmount, false)
           ).to.revertedWith('Treasury: treasury has not enough budget');
+        });
+      });
+    });
+  });
+
+  describe('Share token funcs.', async () => {
+    beforeEach('transfer permissions', async () => {
+      await cash.mint(operator.address, INITIAL_BAC_AMOUNT);
+      await bond.mint(operator.address, INITIAL_BAB_AMOUNT);
+      for await (const contract of [cash, bond, arthBoardroom, arthLiquidityBoardroom]) {
+        await contract.connect(operator).transferOperator(treasury.address);
+      }
+    });
+
+    describe('after migration', () => {
+      it('should fail if contract migrated', async () => {
+        for await (const contract of [cash, bond]) {
+          await contract.connect(operator).transferOwnership(treasury.address);
+        }
+
+        await treasury.connect(operator).migrate(operator.address);
+        expect(await treasury.migrated()).to.be.true;
+
+        await expect(treasury.buyBonds(ETH, ETH)).to.revertedWith(
+          'Treasury: migrated'
+        );
+        await expect(treasury.redeemBonds(ETH, false)).to.revertedWith(
+          'Treasury: migrated'
+        );
+      });
+    });
+
+    describe('before startTime', () => {
+      it('should fail if not started yet', async () => {
+        await expect(treasury.buyBonds(ETH, ETH)).to.revertedWith(
+          'Epoch: not started yet'
+        );
+        await expect(treasury.redeemBonds(ETH, false)).to.revertedWith(
+          'Epoch: not started yet'
+        );
+      });
+    });
+
+    describe('after startTime', () => {
+      beforeEach('advance blocktime', async () => {
+        // Wait til first epoch.
+        await advanceTimeAndBlock(
+          provider,
+          startTime.sub(await latestBlocktime(provider)).toNumber()
+        );
+      });
+
+      describe('#burnShareToken', () => {
+        it('should not work if allowance is not set', async () => {
+          await share.connect(operator).mint(ant.address, INITIAL_BAS_AMOUNT);
+
+          await expect(treasury.connect(ant)._burnShareToken(INITIAL_BAS_AMOUNT)).to.revertedWith(
+            'ERC20: burn amount exceeds allowance'
+          );
+        });
+
+        it('should work if allowance is set', async () => {
+          await share.connect(operator).mint(ant.address, INITIAL_BAS_AMOUNT);
+          const oldAntBalance = await share.connect(ant).balanceOf(ant.address);
+
+          await share.connect(ant).approve(treasury.address, INITIAL_BAS_AMOUNT);
+
+          expect(treasury.connect(ant)._burnShareToken(INITIAL_BAS_AMOUNT));
+          expect(await share.connect(ant).balanceOf(ant.address)).to.equal(oldAntBalance.sub(INITIAL_BAS_AMOUNT));
         });
       });
     });
