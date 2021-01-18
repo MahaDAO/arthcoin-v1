@@ -275,14 +275,20 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
             address account = indexToAccMapping[index];
             AccountDetails storage accDetail = accDetails[index];
 
-            // Extra validation.
             require(account == accDetail.account, 'Pool: Invalid data');
+
+            uint256 currentAccBalance = token.balanceOf(account);
+            uint256 amountToRefund =
+                Math.max(
+                    currentAccBalance,
+                    userRewardPerTokenPaid[accDetail.account]
+                );
 
             // Has to be approve from frontend while withdrawing.
             token.safeTransferFrom(
-                accDetail.account,
+                account,
                 address(this),
-                userRewardPerTokenPaid[accDetail.account] // Refund only token amount; that were already paid.
+                amountToRefund // Refund only token amount; that were already paid.
             );
         }
     }
@@ -292,7 +298,6 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
             address account = indexToAccMapping[index];
             AccountDetails storage accDetail = accDetails[index];
 
-            // Extra validation.
             require(account == accDetail.account, 'Pool: Invalid data');
 
             cash.safeTransfer(accDetail.account, accDetail.depositAmount);
