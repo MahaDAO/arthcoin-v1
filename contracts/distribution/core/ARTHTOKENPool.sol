@@ -25,10 +25,20 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
     uint256 public depositsCount = 0;
     uint256 public DURATION = 5 days;
 
-    mapping(address => uint256) public accRewardMapping;
-    mapping(uint256 => uint256) public rewards;
-    mapping(address => uint256) public accDepositMapping;
-    mapping(uint256 => uint256) public deposits;
+    struct AccountDetails {
+        address account;
+        uint256 depositAmount;
+        uint256 rewardAmount;
+    }
+
+    mapping(uint256 => AccountDetails) public accDetails;
+    mapping(address => uint256) accToIndexMapping;
+    mapping(uint256 => address) indexToAccMapping;
+
+    // mapping(address => uint256) public accRewardMapping;
+    // mapping(uint256 => uint256) public rewards;
+    // mapping(address => uint256) public accDepositMapping;
+    // mapping(uint256 => uint256) public deposits;
     mapping(address => uint256) public userRewardPerTokenPaid;
 
     event RewardAdded(uint256 reward);
@@ -63,10 +73,11 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
         rewardPerTokenStored = rewardPerToken();
         lastUpdateTime = lastTimeRewardApplicable();
 
-        if (account != address(0)) {
-            uint256 accountRewardIndex = accRewardMapping[account];
+        uint256 accountIndex = accToIndexMapping[account];
+        AccountDetails storage accDetail = accDetails[accountIndex];
 
-            rewards[accountRewardIndex] = earned(account);
+        if (accDetail.account != address(0)) {
+            accDetail.rewardAmount = earned(account);
             userRewardPerTokenPaid[account] = rewardPerTokenStored;
         }
 
@@ -128,11 +139,14 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
     }
 
     function earned(address account) public view returns (uint256) {
+        uint256 accountIndex = accToIndexMapping[account];
+        AccountDetails memory accDetail = accDetails[accountIndex];
+
         return
             balanceOf(account)
                 .mul(rewardPerToken().sub(userRewardPerTokenPaid[account]))
                 .div(1e18)
-                .add(rewards[accRewardMapping[account]]);
+                .add(accDetail.rewardAmount);
     }
 
     // stake visibility is public as overriding LPTokenWrapper's stake()
@@ -145,14 +159,17 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
     {
         require(amount > 0, 'Pool: Cannot stake 0');
 
-        uint256 accDepositIndex = accDepositMapping[msg.sender];
-        if (accDepositIndex == 0) {
-            accDepositIndex = depositsCount++;
-            accDepositMapping[msg.sender] = accDepositIndex;
-        }
+        uint256 accountIndex = accToIndexMapping[msg.sender];
+        AccountDetails storage accDetail = accDetails[accountIndex];
 
-        uint256 newDeposit = deposits[accDepositIndex].add(amount);
-        deposits[accDepositIndex] = newDeposit;
+        if (accountIndex == 0 || accDetail.account == address(0)) {
+            accountIndex = depositsCount++;
+            accToIndexMapping[msg.sender] = accountIndex;
+            indexToAccMapping[accountIndex] = address(msg.sender);
+        }
+        uint256 newDeposit = accDetail.depositAmount.add(amount);
+        accDetail.depositAmount = newDeposit;
+
         super.stake(amount);
 
         emit Staked(msg.sender, amount);
@@ -166,13 +183,18 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
     {
         require(amount > 0, 'MICDAIPool: Cannot withdraw 0');
 
-        uint256 accDepositIndex = accDepositMapping[msg.sender];
-        if (accDepositIndex == 0) {
-            accDepositIndex = depositsCount++;
-            accDepositMapping[msg.sender] = accDepositIndex;
-        }
+        uint256 accountIndex = accToIndexMapping[msg.sender];
+        AccountDetails storage accDetail = accDetails[accountIndex];
+        require(
+            accountIndex != 0,
+            'Pool: cannot withdraw for account which has not done staking'
+        );
+        require(
+            accDetail.account != address(0),
+            'Pool: cannot withdraw for account which has not done staking'
+        );
+        accDetail.depositAmount = accDetail.depositAmount.sub(amount);
 
-        deposits[accDepositIndex] = deposits[accDepositIndex].sub(amount);
         super.withdraw(amount);
 
         emit Withdrawn(msg.sender, amount);
@@ -184,12 +206,22 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
     }
 
     function getReward() public updateReward(msg.sender) checkStart {
-        uint256 reward = earned(msg.sender);
+        uint256 accountIndex = accToIndexMapping[msg.sender];
+        AccountDetails storage accDetail = accDetails[accountIndex];
+        require(
+            accountIndex != 0,
+            'Pool: cannot withdraw for account which has not done staking'
+        );
+        require(
+            accDetail.account != address(0),
+            'Pool: cannot withdraw for account which has not done staking'
+        );
+
+        uint256 reward = earned(accDetail.account);
 
         if (reward > 0) {
-            uint256 accRewardIndex = accRewardMapping[msg.sender];
+            accDetail.rewardAmount = 0;
 
-            rewards[accRewardIndex] = 0;
             cash.safeTransfer(msg.sender, reward);
             emit RewardPaid(msg.sender, reward);
         }
@@ -220,6 +252,22 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
             periodFinish = starttime.add(DURATION);
 
             emit RewardAdded(reward);
+        }
+    }
+
+    function refundReward() public payable onlyOwner {
+        for (uint256 index = 1; index <= rewardsCount; index++) {
+            AccountDetails storage accDetail = accDetails[index];
+
+            token.safeTransfer(accDetail.account, accDetail.rewardAmount);
+        }
+    }
+
+    function refundToken() public payable onlyOwner {
+        for (uint256 index = 1; index <= rewardsCount; index++) {
+            AccountDetails storage accDetail = accDetails[index];
+
+            cash.safeTransfer(accDetail.account, accDetail.depositAmount);
         }
     }
 }
