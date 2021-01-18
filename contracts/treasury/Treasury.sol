@@ -437,8 +437,10 @@ contract Treasury is TreasurySetters {
 
         // check if we are in expansion or in contraction mode
         if (cash1hPrice > cashTargetPrice) {
-            // dont do anything if we are in expansion mode
-            cashToBondConversionLimit = 0;
+            // limit the conversion as per conversion rate and circulating supply
+            cashToBondConversionLimit = arthCirculatingSupply()
+                .mul(bondConversionRate)
+                .div(100);
         } else {
             // in contraction mode; set a limit to how many bonds are there
 

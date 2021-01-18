@@ -26,6 +26,10 @@ abstract contract TreasuryGetters is TreasuryState {
         return accumulatedSeigniorage;
     }
 
+    function getBondConversionRate() public view returns (uint256) {
+        return bondConversionRate;
+    }
+
     function getStabilityFee() public view returns (uint256) {
         return stabilityFee;
     }

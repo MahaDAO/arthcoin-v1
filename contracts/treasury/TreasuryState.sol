@@ -51,6 +51,9 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     uint256 public accumulatedSeigniorage = 0;
     uint256 public accumulatedBonds = 0;
 
+    // used to limit the generation of bond when currentPrice > targetPrice.
+    uint256 public bondConversionRate = 1; // in %
+
     // the ecosystem fund recieves seigniorage before anybody else; this
     // value decides how much of the new seigniorage is sent to this fund.
     uint256 public ecosystemFundAllocationRate = 2; // in %

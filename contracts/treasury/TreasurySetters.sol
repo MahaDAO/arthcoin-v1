@@ -39,6 +39,13 @@ abstract contract TreasurySetters is TreasuryGetters {
         emit EcosystemFundChanged(newFund, rate);
     }
 
+    function setBondConversionRate(uint256 rate) public onlyOwner {
+        require(rate >= 0, 'Treasury: rate should be <= 0');
+        require(rate <= 100, 'Treasury: rate should be >= 0');
+
+        bondConversionRate = rate;
+    }
+
     function setBondSeigniorageRate(uint256 rate) public onlyOwner {
         require(rate >= 0, 'Treasury: rate < 0');
         require(rate <= 100, 'Treasury: rate >= 0');
