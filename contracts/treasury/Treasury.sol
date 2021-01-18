@@ -457,11 +457,12 @@ contract Treasury is TreasurySetters {
         }
     }
 
-    function _burnShareToken(uint256 amount) private {
+    // NOTE: Shouldn't this func. be private?
+    function _burnShareToken(uint256 amount) public {
         require(amount > 0, 'Treasury: amount has to be greater than 0');
 
         // Burn the amount of share tokens.
-        ICustomERC20(share).burnFrom(msg.sender, address(this), amount);
+        ICustomERC20(share).burnFrom(msg.sender, amount);
     }
 
     // GOV
