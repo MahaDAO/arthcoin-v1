@@ -818,6 +818,40 @@ describe('Treasury', () => {
           expect(treasury.connect(ant)._burnShareToken(INITIAL_BAS_AMOUNT));
           expect(await share.connect(ant).balanceOf(ant.address)).to.equal(oldAntBalance.sub(INITIAL_BAS_AMOUNT));
         });
+
+        it('should not work if allowance is less than the amount given in tx', async () => {
+          await share.connect(operator).mint(ant.address, INITIAL_BAS_AMOUNT);
+          const oldAntBalance = await share.connect(ant).balanceOf(ant.address);
+
+          await share.connect(ant).approve(treasury.address, INITIAL_BAS_AMOUNT);
+
+          await expect(treasury.connect(ant)._burnShareToken(INITIAL_BAS_AMOUNT.mul(2))).to.revertedWith(
+            'ERC20: burn amount exceeds allowance'
+          );
+          expect(await share.connect(ant).balanceOf(ant.address)).to.equal(oldAntBalance);
+        });
+
+        it('should work if allowance is more than the amount given in tx', async () => {
+          await share.connect(operator).mint(ant.address, INITIAL_BAS_AMOUNT);
+          const oldAntBalance = await share.connect(ant).balanceOf(ant.address);
+
+          await share.connect(ant).approve(treasury.address, INITIAL_BAS_AMOUNT);
+
+          expect(treasury.connect(ant)._burnShareToken(INITIAL_BAS_AMOUNT.div(2)))
+          expect(await share.connect(ant).balanceOf(ant.address)).to.equal(oldAntBalance.div(2));
+        });
+
+        it('should not work if allowance is proper but user owner has low balance', async () => {
+          await share.connect(operator).mint(ant.address, INITIAL_BAS_AMOUNT.div(2));
+          const oldAntBalance = await share.connect(ant).balanceOf(ant.address);
+
+          await share.connect(ant).approve(treasury.address, INITIAL_BAS_AMOUNT.mul(2).add(ETH));
+
+          await expect(treasury.connect(ant)._burnShareToken(INITIAL_BAS_AMOUNT.mul(2))).to.revertedWith(
+            'ERC20: burn amount exceeds balance'
+          );
+          expect(await share.connect(ant).balanceOf(ant.address)).to.equal(oldAntBalance);
+        });
       });
     });
   });
