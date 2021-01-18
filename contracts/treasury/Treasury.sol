@@ -3,10 +3,10 @@
 pragma solidity ^0.6.0;
 
 import '@openzeppelin/contracts/math/Math.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
 
+import '../interfaces/ICustomERC20.sol';
 import {ICurve} from '../curve/Curve.sol';
 import {IOracle} from '../interfaces/IOracle.sol';
 import {IMultiUniswapOracle} from '../interfaces/IMultiUniswapOracle.sol';
@@ -29,6 +29,8 @@ import './TreasurySetters.sol';
  * @author Steven Enamakel & Yash Agarwal. Original code written by Summer Smith & Rick Sanchez
  */
 contract Treasury is TreasurySetters {
+    using SafeERC20 for ICustomERC20;
+
     constructor(
         address _dai,
         address _cash,
@@ -80,7 +82,7 @@ contract Treasury is TreasurySetters {
         require(!initialized, 'Treasury: initialized');
 
         // set accumulatedSeigniorage to it's balance
-        accumulatedSeigniorage = IERC20(cash).balanceOf(address(this));
+        accumulatedSeigniorage = ICustomERC20(cash).balanceOf(address(this));
 
         initialized = true;
         emit Initialized(msg.sender, block.number);
@@ -92,15 +94,24 @@ contract Treasury is TreasurySetters {
         // cash
         Operator(cash).transferOperator(target);
         Operator(cash).transferOwnership(target);
-        IERC20(cash).transfer(target, IERC20(cash).balanceOf(address(this)));
+        ICustomERC20(cash).transfer(
+            target,
+            ICustomERC20(cash).balanceOf(address(this))
+        );
 
         // bond
         Operator(bond).transferOperator(target);
         Operator(bond).transferOwnership(target);
-        IERC20(bond).transfer(target, IERC20(bond).balanceOf(address(this)));
+        ICustomERC20(bond).transfer(
+            target,
+            ICustomERC20(bond).balanceOf(address(this))
+        );
 
         // share - disabled ownership and operator functions as MAHA tokens don't have these
-        IERC20(share).transfer(target, IERC20(share).balanceOf(address(this)));
+        ICustomERC20(share).transfer(
+            target,
+            ICustomERC20(share).balanceOf(address(this))
+        );
 
         migrated = true;
         emit Migration(target);
@@ -140,10 +151,14 @@ contract Treasury is TreasurySetters {
         uint256 expectedCashAmount = amountsOut[1];
 
         // 1. Take Dai from the user
-        IERC20(dai).safeTransferFrom(msg.sender, address(this), amountInDai);
+        ICustomERC20(dai).safeTransferFrom(
+            msg.sender,
+            address(this),
+            amountInDai
+        );
 
         // 2. Approve dai for trade on uniswap
-        IERC20(dai).safeApprove(uniswapRouter, amountInDai);
+        ICustomERC20(dai).safeApprove(uniswapRouter, amountInDai);
 
         // 3. Swap dai for ARTH from uniswap and send the ARTH to the sender
         // we send the ARTH back to the sender just in case there is some slippage
@@ -204,7 +219,7 @@ contract Treasury is TreasurySetters {
             'Treasury: cashPrice less than ceiling'
         );
         require(
-            IERC20(cash).balanceOf(address(this)) >= amount,
+            ICustomERC20(cash).balanceOf(address(this)) >= amount,
             'Treasury: treasury has not enough budget'
         );
 
@@ -219,7 +234,7 @@ contract Treasury is TreasurySetters {
                 getArthMahaOraclePrice().mul(stabilityFeeAmount).div(1e18);
 
             // charge the stability fee
-            IERC20(share).safeTransferFrom(
+            ICustomERC20(share).safeTransferFrom(
                 msg.sender,
                 address(this),
                 stabilityFeeValue
@@ -243,7 +258,7 @@ contract Treasury is TreasurySetters {
             // TODO: write some checkes over here
 
             // send it!
-            IERC20(cash).safeApprove(uniswapRouter, amount);
+            ICustomERC20(cash).safeApprove(uniswapRouter, amount);
             IUniswapV2Router02(uniswapRouter).swapExactTokensForTokens(
                 amount,
                 expectedDaiAmount,
@@ -253,7 +268,7 @@ contract Treasury is TreasurySetters {
             );
         } else {
             // or just hand over the ARTH directly
-            IERC20(cash).safeTransfer(msg.sender, amount);
+            ICustomERC20(cash).safeTransfer(msg.sender, amount);
         }
 
         _updateCashPrice();
@@ -312,7 +327,7 @@ contract Treasury is TreasurySetters {
         uint256 ecosystemReserve =
             seigniorage.mul(ecosystemFundAllocationRate).div(100);
         if (ecosystemReserve > 0) {
-            IERC20(cash).safeApprove(ecosystemFund, ecosystemReserve);
+            ICustomERC20(cash).safeApprove(ecosystemFund, ecosystemReserve);
             ISimpleERCFund(ecosystemFund).deposit(
                 cash,
                 ecosystemReserve,
@@ -357,7 +372,7 @@ contract Treasury is TreasurySetters {
         uint256 treasuryReserve =
             Math.min(
                 seigniorage,
-                IERC20(bond).totalSupply().sub(accumulatedSeigniorage)
+                ICustomERC20(bond).totalSupply().sub(accumulatedSeigniorage)
             );
 
         if (treasuryReserve > 0) {
@@ -386,7 +401,7 @@ contract Treasury is TreasurySetters {
             boardroomReserve.mul(arthBoardroomAllocationRate).div(100);
 
         if (arthLiquidityBoardroomReserve > 0) {
-            IERC20(cash).safeApprove(
+            ICustomERC20(cash).safeApprove(
                 arthLiquidityBoardroom,
                 arthLiquidityBoardroomReserve
             );
@@ -400,7 +415,7 @@ contract Treasury is TreasurySetters {
         }
 
         if (arthBoardroomReserve > 0) {
-            IERC20(cash).safeApprove(arthBoardroom, arthBoardroomReserve);
+            ICustomERC20(cash).safeApprove(arthBoardroom, arthBoardroomReserve);
             IBoardroom(arthBoardroom).allocateSeigniorage(arthBoardroomReserve);
             emit PoolFunded(arthBoardroom, arthBoardroomReserve);
         }
@@ -440,6 +455,13 @@ contract Treasury is TreasurySetters {
 
             emit BondsAllocated(cashToBondConversionLimit);
         }
+    }
+
+    function _burnShareToken(uint256 amount) private {
+        require(amount > 0, 'Treasury: amount has to be greater than 0');
+
+        // Burn the amount of share tokens.
+        ICustomERC20(share).burnFrom(msg.sender, address(this), amount);
     }
 
     // GOV
