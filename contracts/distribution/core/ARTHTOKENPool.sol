@@ -107,7 +107,7 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
         );
         require(
             newPeriodFinish >= block.timestamp,
-            'Pool: period finish has to be bigger than 0'
+            'Pool: cannot finish in the past time'
         );
 
         periodFinish = newPeriodFinish;

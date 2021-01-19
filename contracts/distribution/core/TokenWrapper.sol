@@ -31,6 +31,8 @@ contract TOKENWrapper is Ownable {
     }
 
     function changeToken(address newToken) public onlyOwner {
+        require(newToken != address(0), 'Pool: invalid token');
+
         token = IERC20(newToken);
     }
 
