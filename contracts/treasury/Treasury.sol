@@ -441,24 +441,37 @@ contract Treasury is TreasurySetters {
             cashTargetPrice.mul(triggerBondAllocationLowerBandRate).div(100);
 
         // check if we are in expansion or in contraction mode
-        if (cash1hPrice > cashTargetPrice.add(upperBandPrice)) {
-            // limit the conversion as per conversion rate and circulating supply
+        // if (cash1hPrice >= cashTargetPrice.add(upperBandPrice)) {
+        //     // limit the conversion as per conversion rate and circulating supply
+        //     cashToBondConversionLimit = arthCirculatingSupply()
+        //         .mul(bondConversionRate)
+        //         .div(100);
+        // } else if (cash1hPrice <= cashTargetPrice.sub(lowerBandPrice)) {
+        //     // in contraction mode; set a limit to how many bonds are there
+
+        //     // understand how much % deviation do we have from target price
+        //     // if target price is 2.5$ and we are at 2$; then percentage
+        //     uint256 percentage =
+        //         cashTargetPrice.sub(cash1hPrice).mul(1e18).div(cashTargetPrice);
+
+        //     // accordingly set the new conversion limit to be that % from the
+        //     // current circulating supply of ARTH
+        //     cashToBondConversionLimit = arthCirculatingSupply()
+        //         .mul(percentage)
+        //         .div(1e18);
+
+        //     emit BondsAllocated(cashToBondConversionLimit);
+        // }
+
+        // The price is outwards of the target band, hence set a conversion limit acc. to the fixed
+        // rate param specified.
+        if (
+            cash1hPrice >= cashTargetPrice.add(upperBandPrice) ||
+            cash1hPrice <= cashTargetPrice.sub(lowerBandPrice)
+        ) {
             cashToBondConversionLimit = arthCirculatingSupply()
                 .mul(bondConversionRate)
                 .div(100);
-        } else if (cash1hPrice < cashTargetPrice.sub(lowerBandPrice)) {
-            // in contraction mode; set a limit to how many bonds are there
-
-            // understand how much % deviation do we have from target price
-            // if target price is 2.5$ and we are at 2$; then percentage
-            uint256 percentage =
-                cashTargetPrice.sub(cash1hPrice).mul(1e18).div(cashTargetPrice);
-
-            // accordingly set the new conversion limit to be that % from the
-            // current circulating supply of ARTH
-            cashToBondConversionLimit = arthCirculatingSupply()
-                .mul(percentage)
-                .div(1e18);
 
             emit BondsAllocated(cashToBondConversionLimit);
         }

@@ -51,12 +51,10 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     uint256 public accumulatedSeigniorage = 0;
     uint256 public accumulatedBonds = 0;
 
-    // used to limit the generation of bond in all situations.
+    // used to limit the generation of bond if price is outwards of targetBand.
     uint256 public bondConversionRate = 1; // in %
-
     // used to trigger bond generation if price > (targetPrice + % ) above it.
     uint256 public triggerBondAllocationUpperBandRate = 5; // in %
-
     // used to trigger bond generation if price < (targetPrice - %) above it.
     uint256 public triggerBondAllocationLowerBandRate = 5; // in %
 
