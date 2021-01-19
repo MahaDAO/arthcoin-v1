@@ -435,13 +435,18 @@ contract Treasury is TreasurySetters {
         // reset this counter so that new bonds can now be minted...
         accumulatedBonds = 0;
 
+        uint256 lowerBandPrice =
+            cashTargetPrice.mul(triggerBondAllocationLowerBandRate).div(100);
+        uint256 upperBandPrice =
+            cashTargetPrice.mul(triggerBondAllocationLowerBandRate).div(100);
+
         // check if we are in expansion or in contraction mode
-        if (cash1hPrice > cashTargetPrice) {
+        if (cash1hPrice > cashTargetPrice.add(upperBandPrice)) {
             // limit the conversion as per conversion rate and circulating supply
             cashToBondConversionLimit = arthCirculatingSupply()
                 .mul(bondConversionRate)
                 .div(100);
-        } else {
+        } else if (cash1hPrice < cashTargetPrice.sub(lowerBandPrice)) {
             // in contraction mode; set a limit to how many bonds are there
 
             // understand how much % deviation do we have from target price
