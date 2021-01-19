@@ -62,6 +62,8 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
         poolName = poolName_;
         cash = IERC20(cash_);
         starttime = starttime_;
+
+        periodFinish = starttime_.add(DURATION);
     }
 
     modifier checkStart() {
@@ -191,11 +193,8 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
 
         address mappingAccount = indexToAccMapping[mappingIndex];
         AccountDetails storage accDetail = accDetails[mappingIndex];
-        rewardPerTokenStored = rewardPerToken();
-        lastUpdateTime = lastTimeRewardApplicable();
+
         accDetail.depositAmount = accDetail.depositAmount.add(amount);
-        accDetail.rewardAmount = earned(msg.sender);
-        accDetail.rewardPerTokenPaid = rewardPerTokenStored;
 
         super.stake(amount);
 

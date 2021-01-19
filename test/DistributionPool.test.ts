@@ -285,12 +285,6 @@ describe('Distribution pools', () => {
 
         await pool.connect(ant).stake(ETH);
         await pool.connect(whale).stake(ETH);
-
-        // Wait till start time.
-        await advanceTimeAndBlock(
-          provider,
-          startTime.sub(await latestBlocktime(provider)).toNumber()
-        );
       });
 
       it('should not work if not a staker', async () => {
@@ -343,6 +337,8 @@ describe('Distribution pools', () => {
 
         await pool.connect(operator).modifyRewardRate(10);
 
+        await cash.connect(operator).mint(pool.address, ETH.mul(ETH));
+
         await pool.connect(ant).stake(ETH);
         await pool.connect(whale).stake(ETH);
       });
@@ -359,8 +355,6 @@ describe('Distribution pools', () => {
 
         await pool.connect(ant).getReward();
         await pool.connect(whale).getReward();
-
-        console.log((await pool.lastTimeRewardApplicable()).toString(), (await pool.lastUpdateTime()).toString());
 
         expect(await dai.connect(operator).balanceOf(ant.address)).to.eq(oldAntDaiBalance);
         expect(await dai.connect(operator).balanceOf(whale.address)).to.eq(oldWhaleDaiBalance);
@@ -384,16 +378,12 @@ describe('Distribution pools', () => {
         await dai.connect(ant).approve(pool.address, ETH);
         await dai.connect(whale).approve(pool.address, ETH);
 
+        await cash.connect(operator).mint(pool.address, ETH.mul(ETH));
+
         await pool.connect(operator).modifyRewardRate(10);
 
         await pool.connect(ant).stake(ETH);
         await pool.connect(whale).stake(ETH);
-
-        // Wait til start time.
-        await advanceTimeAndBlock(
-          provider,
-          startTime.sub(await latestBlocktime(provider)).toNumber()
-        )
       });
 
       it('should not work if not a owner', async () => {
@@ -401,17 +391,14 @@ describe('Distribution pools', () => {
       });
 
       it('should work if owner', async () => {
-        // Wait til start time.
-        await advanceTimeAndBlock(
-          provider,
-          startTime.add(DAY).toNumber()
-        )
-
         await pool.connect(ant).getReward();
         await pool.connect(whale).getReward();
 
         expect(await cash.connect(operator).balanceOf(ant.address)).to.gt(beforeStakingAntCashBalance);
         expect(await cash.connect(operator).balanceOf(whale.address)).to.gt(beforeStakingWhaleCashBalance);
+
+        await cash.connect(ant).approve(pool.address, await cash.balanceOf(ant.address))
+        await cash.connect(whale).approve(pool.address, await cash.balanceOf(whale.address))
 
         await pool.connect(operator).refundRewardToken();
 
