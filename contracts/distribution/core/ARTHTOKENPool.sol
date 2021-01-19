@@ -85,7 +85,7 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
     }
 
     function modifyStartTime(uint256 newStartTime) public onlyOwner {
-        require(newStartTime >= 0, 'Pool: invalid start time');
+        require(newStartTime > 0, 'Pool: invalid start time');
 
         starttime = newStartTime;
     }
