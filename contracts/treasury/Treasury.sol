@@ -7,6 +7,7 @@ import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
 
 import '../interfaces/ICustomERC20.sol';
+import '../interfaces/IUniswapV2Factory.sol';
 import {ICurve} from '../curve/Curve.sol';
 import {IOracle} from '../interfaces/IOracle.sol';
 import {IMultiUniswapOracle} from '../interfaces/IMultiUniswapOracle.sol';
@@ -140,6 +141,31 @@ contract Treasury is TreasurySetters {
             'Treasury: cashPrice not eligible for bond purchase'
         );
 
+        // Sort the tokens in pair, as per uniswap's implementation.
+        (address token0, address token1) =
+            dai < cash ? (dai, cash) : (cash, dai);
+
+        // Get the uniswap addresses.
+        address uniswapFactory = IUniswapV2Router02(uniswapRouter).factory();
+        address uniswapLiquidityPair =
+            IUniswapV2Factory(uniswapFactory).getPair(token0, token1);
+        // Get the liquidity of cash locked in uniswap pair.
+        uint256 uniswapLiquidityPairCashBalance =
+            ICustomERC20(cash).balanceOf(uniswapLiquidityPair);
+        // Get the liquidity percent.
+        uint256 uniswapCashLiquidityPercent =
+            uniswapLiquidityPairCashBalance.mul(100).div(
+                ICustomERC20(cash).totalSupply()
+            );
+
+        // NOTE: require just to see if compilation happens or not.
+        require(
+            uniswapLiquidityPairCashBalance >= 0 ||
+                uniswapLiquidityPairCashBalance <= 0 ||
+                uniswapCashLiquidityPercent <= 0 ||
+                uniswapCashLiquidityPercent >= 0
+        );
+
         // Find the expected amount recieved when swapping the following
         // tokens on uniswap.
         address[] memory path = new address[](2);
@@ -197,7 +223,8 @@ contract Treasury is TreasurySetters {
         IBasisAsset(cash).burnFrom(msg.sender, cashToConvert);
         IBasisAsset(bond).mint(msg.sender, bondsToIssue);
 
-        emit BoughtBonds(msg.sender, amountInDai, cashToConvert, bondsToIssue);
+        // emit BoughtBonds(msg.sender, amountInDai, cashToConvert, bondsToIssue);
+
         return bondsToIssue;
     }
 
