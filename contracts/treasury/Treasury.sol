@@ -186,7 +186,8 @@ contract Treasury is TreasurySetters {
             );
 
         // if all good then mint ARTHB, burn ARTH and update the counters
-        require(cashToConvert > 0, 'No more bonds to be redeemed');
+        require(cashToConvert > 0, 'Treasury: No more bonds to be redeemed');
+
         uint256 bondsToIssue = cashToConvert.mul(1e18).div(cash1hPrice);
         accumulatedBonds = accumulatedBonds.add(bondsToIssue);
 
