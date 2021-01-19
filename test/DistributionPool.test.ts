@@ -85,9 +85,6 @@ describe('Distribution pools', () => {
       false,
       'Test pool'
     );
-
-    await cash.connect(operator).mint(operator.address, INITIAL_BAC_AMOUNT);
-    await dai.connect(operator).mint(operator.address, INITIAL_BAB_AMOUNT);
   });
 
   describe('#setters', () => {
@@ -141,21 +138,17 @@ describe('Distribution pools', () => {
       );
     });
 
-    it('should work if tx sender is the owner', async () => {
+    it('should work if tx sender is the owner and params are not proper', async () => {
       await expect(pool.connect(operator).changeToken(ZERO_ADDR)).to.revertedWith(
         'Pool: invalid token'
       );
 
-      await expect(pool.connect(operator).modifyMaxPoolSize(ETH.mul(0))).to.revertedWith(
+      await expect(pool.connect(operator).modifyMaxPoolSize(0)).to.revertedWith(
         'Pool: size of pool cannot be 0'
       );
 
-      await expect(pool.connect(operator).modifyStartTime(startTime.mul(0))).to.revertedWith(
+      await expect(pool.connect(operator).modifyStartTime(0)).to.revertedWith(
         'Pool: invalid start time'
-      );
-
-      await expect(pool.connect(operator).modifyRewardRate(-1)).to.revertedWith(
-        'Pool: reward rate has to be positive'
       );
 
       await expect(pool.connect(operator).modifyRewardRate(101)).to.revertedWith(
@@ -175,7 +168,7 @@ describe('Distribution pools', () => {
       );
     });
 
-    it('should work if tx sender is the owner but params are not proper', async () => {
+    it('should work if tx sender is the owner but params are proper', async () => {
       expect(pool.connect(operator).changeToken(bond.address))
       expect(pool.connect(operator).modifyMaxPoolSize(ETH.mul(2)))
       expect(pool.connect(operator).resetLimitingPoolSize())
@@ -207,129 +200,56 @@ describe('Distribution pools', () => {
     });
   });
 
-  // describe('after startTime', () => {
-  //   beforeEach('advance blocktime', async () => {
-  //     // Wait til first epoch.
-  //     await advanceTimeAndBlock(
-  //       provider,
-  //       startTime.sub(await latestBlocktime(provider)).toNumber()
-  //     );
-  //   });
+  describe('after startTime', () => {
+    beforeEach('advance blocktime', async () => {
+      // Wait til start time.
+      await advanceTimeAndBlock(
+        provider,
+        startTime.sub(await latestBlocktime(provider)).toNumber()
+      );
 
-  //   describe('#buyBonds', () => {
-  //     it('should work if cash price below $1', async () => {
-  //       const cashPrice = ETH.mul(99).div(100); // $0.99
-  //       await oracle.setPrice(cashPrice);
-  //       await oracle.setEpoch(1);
+      await dai.connect(operator).mint(ant.address, ETH);
+      await dai.connect(operator).mint(whale.address, ETH);
+    });
 
-  //       // trigger updateConversionRate
-  //       await treasury.allocateSeigniorage();
+    describe('#stake', () => {
+      it('should not work if not amount not approved for staking', async () => {
+        const oldDaiBalance = await dai.connect(ant).balanceOf(ant.address);
 
-  //       await dai.connect(operator).transfer(ant.address, ETH);
-  //       await dai.connect(ant).approve(treasury.address, ETH);
-  //       await cash.connect(ant).approve(treasury.address, ETH);
+        await expect(pool.connect(ant).stake(ETH)).to.revertedWith(
+          'ERC20: transfer amount exceeds allowance'
+        );
 
-  //       await expect(treasury.connect(ant).buyBonds(ETH, cashPrice))
-  //         .to.emit(treasury, 'BoughtBonds')
-  //         // TODO: calculate real numbers
-  //         .withArgs(ant.address, ETH, BigNumber.from("906610893880149131"), BigNumber.from("915768579676918314"));
+        expect(await dai.connect(ant).balanceOf(ant.address)).to.equal(oldDaiBalance);
+      });
 
-  //       expect(await dai.balanceOf(ant.address)).to.eq(ZERO);
-  //       expect(await bond.balanceOf(ant.address)).to.eq(
-  //         // TODO: calculate real numbers
-  //         BigNumber.from("915768579676918314")
-  //         // ETH.mul(ETH).div(cashPrice)
-  //       );
-  //     });
+      it('should work if amount approved for staking', async () => {
+        await dai.connect(ant).approve(pool.address, ETH);
+        await dai.connect(whale).approve(pool.address, ETH);
 
-  //     it('should fail if cash price over $1', async () => {
-  //       const cashPrice = ETH.mul(101).div(100); // $1.01
-  //       await oracle.setPrice(cashPrice);
+        expect(await pool.connect(ant).stake(ETH));
+        expect(await pool.connect(whale).stake(ETH));
 
-  //       await dai.connect(operator).transfer(ant.address, ETH);
-  //       await dai.connect(ant).approve(treasury.address, ETH);
-  //       await cash.connect(ant).approve(treasury.address, ETH);
+        expect(await dai.connect(operator).balanceOf(ant.address)).to.equal(ZERO);
+        expect(await dai.connect(operator).balanceOf(whale.address)).to.equal(ZERO);
+      })
+    });
 
-  //       await expect(
-  //         treasury.connect(ant).buyBonds(ETH, cashPrice)
-  //       ).to.revertedWith(
-  //         'Treasury: cashPrice not eligible for bond purchase'
-  //       );
-  //     });
+    // describe('#withdraw', () => {
+    //   it('should not work if not amount not approved for staking', async () => {
+    //     expect(await pool.connect(ant).stake(ETH));
+    //   });
 
-  //     it('should fail if price changed', async () => {
-  //       const cashPrice = ETH.mul(99).div(100); // $0.99
-  //       await oracle.setPrice(cashPrice);
+    //   it('should work if amount approved for staking', async () => {
+    //     await cash.connect(ant).approve(pool.address, ETH);
+    //     await cash.connect(whale).approve(pool.address, ETH);
 
-  //       await dai.connect(operator).transfer(ant.address, ETH);
-  //       await dai.connect(ant).approve(treasury.address, ETH);
-  //       await cash.connect(ant).approve(treasury.address, ETH);
+    //     expect(pool.connect(ant).stake(ETH));
+    //     expect(pool.connect(ant).stake(ETH));
 
-  //       await expect(
-  //         treasury.connect(ant).buyBonds(ETH, ETH.mul(98).div(100))
-  //       ).to.revertedWith('Treasury: cash price moved');
-  //     });
-
-  //     it('should fail if purchase bonds with zero amount', async () => {
-  //       const cashPrice = ETH.mul(99).div(100); // $0.99
-  //       await oracle.setPrice(cashPrice);
-
-  //       await expect(
-  //         treasury.connect(ant).buyBonds(ZERO, cashPrice)
-  //       ).to.revertedWith('Treasury: cannot purchase bonds with zero amount');
-  //     });
-
-  //     it('should update conversion limit', async () => {
-  //       const cashPrice = ETH.mul(99).div(100);
-  //       await oracle.setPrice(cashPrice);
-  //       await oracle.setEpoch(1);
-
-  //       await dai.connect(operator).transfer(ant.address, ETH);
-  //       await dai.connect(ant).approve(treasury.address, ETH);
-  //       await cash.connect(ant).approve(treasury.address, ETH);
-
-  //       const getStatus = async () => ({
-  //         lim: await treasury.cashToBondConversionLimit(),
-  //         acc: await treasury.accumulatedBonds(),
-  //       });
-
-  //       let status;
-
-  //       status = await getStatus();
-  //       expect(status.lim).to.eq(0);
-  //       expect(status.acc).to.eq(0);
-
-  //       // trigger updateConversionRate
-  //       await treasury.allocateSeigniorage();
-
-  //       const circulatingSupply = await treasury.arthCirculatingSupply();
-  //       await treasury.connect(ant).buyBonds(ETH, cashPrice);
-
-  //       status = await getStatus();
-  //       expect(status.lim).to.eq(
-  //         circulatingSupply.mul(ETH.sub(cashPrice)).div(ETH)
-  //       );
-  //       // expect(status.acc).to.eq(ETH);
-  //       // TODO: calculate real numbers
-  //       expect(status.acc).to.eq(BigNumber.from("915768579676918314"));
-  //     });
-
-  //     it('should not purchase over conversion limit', async () => {
-  //       const cashPrice = ETH.mul(99).div(100);
-  //       await oracle.setPrice(cashPrice);
-  //       await oracle.setEpoch(1);
-
-  //       const circulatingSupply = await treasury.arthCirculatingSupply();
-  //       const limit = circulatingSupply.mul(ETH.sub(cashPrice)).div(ETH);
-
-  //       await dai.connect(operator).transfer(ant.address, limit.add(1));
-  //       await dai.connect(ant).approve(treasury.address, limit.add(1));
-  //       await cash.connect(ant).approve(treasury.address, limit.add(1));
-
-  //       await expect(
-  //         treasury.connect(ant).buyBonds(limit.add(1), cashPrice)
-  //       ).to.revertedWith('No more bonds to be redeemed');
-  //     });
-  //   });
-  // });
+    //     expect(await cash.connect(operator).balanceOf(ant.address)).to.equal(ZERO);
+    //     expect(await cash.connect(operator).balanceOf(whale.address)).to.equal(ZERO);
+    //   })
+    //});
+  });
 });

@@ -197,7 +197,7 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
         updateReward(msg.sender)
         checkStart
     {
-        require(amount > 0, 'MICDAIPool: Cannot withdraw 0');
+        require(amount > 0, 'Pool: Cannot withdraw 0');
 
         uint256 accountIndex = accToIndexMapping[msg.sender];
         address account = indexToAccMapping[accountIndex];
