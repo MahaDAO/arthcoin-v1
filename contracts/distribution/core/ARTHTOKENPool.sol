@@ -14,14 +14,13 @@ import '../../interfaces/IRewardDistributionRecipient.sol';
 contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
     IERC20 public cash;
 
-    string poolName;
+    string public poolName;
     uint256 public starttime;
     uint256 public lastUpdateTime;
     uint256 public rewardPerTokenStored;
 
     uint256 public rewardRate = 0;
     uint256 public periodFinish = 0;
-    uint256 public rewardsCount = 0;
     uint256 public depositsCount = 0;
     uint256 public DURATION = 5 days;
 
@@ -29,17 +28,19 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
         address account;
         uint256 depositAmount;
         uint256 rewardAmount;
+        uint256 rewardedAmount;
+        uint256 rewardPerTokenPaid;
     }
 
-    mapping(uint256 => AccountDetails) public accDetails;
     mapping(address => uint256) accToIndexMapping; // Used to map acc. addr. to a number(identifier).
     mapping(uint256 => address) indexToAccMapping; // Used to map the same number(identifier) to a acc. addr.
+    mapping(uint256 => AccountDetails) public accDetails;
 
     // mapping(address => uint256) public accRewardMapping;
     // mapping(uint256 => uint256) public rewards;
     // mapping(address => uint256) public accDepositMapping;
     // mapping(uint256 => uint256) public deposits;
-    mapping(address => uint256) public userRewardPerTokenPaid;
+    // mapping(address => uint256) public userRewardPerTokenPaid;
 
     event RewardAdded(uint256 reward);
     event Staked(address indexed user, uint256 amount);
@@ -61,6 +62,8 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
         poolName = poolName_;
         cash = IERC20(cash_);
         starttime = starttime_;
+
+        periodFinish = starttime_.add(DURATION);
     }
 
     modifier checkStart() {
@@ -73,19 +76,24 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
         rewardPerTokenStored = rewardPerToken();
         lastUpdateTime = lastTimeRewardApplicable();
 
-        uint256 accountIndex = accToIndexMapping[account];
-        AccountDetails storage accDetail = accDetails[accountIndex];
+        if (account != address(0)) {
+            uint256 mappingIndex = accToIndexMapping[account];
+            address mappingAccount = indexToAccMapping[mappingIndex];
+            AccountDetails storage accDetail = accDetails[mappingIndex];
 
-        if (accDetail.account != address(0)) {
-            accDetail.rewardAmount = earned(account);
-            userRewardPerTokenPaid[account] = rewardPerTokenStored;
+            require(accDetail.account == mappingAccount);
+
+            if (accDetail.account != address(0) && mappingIndex != 0) {
+                accDetail.rewardAmount = earned(account);
+                accDetail.rewardPerTokenPaid = rewardPerTokenStored;
+            }
+
+            _;
         }
-
-        _;
     }
 
     function modifyStartTime(uint256 newStartTime) public onlyOwner {
-        require(newStartTime >= 0, 'Pool: invalid start time');
+        require(newStartTime > 0, 'Pool: invalid start time');
 
         starttime = newStartTime;
     }
@@ -101,13 +109,20 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
     }
 
     function modifyPeriodFinish(uint256 newPeriodFinish) public onlyOwner {
-        require(periodFinish > 0, 'Pool: reward rate has to be bigger than 0');
+        require(
+            newPeriodFinish > 0,
+            'Pool: period finish has to be bigger than 0'
+        );
+        require(
+            newPeriodFinish >= block.timestamp,
+            'Pool: cannot finish in the past time'
+        );
 
         periodFinish = newPeriodFinish;
     }
 
     function modifyDuration(uint256 newDuration) public onlyOwner {
-        require(newDuration >= 0, 'Pool: duration has to be positive');
+        require(newDuration > 0, 'Pool: duration has to be positive');
 
         DURATION = newDuration;
     }
@@ -128,6 +143,7 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
         if (totalSupply() == 0) {
             return rewardPerTokenStored;
         }
+
         return
             rewardPerTokenStored.add(
                 lastTimeRewardApplicable()
@@ -139,17 +155,20 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
     }
 
     function earned(address account) public view returns (uint256) {
-        uint256 accountIndex = accToIndexMapping[account];
-        AccountDetails memory accDetail = accDetails[accountIndex];
+        uint256 mappingIndex = accToIndexMapping[account];
+        address mappingAccount = indexToAccMapping[mappingIndex];
+        AccountDetails memory accDetail = accDetails[mappingIndex];
+
+        assert(accDetail.account == mappingAccount);
 
         return
             balanceOf(account)
-                .mul(rewardPerToken().sub(userRewardPerTokenPaid[account]))
+                .mul(rewardPerToken().sub(accDetail.rewardPerTokenPaid))
                 .div(1e18)
                 .add(accDetail.rewardAmount);
     }
 
-    // stake visibility is public as overriding LPTokenWrapper's stake()
+    // Stake visibility is public as overriding Wrappers's stake()
     // function.
     function stake(uint256 amount)
         public
@@ -159,29 +178,29 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
     {
         require(amount > 0, 'Pool: Cannot stake 0');
 
-        uint256 accountIndex = accToIndexMapping[msg.sender];
-        address account = indexToAccMapping[accountIndex];
-        AccountDetails storage accDetail = accDetails[accountIndex];
+        uint256 msgSenderIndex = accToIndexMapping[msg.sender];
+        uint256 mappingIndex = msgSenderIndex;
+        if (msgSenderIndex == 0) {
+            depositsCount++;
 
-        // If acccount index or details of that acc. does not exists, then
-        // we say it's a first time staking acc.
-        if (accountIndex == 0 || accDetail.account == address(0)) {
-            // This will ensure genesis staking acc. gets identifier as 1.
-            // 0 should not be used as identifier because, this value is used
-            // in validation steps while fetching details from the two mappings.
-            depositsCount = depositsCount + 1;
+            mappingIndex = depositsCount;
 
-            accountIndex = depositsCount;
-            accToIndexMapping[msg.sender] = accountIndex;
-            indexToAccMapping[accountIndex] = address(msg.sender); // Assign that same index to reverse mapping variable.
+            // Update the mappings to save a new staker.
+            accToIndexMapping[msg.sender] = mappingIndex;
+            indexToAccMapping[mappingIndex] = msg.sender;
+            accDetails[mappingIndex] = AccountDetails(msg.sender, 0, 0, 0, 0);
         }
+
+        address mappingAccount = indexToAccMapping[mappingIndex];
+        AccountDetails storage accDetail = accDetails[mappingIndex];
+
         accDetail.depositAmount = accDetail.depositAmount.add(amount);
 
         super.stake(amount);
 
         emit Staked(msg.sender, amount);
 
-        assert(account == accDetail.account);
+        assert(mappingAccount == msg.sender);
     }
 
     function withdraw(uint256 amount)
@@ -190,21 +209,21 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
         updateReward(msg.sender)
         checkStart
     {
-        require(amount > 0, 'MICDAIPool: Cannot withdraw 0');
+        require(amount > 0, 'Pool: Cannot withdraw 0');
 
-        uint256 accountIndex = accToIndexMapping[msg.sender];
-        address account = indexToAccMapping[accountIndex];
-        AccountDetails storage accDetail = accDetails[accountIndex];
+        uint256 mappingIndex = accToIndexMapping[msg.sender];
+        address mappingAccount = indexToAccMapping[mappingIndex];
+        AccountDetails storage accDetail = accDetails[mappingIndex];
 
         require(
-            accountIndex != 0,
+            mappingIndex != 0,
             'Pool: cannot withdraw for account which has not done staking'
         );
         require(
             accDetail.account != address(0),
             'Pool: cannot withdraw for account which has not done staking'
         );
-        require(account == accDetail.account, 'Pool: invalid details');
+        require(mappingAccount == accDetail.account, 'Pool: invalid details');
 
         accDetail.depositAmount = accDetail.depositAmount.sub(amount);
         super.withdraw(amount);
@@ -218,26 +237,25 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
     }
 
     function getReward() public updateReward(msg.sender) checkStart {
-        uint256 accountIndex = accToIndexMapping[msg.sender];
-        address account = indexToAccMapping[accountIndex];
-        AccountDetails storage accDetail = accDetails[accountIndex];
+        uint256 mappingIndex = accToIndexMapping[msg.sender];
+        address mappingAccount = indexToAccMapping[mappingIndex];
+        AccountDetails storage accDetail = accDetails[mappingIndex];
 
-        require(
-            accountIndex != 0,
-            'Pool: cannot withdraw for account which has not done staking'
-        );
+        require(mappingIndex != 0, 'Pool: cannot reward a non staker account');
         require(
             accDetail.account != address(0),
-            'Pool: cannot withdraw for account which has not done staking'
+            'Pool: cannot withdraw for a non staker'
         );
-        require(account == accDetail.account, 'Pool: invalid details');
+        require(mappingAccount == accDetail.account, 'Pool: invalid details');
 
         uint256 reward = earned(accDetail.account);
 
         if (reward > 0) {
             accDetail.rewardAmount = 0;
+            accDetail.rewardedAmount = reward;
 
             cash.safeTransfer(msg.sender, reward);
+
             emit RewardPaid(msg.sender, reward);
         }
     }
@@ -271,36 +289,32 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
     }
 
     function refundRewardToken() public payable onlyOwner {
-        for (uint256 index = 1; index <= rewardsCount; index++) {
+        for (uint256 index = 1; index <= depositsCount; index++) {
             address account = indexToAccMapping[index];
             AccountDetails storage accDetail = accDetails[index];
 
             require(account == accDetail.account, 'Pool: Invalid data');
 
-            uint256 currentAccBalance = token.balanceOf(account);
-            uint256 amountToRefund =
-                Math.max(
-                    currentAccBalance,
-                    userRewardPerTokenPaid[accDetail.account]
-                );
+            uint256 currentAccBalance = cash.balanceOf(account);
+            uint256 amountToRefund = accDetail.rewardedAmount;
 
-            // Has to be approve from frontend while withdrawing.
-            token.safeTransferFrom(
-                account,
-                address(this),
-                amountToRefund // Refund only token amount; that were already paid.
-            );
+            // Get the maximum reward token, which user has from the rewarded amount.
+            if (amountToRefund > currentAccBalance)
+                amountToRefund = currentAccBalance;
+
+            // NOTE: Has to be approve from frontend while withdrawing.
+            cash.safeTransferFrom(account, address(this), amountToRefund);
         }
     }
 
     function refundStakedToken() public payable onlyOwner {
-        for (uint256 index = 1; index <= rewardsCount; index++) {
+        for (uint256 index = 1; index <= depositsCount; index++) {
             address account = indexToAccMapping[index];
             AccountDetails storage accDetail = accDetails[index];
 
             require(account == accDetail.account, 'Pool: Invalid data');
 
-            cash.safeTransfer(accDetail.account, accDetail.depositAmount);
+            token.safeTransfer(accDetail.account, accDetail.depositAmount);
         }
     }
 }

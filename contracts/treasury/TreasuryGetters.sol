@@ -62,6 +62,22 @@ abstract contract TreasuryGetters is TreasuryState {
         return Epoch(bondOracle).getLastEpoch();
     }
 
+    function getTriggerBondAllocationUpperBandRate()
+        public
+        view
+        returns (uint256)
+    {
+        return triggerBondAllocationUpperBandRate;
+    }
+
+    function getTriggerBondAllocationLowerBandRate()
+        public
+        view
+        returns (uint256)
+    {
+        return triggerBondAllocationLowerBandRate;
+    }
+
     function _getCashPrice(address oracle) internal view returns (uint256) {
         try IOracle(oracle).getPrice() returns (uint256 price) {
             return price;
