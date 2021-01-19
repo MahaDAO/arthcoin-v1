@@ -82,7 +82,7 @@ contract Treasury is TreasurySetters {
         require(!initialized, 'Treasury: initialized');
 
         // set accumulatedSeigniorage to it's balance
-        accumulatedSeigniorage = ICustomERC20(cash).balanceOf(address(this));
+        accumulatedSeigniorage = IERC20(cash).balanceOf(address(this));
 
         initialized = true;
         emit Initialized(msg.sender, block.number);
@@ -223,26 +223,21 @@ contract Treasury is TreasurySetters {
             'Treasury: treasury has not enough budget'
         );
 
-        accumulatedSeigniorage = accumulatedSeigniorage.sub(
-            Math.min(accumulatedSeigniorage, amount)
-        );
+        amount = Math.min(accumulatedSeigniorage, amount);
 
         // charge stabilty fees in MAHA
         if (stabilityFee > 0) {
-            uint256 stabilityFeeAmount = amount.mul(stabilityFee).div(100);
-            uint256 stabilityFeeValue =
-                getArthMahaOraclePrice().mul(stabilityFeeAmount).div(1e18);
+            uint256 stabilityFeeInARTH = amount.mul(stabilityFee).div(100);
+            uint256 stabilityFeeInMAHA =
+                getArthMahaOraclePrice().mul(stabilityFeeInARTH).div(1e18);
 
             // charge the stability fee
-            ICustomERC20(share).safeTransferFrom(
-                msg.sender,
-                address(this),
-                stabilityFeeValue
-            );
+            ICustomERC20(share).burnFrom(msg.sender, stabilityFeeInMAHA);
 
-            emit StabilityFeesCharged(msg.sender, stabilityFeeValue);
+            emit StabilityFeesCharged(msg.sender, stabilityFeeInMAHA);
         }
 
+        accumulatedSeigniorage = accumulatedSeigniorage.sub(amount);
         IBasisAsset(bond).burnFrom(msg.sender, amount);
 
         // sell the ARTH for Dai right away
@@ -270,8 +265,6 @@ contract Treasury is TreasurySetters {
             // or just hand over the ARTH directly
             ICustomERC20(cash).safeTransfer(msg.sender, amount);
         }
-
-        _updateCashPrice();
 
         emit RedeemedBonds(msg.sender, amount, sellForDai);
     }
@@ -459,8 +452,8 @@ contract Treasury is TreasurySetters {
         }
     }
 
-    // NOTE: Shouldn't this func. be private?
-    function _burnShareToken(uint256 amount) public {
+    function _burnShareToken() public {
+        uint256 amount = ICustomERC20(share).balanceOf(msg.sender);
         require(amount > 0, 'Treasury: amount has to be greater than 0');
 
         // Burn the amount of share tokens.
