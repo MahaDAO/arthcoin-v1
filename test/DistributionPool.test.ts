@@ -25,8 +25,6 @@ const DAY = 86400;
 const ETH = utils.parseEther('1');
 const ZERO = BigNumber.from(0);
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000';
-const INITIAL_BAC_AMOUNT = utils.parseEther('50000');
-const INITIAL_BAB_AMOUNT = utils.parseEther('50000');
 
 
 async function latestBlocktime(provider: Provider): Promise<number> {
@@ -335,51 +333,42 @@ describe('Distribution pools', () => {
       })
     });
 
-    // describe('#claimrewards', () => {
-    //   beforeEach('advance blocktime', async () => {
-    //     await dai.connect(operator).mint(ant.address, ETH);
-    //     await dai.connect(operator).mint(whale.address, ETH);
+    describe('#claimrewards', () => {
+      beforeEach('advance blocktime', async () => {
+        await dai.connect(operator).mint(ant.address, ETH);
+        await dai.connect(operator).mint(whale.address, ETH);
 
-    //     await dai.connect(ant).approve(pool.address, ETH);
-    //     await dai.connect(whale).approve(pool.address, ETH);
+        await dai.connect(ant).approve(pool.address, ETH);
+        await dai.connect(whale).approve(pool.address, ETH);
 
-    //     await pool.connect(operator).modifyRewardRate(10);
+        await pool.connect(operator).modifyRewardRate(10);
 
-    //     await pool.connect(ant).stake(ETH);
-    //     await pool.connect(whale).stake(ETH);
+        await pool.connect(ant).stake(ETH);
+        await pool.connect(whale).stake(ETH);
+      });
 
-    //     // Wait till start time.
-    //     await advanceTimeAndBlock(
-    //       provider,
-    //       startTime.add(DAY).sub(await latestBlocktime(provider)).toNumber()
-    //     )
-    //   });
+      it('should not work if not a staker', async () => {
+        await expect(pool.connect(operator).withdraw(ETH)).to.revertedWith('Pool: cannot withdraw for account which has not done staking');
+      });
 
-    //   it('should not work if not a staker', async () => {
-    //     await expect(pool.connect(operator).withdraw(ETH)).to.revertedWith('Pool: cannot withdraw for account which has not done staking');
-    //   });
+      it('should work', async () => {
+        const oldAntDaiBalance = await dai.balanceOf(ant.address);
+        const oldWhaleDaiBalance = await dai.balanceOf(whale.address);
+        const oldAntCashBalance = await cash.balanceOf(ant.address);
+        const oldWhaleCashBalance = await cash.balanceOf(whale.address);
 
-    //   it('should work', async () => {
-    //     const oldAntDaiBalance = await dai.balanceOf(ant.address);
-    //     const oldWhaleDaiBalance = await dai.balanceOf(whale.address);
-    //     const oldAntCashBalance = await cash.balanceOf(ant.address);
-    //     const oldWhaleCashBalance = await cash.balanceOf(whale.address);
+        await pool.connect(ant).getReward();
+        await pool.connect(whale).getReward();
 
-    //     await advanceTimeAndBlock(
-    //       provider,
-    //       startTime.add(await latestBlocktime(provider)).toNumber()
-    //     )
+        console.log((await pool.lastTimeRewardApplicable()).toString(), (await pool.lastUpdateTime()).toString());
 
-    //     await pool.connect(ant).getReward();
-    //     await pool.connect(whale).getReward();
+        expect(await dai.connect(operator).balanceOf(ant.address)).to.eq(oldAntDaiBalance);
+        expect(await dai.connect(operator).balanceOf(whale.address)).to.eq(oldWhaleDaiBalance);
 
-    //     expect(await dai.connect(operator).balanceOf(ant.address)).to.eq(oldAntDaiBalance);
-    //     expect(await dai.connect(operator).balanceOf(whale.address)).to.eq(oldWhaleDaiBalance);
-
-    //     expect(await cash.connect(operator).balanceOf(ant.address)).to.gt(oldAntCashBalance);
-    //     expect(await cash.connect(operator).balanceOf(whale.address)).to.gt(oldWhaleCashBalance);
-    //   })
-    // });
+        expect(await cash.connect(operator).balanceOf(ant.address)).to.gt(oldAntCashBalance);
+        expect(await cash.connect(operator).balanceOf(whale.address)).to.gt(oldWhaleCashBalance);
+      })
+    });
 
     describe('#refundreward', () => {
       let beforeStakingAntCashBalance: any;
@@ -412,16 +401,14 @@ describe('Distribution pools', () => {
       });
 
       it('should work if owner', async () => {
-        console.log((await cash.connect(operator).balanceOf(ant.address)).toString())
-
-        console.log(await pool.accDetails(1));
+        // Wait til start time.
+        await advanceTimeAndBlock(
+          provider,
+          startTime.add(DAY).toNumber()
+        )
 
         await pool.connect(ant).getReward();
         await pool.connect(whale).getReward();
-
-        console.log(await pool.accDetails(1));
-
-        console.log((await cash.connect(operator).balanceOf(ant.address)).toString())
 
         expect(await cash.connect(operator).balanceOf(ant.address)).to.gt(beforeStakingAntCashBalance);
         expect(await cash.connect(operator).balanceOf(whale.address)).to.gt(beforeStakingWhaleCashBalance);

@@ -81,7 +81,7 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
 
             require(accDetail.account == mappingAccount);
 
-            if (accDetail.account != address(0) && mappingIndex == 0) {
+            if (accDetail.account != address(0) && mappingIndex != 0) {
                 accDetail.rewardAmount = earned(account);
                 accDetail.rewardPerTokenPaid = rewardPerTokenStored;
             }
@@ -191,13 +191,12 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
 
         address mappingAccount = indexToAccMapping[mappingIndex];
         AccountDetails storage accDetail = accDetails[mappingIndex];
-
         rewardPerTokenStored = rewardPerToken();
         lastUpdateTime = lastTimeRewardApplicable();
-
         accDetail.depositAmount = accDetail.depositAmount.add(amount);
         accDetail.rewardAmount = earned(msg.sender);
         accDetail.rewardPerTokenPaid = rewardPerTokenStored;
+
         super.stake(amount);
 
         emit Staked(msg.sender, amount);
