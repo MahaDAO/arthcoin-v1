@@ -101,7 +101,10 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
     }
 
     function modifyPeriodFinish(uint256 newPeriodFinish) public onlyOwner {
-        require(periodFinish > 0, 'Pool: reward rate has to be bigger than 0');
+        require(
+            periodFinish > 0,
+            'Pool: period finish has to be bigger than 0'
+        );
 
         periodFinish = newPeriodFinish;
     }
