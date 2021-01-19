@@ -191,8 +191,13 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
 
         address mappingAccount = indexToAccMapping[mappingIndex];
         AccountDetails storage accDetail = accDetails[mappingIndex];
-        accDetail.depositAmount = accDetail.depositAmount.add(amount);
 
+        rewardPerTokenStored = rewardPerToken();
+        lastUpdateTime = lastTimeRewardApplicable();
+
+        accDetail.depositAmount = accDetail.depositAmount.add(amount);
+        accDetail.rewardAmount = earned(msg.sender);
+        accDetail.rewardPerTokenPaid = rewardPerTokenStored;
         super.stake(amount);
 
         emit Staked(msg.sender, amount);
@@ -292,7 +297,7 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
 
             require(account == accDetail.account, 'Pool: Invalid data');
 
-            uint256 currentAccBalance = token.balanceOf(account);
+            uint256 currentAccBalance = cash.balanceOf(account);
             uint256 amountToRefund = accDetail.rewardedAmount;
 
             // Get the maximum reward token, which user has from the rewarded amount.
@@ -300,7 +305,7 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
                 amountToRefund = currentAccBalance;
 
             // NOTE: Has to be approve from frontend while withdrawing.
-            token.safeTransferFrom(account, address(this), amountToRefund);
+            cash.safeTransferFrom(account, address(this), amountToRefund);
         }
     }
 
@@ -311,7 +316,7 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
 
             require(account == accDetail.account, 'Pool: Invalid data');
 
-            cash.safeTransfer(accDetail.account, accDetail.depositAmount);
+            token.safeTransfer(accDetail.account, accDetail.depositAmount);
         }
     }
 }
