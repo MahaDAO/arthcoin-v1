@@ -29,7 +29,7 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
         uint256 depositAmount;
         uint256 rewardAmount;
         uint256 rewardedAmount;
-        uint256 userRewardPerTokenPaid;
+        uint256 rewardPerTokenPaid;
     }
 
     mapping(address => uint256) accToIndexMapping; // Used to map acc. addr. to a number(identifier).
@@ -83,7 +83,7 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
 
             if (accDetail.account != address(0) && mappingIndex == 0) {
                 accDetail.rewardAmount = earned(account);
-                accDetail.userRewardPerTokenPaid = rewardPerTokenStored;
+                accDetail.rewardPerTokenPaid = rewardPerTokenStored;
             }
 
             _;
@@ -161,7 +161,7 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
 
         return
             balanceOf(account)
-                .mul(rewardPerToken().sub(accDetail.userRewardPerTokenPaid))
+                .mul(rewardPerToken().sub(accDetail.rewardPerTokenPaid))
                 .div(1e18)
                 .add(accDetail.rewardAmount);
     }
