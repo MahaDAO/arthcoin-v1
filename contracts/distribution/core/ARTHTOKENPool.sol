@@ -114,7 +114,7 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
     }
 
     function modifyDuration(uint256 newDuration) public onlyOwner {
-        require(newDuration >= 0, 'Pool: duration has to be positive');
+        require(newDuration > 0, 'Pool: duration has to be positive');
 
         DURATION = newDuration;
     }
