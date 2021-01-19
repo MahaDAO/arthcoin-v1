@@ -233,23 +233,60 @@ describe('Distribution pools', () => {
         expect(await dai.connect(operator).balanceOf(ant.address)).to.equal(ZERO);
         expect(await dai.connect(operator).balanceOf(whale.address)).to.equal(ZERO);
       })
+
+      it('should not work if amount approved is less than staking', async () => {
+        await dai.connect(ant).approve(pool.address, ETH.div(2));
+        await dai.connect(whale).approve(pool.address, ETH.div(2));
+
+        const oldAntDaiBalance = await dai.balanceOf(ant.address);
+        const oldWhaleDaiBalance = await dai.balanceOf(whale.address);
+
+        await expect(pool.connect(ant).stake(ETH)).to.revertedWith(
+          'ERC20: transfer amount exceeds allowance'
+        );;
+        await expect(pool.connect(whale).stake(ETH)).to.revertedWith(
+          'ERC20: transfer amount exceeds allowance'
+        );;
+
+        expect(await dai.connect(operator).balanceOf(ant.address)).to.equal(oldAntDaiBalance);
+        expect(await dai.connect(operator).balanceOf(whale.address)).to.equal(oldWhaleDaiBalance);
+      })
     });
 
-    // describe('#withdraw', () => {
-    //   it('should not work if not amount not approved for staking', async () => {
-    //     expect(await pool.connect(ant).stake(ETH));
-    //   });
+    describe('#withdraw', () => {
+      it('should not work if not amount is 0', async () => {
+        await expect(pool.connect(ant).withdraw(ZERO)).to.revertedWith('Pool: Cannot withdraw 0');
+        await expect(pool.connect(whale).withdraw(ZERO)).to.revertedWith('Pool: Cannot withdraw 0');
+      });
 
-    //   it('should work if amount approved for staking', async () => {
-    //     await cash.connect(ant).approve(pool.address, ETH);
-    //     await cash.connect(whale).approve(pool.address, ETH);
+      it('should work', async () => {
+        const beforeStakeAntDaiBalance = await dai.balanceOf(ant.address);
+        const beforeStakeWhaleDaiBalance = await dai.balanceOf(whale.address);
 
-    //     expect(pool.connect(ant).stake(ETH));
-    //     expect(pool.connect(ant).stake(ETH));
+        await dai.connect(ant).approve(pool.address, ETH);
+        await dai.connect(whale).approve(pool.address, ETH);
 
-    //     expect(await cash.connect(operator).balanceOf(ant.address)).to.equal(ZERO);
-    //     expect(await cash.connect(operator).balanceOf(whale.address)).to.equal(ZERO);
-    //   })
-    //});
+        await pool.connect(ant).stake(ETH);
+        await pool.connect(whale).stake(ETH);
+
+        const oldAntDaiBalance = await dai.balanceOf(ant.address);
+        const oldWhaleDaiBalance = await dai.balanceOf(whale.address);
+
+        const oldAntCashBalance = await cash.balanceOf(ant.address);
+        const oldWhaleCashBalance = await cash.balanceOf(whale.address);
+
+        await pool.connect(ant).withdraw(ETH);
+        await pool.connect(whale).withdraw(ETH);
+
+        // expect(await dai.connect(operator).balanceOf(ant.address)).to.greaterThan(oldAntDaiBalance);
+        // expect(await dai.connect(operator).balanceOf(whale.address)).to.greaterThan(oldWhaleDaiBalance);
+
+        expect(await dai.connect(operator).balanceOf(ant.address)).to.equal(beforeStakeAntDaiBalance);
+        expect(await dai.connect(operator).balanceOf(whale.address)).to.equal(beforeStakeWhaleDaiBalance);
+
+        // expect(await cash.connect(operator).balanceOf(ant.address)).to.greaterThan(oldAntCashBalance);
+        // expect(await cash.connect(operator).balanceOf(whale.address)).to.greaterThan(oldWhaleCashBalance);
+      })
+    });
   });
 });

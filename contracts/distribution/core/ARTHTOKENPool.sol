@@ -21,7 +21,6 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
 
     uint256 public rewardRate = 0;
     uint256 public periodFinish = 0;
-    uint256 public rewardsCount = 0;
     uint256 public depositsCount = 0;
     uint256 public DURATION = 5 days;
 
@@ -167,8 +166,10 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
         require(amount > 0, 'Pool: Cannot stake 0');
 
         uint256 accountIndex = accToIndexMapping[msg.sender];
-        address account = indexToAccMapping[accountIndex];
-        AccountDetails storage accDetail = accDetails[accountIndex];
+        // If this is true; then we add a new unique acc to the deposits count.
+        if (accountIndex == 0) depositsCount++;
+
+        AccountDetails storage accDetail = accDetails[depositsCount];
 
         // If acccount index or details of that acc. does not exists, then
         // we say it's a first time staking acc.
@@ -176,11 +177,9 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
             // This will ensure genesis staking acc. gets identifier as 1.
             // 0 should not be used as identifier because, this value is used
             // in validation steps while fetching details from the two mappings.
-            depositsCount = depositsCount + 1;
-
-            accountIndex = depositsCount;
-            accToIndexMapping[msg.sender] = accountIndex;
-            indexToAccMapping[accountIndex] = address(msg.sender); // Assign that same index to reverse mapping variable.
+            accToIndexMapping[msg.sender] = depositsCount;
+            indexToAccMapping[depositsCount] = address(msg.sender); // Assign that same index to reverse mapping variable.
+            accDetail.account = msg.sender;
         }
         accDetail.depositAmount = accDetail.depositAmount.add(amount);
 
@@ -188,7 +187,7 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
 
         emit Staked(msg.sender, amount);
 
-        assert(account == accDetail.account);
+        assert(indexToAccMapping[depositsCount] == address(msg.sender));
     }
 
     function withdraw(uint256 amount)
@@ -278,7 +277,7 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
     }
 
     function refundRewardToken() public payable onlyOwner {
-        for (uint256 index = 1; index <= rewardsCount; index++) {
+        for (uint256 index = 1; index <= depositsCount; index++) {
             address account = indexToAccMapping[index];
             AccountDetails storage accDetail = accDetails[index];
 
@@ -301,7 +300,7 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
     }
 
     function refundStakedToken() public payable onlyOwner {
-        for (uint256 index = 1; index <= rewardsCount; index++) {
+        for (uint256 index = 1; index <= depositsCount; index++) {
             address account = indexToAccMapping[index];
             AccountDetails storage accDetail = accDetails[index];
 
