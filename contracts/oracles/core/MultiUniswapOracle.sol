@@ -63,8 +63,7 @@ contract MultiUniswapOracle is IMultiUniswapOracle, Epoch {
         if (tokensCount == 2) {
             path[0] = address(token0);
             path[1] = address(token1);
-        }
-        if (tokensCount == 3) {
+        } else if (tokensCount == 3) {
             path[0] = address(token0);
             path[1] = address(token1);
             path[2] = address(token2);
