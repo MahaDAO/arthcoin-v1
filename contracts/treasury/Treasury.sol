@@ -463,7 +463,7 @@ contract Treasury is TreasurySetters {
         // check if we are in expansion phase.
         if (cash1hPrice >= bondExpansionPhasePrice) {
             // in expansion mode- expands supply.
-            uint256 percentage = getPercentDeviationFromTarget(cash1hPrice);
+            uint256 percentage = getPercentTargetDevianceFromPrice(cash1hPrice);
             uint256 expandSupplyAmount =
                 arthCirculatingSupply()
                     .mul(percentage)
