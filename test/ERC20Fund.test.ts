@@ -24,7 +24,7 @@ async function latestBlocktime(provider: Provider): Promise<number> {
 }
 
 
-describe('DevelopmentFund', () => {
+describe('ERC20Fund', () => {
   const { provider } = ethers;
 
   let operator: SignerWithAddress;

@@ -6,9 +6,8 @@ import {
   ContractFactory,
   BigNumber,
   utils,
-  BigNumberish,
 } from 'ethers';
-import { EtherscanProvider, Provider, showThrottleMessage } from '@ethersproject/providers';
+import { Provider } from '@ethersproject/providers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address';
 
 import UniswapV2Factory from '@uniswap/v2-core/build/UniswapV2Factory.json';
@@ -23,7 +22,6 @@ chai.use(solidity);
 const DAY = 86400;
 const ETH = utils.parseEther('1');
 const ZERO = BigNumber.from(0);
-const ZERO_ADDR = '0x0000000000000000000000000000000000000000';
 const INITIAL_BAC_AMOUNT = utils.parseEther('50000');
 const INITIAL_BAS_AMOUNT = utils.parseEther('10000');
 const INITIAL_BAB_AMOUNT = utils.parseEther('50000');

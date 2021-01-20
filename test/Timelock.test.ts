@@ -9,7 +9,6 @@ import UniswapV2Router from '@uniswap/v2-periphery/build/UniswapV2Router02.json'
 
 import { advanceTimeAndBlock } from './shared/utilities';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address';
-import { ParamType } from 'ethers/lib/utils';
 import { encodeParameters } from '../scripts/utils';
 
 
@@ -19,7 +18,6 @@ chai.use(solidity);
 const DAY = 86400;
 const ETH = utils.parseEther('1');
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000';
-const BOARDROOM_LOCK_DURATION = 5 * 60;
 
 
 async function latestBlocktime(provider: Provider): Promise<number> {
