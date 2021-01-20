@@ -358,6 +358,10 @@ contract Treasury is TreasurySetters {
         cashTargetPrice = IOracle(gmuOracle).getPrice();
     }
 
+    function _payBackBondHolders(uint256 amount) internal {
+        // TODO: pay back bond holders.
+    }
+
     /**
      * Helper function to allocate seigniorage to bond token holders. Seigniorage
      * before the boardrooms get paid.
@@ -448,7 +452,22 @@ contract Treasury is TreasurySetters {
 
             IBasisAsset(cash).mint(address(this), expandSupplyAmount);
 
+            // in expansion mode- set upper limit to current price.
+            triggerBondAllocationLowerBandRate - percentage;
+
             return;
+        }
+
+        // check if in upper band.
+        if (
+            cash1hPrice > cashTargetPrice &&
+            cash1hPrice < bondExpansionPhasePrice
+        ) {
+            // in the upper band- pay back bond holder.
+            // TODO: calculate payback amount;
+            uint256 payBackAmount = 1;
+
+            _payBackBondHolders(payBackAmount);
         }
 
         // check if we are in contract mode.
