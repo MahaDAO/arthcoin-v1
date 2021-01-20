@@ -137,33 +137,8 @@ contract Treasury is TreasurySetters {
 
         require(cash1hPrice <= targetPrice, 'Treasury: cash price moved');
         require(
-            cash1hPrice < cashTargetPrice, // price < $1
+            cash1hPrice < getBondPurchasePrice(), // price < $0.95
             'Treasury: cashPrice not eligible for bond purchase'
-        );
-
-        // Sort the tokens in pair, as per uniswap's implementation.
-        (address token0, address token1) =
-            dai < cash ? (dai, cash) : (cash, dai);
-
-        // Get the uniswap addresses.
-        address uniswapFactory = IUniswapV2Router02(uniswapRouter).factory();
-        address uniswapLiquidityPair =
-            IUniswapV2Factory(uniswapFactory).getPair(token0, token1);
-        // Get the liquidity of cash locked in uniswap pair.
-        uint256 uniswapLiquidityPairCashBalance =
-            ICustomERC20(cash).balanceOf(uniswapLiquidityPair);
-        // Get the liquidity percent.
-        uint256 uniswapCashLiquidityPercent =
-            uniswapLiquidityPairCashBalance.mul(100).div(
-                ICustomERC20(cash).totalSupply()
-            );
-
-        // NOTE: require just to see if compilation happens or not.
-        require(
-            uniswapLiquidityPairCashBalance >= 0 ||
-                uniswapLiquidityPairCashBalance <= 0 ||
-                uniswapCashLiquidityPercent <= 0 ||
-                uniswapCashLiquidityPercent >= 0
         );
 
         // Find the expected amount recieved when swapping the following
@@ -214,8 +189,9 @@ contract Treasury is TreasurySetters {
         // if all good then mint ARTHB, burn ARTH and update the counters
         require(cashToConvert > 0, 'Treasury: No more bonds to be redeemed');
 
-        uint256 bondsToIssue = cashToConvert.mul(1e18).div(cash1hPrice);
-        accumulatedBonds = accumulatedBonds.add(bondsToIssue);
+        uint256 bondsToIssue =
+            cashToConvert.mul(uint256(100).add(bondDiscount)).div(100);
+        accumulatedBonds = accumulatedBonds.add(cashToConvert);
 
         // 3. Burn bought ARTH cash and mint bonds at the discounted price.
         // TODO: Set the minting amount according to bond price.
@@ -223,7 +199,7 @@ contract Treasury is TreasurySetters {
         IBasisAsset(cash).burnFrom(msg.sender, cashToConvert);
         IBasisAsset(bond).mint(msg.sender, bondsToIssue);
 
-        // emit BoughtBonds(msg.sender, amountInDai, cashToConvert, bondsToIssue);
+        emit BoughtBonds(msg.sender, amountInDai, cashToConvert, bondsToIssue);
 
         return bondsToIssue;
     }
@@ -243,7 +219,7 @@ contract Treasury is TreasurySetters {
 
         uint256 cashPrice = _getCashPrice(bondOracle);
         require(
-            cashPrice > getCeilingPrice(), // price > $1.05
+            cashPrice > getBondRedemtionPrice(), // price > $1.05
             'Treasury: cashPrice less than ceiling'
         );
         require(
@@ -309,8 +285,8 @@ contract Treasury is TreasurySetters {
         uint256 cash12hPrice = getSeigniorageOraclePrice();
         uint256 cash1hPrice = getBondOraclePrice();
 
-        // send 1000 ARTH reward to the person advancing the epoch to compensate for gas
-        IBasisAsset(cash).mint(msg.sender, uint256(1000).mul(1e18));
+        // send 200 ARTH reward to the person advancing the epoch to compensate for gas
+        IBasisAsset(cash).mint(msg.sender, uint256(200).mul(1e18));
 
         // update the bond limits
         _updateConversionLimit(cash1hPrice);
@@ -456,54 +432,33 @@ contract Treasury is TreasurySetters {
         // reset this counter so that new bonds can now be minted...
         accumulatedBonds = 0;
 
-        uint256 lowerBandPrice =
-            cashTargetPrice.mul(triggerBondAllocationLowerBandRate).div(100);
-        uint256 upperBandPrice =
-            cashTargetPrice.mul(triggerBondAllocationLowerBandRate).div(100);
+        uint256 bondPurchasePrice = getBondPurchasePrice();
 
         // check if we are in expansion or in contraction mode
-        // if (cash1hPrice >= cashTargetPrice.add(upperBandPrice)) {
-        //     // limit the conversion as per conversion rate and circulating supply
-        //     cashToBondConversionLimit = arthCirculatingSupply()
-        //         .mul(bondConversionRate)
-        //         .div(100);
-        // } else if (cash1hPrice <= cashTargetPrice.sub(lowerBandPrice)) {
-        //     // in contraction mode; set a limit to how many bonds are there
+        if (cash1hPrice <= bondPurchasePrice) {
+            // in contraction mode; set a limit to how many bonds are there
 
-        //     // understand how much % deviation do we have from target price
-        //     // if target price is 2.5$ and we are at 2$; then percentage
-        //     uint256 percentage =
-        //         cashTargetPrice.sub(cash1hPrice).mul(1e18).div(cashTargetPrice);
+            // understand how much % deviation do we have from target price
+            // if target price is 2.5$ and we are at 2$; then percentage
+            // uint256 percentage =
+            //     cashTargetPrice.sub(cash1hPrice).mul(1e18).div(cashTargetPrice);
 
-        //     // accordingly set the new conversion limit to be that % from the
-        //     // current circulating supply of ARTH
-        //     cashToBondConversionLimit = arthCirculatingSupply()
-        //         .mul(percentage)
-        //         .div(1e18);
+            // accordingly set the new conversion limit to be that % from the
+            // current circulating supply of ARTH
+            // cashToBondConversionLimit = arthCirculatingSupply()
+            //     .mul(percentage)
+            //     .div(1e18);
 
-        //     emit BondsAllocated(cashToBondConversionLimit);
-        // }
-
-        // The price is outwards of the target band, hence set a conversion limit acc. to the fixed
-        // rate param specified.
-        if (
-            cash1hPrice >= cashTargetPrice.add(upperBandPrice) ||
-            cash1hPrice <= cashTargetPrice.sub(lowerBandPrice)
-        ) {
             cashToBondConversionLimit = arthCirculatingSupply()
                 .mul(bondConversionRate)
                 .div(100);
+            // .mul(getCashSupplyInLiquidity())
+            // .div(100);
 
             emit BondsAllocated(cashToBondConversionLimit);
+        } else {
+            cashToBondConversionLimit = 0;
         }
-    }
-
-    function _burnShareToken() public {
-        uint256 amount = ICustomERC20(share).balanceOf(msg.sender);
-        require(amount > 0, 'Treasury: amount has to be greater than 0');
-
-        // Burn the amount of share tokens.
-        ICustomERC20(share).burnFrom(msg.sender, amount);
     }
 
     // GOV
