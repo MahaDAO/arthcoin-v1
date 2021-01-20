@@ -610,7 +610,6 @@ describe('Treasury', () => {
           await oracle.setPrice(cashPrice);
           await oracle.setEpoch(1);
 
-          await oracle.setPrice(ETH.mul(102).div(100));
           // trigger updateConversionRate
           await treasury.allocateSeigniorage();
 
@@ -803,11 +802,8 @@ describe('Treasury', () => {
           expect(status.lim).to.eq(0);
           expect(status.acc).to.eq(0);
 
-          await oracle.setPrice(ETH.mul(102).div(100));
           // trigger updateConversionRate
           await treasury.allocateSeigniorage();
-
-          await oracle.setPrice(cashPrice);
 
           expect(await treasury.connect(ant).buyBonds(ETH, cashPrice))
           const newStatus = await getStatus();
@@ -841,11 +837,9 @@ describe('Treasury', () => {
           await cash.connect(operator).transfer(ant.address, ETH.mul(2));
           await cash.connect(ant).approve(treasury.address, ETH.mul(2));
 
-          await oracle.setPrice(ETH.mul(102).div(100));
           // trigger updateConversionRate
           await treasury.allocateSeigniorage();
 
-          await oracle.setPrice(cashPrice);
           await treasury.connect(ant).buyBonds(ETH, cashPrice);
 
           expect(await treasury.lastBondOracleEpoch()).to.eq(1);
