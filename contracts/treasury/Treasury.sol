@@ -494,14 +494,6 @@ contract Treasury is TreasurySetters {
 
             _payBackBondHolders(payBackAmount);
 
-            // set conversion limit as per the fixed amount.
-            // NOTE: just for test cases; since they use same 12h and 1h oracle feed.
-            cashToBondConversionLimit = arthCirculatingSupply()
-                .mul(bondConversionRate)
-                .div(100)
-                .mul(getCashSupplyInLiquidity())
-                .div(100);
-
             return;
         }
 
