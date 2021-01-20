@@ -578,29 +578,7 @@ describe('Treasury', () => {
           );
         });
 
-        it('should update conversion rate by a fixed rate if price > and outside band', async () => {
-          const cashPrice = ETH.mul(110).div(100); // $1.01
-          await oracle.setPrice(cashPrice);
-
-          await treasury.allocateSeigniorage();
-
-          const bondConversionRate = await treasury.bondConversionRate();
-          const expectedBondConversionLimit = (await treasury.arthCirculatingSupply()).mul(bondConversionRate).div(100);
-
-          await dai.connect(operator).transfer(ant.address, ETH);
-          await dai.connect(ant).approve(treasury.address, ETH);
-          await cash.connect(ant).approve(treasury.address, ETH);
-
-          await expect(
-            treasury.connect(ant).buyBonds(ETH, cashPrice)
-          ).to.revertedWith(
-            'Treasury: cashPrice not eligible for bond purchase'
-          );
-
-          expect(await treasury.cashToBondConversionLimit()).to.eq(expectedBondConversionLimit);
-        });
-
-        it('should fail if cash price over $1', async () => {
+        it('should fail if cash price over $1 but update the conversion limit', async () => {
           const cashPrice = ETH.mul(110).div(100); // $1.01
           await oracle.setPrice(cashPrice);
 

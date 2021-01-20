@@ -27,7 +27,7 @@ import './TreasurySetters.sol';
 /**
  * @title ARTH Treasury contract
  * @notice Monetary policy logic to adjust supplies of basis cash assets
- * @author Steven Enamakel & Yash Agarwal. Original code written by Summer Smith & Rick Sanchez
+ * @author Steven Enamakel & Yash Agrawal. Original code written by Summer Smith & Rick Sanchez
  */
 contract Treasury is TreasurySetters {
     using SafeERC20 for ICustomERC20;
@@ -466,7 +466,7 @@ contract Treasury is TreasurySetters {
         uint256 lowerBandPrice =
             cashTargetPrice.mul(triggerBondAllocationLowerBandRate).div(100);
         uint256 upperBandPrice =
-            cashTargetPrice.mul(triggerBondAllocationLowerBandRate).div(100);
+            cashTargetPrice.mul(triggerBondAllocationUpperBandRate).div(100);
 
         // check if we are in expansion or in contraction mode
         // if (cash1hPrice >= cashTargetPrice.add(upperBandPrice)) {
