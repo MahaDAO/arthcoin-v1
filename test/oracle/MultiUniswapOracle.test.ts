@@ -45,10 +45,9 @@ describe('MultiUniswapOracle', () => {
   const { provider } = ethers;
 
   let operator: SignerWithAddress;
-  let whale: SignerWithAddress;
 
   before('setup accounts', async () => {
-    [operator, whale] = await ethers.getSigners();
+    [operator] = await ethers.getSigners();
   });
 
   let Cash: ContractFactory;
