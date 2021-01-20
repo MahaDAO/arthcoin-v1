@@ -100,12 +100,14 @@ describe('Boardroom', () => {
       }
     });
 
-    await advanceTimeAndBlock(
-      provider,
-      (await latestBlocktime(provider)) + BOARDROOM_LOCK_PERIOD
-    );
+
 
     it('Should work correctly now', async () => {
+      await advanceTimeAndBlock(
+        provider,
+        (await latestBlocktime(provider)) + BOARDROOM_LOCK_PERIOD
+      );
+
       await expect(boardroom.connect(whale).withdraw(STAKE_AMOUNT))
         .to.emit(boardroom, 'Withdrawn')
         .withArgs(whale.address, STAKE_AMOUNT);
@@ -115,12 +117,22 @@ describe('Boardroom', () => {
     });
 
     it('Should fail when user tries to withdraw with zero amount', async () => {
+      await advanceTimeAndBlock(
+        provider,
+        (await latestBlocktime(provider)) + BOARDROOM_LOCK_PERIOD
+      );
+
       await expect(boardroom.connect(whale).withdraw(ZERO)).to.revertedWith(
         'Boardroom: Cannot withdraw 0'
       );
     });
 
     it('Should fail when user tries to withdraw more than staked amount', async () => {
+      await advanceTimeAndBlock(
+        provider,
+        (await latestBlocktime(provider)) + BOARDROOM_LOCK_PERIOD
+      );
+
       await expect(
         boardroom.connect(whale).withdraw(STAKE_AMOUNT.add(1))
       ).to.revertedWith(
@@ -129,6 +141,11 @@ describe('Boardroom', () => {
     });
 
     it('Should fail when non-director tries to withdraw', async () => {
+      await advanceTimeAndBlock(
+        provider,
+        (await latestBlocktime(provider)) + BOARDROOM_LOCK_PERIOD
+      );
+
       await expect(boardroom.connect(abuser).withdraw(ZERO)).to.revertedWith(
         'Boardroom: The director does not exist'
       );
