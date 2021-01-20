@@ -140,6 +140,10 @@ contract Treasury is TreasurySetters {
             cash1hPrice <= getBondPurchasePrice(), // price < $0.95
             'Treasury: cashPrice not eligible for bond purchase'
         );
+        require(
+            cashToBondConversionLimit > 0,
+            'Treasury: No more bonds to be redeemed'
+        );
 
         // Find the expected amount recieved when swapping the following
         // tokens on uniswap.
@@ -513,7 +517,7 @@ contract Treasury is TreasurySetters {
 
         // if neither expansion nor contraction then we are in band limit,
         // hence we do nothing.
-        // cashToBondConversionLimit = 0;
+        cashToBondConversionLimit = 0;
     }
 
     // GOV
