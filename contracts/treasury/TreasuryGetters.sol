@@ -21,6 +21,10 @@ import '../utils/Epoch.sol';
 import '../utils/ContractGuard.sol';
 import './TreasuryState.sol';
 
+import '../interfaces/ICustomERC20.sol';
+import '../interfaces/IUniswapV2Factory.sol';
+import {IUniswapV2Router02} from '../interfaces/IUniswapV2Router02.sol';
+
 abstract contract TreasuryGetters is TreasuryState {
     function getReserve() public view returns (uint256) {
         return accumulatedSeigniorage;
@@ -46,6 +50,14 @@ abstract contract TreasuryGetters is TreasuryState {
         return IOracle(arthMahaOracle).getPrice();
     }
 
+    function getPercentDeviationFromTarget(uint256 cash1hPrice)
+        public
+        view
+        returns (uint256)
+    {
+        return cashTargetPrice.sub(cash1hPrice).mul(1e18).div(cashTargetPrice);
+    }
+
     function getSeigniorageOraclePrice() public view returns (uint256) {
         return _getCashPrice(seigniorageOracle);
     }
@@ -54,28 +66,39 @@ abstract contract TreasuryGetters is TreasuryState {
         return IERC20(cash).totalSupply().sub(accumulatedSeigniorage);
     }
 
+    function getBondRedemtionPrice() public view returns (uint256) {
+        return cashTargetPrice.mul(safetyRegion.add(100)).div(100); // 1.05%
+    }
+
+    function getBondPurchasePrice() public view returns (uint256) {
+        return cashTargetPrice.mul(uint256(100).sub(safetyRegion)).div(100); // 0.95%
+    }
+
+    function getCashSupplyInLiquidity() public view returns (uint256) {
+        // check if enabled or not
+        if (!considerUniswapLiquidity) return uint256(100);
+
+        address uniswapFactory = IUniswapV2Router02(uniswapRouter).factory();
+        address uniswapLiquidityPair =
+            IUniswapV2Factory(uniswapFactory).getPair(cash, dai);
+
+        // Get the liquidity of cash locked in uniswap pair.
+        uint256 uniswapLiquidityPairCashBalance =
+            ICustomERC20(cash).balanceOf(uniswapLiquidityPair);
+
+        // Get the liquidity percent.
+        return
+            uniswapLiquidityPairCashBalance.mul(100).div(
+                ICustomERC20(cash).totalSupply()
+            );
+    }
+
     function getCeilingPrice() public view returns (uint256) {
         return ICurve(curve).calcCeiling(arthCirculatingSupply());
     }
 
     function get1hourEpoch() public view returns (uint256) {
         return Epoch(bondOracle).getLastEpoch();
-    }
-
-    function getTriggerBondAllocationUpperBandRate()
-        public
-        view
-        returns (uint256)
-    {
-        return triggerBondAllocationUpperBandRate;
-    }
-
-    function getTriggerBondAllocationLowerBandRate()
-        public
-        view
-        returns (uint256)
-    {
-        return triggerBondAllocationLowerBandRate;
     }
 
     function _getCashPrice(address oracle) internal view returns (uint256) {

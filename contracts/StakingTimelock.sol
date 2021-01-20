@@ -28,14 +28,14 @@ contract StakingTimelock is Ownable {
         require(_stakerDetails.lastStakedOn != 0);
         require(_stakerDetails.lastStakedAmount != 0);
         require(_stakerDetails.totalStakedAmount != 0);
-        require(_stakerDetails.lastStakedOn + duration <= now);
+        require(_stakerDetails.lastStakedOn + duration <= block.timestamp);
         _;
     }
 
-    function addStakerDetails(uint256 _amount) public {
-        StakingDetails storage _stakerDetails = _stakingDetails[msg.sender];
+    function addStakerDetails(address sender, uint256 _amount) internal {
+        StakingDetails storage _stakerDetails = _stakingDetails[sender];
 
-        _stakerDetails.lastStakedOn = now;
+        _stakerDetails.lastStakedOn = block.timestamp;
         _stakerDetails.lastStakedAmount = _amount;
         _stakerDetails.totalStakedAmount = _stakerDetails.totalStakedAmount.add(
             _amount

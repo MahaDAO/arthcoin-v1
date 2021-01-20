@@ -11,8 +11,9 @@ import '../owner/Operator.sol';
 import '../utils/ContractGuard.sol';
 import '../interfaces/IBasisAsset.sol';
 import '../StakingTimelock.sol';
+import '../owner/Operator.sol';
 
-abstract contract ShareWrapper is StakingTimelock {
+abstract contract ShareWrapper is StakingTimelock, Operator {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -30,10 +31,22 @@ abstract contract ShareWrapper is StakingTimelock {
     }
 
     function stake(uint256 amount) public virtual {
-        addStakerDetails(amount);
+        addStakerDetails(msg.sender, amount);
 
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
+        share.safeTransferFrom(msg.sender, address(this), amount);
+    }
+
+    function stakeFor(address onBehalf, uint256 amount)
+        public
+        virtual
+        onlyOperator
+    {
+        addStakerDetails(onBehalf, amount);
+
+        _totalSupply = _totalSupply.add(amount);
+        _balances[msg.sender] = _balances[onBehalf].add(amount);
         share.safeTransferFrom(msg.sender, address(this), amount);
     }
 

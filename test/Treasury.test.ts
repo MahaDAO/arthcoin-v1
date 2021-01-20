@@ -561,6 +561,28 @@ describe('Treasury', () => {
           expect(await bond.balanceOf(ant.address)).to.gt(ZERO);
         });
 
+        it('should work if bondConversionLimit < boughtBackAmount(not 0) and byy bonds', async () => {
+          const cashPrice = ETH.mul(90).div(100); // $0.99
+          await oracle.setPrice(cashPrice);
+          await oracle.setEpoch(1);
+
+          // trigger updateConversionRate
+          await treasury.allocateSeigniorage();
+
+          await dai.connect(operator).transfer(ant.address, ETH);
+          await dai.connect(ant).approve(treasury.address, ETH);
+          await cash.connect(ant).approve(treasury.address, ETH);
+
+          expect(treasury.connect(ant).buyBonds(ETH, cashPrice))
+          // .to.emit(treasury, 'BoughtBonds')
+          // // TODO: calculate real numbers
+          // .withArgs(ant.address, ETH, BigNumber.from("906610893880149131"), BigNumber.from("915768579676918314"));
+
+          expect(await dai.balanceOf(ant.address)).to.eq(ZERO);
+          // TODO: use a proper number;
+          expect(await bond.balanceOf(ant.address)).to.gt(ZERO);
+        });
+
         it('should fail if cash price over $1 but inside band', async () => {
           const cashPrice = ETH.mul(101).div(100); // $1.01
           await oracle.setPrice(cashPrice);
