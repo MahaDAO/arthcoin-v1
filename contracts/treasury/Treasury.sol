@@ -316,7 +316,7 @@ contract Treasury is TreasurySetters {
             (cash12hPrice.sub(cashTargetPrice)).mul(1e18).div(cashTargetPrice);
 
         // stops allocation if deviated too much(more than we want).
-        // if (percentage > stopSeigniorageAtDeviationRate) return; // just advance epoch instead of revert
+        // if (percentage > stopSeigniorageAtDeviationRate.mul(1e18)) return; // just advance epoch instead of revert
 
         // caps maximum percentage allowed to 30
         percentage = Math.min(percentage, uint256(30).mul(1e18));
