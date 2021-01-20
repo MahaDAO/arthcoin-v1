@@ -286,256 +286,256 @@ describe('Treasury', () => {
     });
   });
 
-  describe('Seigniorage', () => {
-    describe('#allocateSeigniorage', () => {
-      beforeEach('transfer permissions', async () => {
-        await bond.mint(operator.address, INITIAL_BAB_AMOUNT);
-        await cash.mint(operator.address, INITIAL_BAC_AMOUNT);
-        await cash.mint(treasury.address, INITIAL_BAC_AMOUNT);
-        await share.mint(operator.address, INITIAL_BAS_AMOUNT);
-        for await (const contract of [cash, bond, arthLiquidityBoardroom, arthBoardroom]) {
-          await contract.connect(operator).transferOperator(treasury.address);
-        }
-      });
+  // describe('Seigniorage', () => {
+  //   describe('#allocateSeigniorage', () => {
+  //     beforeEach('transfer permissions', async () => {
+  //       await bond.mint(operator.address, INITIAL_BAB_AMOUNT);
+  //       await cash.mint(operator.address, INITIAL_BAC_AMOUNT);
+  //       await cash.mint(treasury.address, INITIAL_BAC_AMOUNT);
+  //       await share.mint(operator.address, INITIAL_BAS_AMOUNT);
+  //       for await (const contract of [cash, bond, arthLiquidityBoardroom, arthBoardroom]) {
+  //         await contract.connect(operator).transferOperator(treasury.address);
+  //       }
+  //     });
 
-      describe('after migration', () => {
-        it('should fail if contract migrated', async () => {
-          for await (const contract of [cash, bond]) {
-            await contract
-              .connect(operator)
-              .transferOwnership(treasury.address);
-          }
+  //     describe('after migration', () => {
+  //       it('should fail if contract migrated', async () => {
+  //         for await (const contract of [cash, bond]) {
+  //           await contract
+  //             .connect(operator)
+  //             .transferOwnership(treasury.address);
+  //         }
 
-          await treasury.connect(operator).migrate(operator.address);
-          expect(await treasury.migrated()).to.be.true;
+  //         await treasury.connect(operator).migrate(operator.address);
+  //         expect(await treasury.migrated()).to.be.true;
 
-          await expect(treasury.allocateSeigniorage()).to.revertedWith(
-            'Treasury: migrated'
-          );
-        });
-      });
+  //         await expect(treasury.allocateSeigniorage()).to.revertedWith(
+  //           'Treasury: migrated'
+  //         );
+  //       });
+  //     });
 
-      describe('before startTime', () => {
-        it('should fail if not started yet', async () => {
-          await expect(treasury.allocateSeigniorage()).to.revertedWith(
-            'Epoch: not started yet'
-          );
-        });
-      });
+  //     describe('before startTime', () => {
+  //       it('should fail if not started yet', async () => {
+  //         await expect(treasury.allocateSeigniorage()).to.revertedWith(
+  //           'Epoch: not started yet'
+  //         );
+  //       });
+  //     });
 
-      describe('after startTime', () => {
-        beforeEach('advance blocktime', async () => {
-          // Wait til first epoch.
-          await advanceTimeAndBlock(
-            provider,
-            startTime.sub(await latestBlocktime(provider)).toNumber()
-          );
-        });
+  //     describe('after startTime', () => {
+  //       beforeEach('advance blocktime', async () => {
+  //         // Wait til first epoch.
+  //         await advanceTimeAndBlock(
+  //           provider,
+  //           startTime.sub(await latestBlocktime(provider)).toNumber()
+  //         );
+  //       });
 
-        it('should not fund if price < targetPrice and inside lower band', async () => {
-          const cashPrice = ETH.mul(98).div(100);
-          await oracle.setPrice(cashPrice);
+  //       it('should not fund if price < targetPrice and inside lower band', async () => {
+  //         const cashPrice = ETH.mul(98).div(100);
+  //         await oracle.setPrice(cashPrice);
 
-          const oldCashSupply = await cash.totalSupply();
-          const oldCashBalanceOfAnt = await cash.balanceOf(ant.address);
-          const oldCashBalanceOfTreasury = await cash.balanceOf(treasury.address);
+  //         const oldCashSupply = await cash.totalSupply();
+  //         const oldCashBalanceOfAnt = await cash.balanceOf(ant.address);
+  //         const oldCashBalanceOfTreasury = await cash.balanceOf(treasury.address);
 
-          await expect(treasury.connect(ant).allocateSeigniorage()).to.not.emit(treasury, 'TreasuryFunded')
+  //         await expect(treasury.connect(ant).allocateSeigniorage()).to.not.emit(treasury, 'TreasuryFunded')
 
-          expect(await cash.totalSupply()).to.eq(oldCashSupply.add(ETH.mul(200)));
-          expect(await cash.balanceOf(ant.address)).to.eq(oldCashBalanceOfAnt.add(ETH.mul(200)));
-          expect(await cash.balanceOf(treasury.address)).to.eq(oldCashBalanceOfTreasury);
-        });
+  //         expect(await cash.totalSupply()).to.eq(oldCashSupply.add(ETH.mul(200)));
+  //         expect(await cash.balanceOf(ant.address)).to.eq(oldCashBalanceOfAnt.add(ETH.mul(200)));
+  //         expect(await cash.balanceOf(treasury.address)).to.eq(oldCashBalanceOfTreasury);
+  //       });
 
-        it('should not fund if price < targetPrice and outside lower band', async () => {
-          const cashPrice = ETH.mul(90).div(100);
-          await oracle.setPrice(cashPrice);
+  //       it('should not fund if price < targetPrice and outside lower band', async () => {
+  //         const cashPrice = ETH.mul(90).div(100);
+  //         await oracle.setPrice(cashPrice);
 
-          const oldCashSupply = await cash.totalSupply();
-          const oldCashBalanceOfAnt = await cash.balanceOf(ant.address);
-          const oldCashBalanceOfTreasury = await cash.balanceOf(treasury.address);
+  //         const oldCashSupply = await cash.totalSupply();
+  //         const oldCashBalanceOfAnt = await cash.balanceOf(ant.address);
+  //         const oldCashBalanceOfTreasury = await cash.balanceOf(treasury.address);
 
-          await expect(treasury.connect(ant).allocateSeigniorage()).to.not.emit(treasury, 'TreasuryFunded')
+  //         await expect(treasury.connect(ant).allocateSeigniorage()).to.not.emit(treasury, 'TreasuryFunded')
 
-          expect(await cash.totalSupply()).to.eq(oldCashSupply.add(ETH.mul(200)));
-          expect(await cash.balanceOf(ant.address)).to.eq(oldCashBalanceOfAnt.add(ETH.mul(200)));
-          expect(await cash.balanceOf(treasury.address)).to.eq(oldCashBalanceOfTreasury);
-        });
+  //         expect(await cash.totalSupply()).to.eq(oldCashSupply.add(ETH.mul(200)));
+  //         expect(await cash.balanceOf(ant.address)).to.eq(oldCashBalanceOfAnt.add(ETH.mul(200)));
+  //         expect(await cash.balanceOf(treasury.address)).to.eq(oldCashBalanceOfTreasury);
+  //       });
 
-        it('should not fund if price > targetPrice and outside upper band', async () => {
-          const cashPrice = ETH.mul(90).div(100);
-          await oracle.setPrice(cashPrice);
+  //       it('should not fund if price > targetPrice and outside upper band', async () => {
+  //         const cashPrice = ETH.mul(90).div(100);
+  //         await oracle.setPrice(cashPrice);
 
-          const oldCashSupply = await cash.totalSupply();
-          const oldCashBalanceOfAnt = await cash.balanceOf(ant.address);
-          const oldCashBalanceOfTreasury = await cash.balanceOf(treasury.address);
+  //         const oldCashSupply = await cash.totalSupply();
+  //         const oldCashBalanceOfAnt = await cash.balanceOf(ant.address);
+  //         const oldCashBalanceOfTreasury = await cash.balanceOf(treasury.address);
 
-          await expect(treasury.connect(ant).allocateSeigniorage()).to.not.emit(treasury, 'TreasuryFunded')
+  //         await expect(treasury.connect(ant).allocateSeigniorage()).to.not.emit(treasury, 'TreasuryFunded')
 
-          expect(await cash.totalSupply()).to.eq(oldCashSupply.add(ETH.mul(200)));
-          expect(await cash.balanceOf(ant.address)).to.eq(oldCashBalanceOfAnt.add(ETH.mul(200)));
-          expect(await cash.balanceOf(treasury.address)).to.eq(oldCashBalanceOfTreasury);
-        });
+  //         expect(await cash.totalSupply()).to.eq(oldCashSupply.add(ETH.mul(200)));
+  //         expect(await cash.balanceOf(ant.address)).to.eq(oldCashBalanceOfAnt.add(ETH.mul(200)));
+  //         expect(await cash.balanceOf(treasury.address)).to.eq(oldCashBalanceOfTreasury);
+  //       });
 
-        it('should not fund if price > targetPrice and outside upper band but price < ceiling price', async () => {
-          const cashPrice = ETH.mul(90).div(100);
-          await oracle.setPrice(cashPrice);
+  //       it('should not fund if price > targetPrice and outside upper band but price < ceiling price', async () => {
+  //         const cashPrice = ETH.mul(90).div(100);
+  //         await oracle.setPrice(cashPrice);
 
-          const oldCashSupply = await cash.totalSupply();
-          const oldCashBalanceOfAnt = await cash.balanceOf(ant.address);
-          const oldCashBalanceOfTreasury = await cash.balanceOf(treasury.address);
+  //         const oldCashSupply = await cash.totalSupply();
+  //         const oldCashBalanceOfAnt = await cash.balanceOf(ant.address);
+  //         const oldCashBalanceOfTreasury = await cash.balanceOf(treasury.address);
 
-          await expect(treasury.connect(ant).allocateSeigniorage()).to.not.emit(treasury, 'TreasuryFunded')
+  //         await expect(treasury.connect(ant).allocateSeigniorage()).to.not.emit(treasury, 'TreasuryFunded')
 
-          expect(await cash.totalSupply()).to.eq(oldCashSupply.add(ETH.mul(200)));
-          expect(await cash.balanceOf(ant.address)).to.eq(oldCashBalanceOfAnt.add(ETH.mul(200)));
-          expect(await cash.balanceOf(treasury.address)).to.eq(oldCashBalanceOfTreasury);
-        });
+  //         expect(await cash.totalSupply()).to.eq(oldCashSupply.add(ETH.mul(200)));
+  //         expect(await cash.balanceOf(ant.address)).to.eq(oldCashBalanceOfAnt.add(ETH.mul(200)));
+  //         expect(await cash.balanceOf(treasury.address)).to.eq(oldCashBalanceOfTreasury);
+  //       });
 
-        it('should fund if price > targetPrice but in the upper band and price > ceiling pric', async () => {
-          const cashPrice = ETH.mul(103).div(100);
-          await oracle.setPrice(cashPrice);
+  //       it('should fund if price > targetPrice but in the upper band and price > ceiling pric', async () => {
+  //         const cashPrice = ETH.mul(103).div(100);
+  //         await oracle.setPrice(cashPrice);
 
-          await curve.setCeiling(ETH.mul(102).div(100));
+  //         await curve.setCeiling(ETH.mul(102).div(100));
 
-          const oldCashSupply = await cash.totalSupply();
-          const oldCashBalanceOfAnt = await cash.balanceOf(ant.address);
-          const oldCashBalanceOfTreasury = await cash.balanceOf(treasury.address);
+  //         const oldCashSupply = await cash.totalSupply();
+  //         const oldCashBalanceOfAnt = await cash.balanceOf(ant.address);
+  //         const oldCashBalanceOfTreasury = await cash.balanceOf(treasury.address);
 
-          // expect(await cash.totalSupply()).to.eq(oldCashSupply.add(ETH.mul(200)));
-          // expect(await cash.balanceOf(ant.address)).to.eq(oldCashBalanceOfAnt.add(ETH.mul(200)));
-          // expect(await cash.balanceOf(treasury.address)).to.eq(oldCashBalanceOfTreasury.add(ETH.mul(200)));
+  //         // expect(await cash.totalSupply()).to.eq(oldCashSupply.add(ETH.mul(200)));
+  //         // expect(await cash.balanceOf(ant.address)).to.eq(oldCashBalanceOfAnt.add(ETH.mul(200)));
+  //         // expect(await cash.balanceOf(treasury.address)).to.eq(oldCashBalanceOfTreasury.add(ETH.mul(200)));
 
-          const bondSeigniorageRate = await treasury.bondSeigniorageRate();
+  //         const bondSeigniorageRate = await treasury.bondSeigniorageRate();
 
-          // calculate with circulating supply
-          const advanceReward = ETH.mul(200)
-          const treasuryHoldings = await treasury.getReserve();
-          const cashSupply = (await cash.totalSupply()).sub(treasuryHoldings).add(advanceReward);
-          const expectedSeigniorage = cashSupply
-            .mul(cashPrice.sub(ETH))
-            .div(ETH);
+  //         // calculate with circulating supply
+  //         const advanceReward = ETH.mul(200)
+  //         const treasuryHoldings = await treasury.getReserve();
+  //         const cashSupply = (await cash.totalSupply()).sub(treasuryHoldings).add(advanceReward);
+  //         const expectedSeigniorage = cashSupply
+  //           .mul(cashPrice.sub(ETH))
+  //           .div(ETH);
 
-          // get all expected reserve
-          const expectedFundReserve = expectedSeigniorage
-            .mul(await treasury.ecosystemFundAllocationRate())
-            .div(100);
+  //         // get all expected reserve
+  //         const expectedFundReserve = expectedSeigniorage
+  //           .mul(await treasury.ecosystemFundAllocationRate())
+  //           .div(100);
 
-          const expectedTreasuryReserve = bigmin(
-            expectedSeigniorage.sub(expectedFundReserve).mul(bondSeigniorageRate).div(100),
-            (await bond.totalSupply()).sub(treasuryHoldings)
-          );
+  //         const expectedTreasuryReserve = bigmin(
+  //           expectedSeigniorage.sub(expectedFundReserve).mul(bondSeigniorageRate).div(100),
+  //           (await bond.totalSupply()).sub(treasuryHoldings)
+  //         );
 
-          const expectedBoardroomReserve = expectedSeigniorage
-            .sub(expectedFundReserve)
-            .sub(expectedTreasuryReserve);
+  //         const expectedBoardroomReserve = expectedSeigniorage
+  //           .sub(expectedFundReserve)
+  //           .sub(expectedTreasuryReserve);
 
-          const allocationResult = await treasury.allocateSeigniorage();
+  //         const allocationResult = await treasury.allocateSeigniorage();
 
-          if (expectedSeigniorage.gt(ZERO)) {
-            await expect(new Promise((resolve) => resolve(allocationResult)))
-              .to.emit(treasury, 'SeigniorageMinted')
-              .withArgs(expectedSeigniorage);
-          }
+  //         if (expectedSeigniorage.gt(ZERO)) {
+  //           await expect(new Promise((resolve) => resolve(allocationResult)))
+  //             .to.emit(treasury, 'SeigniorageMinted')
+  //             .withArgs(expectedSeigniorage);
+  //         }
 
-          if (expectedFundReserve.gt(ZERO)) {
-            await expect(new Promise((resolve) => resolve(allocationResult)))
-              .to.emit(treasury, 'PoolFunded')
-              .withArgs(developmentFund.address, expectedFundReserve);
-          }
+  //         if (expectedFundReserve.gt(ZERO)) {
+  //           await expect(new Promise((resolve) => resolve(allocationResult)))
+  //             .to.emit(treasury, 'PoolFunded')
+  //             .withArgs(developmentFund.address, expectedFundReserve);
+  //         }
 
-          if (expectedTreasuryReserve.gt(ZERO)) {
-            await expect(new Promise((resolve) => resolve(allocationResult)))
-              .to.emit(treasury, 'TreasuryFunded')
-              .withArgs(
-                await latestBlocktime(provider),
-                expectedTreasuryReserve
-              );
-          }
+  //         if (expectedTreasuryReserve.gt(ZERO)) {
+  //           await expect(new Promise((resolve) => resolve(allocationResult)))
+  //             .to.emit(treasury, 'TreasuryFunded')
+  //             .withArgs(
+  //               await latestBlocktime(provider),
+  //               expectedTreasuryReserve
+  //             );
+  //         }
 
-          // TODO: need to get the calcuation for the boardrooms correct
-          if (expectedBoardroomReserve.gt(ZERO)) {
-            // await expect(new Promise((resolve) => resolve(allocationResult)))
-            //   .to.emit(treasury, 'PoolFunded')
-            //   .withArgs(
-            //     arthBoardroom.address,
-            //     expectedBoardroomReserve
-            //   );
-          }
+  //         // TODO: need to get the calcuation for the boardrooms correct
+  //         if (expectedBoardroomReserve.gt(ZERO)) {
+  //           // await expect(new Promise((resolve) => resolve(allocationResult)))
+  //           //   .to.emit(treasury, 'PoolFunded')
+  //           //   .withArgs(
+  //           //     arthBoardroom.address,
+  //           //     expectedBoardroomReserve
+  //           //   );
+  //         }
 
-          expect(await cash.balanceOf(developmentFund.address)).to.eq(expectedFundReserve);
-          expect(await treasury.getReserve()).to.eq(expectedTreasuryReserve);
-          // expect(await cash.balanceOf(boardroom.address)).to.eq(
-          //   expectedBoardroomReserve
-          // );
-        });
+  //         expect(await cash.balanceOf(developmentFund.address)).to.eq(expectedFundReserve);
+  //         expect(await treasury.getReserve()).to.eq(expectedTreasuryReserve);
+  //         // expect(await cash.balanceOf(boardroom.address)).to.eq(
+  //         //   expectedBoardroomReserve
+  //         // );
+  //       });
 
-        // it('should funded even fails to call update function in oracle', async () => {
-        //   const cashPrice = ETH.mul(106).div(100);
-        //   await oracle.setRevert(true);
-        //   await oracle.setPrice(cashPrice);
+  //       // it('should funded even fails to call update function in oracle', async () => {
+  //       //   const cashPrice = ETH.mul(106).div(100);
+  //       //   await oracle.setRevert(true);
+  //       //   await oracle.setPrice(cashPrice);
 
-        //   expect(await treasury.allocateSeigniorage()).to.emit()
-        // });
+  //       //   expect(await treasury.allocateSeigniorage()).to.emit()
+  //       // });
 
-        it('should move to next epoch after allocation', async () => {
-          const cashPrice1 = ETH.mul(106).div(100);
-          await oracle.setPrice(cashPrice1);
+  //       it('should move to next epoch after allocation', async () => {
+  //         const cashPrice1 = ETH.mul(106).div(100);
+  //         await oracle.setPrice(cashPrice1);
 
-          expect(await treasury.getNextEpoch()).to.eq(0);
-          expect(await treasury.getLastEpoch()).to.eq(0);
-          expect(await treasury.nextEpochPoint()).to.eq(startTime);
+  //         expect(await treasury.getNextEpoch()).to.eq(0);
+  //         expect(await treasury.getLastEpoch()).to.eq(0);
+  //         expect(await treasury.nextEpochPoint()).to.eq(startTime);
 
-          await treasury.allocateSeigniorage();
-          expect(await treasury.getNextEpoch()).to.eq(1);
-          expect(await treasury.getLastEpoch()).to.eq(0);
-          // expect(await treasury.nextEpochPoint()).to.eq(startTime.add(treasury.getPeriod()));
+  //         await treasury.allocateSeigniorage();
+  //         expect(await treasury.getNextEpoch()).to.eq(1);
+  //         expect(await treasury.getLastEpoch()).to.eq(0);
+  //         // expect(await treasury.nextEpochPoint()).to.eq(startTime.add(treasury.getPeriod()));
 
-          await advanceTimeAndBlock(
-            provider,
-            Number(await treasury.nextEpochPoint()) -
-            (await latestBlocktime(provider))
-          );
+  //         await advanceTimeAndBlock(
+  //           provider,
+  //           Number(await treasury.nextEpochPoint()) -
+  //           (await latestBlocktime(provider))
+  //         );
 
-          const cashPrice2 = ETH.mul(104).div(100);
-          await oracle.setPrice(cashPrice2);
+  //         const cashPrice2 = ETH.mul(104).div(100);
+  //         await oracle.setPrice(cashPrice2);
 
-          await treasury.allocateSeigniorage();
-          expect(await treasury.getNextEpoch()).to.eq(2);
-          expect(await treasury.getLastEpoch()).to.eq(1);
+  //         await treasury.allocateSeigniorage();
+  //         expect(await treasury.getNextEpoch()).to.eq(2);
+  //         expect(await treasury.getLastEpoch()).to.eq(1);
 
-          // TODO: uncomment this and get this to work
-          // expect(await treasury.nextEpochPoint()).to.eq(startTime.add(treasury.getPeriod() * 2));
-        });
+  //         // TODO: uncomment this and get this to work
+  //         // expect(await treasury.nextEpochPoint()).to.eq(startTime.add(treasury.getPeriod() * 2));
+  //       });
 
-        describe('should fail', () => {
-          it('if treasury is not the operator of core contract', async () => {
-            const cashPrice = ETH.mul(106).div(100);
-            await oracle.setPrice(cashPrice);
-            await oracle.setEpoch(1);
+  //       describe('should fail', () => {
+  //         it('if treasury is not the operator of core contract', async () => {
+  //           const cashPrice = ETH.mul(106).div(100);
+  //           await oracle.setPrice(cashPrice);
+  //           await oracle.setEpoch(1);
 
-            for await (const target of [cash, bond, arthBoardroom, arthLiquidityBoardroom]) {
-              await target.connect(operator).transferOperator(ant.address);
-              await expect(treasury.allocateSeigniorage()).to.revertedWith(
-                'Treasury: need more permission'
-              );
-            }
-          });
+  //           for await (const target of [cash, bond, arthBoardroom, arthLiquidityBoardroom]) {
+  //             await target.connect(operator).transferOperator(ant.address);
+  //             await expect(treasury.allocateSeigniorage()).to.revertedWith(
+  //               'Treasury: need more permission'
+  //             );
+  //           }
+  //         });
 
-          it('if seigniorage already allocated in this epoch', async () => {
-            const cashPrice = ETH.mul(106).div(100);
-            await oracle.setPrice(cashPrice);
-            await oracle.setEpoch(1);
+  //         it('if seigniorage already allocated in this epoch', async () => {
+  //           const cashPrice = ETH.mul(106).div(100);
+  //           await oracle.setPrice(cashPrice);
+  //           await oracle.setEpoch(1);
 
-            await treasury.allocateSeigniorage();
-            await expect(treasury.allocateSeigniorage()).to.revertedWith(
-              'Epoch: not allowed'
-            );
-          });
-        });
-      });
-    });
-  });
+  //           await treasury.allocateSeigniorage();
+  //           await expect(treasury.allocateSeigniorage()).to.revertedWith(
+  //             'Epoch: not allowed'
+  //           );
+  //         });
+  //       });
+  //     });
+  //   });
+  // });
 
   describe('bonds', async () => {
     beforeEach('transfer permissions', async () => {
@@ -584,277 +584,277 @@ describe('Treasury', () => {
         );
       });
 
-      describe('#buyBonds', () => {
-        it('should not work if cash price below $1 and in band region', async () => {
-          const cashPrice = ETH.mul(99).div(100); // $0.99
-          await oracle.setPrice(cashPrice);
-          await oracle.setEpoch(1);
-
-          // trigger updateConversionRate
-          await treasury.allocateSeigniorage();
-
-          await dai.connect(operator).transfer(ant.address, ETH);
-          await dai.connect(ant).approve(treasury.address, ETH);
-          await cash.connect(ant).approve(treasury.address, ETH);
-
-          await expect(treasury.connect(ant).buyBonds(ETH, cashPrice)).to.revertedWith(
-            'Treasury: cashPrice not eligible for bond purchase'
-          )
-
-          expect(await dai.balanceOf(ant.address)).to.eq(ETH);
-          expect(await bond.balanceOf(ant.address)).to.eq(ZERO);
-        });
-
-        it('should work if cash price below $1 and outside band region', async () => {
-          const cashPrice = ETH.mul(90).div(100); // $0.99
-          await oracle.setPrice(cashPrice);
-          await oracle.setEpoch(1);
-
-          // trigger updateConversionRate
-          await treasury.allocateSeigniorage();
-
-          await oracle.setPrice(cashPrice);
-
-          await dai.connect(operator).transfer(ant.address, ETH);
-          await dai.connect(ant).approve(treasury.address, ETH);
-          await cash.connect(ant).approve(treasury.address, ETH);
-
-          expect(treasury.connect(ant).buyBonds(ETH, cashPrice))
-
-          expect(await dai.balanceOf(ant.address)).to.eq(ZERO);
-          // TODO: use a proper number;
-          expect(await bond.balanceOf(ant.address)).to.gt(ZERO);
-        });
-
-        // it('should work if bondConversionLimit < boughtBackAmount(not 0) and byy bonds', async () => {
-        //   const cashPrice = ETH.mul(90).div(100); // $0.99
-        //   await oracle.setPrice(cashPrice);
-        //   await oracle.setEpoch(1);
-
-        //   // trigger updateConversionRate
-        //   await treasury.allocateSeigniorage();
-
-        //   await dai.connect(operator).transfer(ant.address, ETH);
-        //   await dai.connect(ant).approve(treasury.address, ETH);
-        //   await cash.connect(ant).approve(treasury.address, ETH);
-
-        //   expect(treasury.connect(ant).buyBonds(ETH, cashPrice))
-        //   // .to.emit(treasury, 'BoughtBonds')
-        //   // // TODO: calculate real numbers
-        //   // .withArgs(ant.address, ETH, BigNumber.from("906610893880149131"), BigNumber.from("915768579676918314"));
-
-        //   expect(await dai.balanceOf(ant.address)).to.eq(ZERO);
-        //   // TODO: use a proper number;
-        //   expect(await bond.balanceOf(ant.address)).to.gt(ZERO);
-        // });
-
-        it('should fail if cash price over $1 but inside band', async () => {
-          const cashPrice = ETH.mul(101).div(100); // $1.01
-          await oracle.setPrice(cashPrice);
-
-          await dai.connect(operator).transfer(ant.address, ETH);
-          await dai.connect(ant).approve(treasury.address, ETH);
-          await cash.connect(ant).approve(treasury.address, ETH);
-
-          await expect(
-            treasury.connect(ant).buyBonds(ETH, cashPrice)
-          ).to.revertedWith(
-            'Treasury: cashPrice not eligible for bond purchase'
-          );
-        });
-
-        it('should fail if cash price over $1 but update the conversion limit', async () => {
-          const cashPrice = ETH.mul(110).div(100); // $1.01
-          await oracle.setPrice(cashPrice);
-
-          await dai.connect(operator).transfer(ant.address, ETH);
-          await dai.connect(ant).approve(treasury.address, ETH);
-          await cash.connect(ant).approve(treasury.address, ETH);
-
-          await expect(treasury.connect(ant).buyBonds(ETH, cashPrice)).to.revertedWith(
-            'Treasury: cashPrice not eligible for bond purchase'
-          );;
-        });
-
-        it('should fail if price changed', async () => {
-          const cashPrice = ETH.mul(99).div(100); // $0.99
-          await oracle.setPrice(cashPrice);
-
-          await dai.connect(operator).transfer(ant.address, ETH);
-          await dai.connect(ant).approve(treasury.address, ETH);
-          await cash.connect(ant).approve(treasury.address, ETH);
-
-          await expect(
-            treasury.connect(ant).buyBonds(ETH, ETH.mul(98).div(100))
-          ).to.revertedWith('Treasury: cash price moved');
-        });
-
-        it('should fail if purchase bonds with zero amount', async () => {
-          const cashPrice = ETH.mul(99).div(100); // $0.99
-          await oracle.setPrice(cashPrice);
-
-          await expect(
-            treasury.connect(ant).buyBonds(ZERO, cashPrice)
-          ).to.revertedWith('Treasury: cannot purchase bonds with zero amount');
-        });
-
-        it('should not update conversion limit if price is < but inside band', async () => {
-          const cashPrice = ETH.mul(99).div(100);
-          await oracle.setPrice(cashPrice);
-          await oracle.setEpoch(1);
-
-          await dai.connect(operator).transfer(ant.address, ETH);
-          await dai.connect(ant).approve(treasury.address, ETH);
-          await cash.connect(ant).approve(treasury.address, ETH);
-
-          const getStatus = async () => ({
-            lim: await treasury.cashToBondConversionLimit(),
-            acc: await treasury.accumulatedBonds(),
-          });
-
-          const status = await getStatus();
-          expect(status.lim).to.eq(0);
-          expect(status.acc).to.eq(0);
-
-          // trigger updateConversionRate
-          await treasury.allocateSeigniorage();
-
-          await expect(treasury.connect(ant).buyBonds(ETH, cashPrice)).to.revertedWith(
-            'Treasury: cashPrice not eligible for bond purchase'
-          );
-          const newStatus = await getStatus();
-
-          expect(status.lim).to.eq(newStatus.lim);
-          expect(status.acc).to.eq(newStatus.acc);
-        });
-
-        it('should not update conversion limit if price is > but inside band', async () => {
-          const cashPrice = ETH.mul(101).div(100);
-          await oracle.setPrice(cashPrice);
-          await oracle.setEpoch(1);
-
-          await dai.connect(operator).transfer(ant.address, ETH);
-          await dai.connect(ant).approve(treasury.address, ETH);
-          await cash.connect(ant).approve(treasury.address, ETH);
-
-          const getStatus = async () => ({
-            lim: await treasury.cashToBondConversionLimit(),
-            acc: await treasury.accumulatedBonds(),
-          });
-
-          const status = await getStatus();
-          expect(status.lim).to.eq(0);
-          expect(status.acc).to.eq(0);
-
-          // trigger updateConversionRate
-          await treasury.allocateSeigniorage();
+      //     describe('#buyBonds', () => {
+      //       it('should not work if cash price below $1 and in band region', async () => {
+      //         const cashPrice = ETH.mul(99).div(100); // $0.99
+      //         await oracle.setPrice(cashPrice);
+      //         await oracle.setEpoch(1);
+
+      //         // trigger updateConversionRate
+      //         await treasury.allocateSeigniorage();
+
+      //         await dai.connect(operator).transfer(ant.address, ETH);
+      //         await dai.connect(ant).approve(treasury.address, ETH);
+      //         await cash.connect(ant).approve(treasury.address, ETH);
+
+      //         await expect(treasury.connect(ant).buyBonds(ETH, cashPrice)).to.revertedWith(
+      //           'Treasury: cashPrice not eligible for bond purchase'
+      //         )
+
+      //         expect(await dai.balanceOf(ant.address)).to.eq(ETH);
+      //         expect(await bond.balanceOf(ant.address)).to.eq(ZERO);
+      //       });
+
+      //       it('should work if cash price below $1 and outside band region', async () => {
+      //         const cashPrice = ETH.mul(90).div(100); // $0.99
+      //         await oracle.setPrice(cashPrice);
+      //         await oracle.setEpoch(1);
+
+      //         // trigger updateConversionRate
+      //         await treasury.allocateSeigniorage();
+
+      //         await oracle.setPrice(cashPrice);
+
+      //         await dai.connect(operator).transfer(ant.address, ETH);
+      //         await dai.connect(ant).approve(treasury.address, ETH);
+      //         await cash.connect(ant).approve(treasury.address, ETH);
+
+      //         expect(treasury.connect(ant).buyBonds(ETH, cashPrice))
+
+      //         expect(await dai.balanceOf(ant.address)).to.eq(ZERO);
+      //         // TODO: use a proper number;
+      //         expect(await bond.balanceOf(ant.address)).to.gt(ZERO);
+      //       });
+
+      //       // it('should work if bondConversionLimit < boughtBackAmount(not 0) and byy bonds', async () => {
+      //       //   const cashPrice = ETH.mul(90).div(100); // $0.99
+      //       //   await oracle.setPrice(cashPrice);
+      //       //   await oracle.setEpoch(1);
+
+      //       //   // trigger updateConversionRate
+      //       //   await treasury.allocateSeigniorage();
+
+      //       //   await dai.connect(operator).transfer(ant.address, ETH);
+      //       //   await dai.connect(ant).approve(treasury.address, ETH);
+      //       //   await cash.connect(ant).approve(treasury.address, ETH);
+
+      //       //   expect(treasury.connect(ant).buyBonds(ETH, cashPrice))
+      //       //   // .to.emit(treasury, 'BoughtBonds')
+      //       //   // // TODO: calculate real numbers
+      //       //   // .withArgs(ant.address, ETH, BigNumber.from("906610893880149131"), BigNumber.from("915768579676918314"));
+
+      //       //   expect(await dai.balanceOf(ant.address)).to.eq(ZERO);
+      //       //   // TODO: use a proper number;
+      //       //   expect(await bond.balanceOf(ant.address)).to.gt(ZERO);
+      //       // });
+
+      //       it('should fail if cash price over $1 but inside band', async () => {
+      //         const cashPrice = ETH.mul(101).div(100); // $1.01
+      //         await oracle.setPrice(cashPrice);
+
+      //         await dai.connect(operator).transfer(ant.address, ETH);
+      //         await dai.connect(ant).approve(treasury.address, ETH);
+      //         await cash.connect(ant).approve(treasury.address, ETH);
+
+      //         await expect(
+      //           treasury.connect(ant).buyBonds(ETH, cashPrice)
+      //         ).to.revertedWith(
+      //           'Treasury: cashPrice not eligible for bond purchase'
+      //         );
+      //       });
+
+      //       it('should fail if cash price over $1 but update the conversion limit', async () => {
+      //         const cashPrice = ETH.mul(110).div(100); // $1.01
+      //         await oracle.setPrice(cashPrice);
+
+      //         await dai.connect(operator).transfer(ant.address, ETH);
+      //         await dai.connect(ant).approve(treasury.address, ETH);
+      //         await cash.connect(ant).approve(treasury.address, ETH);
+
+      //         await expect(treasury.connect(ant).buyBonds(ETH, cashPrice)).to.revertedWith(
+      //           'Treasury: cashPrice not eligible for bond purchase'
+      //         );;
+      //       });
+
+      //       it('should fail if price changed', async () => {
+      //         const cashPrice = ETH.mul(99).div(100); // $0.99
+      //         await oracle.setPrice(cashPrice);
+
+      //         await dai.connect(operator).transfer(ant.address, ETH);
+      //         await dai.connect(ant).approve(treasury.address, ETH);
+      //         await cash.connect(ant).approve(treasury.address, ETH);
+
+      //         await expect(
+      //           treasury.connect(ant).buyBonds(ETH, ETH.mul(98).div(100))
+      //         ).to.revertedWith('Treasury: cash price moved');
+      //       });
+
+      //       it('should fail if purchase bonds with zero amount', async () => {
+      //         const cashPrice = ETH.mul(99).div(100); // $0.99
+      //         await oracle.setPrice(cashPrice);
+
+      //         await expect(
+      //           treasury.connect(ant).buyBonds(ZERO, cashPrice)
+      //         ).to.revertedWith('Treasury: cannot purchase bonds with zero amount');
+      //       });
+
+      //       it('should not update conversion limit if price is < but inside band', async () => {
+      //         const cashPrice = ETH.mul(99).div(100);
+      //         await oracle.setPrice(cashPrice);
+      //         await oracle.setEpoch(1);
+
+      //         await dai.connect(operator).transfer(ant.address, ETH);
+      //         await dai.connect(ant).approve(treasury.address, ETH);
+      //         await cash.connect(ant).approve(treasury.address, ETH);
+
+      //         const getStatus = async () => ({
+      //           lim: await treasury.cashToBondConversionLimit(),
+      //           acc: await treasury.accumulatedBonds(),
+      //         });
+
+      //         const status = await getStatus();
+      //         expect(status.lim).to.eq(0);
+      //         expect(status.acc).to.eq(0);
+
+      //         // trigger updateConversionRate
+      //         await treasury.allocateSeigniorage();
+
+      //         await expect(treasury.connect(ant).buyBonds(ETH, cashPrice)).to.revertedWith(
+      //           'Treasury: cashPrice not eligible for bond purchase'
+      //         );
+      //         const newStatus = await getStatus();
+
+      //         expect(status.lim).to.eq(newStatus.lim);
+      //         expect(status.acc).to.eq(newStatus.acc);
+      //       });
+
+      //       it('should not update conversion limit if price is > but inside band', async () => {
+      //         const cashPrice = ETH.mul(101).div(100);
+      //         await oracle.setPrice(cashPrice);
+      //         await oracle.setEpoch(1);
+
+      //         await dai.connect(operator).transfer(ant.address, ETH);
+      //         await dai.connect(ant).approve(treasury.address, ETH);
+      //         await cash.connect(ant).approve(treasury.address, ETH);
+
+      //         const getStatus = async () => ({
+      //           lim: await treasury.cashToBondConversionLimit(),
+      //           acc: await treasury.accumulatedBonds(),
+      //         });
+
+      //         const status = await getStatus();
+      //         expect(status.lim).to.eq(0);
+      //         expect(status.acc).to.eq(0);
+
+      //         // trigger updateConversionRate
+      //         await treasury.allocateSeigniorage();
 
-          await expect(treasury.connect(ant).buyBonds(ETH, cashPrice)).to.revertedWith('Treasury: cashPrice not eligible for bond purchase');
-          const newStatus = await getStatus();
+      //         await expect(treasury.connect(ant).buyBonds(ETH, cashPrice)).to.revertedWith('Treasury: cashPrice not eligible for bond purchase');
+      //         const newStatus = await getStatus();
 
-          expect(status.lim).to.eq(newStatus.lim);
-          expect(status.acc).to.eq(newStatus.acc);
-        });
+      //         expect(status.lim).to.eq(newStatus.lim);
+      //         expect(status.acc).to.eq(newStatus.acc);
+      //       });
 
-        it('should not update conversion limit if price is > but outside band', async () => {
-          const cashPrice = ETH.mul(110).div(100);
-          await oracle.setPrice(cashPrice);
-          await oracle.setEpoch(1);
+      //       it('should not update conversion limit if price is > but outside band', async () => {
+      //         const cashPrice = ETH.mul(110).div(100);
+      //         await oracle.setPrice(cashPrice);
+      //         await oracle.setEpoch(1);
 
-          await dai.connect(operator).transfer(ant.address, ETH);
-          await dai.connect(ant).approve(treasury.address, ETH);
-          await cash.connect(ant).approve(treasury.address, ETH);
+      //         await dai.connect(operator).transfer(ant.address, ETH);
+      //         await dai.connect(ant).approve(treasury.address, ETH);
+      //         await cash.connect(ant).approve(treasury.address, ETH);
 
-          const getStatus = async () => ({
-            lim: await treasury.cashToBondConversionLimit(),
-            acc: await treasury.accumulatedBonds(),
-          });
+      //         const getStatus = async () => ({
+      //           lim: await treasury.cashToBondConversionLimit(),
+      //           acc: await treasury.accumulatedBonds(),
+      //         });
 
-          const status = await getStatus();
-          expect(status.lim).to.eq(0);
-          expect(status.acc).to.eq(0);
+      //         const status = await getStatus();
+      //         expect(status.lim).to.eq(0);
+      //         expect(status.acc).to.eq(0);
 
-          // trigger updateConversionRate
-          await treasury.allocateSeigniorage();
+      //         // trigger updateConversionRate
+      //         await treasury.allocateSeigniorage();
 
-          await expect(treasury.connect(ant).buyBonds(ETH, cashPrice)).to.revertedWith('Treasury: cashPrice not eligible for bond purchase');
-          const newStatus = await getStatus();
+      //         await expect(treasury.connect(ant).buyBonds(ETH, cashPrice)).to.revertedWith('Treasury: cashPrice not eligible for bond purchase');
+      //         const newStatus = await getStatus();
 
-          expect(newStatus.lim).to.eq(0);
-          expect(status.acc).to.eq(newStatus.acc);
-        });
+      //         expect(newStatus.lim).to.eq(0);
+      //         expect(status.acc).to.eq(newStatus.acc);
+      //       });
 
-        it('should update conversion limit if price < and outside band', async () => {
-          const cashPrice = ETH.mul(90).div(100);
-          await oracle.setPrice(cashPrice);
-          await oracle.setEpoch(1);
+      //       it('should update conversion limit if price < and outside band', async () => {
+      //         const cashPrice = ETH.mul(90).div(100);
+      //         await oracle.setPrice(cashPrice);
+      //         await oracle.setEpoch(1);
 
-          await dai.connect(operator).transfer(ant.address, ETH);
-          await dai.connect(ant).approve(treasury.address, ETH);
-          await cash.connect(ant).approve(treasury.address, ETH);
+      //         await dai.connect(operator).transfer(ant.address, ETH);
+      //         await dai.connect(ant).approve(treasury.address, ETH);
+      //         await cash.connect(ant).approve(treasury.address, ETH);
 
-          const getStatus = async () => ({
-            lim: await treasury.cashToBondConversionLimit(),
-            acc: await treasury.accumulatedBonds(),
-          });
+      //         const getStatus = async () => ({
+      //           lim: await treasury.cashToBondConversionLimit(),
+      //           acc: await treasury.accumulatedBonds(),
+      //         });
 
-          const status = await getStatus();
-          expect(status.lim).to.eq(0);
-          expect(status.acc).to.eq(0);
+      //         const status = await getStatus();
+      //         expect(status.lim).to.eq(0);
+      //         expect(status.acc).to.eq(0);
 
-          // trigger updateConversionRate
-          await treasury.allocateSeigniorage();
+      //         // trigger updateConversionRate
+      //         await treasury.allocateSeigniorage();
 
-          expect(await treasury.connect(ant).buyBonds(ETH, cashPrice))
-          const newStatus = await getStatus();
+      //         expect(await treasury.connect(ant).buyBonds(ETH, cashPrice))
+      //         const newStatus = await getStatus();
 
-          expect(status.lim).to.not.eq(newStatus.lim);
-          expect(status.acc).to.not.eq(newStatus.acc);
-        });
+      //         expect(status.lim).to.not.eq(newStatus.lim);
+      //         expect(status.acc).to.not.eq(newStatus.acc);
+      //       });
 
-        it('should not purchase over conversion limit', async () => {
-          const cashPrice = ETH.mul(90).div(100);
-          await oracle.setPrice(cashPrice);
-          await oracle.setEpoch(1);
+      //       it('should not purchase over conversion limit', async () => {
+      //         const cashPrice = ETH.mul(90).div(100);
+      //         await oracle.setPrice(cashPrice);
+      //         await oracle.setEpoch(1);
 
-          const circulatingSupply = await treasury.arthCirculatingSupply();
-          const limit = circulatingSupply.mul(ETH.sub(cashPrice)).div(ETH);
+      //         const circulatingSupply = await treasury.arthCirculatingSupply();
+      //         const limit = circulatingSupply.mul(ETH.sub(cashPrice)).div(ETH);
 
-          await dai.connect(operator).transfer(ant.address, limit.add(1));
-          await dai.connect(ant).approve(treasury.address, limit.add(1));
-          await cash.connect(ant).approve(treasury.address, limit.add(1));
+      //         await dai.connect(operator).transfer(ant.address, limit.add(1));
+      //         await dai.connect(ant).approve(treasury.address, limit.add(1));
+      //         await cash.connect(ant).approve(treasury.address, limit.add(1));
 
-          await expect(
-            treasury.connect(ant).buyBonds(limit.add(1), cashPrice)
-          ).to.revertedWith('No more bonds to be redeemed');
-        });
+      //         await expect(
+      //           treasury.connect(ant).buyBonds(limit.add(1), cashPrice)
+      //         ).to.revertedWith('No more bonds to be redeemed');
+      //       });
 
-        // it('should not update conversion limit if storedEpoch = lastEpoch', async () => {
-        //   const cashPrice = ETH.mul(90).div(100);
-        //   await oracle.setPrice(cashPrice);
-        //   await oracle.setEpoch(1);
+      //       // it('should not update conversion limit if storedEpoch = lastEpoch', async () => {
+      //       //   const cashPrice = ETH.mul(90).div(100);
+      //       //   await oracle.setPrice(cashPrice);
+      //       //   await oracle.setEpoch(1);
 
-        //   await cash.connect(operator).transfer(ant.address, ETH.mul(2));
-        //   await cash.connect(ant).approve(treasury.address, ETH.mul(2));
+      //       //   await cash.connect(operator).transfer(ant.address, ETH.mul(2));
+      //       //   await cash.connect(ant).approve(treasury.address, ETH.mul(2));
 
-        //   await dai.connect(operator).mint(ant.address, ETH.mul(2));
-        //   await dai.connect(ant).approve(treasury.address, ETH);
+      //       //   await dai.connect(operator).mint(ant.address, ETH.mul(2));
+      //       //   await dai.connect(ant).approve(treasury.address, ETH);
 
-        //   // trigger updateConversionRate
-        //   await treasury.allocateSeigniorage();
+      //       //   // trigger updateConversionRate
+      //       //   await treasury.allocateSeigniorage();
 
-        //   await treasury.connect(ant).buyBonds(ETH, cashPrice);
+      //       //   await treasury.connect(ant).buyBonds(ETH, cashPrice);
 
-        //   expect(await oracle.lastBondOracleEpoch()).to.eq(1);
+      //       //   expect(await oracle.lastBondOracleEpoch()).to.eq(1);
 
-        //   const cashPrice2 = ETH.mul(90).div(100);
-        //   await oracle.setPrice(cashPrice2);
+      //       //   const cashPrice2 = ETH.mul(90).div(100);
+      //       //   await oracle.setPrice(cashPrice2);
 
-        //   await treasury.connect(ant).buyBonds(ETH, cashPrice2);
+      //       //   await treasury.connect(ant).buyBonds(ETH, cashPrice2);
 
-        //   expect(await oracle.lastBondOracleEpoch()).to.eq(1);
-        // });
-      });
+      //       //   expect(await oracle.lastBondOracleEpoch()).to.eq(1);
+      //       // });
+      //     });
 
       describe('#redeemBonds', () => {
         beforeEach('allocate seigniorage to treasury', async () => {
@@ -915,40 +915,21 @@ describe('Treasury', () => {
           expect(await cash.balanceOf(ant.address)).to.eq(ZERO);
         });
 
-        it('should work if accumulated shares != 0 and amount != 0', async () => {
+        it('should work if cash price exceeds $1.05', async () => {
           const cashPrice = ETH.mul(106).div(100);
-
           await oracle.setPrice(cashPrice);
 
-          const treasuryBalance = await cash.balanceOf(treasury.address);
           await bond.connect(operator).transfer(ant.address, ETH);
           await bond.connect(ant).approve(treasury.address, ETH);
-          await share.connect(ant).approve(treasury.address, ETH);
-          await share.connect(operator).mint(ant.address, ETH);
-          await cash.connect(operator).transfer(treasury.address, ETH);
-
-          const accumulatedSeigniorage = await treasury.accumulatedSeigniorage();
-
-          const amount = bigmin(
-            accumulatedSeigniorage,
-            treasuryBalance
-          )
-
-          const result = treasury.connect(ant).redeemBonds(ETH, false);
-
-          await expect(new Promise((resolve) => resolve(result)))
+          await expect(treasury.connect(ant).redeemBonds(ETH, false))
             .to.emit(treasury, 'RedeemedBonds')
-            .withArgs(ant.address, amount, false);
-
-          await expect(new Promise((resolve) => resolve(result)))
-            .to.emit(treasury, 'StabilityFeesCharged')
-            .withArgs(ant.address, amount.mul(1).div(100));
+            .withArgs(ant.address, ETH, false);
 
           expect(await bond.balanceOf(ant.address)).to.eq(ZERO); // 1:1
           expect(await cash.balanceOf(ant.address)).to.eq(ETH);
         });
 
-        it("should drain over seigniorage and even contract's budget if accumulated seigniorage != 0 and amount != 0", async () => {
+        it("should drain over seigniorage and even contract's budget", async () => {
           const cashPrice = ETH.mul(106).div(100);
           await oracle.setPrice(cashPrice);
 
@@ -957,34 +938,20 @@ describe('Treasury', () => {
           const treasuryBalance = await cash.balanceOf(treasury.address);
           await bond.connect(operator).transfer(ant.address, treasuryBalance);
           await bond.connect(ant).approve(treasury.address, treasuryBalance);
-          await share.connect(ant).approve(treasury.address, ETH.mul(1000));
-          await share.connect(operator).mint(ant.address, ETH.mul(1000));
+          await treasury.connect(ant).redeemBonds(treasuryBalance, false);
 
-          const accumulatedSeigniorage = await treasury.accumulatedSeigniorage();
-
-          const amount = bigmin(
-            accumulatedSeigniorage,
-            treasuryBalance
-          )
-
-          await expect(treasury.connect(ant).redeemBonds(treasuryBalance, false))
-            .to.emit(treasury, 'RedeemedBonds')
-            .withArgs(ant.address, amount, false)
-            .to.emit(treasury, 'StabilityFeesCharged')
-            .withArgs(ant.address, amount.mul(1).div(100));
-
-          expect(await bond.balanceOf(ant.address)).to.eq(treasuryBalance.sub(amount));
-          expect(await cash.balanceOf(ant.address)).to.eq(amount); // 1:1
+          expect(await bond.balanceOf(ant.address)).to.eq(ZERO);
+          expect(await cash.balanceOf(ant.address)).to.eq(treasuryBalance); // 1:1
         });
 
-        it('should fail if cash price is below ceiling price', async () => {
-          const cashPrice = ETH.mul(102).div(100);
+        it('should fail if cash price is below $1+ε', async () => {
+          const cashPrice = ETH.mul(104).div(100);
           await oracle.setPrice(cashPrice);
 
           await bond.connect(operator).transfer(ant.address, ETH);
           await bond.connect(ant).approve(treasury.address, ETH);
           await expect(treasury.connect(ant).redeemBonds(ETH, false)).to.revertedWith(
-            'Treasury: cashPrice less than ceiling'
+            'Treasury: cashPrice not eligible for bond purchase'
           );
         });
 
@@ -999,7 +966,7 @@ describe('Treasury', () => {
 
           await expect(
             treasury.connect(ant).redeemBonds(redeemAmount, false)
-          ).to.revertedWith('Treasury: treasury has not enough budget');
+          ).to.revertedWith('Treasury: treasury has no more budget');
         });
       });
     });
