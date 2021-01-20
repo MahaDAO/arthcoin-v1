@@ -20,6 +20,10 @@ contract OracleUpdater is Ownable {
         uniswapOracles.push(uniswapOracle);
     }
 
+    function removeUniSwapOracle(uint256 position) public onlyOwner {
+        uniswapOracles[position] = address(0);
+    }
+
     function getUniSwapOracle(uint256 position) public view returns (address) {
         return uniswapOracles[position];
     }
@@ -28,7 +32,7 @@ contract OracleUpdater is Ownable {
         for (uint256 i = 0; i < uniswapOracles.length; i++) {
             address oracle = uniswapOracles[i];
 
-            if (Epoch(oracle).callable()) {
+            if (Epoch(oracle).callable() && oracle != address(0)) {
                 try IMultiUniswapOracle(oracle).update() {} catch {}
 
                 emit UpdateOracle(oracle, msg.sender, block.timestamp);
