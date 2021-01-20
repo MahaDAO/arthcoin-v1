@@ -1,5 +1,5 @@
 const { BigNumber } = require('ethers');
-const knownContracts = require('../known-contracts');
+const knownContracts = require('./known-contracts');
 
 const ARTH = artifacts.require('ARTH');
 const ARTHB = artifacts.require('ARTHB');

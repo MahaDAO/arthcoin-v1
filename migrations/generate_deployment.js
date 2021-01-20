@@ -32,27 +32,27 @@ const exportedContracts = [
   // 'Treasury',
 
   "ARTHBASPool",
-  "ARTHMKRPool",
-  "ARTHSHAREPool",
-  "ARTHCOMPool",
-  "ARTHESDPool",
-  "ARTHMahaEthLPPool",
-  "ARTHSUSHIPool",
-  "ARTHCURVEPool",
-  "ARTHFRAXPool",
-  "ARTHMahaPool",
-  "ARTHYFIPool",
-  "ARTHDSDPool",
-  "ARTHMATICPool",
-  "ARTHRSRPool",
+  // "ARTHMKRPool",
+  // "ARTHSHAREPool",
+  // "ARTHCOMPool",
+  // "ARTHESDPool",
+  // "ARTHMahaEthLPPool",
+  // "ARTHSUSHIPool",
+  // "ARTHCURVEPool",
+  // "ARTHFRAXPool",
+  // "ARTHMahaPool",
+  // "ARTHYFIPool",
+  // "ARTHDSDPool",
+  // "ARTHMATICPool",
+  // "ARTHRSRPool",
 
-  'MAHAARTHPool',
-  'MAHADAIARTHLPTokenPool',
-  'MAHAMAHAETHLPTokenPool'
+  // 'MAHAARTHPool',
+  // 'MAHADAIARTHLPTokenPool',
+  // 'MAHAMAHAETHLPTokenPool'
   // ...distributionPoolContracts(),
 ];
 
-const Arth = artifacts.require('Arth');
+const Arth = artifacts.require('ARTH');
 const MahaToken = artifacts.require('MahaToken');
 // const Oracle = artifacts.require('MockOracle');
 const MockDai = artifacts.require('MockDai');
@@ -62,7 +62,7 @@ const IERC20 = artifacts.require('IERC20');
  * Main migrations
  */
 module.exports = async (callback) => {
-  const network = 'mainnet';
+  const network = 'development';
 
   // Set the main account, you'll be using accross all the files for various
   // important activities to your desired address in the .env file.

@@ -3,7 +3,7 @@ const { BigNumber } = require('ethers');
 
 // Pools
 // deployed first
-const Cash = artifacts.require('Arth')
+const Cash = artifacts.require('ARTH')
 const InitialCashDistributor = artifacts.require('InitialCashDistributor');
 const ARTHMahaPool = artifacts.require('ARTHMahaPool');
 const ARTHMahaEthLPPool = artifacts.require('ARTHMahaEthLPPool');
@@ -17,12 +17,12 @@ module.exports = async (deployer, network, accounts) => {
   const cash = await Cash.deployed();
 
   const filteredPools = bacPools
-  // exclude maha pools (as they get different amount of ARTH rewards)
-  .filter(({ contractName }) => contractName.indexOf('ARTHMaha') === -1)
+    // exclude maha pools (as they get different amount of ARTH rewards)
+    .filter(({ contractName }) => contractName.indexOf('ARTHMaha') === -1)
 
   console.log('commuinty pools are', filteredPools.map(d => d.contractName).join(', '))
 
-  const pools = filteredPools.map(({contractName}) => artifacts.require(contractName));
+  const pools = filteredPools.map(({ contractName }) => artifacts.require(contractName));
 
   await deployer.deploy(
     InitialCashDistributor,
@@ -43,13 +43,15 @@ module.exports = async (deployer, network, accounts) => {
   console.log(`Deposited 150k ARTH to InitialCashDistributor. You'll need to manually distribute the remaining 350k`);
 
 
-  const decimals = BigNumber.from(10).pow(18)
-  cash.mint(ARTHMahaPool.address, BigNumber.from(150000).mul(decimals))
-  cash.mint(ARTHMahaEthLPPool.address, BigNumber.from(150000).mul(decimals))
+  if (network === 'mainnet') {
+    const decimals = BigNumber.from(10).pow(18)
+    cash.mint(ARTHMahaPool.address, BigNumber.from(150000).mul(decimals))
+    cash.mint(ARTHMahaEthLPPool.address, BigNumber.from(150000).mul(decimals))
 
+    console.log(`Deposited ARTH to all community pools.`);
+  }
 
   await distributor.distribute();
-  console.log(`Deposited ARTH to all community pools.`);
 
 
   if (network === 'development') {

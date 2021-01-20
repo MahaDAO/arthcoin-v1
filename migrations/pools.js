@@ -26,19 +26,19 @@ const POOL_START_DATE = Math.floor(new Date("Sat Jan 16 2021 15:00:10 GMT+0000")
 
 const bacPools = [
   { contractName: "ARTHBASPool", token: 'BAS' },
-  { contractName: "ARTHMKRPool", token: 'MKR' },
-  { contractName: "ARTHSHAREPool", token: 'SHARE' },
-  { contractName: "ARTHCOMPool", token: 'COMP' },
-  { contractName: "ARTHESDPool", token: 'ESD' },
-  { contractName: "ARTHMahaEthLPPool", token: 'MAHA_ETH_LP' },
-  { contractName: "ARTHSUSHIPool", token: 'SUSHI' },
-  { contractName: "ARTHCURVEPool", token: 'CURVE' },
-  { contractName: "ARTHFRAXPool", token: 'FRAX' },
-  { contractName: "ARTHMahaPool", token: 'MAHA' },
-  { contractName: "ARTHYFIPool", token: 'YFI' },
-  { contractName: "ARTHDSDPool", token: 'DSD' },
-  { contractName: "ARTHMATICPool", token: 'MATIC' },
-  { contractName: "ARTHRSRPool", token: 'RSR' },
+  // { contractName: "ARTHMKRPool", token: 'MKR' },
+  // { contractName: "ARTHSHAREPool", token: 'SHARE' },
+  // { contractName: "ARTHCOMPool", token: 'COMP' },
+  // { contractName: "ARTHESDPool", token: 'ESD' },
+  // { contractName: "ARTHMahaEthLPPool", token: 'MAHA_ETH_LP' },
+  // { contractName: "ARTHSUSHIPool", token: 'SUSHI' },
+  // { contractName: "ARTHCURVEPool", token: 'CURVE' },
+  // { contractName: "ARTHFRAXPool", token: 'FRAX' },
+  // { contractName: "ARTHMahaPool", token: 'MAHA' },
+  // { contractName: "ARTHYFIPool", token: 'YFI' },
+  // { contractName: "ARTHDSDPool", token: 'DSD' },
+  // { contractName: "ARTHMATICPool", token: 'MATIC' },
+  // { contractName: "ARTHRSRPool", token: 'RSR' },
 ];
 
 const basPools = {
