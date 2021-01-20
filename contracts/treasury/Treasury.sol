@@ -468,7 +468,11 @@ contract Treasury is TreasurySetters {
             IBasisAsset(cash).mint(address(this), expandSupplyAmount);
 
             // in expansion mode- set upper limit to current price.
-            triggerBondAllocationLowerBandRate - percentage;
+            // safetyRegion = percentage;
+
+            // in expansion mode- udpate the safety region to 0
+            // (this will case upperLimit = currentTargetPrice in current block if calculated again)
+            safetyRegion = 0;
 
             return;
         }
