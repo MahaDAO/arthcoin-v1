@@ -85,6 +85,8 @@ module.exports = {
         )
       },
       network_id: 3,
+      confirmation: 1,
+
       gasPrice: 5 * 1000000000,
       gas: 6721975, // Any network (default: none)
     },

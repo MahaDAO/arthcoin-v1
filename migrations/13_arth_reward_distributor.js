@@ -34,7 +34,6 @@ module.exports = async (deployer, network, accounts) => {
 
   console.log(`Setting distributor to InitialCashDistributor (${distributor.address})`);
   for await (const poolInfo of pools) {
-    console.log('done for ', poolInfo)
     const pool = await poolInfo.deployed()
     await pool.setRewardDistribution(distributor.address);
   }

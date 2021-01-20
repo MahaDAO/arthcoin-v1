@@ -11,6 +11,7 @@ const ArthBoardroom = artifacts.require('ArthBoardroom');
 const UniswapV2Factory = artifacts.require('UniswapV2Factory');
 const BondRedemtionOracle = artifacts.require('BondRedemtionOracle');
 const ArthLiquidityBoardroom = artifacts.require('ArthLiquidityBoardroom');
+const MahaLiquidityBoardroom = artifacts.require('MahaLiquidityBoardroom');
 
 
 async function migration(deployer, network, accounts) {
@@ -44,6 +45,9 @@ async function migration(deployer, network, accounts) {
 
   // Deploy arth boardroom.
   await deployer.deploy(ArthBoardroom, cash.address, ARTH_BOARDROOM_LOCK_DURATION);
+
+  // Deploy MAHA-ETH boardroom.
+  await deployer.deploy(MahaLiquidityBoardroom, cash.address, dai_arth_lpt, ARTH_BOARDROOM_LOCK_DURATION);
 }
 
 

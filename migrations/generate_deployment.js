@@ -14,22 +14,22 @@ const writeFile = util.promisify(fs.writeFile);
 // Deployment and ABI will be generated for contracts listed on here.
 // The deployment thus can be used on frontend.
 const exportedContracts = [
-  // 'ARTH',
-  // 'ARTHB',
-  // 'MahaToken',
+  'ARTH',
+  'ARTHB',
+  'MahaToken',
 
-  // // oracles
-  // 'GMUOracle',
-  // 'SeigniorageOracle',
-  // 'ArthMahaTestnetOracle',
-  // 'BondRedemtionOracle',
+  // oracles
+  'GMUOracle',
+  'SeigniorageOracle',
+  'ArthMahaTestnetOracle',
+  'BondRedemtionOracle',
 
   // boardroom
-  // 'ArthLiquidityBoardroom',
-  // 'ArthBoardroom',
+  'ArthLiquidityBoardroom',
+  'ArthBoardroom',
 
-  // 'DevelopmentFund',
-  // 'Treasury',
+  'DevelopmentFund',
+  'Treasury',
 
   "ARTHBASPool",
   // "ARTHMKRPool",
@@ -62,7 +62,7 @@ const IERC20 = artifacts.require('IERC20');
  * Main migrations
  */
 module.exports = async (callback) => {
-  const network = 'development';
+  const network = 'ropsten';
 
   // Set the main account, you'll be using accross all the files for various
   // important activities to your desired address in the .env file.
@@ -111,7 +111,7 @@ module.exports = async (callback) => {
       const contract = artifacts.require(name);
       deployments[name] = {
         address: contract.address,
-        // abi: contract.abi,
+        abi: contract.abi,
       };
     }
     const deploymentPath = path.resolve(__dirname, `../build/deployments.${network}.json`);
