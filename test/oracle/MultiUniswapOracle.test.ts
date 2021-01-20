@@ -8,9 +8,11 @@ import UniswapV2Router from '@uniswap/v2-periphery/build/UniswapV2Router02.json'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address';
 import { Provider } from '@ethersproject/providers';
 
-import { advanceTimeAndBlock, latestBlocktime } from './shared/utilities';
+import { advanceTimeAndBlock, latestBlocktime } from '../shared/utilities';
+
 
 chai.use(solidity);
+
 
 async function addLiquidity(
   provider: Provider,
@@ -34,10 +36,11 @@ async function addLiquidity(
     );
 }
 
-describe.skip('UniswapOracle', () => {
+describe('MultiUniswapOracle', () => {
   const MINUTE = 60;
   const DAY = 86400;
   const ETH = utils.parseEther('1');
+  const ZERO_ADDR = '0x0000000000000000000000000000000000000000';
 
   const { provider } = ethers;
 
@@ -66,7 +69,7 @@ describe.skip('UniswapOracle', () => {
   before('fetch contract factories', async () => {
     Cash = await ethers.getContractFactory('ARTH');
     Share = await ethers.getContractFactory('MahaToken');
-    UniswapOracle = await ethers.getContractFactory('UniswapOracle');
+    UniswapOracle = await ethers.getContractFactory('MultiUniswapOracle');
     MockDAI = await ethers.getContractFactory('MockDai');
   });
 
@@ -101,9 +104,12 @@ describe.skip('UniswapOracle', () => {
 
     oracleStartTime = BigNumber.from(await latestBlocktime(provider)).add(DAY);
     oracle = await UniswapOracle.connect(operator).deploy(
-      factory.address,
+      router.address,
       cash.address,
       dai.address,
+      ZERO_ADDR,
+      ZERO_ADDR,
+      2,
       DAY,
       oracleStartTime
     );
