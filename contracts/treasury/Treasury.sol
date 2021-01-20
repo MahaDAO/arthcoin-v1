@@ -493,6 +493,8 @@ contract Treasury is TreasurySetters {
             uint256 payBackAmount = 1;
 
             _payBackBondHolders(payBackAmount);
+
+            return;
         }
 
         // check if we are in contract mode.
