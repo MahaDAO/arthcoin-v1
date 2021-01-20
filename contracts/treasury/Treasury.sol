@@ -289,8 +289,7 @@ contract Treasury is TreasurySetters {
         uint256 cash12hPrice = getSeigniorageOraclePrice();
         uint256 cash1hPrice = getBondOraclePrice();
 
-        uint256 seigniorageExpansionPhasePrice =
-            getSeigniorageAllocationPhasePrice();
+        uint256 seigniorageExpansionPhasePrice = getBondRedemtionPrice();
 
         // send 200 ARTH reward to the person advancing the epoch to compensate for gas
         IBasisAsset(cash).mint(msg.sender, uint256(200).mul(1e18));
@@ -459,7 +458,7 @@ contract Treasury is TreasurySetters {
         accumulatedBonds = 0;
 
         uint256 bondPurchasePrice = getBondPurchasePrice();
-        uint256 bondExpansionPhasePrice = getBondExpansionPhasePrice();
+        uint256 bondExpansionPhasePrice = getBondRedemtionPrice();
 
         // check if we are in expansion phase.
         if (cash1hPrice >= bondExpansionPhasePrice) {

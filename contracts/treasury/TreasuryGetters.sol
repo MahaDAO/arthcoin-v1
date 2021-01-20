@@ -77,18 +77,6 @@ abstract contract TreasuryGetters is TreasuryState {
                 .div(100); // 0.95%
     }
 
-    function getBondExpansionPhasePrice() public view returns (uint256) {
-        return cashTargetPrice.mul(uint256(100).add(safetyRegion)).div(100); // 105%
-    }
-
-    function getSeigniorageAllocationPhasePrice()
-        public
-        view
-        returns (uint256)
-    {
-        return cashTargetPrice.mul(uint256(100).add(safetyRegion)).div(100); // 105%
-    }
-
     function getCashSupplyInLiquidity() public view returns (uint256) {
         // check if enabled or not
         if (!considerUniswapLiquidity) return uint256(100);
