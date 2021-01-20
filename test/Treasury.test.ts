@@ -920,24 +920,32 @@ describe('Treasury', () => {
 
           await oracle.setPrice(cashPrice);
 
+          const treasuryBalance = await cash.balanceOf(treasury.address);
           await bond.connect(operator).transfer(ant.address, ETH);
           await bond.connect(ant).approve(treasury.address, ETH);
           await share.connect(ant).approve(treasury.address, ETH);
           await share.connect(operator).mint(ant.address, ETH);
           await cash.connect(operator).transfer(treasury.address, ETH);
 
+          const accumulatedSeigniorage = await treasury.accumulatedSeigniorage();
+
+          const amount = bigmin(
+            accumulatedSeigniorage,
+            treasuryBalance
+          )
+
           const result = treasury.connect(ant).redeemBonds(ETH, false);
 
           await expect(new Promise((resolve) => resolve(result)))
             .to.emit(treasury, 'RedeemedBonds')
-            .withArgs(ant.address, ETH, false);
+            .withArgs(ant.address, amount, false);
 
           await expect(new Promise((resolve) => resolve(result)))
             .to.emit(treasury, 'StabilityFeesCharged')
-            .withArgs(ant.address, ETH.mul(1).div(100));
+            .withArgs(ant.address, amount.mul(1).div(100));
 
           expect(await bond.balanceOf(ant.address)).to.eq(ZERO); // 1:1
-          // expect(await cash.balanceOf(ant.address)).to.eq(ETH);
+          expect(await cash.balanceOf(ant.address)).to.eq(ETH);
         });
 
         it("should drain over seigniorage and even contract's budget if accumulated seigniorage != 0 and amount != 0", async () => {
