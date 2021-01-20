@@ -4,6 +4,8 @@ import { solidity } from 'ethereum-waffle';
 import { Contract, ContractFactory, BigNumber, utils } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address';
 
+import { advanceTimeAndBlock, latestBlocktime } from './shared/utilities';
+
 
 chai.use(solidity);
 
@@ -17,7 +19,7 @@ describe('ArthBoardroom', () => {
   const STAKE_AMOUNT = ETH.mul(5000);
   const SEIGNIORAGE_AMOUNT = ETH.mul(10000);
 
-  // const { provider } = ethers;
+  const { provider } = ethers;
 
   let operator: SignerWithAddress;
   let whale: SignerWithAddress;
@@ -98,7 +100,10 @@ describe('ArthBoardroom', () => {
       }
     });
 
-    await new Promise(resolve => setTimeout(resolve, 1000 * BOARDROOM_LOCK_PERIOD));
+    await advanceTimeAndBlock(
+      provider,
+      (await latestBlocktime(provider)) + BOARDROOM_LOCK_PERIOD
+    );
 
     it('Should work correctly now', async () => {
       await expect(boardroom.connect(whale).withdraw(STAKE_AMOUNT))
