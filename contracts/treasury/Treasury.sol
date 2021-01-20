@@ -285,6 +285,18 @@ contract Treasury is TreasurySetters {
         uint256 cash12hPrice = getSeigniorageOraclePrice();
         uint256 cash1hPrice = getBondOraclePrice();
 
+        uint256 seigniorageExpansionPhasePrice =
+            getSeigniorageAllocationPhasePrice();
+
+        // check if we are in upper band(> target price but < upper limit)
+        if (
+            !(cash12hPrice > cashTargetPrice &&
+                cash12hPrice < seigniorageExpansionPhasePrice)
+        ) {
+            // if we are not in upper band- don't allocate seigniorage.
+            return;
+        }
+
         // send 200 ARTH reward to the person advancing the epoch to compensate for gas
         IBasisAsset(cash).mint(msg.sender, uint256(200).mul(1e18));
 
@@ -298,6 +310,9 @@ contract Treasury is TreasurySetters {
         // calculate how much seigniorage should be minted basis deviation from target price
         uint256 percentage =
             (cash12hPrice.sub(cashTargetPrice)).mul(1e18).div(cashTargetPrice);
+
+        // stops allocation if deviated too much(more than we want).
+        if (percentage > stopSeigniorageAtDeviationRate) return;
 
         uint256 seigniorage = arthCirculatingSupply().mul(percentage).div(1e18);
         IBasisAsset(cash).mint(address(this), seigniorage);

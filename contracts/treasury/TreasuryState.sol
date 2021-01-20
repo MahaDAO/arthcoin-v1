@@ -63,6 +63,9 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     // used to trigger bond generation if price < (targetPrice - %) below it.
     uint256 public triggerBondAllocationLowerBandRate = 5; // in %
 
+    // stops seigniorage allocation; when price deviation is > than this.
+    uint256 public stopSeigniorageAtDeviationRate = 30; // in %
+
     // the ecosystem fund recieves seigniorage before anybody else; this
     // value decides how much of the new seigniorage is sent to this fund.
     uint256 public ecosystemFundAllocationRate = 2; // in %
