@@ -59,7 +59,7 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     uint256 public bondDiscount = 20; // in %
     // used to trigger bond generation if price > (targetPrice + % ) above it.
     uint256 public safetyRegion = 5; // in %
-    // used to trigger bond generation if price < (targetPrice - %) above it.
+    // used to trigger bond generation if price < (targetPrice - %) below it.
     uint256 public triggerBondAllocationLowerBandRate = 5; // in %
 
     // the ecosystem fund recieves seigniorage before anybody else; this

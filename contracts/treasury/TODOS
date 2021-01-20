@@ -1,8 +1,15 @@
-1. > upper band limit: expand supply.
-2. < lower band limit: issue bonds.
-3. within limit: nothing
+
+
+
 4. within limit; but > target: pay back holders.
 5. expansion phase: upper band limit = targetPrice
-6. uniswap liq function- make optional(done)
-7. fix addStakerDetails()
+
 8. unit test to check if the bondConversionLimit < boughtBackAmount; but not 0. and we are still buying as much bonds as possible.
+
+
+DONE:
+1. > upper band limit: expand supply.
+2. < lower band limit: issue bonds.
+3. within limit: nothing(done)
+6. uniswap liq function- make optional(done)
+7. fix addStakerDetails()(done)

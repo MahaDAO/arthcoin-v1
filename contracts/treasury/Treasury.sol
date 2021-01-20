@@ -433,28 +433,49 @@ contract Treasury is TreasurySetters {
         accumulatedBonds = 0;
 
         uint256 bondPurchasePrice = getBondPurchasePrice();
+        uint256 bondExpansionPhasePrice = getBondExpansionPhasePrice();
 
-        // check if we are in expansion or in contraction mode
+        // check if we are in expansion phase.
+        if (cash1hPrice >= bondExpansionPhasePrice) {
+            // in expansion mode- expands supply.
+            uint256 percentage = getPercentDeviationFromTarget(cash1hPrice);
+            uint256 expandSupplyAmount =
+                arthCirculatingSupply()
+                    .mul(percentage)
+                    .div(100)
+                    .mul(getCashSupplyInLiquidity())
+                    .div(100);
+
+            IBasisAsset(cash).mint(address(this), expandSupplyAmount);
+
+            return;
+        }
+
+        // check if we are in contract mode.
         if (cash1hPrice <= bondPurchasePrice) {
-            // in contraction mode; set a limit to how many bonds are there
+            // in contraction mode -> issue bonds.
+            // set a limit to how many bonds are there.
 
             // understand how much % deviation do we have from target price
             // if target price is 2.5$ and we are at 2$; then percentage
             uint256 percentage = getPercentDeviationFromTarget(cash1hPrice);
 
             // accordingly set the new conversion limit to be that % from the
-            // current circulating supply of ARTH
+            // current circulating supply of ARTH and if uniswap enabled then uniswap liquidity.
             cashToBondConversionLimit = arthCirculatingSupply()
-            // .mul(bondConversionRate)
                 .mul(percentage)
                 .div(100)
                 .mul(getCashSupplyInLiquidity())
                 .div(100);
 
             emit BondsAllocated(cashToBondConversionLimit);
-        } else {
-            cashToBondConversionLimit = 0;
+
+            return;
         }
+
+        // if neither expansion nor contraction then we are in band limit,
+        // hence we do nothing.
+        // cashToBondConversionLimit = 0;
     }
 
     // GOV
