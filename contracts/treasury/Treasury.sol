@@ -289,10 +289,17 @@ contract Treasury is TreasurySetters {
         uint256 cash12hPrice = getSeigniorageOraclePrice();
         uint256 cash1hPrice = getBondOraclePrice();
 
-        uint256 seigniorageExpansionPhasePrice = getBondRedemtionPrice();
-
         // send 200 ARTH reward to the person advancing the epoch to compensate for gas
         IBasisAsset(cash).mint(msg.sender, uint256(200).mul(1e18));
+
+        // update the bond limits
+        _updateConversionLimit(cash1hPrice);
+
+        if (cash12hPrice <= getCeilingPrice()) {
+            return; // just advance epoch instead of revert
+        }
+
+        uint256 seigniorageExpansionPhasePrice = getBondRedemtionPrice();
 
         // check if we are in upper band(> target price but < upper limit)
         if (
@@ -300,13 +307,6 @@ contract Treasury is TreasurySetters {
                 cash12hPrice < seigniorageExpansionPhasePrice)
         ) {
             // if we are not in upper band- don't allocate seigniorage.
-            return; // just advance epoch instead of revert
-        }
-
-        // update the bond limits
-        _updateConversionLimit(cash1hPrice);
-
-        if (cash12hPrice <= getCeilingPrice()) {
             return; // just advance epoch instead of revert
         }
 
