@@ -54,6 +54,7 @@ describe('MultiUniswapOracle', () => {
   let Share: ContractFactory;
   let UniswapOracle: ContractFactory;
   let MockDAI: ContractFactory;
+  let OracleUpdater: ContractFactory;
 
   // uniswap
   let Factory = new ContractFactory(
@@ -70,10 +71,17 @@ describe('MultiUniswapOracle', () => {
     Share = await ethers.getContractFactory('MahaToken');
     UniswapOracle = await ethers.getContractFactory('MultiUniswapOracle');
     MockDAI = await ethers.getContractFactory('MockDai');
+    OracleUpdater = await ethers.getContractFactory('OracleUpdater');
   });
 
   let factory: Contract;
   let router: Contract;
+  let dai: Contract;
+  let cash: Contract;
+  let share: Contract;
+  let oracle: Contract;
+  let updater: Contract;
+  let oracleStartTime: BigNumber;
 
   before('deploy uniswap', async () => {
     factory = await Factory.connect(operator).deploy(operator.address);
@@ -82,12 +90,6 @@ describe('MultiUniswapOracle', () => {
       operator.address
     );
   });
-
-  let dai: Contract;
-  let cash: Contract;
-  let share: Contract;
-  let oracle: Contract;
-  let oracleStartTime: BigNumber;
 
   beforeEach('deploy contracts', async () => {
     dai = await MockDAI.connect(operator).deploy();
@@ -112,6 +114,10 @@ describe('MultiUniswapOracle', () => {
       DAY,
       oracleStartTime
     );
+
+    updater = await OracleUpdater.connect(operator).deploy(
+      [oracle.address]
+    )
   });
 
   describe('#update', async () => {
@@ -122,19 +128,15 @@ describe('MultiUniswapOracle', () => {
       );
 
       // epoch 0
-      await expect(oracle.update()).to.revertedWith('Epoch: not started yet');
-      expect(await oracle.nextEpochPoint()).to.eq(oracleStartTime);
-      expect(await oracle.getCurrentEpoch()).to.eq(BigNumber.from(0));
+      await expect(updater.update()).to.not.emit(oracle, 'Updated');
 
       await advanceTimeAndBlock(provider, 2 * MINUTE);
 
       // epoch 1
-      await expect(oracle.update()).to.emit(oracle, 'Updated');
+      await expect(updater.update()).to.emit(oracle, 'Updated');
 
-      expect(await oracle.nextEpochPoint()).to.eq(oracleStartTime.add(DAY));
-      expect(await oracle.getCurrentEpoch()).to.eq(BigNumber.from(0));
       // check double update
-      await expect(oracle.update()).to.revertedWith('Epoch: not allowed');
+      await expect(updater.update()).to.not.emit(oracle, 'Updated');
     });
   });
 });
