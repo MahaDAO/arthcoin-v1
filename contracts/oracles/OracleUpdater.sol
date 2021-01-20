@@ -24,7 +24,7 @@ contract OracleUpdater is Ownable {
         return uniswapOracles[position];
     }
 
-    function updateOracles() public {
+    function update() public {
         for (uint256 i = 0; i < uniswapOracles.length; i++) {
             address oracle = uniswapOracles[i];
 
