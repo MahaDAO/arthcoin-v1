@@ -338,11 +338,13 @@ describe('Treasury', () => {
 
           const oldCashSupply = await cash.totalSupply();
           const oldCashBalanceOfAnt = await cash.balanceOf(ant.address);
+          const oldCashBalanceOfTreasury = await cash.balanceOf(treasury.address);
 
           await expect(treasury.connect(ant).allocateSeigniorage()).to.not.emit(treasury, 'TreasuryFunded')
 
           expect(await cash.totalSupply()).to.eq(oldCashSupply.add(ETH.mul(200)));
           expect(await cash.balanceOf(ant.address)).to.eq(oldCashBalanceOfAnt.add(ETH.mul(200)));
+          expect(await cash.balanceOf(treasury.address)).to.eq(oldCashBalanceOfTreasury);
         });
 
         it('should not fund if price < targetPrice and outside lower band', async () => {
@@ -351,11 +353,13 @@ describe('Treasury', () => {
 
           const oldCashSupply = await cash.totalSupply();
           const oldCashBalanceOfAnt = await cash.balanceOf(ant.address);
+          const oldCashBalanceOfTreasury = await cash.balanceOf(treasury.address);
 
           await expect(treasury.connect(ant).allocateSeigniorage()).to.not.emit(treasury, 'TreasuryFunded')
 
           expect(await cash.totalSupply()).to.eq(oldCashSupply.add(ETH.mul(200)));
           expect(await cash.balanceOf(ant.address)).to.eq(oldCashBalanceOfAnt.add(ETH.mul(200)));
+          expect(await cash.balanceOf(treasury.address)).to.eq(oldCashBalanceOfTreasury);
         });
 
         it('should not fund if price > targetPrice and outside upper band', async () => {
@@ -364,16 +368,35 @@ describe('Treasury', () => {
 
           const oldCashSupply = await cash.totalSupply();
           const oldCashBalanceOfAnt = await cash.balanceOf(ant.address);
+          const oldCashBalanceOfTreasury = await cash.balanceOf(treasury.address);
 
           await expect(treasury.connect(ant).allocateSeigniorage()).to.not.emit(treasury, 'TreasuryFunded')
 
           expect(await cash.totalSupply()).to.eq(oldCashSupply.add(ETH.mul(200)));
           expect(await cash.balanceOf(ant.address)).to.eq(oldCashBalanceOfAnt.add(ETH.mul(200)));
+          expect(await cash.balanceOf(treasury.address)).to.eq(oldCashBalanceOfTreasury);
         });
 
-        it('should fund if price > targetPrice but in the upper band', async () => {
+        it('should not fund if price > targetPrice and outside upper band but price < ceiling price', async () => {
+          const cashPrice = ETH.mul(106).div(100);
+          await oracle.setPrice(cashPrice);
+
+          const oldCashSupply = await cash.totalSupply();
+          const oldCashBalanceOfAnt = await cash.balanceOf(ant.address);
+          const oldCashBalanceOfTreasury = await cash.balanceOf(treasury.address);
+
+          await expect(treasury.connect(ant).allocateSeigniorage()).to.not.emit(treasury, 'TreasuryFunded')
+
+          expect(await cash.totalSupply()).to.eq(oldCashSupply.add(ETH.mul(200)));
+          expect(await cash.balanceOf(ant.address)).to.eq(oldCashBalanceOfAnt.add(ETH.mul(200)));
+          expect(await cash.balanceOf(treasury.address)).to.eq(oldCashBalanceOfTreasury);
+        });
+
+        it('should not fund if price > targetPrice but in the upper band and price > ceiling pric', async () => {
           const cashPrice = ETH.mul(103).div(100);
           await oracle.setPrice(cashPrice);
+
+          await curve.setCeiling(ETH.mul(102).div(100));
 
           const oldCashSupply = await cash.totalSupply();
           const oldCashBalanceOfAnt = await cash.balanceOf(ant.address);
@@ -416,14 +439,12 @@ describe('Treasury', () => {
           }
 
           if (expectedFundReserve.gt(ZERO)) {
-            console.log('Inside');
             await expect(new Promise((resolve) => resolve(allocationResult)))
               .to.emit(treasury, 'PoolFunded')
               .withArgs(developmentFund.address, expectedFundReserve);
           }
 
           if (expectedTreasuryReserve.gt(ZERO)) {
-            console.log('Inside');
             await expect(new Promise((resolve) => resolve(allocationResult)))
               .to.emit(treasury, 'TreasuryFunded')
               .withArgs(
@@ -434,7 +455,6 @@ describe('Treasury', () => {
 
           // TODO: need to get the calcuation for the boardrooms correct
           if (expectedBoardroomReserve.gt(ZERO)) {
-            console.log('Inside');
             // await expect(new Promise((resolve) => resolve(allocationResult)))
             //   .to.emit(treasury, 'PoolFunded')
             //   .withArgs(
