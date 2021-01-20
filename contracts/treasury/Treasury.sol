@@ -292,23 +292,23 @@ contract Treasury is TreasurySetters {
         uint256 seigniorageExpansionPhasePrice =
             getSeigniorageAllocationPhasePrice();
 
+        // send 200 ARTH reward to the person advancing the epoch to compensate for gas
+        IBasisAsset(cash).mint(msg.sender, uint256(200).mul(1e18));
+
         // check if we are in upper band(> target price but < upper limit)
         if (
             !(cash12hPrice > cashTargetPrice &&
                 cash12hPrice < seigniorageExpansionPhasePrice)
         ) {
             // if we are not in upper band- don't allocate seigniorage.
-            return;
+            return; // just advance epoch instead of revert
         }
-
-        // send 200 ARTH reward to the person advancing the epoch to compensate for gas
-        IBasisAsset(cash).mint(msg.sender, uint256(200).mul(1e18));
 
         // update the bond limits
         _updateConversionLimit(cash1hPrice);
 
         if (cash12hPrice <= getCeilingPrice()) {
-            return; // just advance epoch instead revert
+            return; // just advance epoch instead of revert
         }
 
         // calculate how much seigniorage should be minted basis deviation from target price
@@ -316,7 +316,7 @@ contract Treasury is TreasurySetters {
             (cash12hPrice.sub(cashTargetPrice)).mul(1e18).div(cashTargetPrice);
 
         // stops allocation if deviated too much(more than we want).
-        if (percentage > stopSeigniorageAtDeviationRate) return;
+        if (percentage > stopSeigniorageAtDeviationRate) return; // just advance epoch instead of revert
 
         uint256 seigniorage = arthCirculatingSupply().mul(percentage).div(1e18);
         IBasisAsset(cash).mint(address(this), seigniorage);

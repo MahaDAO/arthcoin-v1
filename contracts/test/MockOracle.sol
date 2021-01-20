@@ -84,5 +84,11 @@ contract MockOracle is IOracle {
         return UniswapV2Library.pairFor(factory, tokenA, tokenB);
     }
 
+    function update() public {
+        require(!error, 'Oracle: mocked error');
+
+        emit Updated(0, 0);
+    }
+
     event Updated(uint256 price0CumulativeLast, uint256 price1CumulativeLast);
 }
