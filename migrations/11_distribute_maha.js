@@ -6,7 +6,7 @@ const knownContracts = require('./known-contracts');
 const { POOL_START_DATE } = require('./pools');
 const { BigNumber } = require('ethers');
 
-const Arth = artifacts.require('Arth');
+const Arth = artifacts.require('ARTH');
 const MahaToken = artifacts.require('MahaToken');
 // const Oracle = artifacts.require('MockOracle');
 const MockDai = artifacts.require('MockDai');
