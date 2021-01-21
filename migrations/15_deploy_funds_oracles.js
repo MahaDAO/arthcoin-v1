@@ -1,5 +1,5 @@
-const knownContracts = require('../known-contracts');
-const { POOL_START_DATE, DAY } = require('../config');
+const knownContracts = require('./known-contracts');
+const { POOL_START_DATE, DAY } = require('./config');
 
 
 const ARTH = artifacts.require('ARTH');
@@ -11,6 +11,7 @@ const UniswapV2Router02 = artifacts.require('UniswapV2Router02');
 const ArthMahaOracle = artifacts.require("ArthMahaTestnetOracle");
 const SeigniorageOracle = artifacts.require('SeigniorageOracle');
 const BondRedemtionOracle = artifacts.require('BondRedemtionOracle');
+const DevelopmentFund = artifacts.require('DevelopmentFund');
 
 
 async function migration(deployer, network, accounts) {
@@ -24,6 +25,10 @@ async function migration(deployer, network, accounts) {
   if (network === 'mainnet') {
     startTime += 5 * DAY;
   }
+
+  // Deploy funds.
+  console.log('Deploying funds.')
+  await deployer.deploy(DevelopmentFund);
 
   const ORACLE_START_PRICE = web3.utils.toBN(1e18).toString();
   const GMU_ORACLE_START_PRICE = ORACLE_START_PRICE;

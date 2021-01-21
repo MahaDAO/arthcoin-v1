@@ -1,6 +1,6 @@
 const { BigNumber } = require("ethers");
 
-const { DAY } = require('../config');
+const { DAY } = require('./config');
 
 
 const ArthLiquidityBoardroom = artifacts.require('ArthLiquidityBoardroom');
