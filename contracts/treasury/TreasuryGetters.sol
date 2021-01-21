@@ -47,10 +47,10 @@ abstract contract TreasuryGetters is TreasuryState {
 
     function getPercentDeviationFromTarget(uint256 price, uint256 targetPrice)
         public
-        view
+        pure
         returns (uint256)
     {
-        return targetPrice.sub(price).mul(1e18).mul(100).div(cashTargetPrice);
+        return targetPrice.sub(price).mul(1e18).mul(100).div(targetPrice);
     }
 
     function getSeigniorageOraclePrice() public view returns (uint256) {
