@@ -458,10 +458,10 @@ contract Treasury is TreasurySetters {
         accumulatedBonds = 0;
 
         uint256 bondPurchasePrice = getBondPurchasePrice();
-        uint256 bondExpansionPhasePrice = getBondRedemtionPrice();
+        uint256 bondRedemtionPrice = getBondRedemtionPrice();
 
         // check if we are in expansion phase.
-        if (cash1hPrice >= bondExpansionPhasePrice) {
+        if (cash1hPrice >= bondRedemtionPrice) {
             // in expansion mode- expands supply.
             uint256 percentage = getPercentTargetDevianceFromPrice(cash1hPrice);
             uint256 expandSupplyAmount =
@@ -484,10 +484,7 @@ contract Treasury is TreasurySetters {
         }
 
         // check if in upper band.
-        if (
-            cash1hPrice > cashTargetPrice &&
-            cash1hPrice < bondExpansionPhasePrice
-        ) {
+        if (cash1hPrice > cashTargetPrice && cash1hPrice < bondRedemtionPrice) {
             // in the upper band- pay back bond holder.
             // TODO: calculate payback amount;
             uint256 payBackAmount = 1;
