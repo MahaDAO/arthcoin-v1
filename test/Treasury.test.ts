@@ -907,27 +907,6 @@ describe('Treasury', () => {
           expect(await cash.balanceOf(ant.address)).to.eq(ZERO);
         });
 
-        it('should work if cash price exceeds bond redemption price', async () => {
-          await oracle.setPrice(ETH.mul(101).div(100));
-          await curve.setCeiling(ETH);
-          await treasury.allocateSeigniorage();
-
-          const cashPrice = ETH.mul(106).div(100);
-          await oracle.setPrice(cashPrice);
-
-          await bond.connect(operator).transfer(ant.address, ETH);
-          await bond.connect(ant).approve(treasury.address, ETH);
-          await cash.connect(operator).transfer(treasury.address, ETH);
-
-          await expect(treasury.connect(ant).redeemBonds(ETH, false))
-            .to.emit(treasury, 'RedeemedBonds')
-
-          console.log((await treasury.accumulatedSeigniorage()).toString());
-
-          expect(await bond.balanceOf(ant.address)).to.eq(ZERO); // 1:1
-          expect(await cash.balanceOf(ant.address)).to.eq(ETH);
-        });
-
         it("should redeem as much bonds as possbile", async () => {
           await oracle.setPrice(ETH.mul(101).div(100));
           await curve.setCeiling(ETH);
@@ -948,6 +927,11 @@ describe('Treasury', () => {
             treasuryBalance
           );
 
+          const expectedStabilityFeeInArth = amount.mul(await treasury.stabilityFee()).div(100);
+          const expectedStabilityFeeInMaha = (await treasury.getArthMahaOraclePrice()).mul(expectedStabilityFeeInArth).div(ETH);
+
+          await share.connect(operator).mint(ant.address, expectedStabilityFeeInMaha.add(ETH));
+          await share.connect(ant).approve(treasury.address, expectedStabilityFeeInMaha);
           await treasury.connect(ant).redeemBonds(treasuryBalance, false);
 
           expect(await bond.balanceOf(ant.address)).to.eq(treasuryBalance.sub(amount));
