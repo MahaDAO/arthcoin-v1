@@ -634,6 +634,23 @@ describe('Treasury', () => {
           // trigger updateConversionRate
           await treasury.allocateSeigniorage();
 
+          const path = [dai.address, cash.address];
+          const amountsOut = await uniswapRouter.getAmountsOut(ETH, path);
+          const expectedCashAmount = amountsOut[1];
+          const output = await uniswapRouter.swapExactTokensForTokens(
+            ETH,
+            expectedCashAmount,
+            path,
+            ant.address,
+            BigNumber.from((await latestBlocktime(provider))).add(60)
+          );
+          console.log(output);
+
+          const boughtBackCash = bigmin(output[1], expectedCashAmount);
+
+          console.log(boughtBackCash.toString());
+          console.log((await treasury.cashToBondConversionLimit()).toString());
+
           await dai.connect(operator).transfer(ant.address, ETH);
           await dai.connect(ant).approve(treasury.address, ETH);
           await cash.connect(ant).approve(treasury.address, ETH);
