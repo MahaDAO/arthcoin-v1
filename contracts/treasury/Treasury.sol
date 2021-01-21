@@ -10,6 +10,7 @@ import '../interfaces/ICustomERC20.sol';
 import '../interfaces/IUniswapV2Factory.sol';
 import {IOracle} from '../interfaces/IOracle.sol';
 import {IMultiUniswapOracle} from '../interfaces/IMultiUniswapOracle.sol';
+import {IUniswapOracle} from '../interfaces/IUniswapOracle.sol';
 import {IUniswapV2Router02} from '../interfaces/IUniswapV2Router02.sol';
 import {IBoardroom} from '../interfaces/IBoardroom.sol';
 import {IBasisAsset} from '../interfaces/IBasisAsset.sol';
@@ -366,11 +367,11 @@ contract Treasury is TreasurySetters {
      */
     function _updateCashPrice() internal {
         if (Epoch(bondOracle).callable()) {
-            try IMultiUniswapOracle(bondOracle).update() {} catch {}
+            try IUniswapOracle(bondOracle).update() {} catch {}
         }
 
         if (Epoch(seigniorageOracle).callable()) {
-            try IMultiUniswapOracle(seigniorageOracle).update() {} catch {}
+            try IUniswapOracle(seigniorageOracle).update() {} catch {}
         }
 
         // TODO: do the same for the gmu oracle as well

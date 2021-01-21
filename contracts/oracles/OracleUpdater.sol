@@ -6,6 +6,7 @@ import '@openzeppelin/contracts/access/Ownable.sol';
 
 import {Epoch} from '../utils/Epoch.sol';
 import {IMultiUniswapOracle} from '../interfaces/IMultiUniswapOracle.sol';
+import {IUniswapOracle} from '../interfaces/IUniswapOracle.sol';
 
 contract OracleUpdater is Ownable {
     address[] public uniswapOracles;
