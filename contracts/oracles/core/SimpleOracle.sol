@@ -21,6 +21,8 @@ contract SimpleOracle is Ownable, IOracle {
     }
 
     function setPrice(uint256 _price) public onlyOwner {
+        require(_price >= 0, 'Oracle: price cannot be < 0');
+
         price = _price;
     }
 

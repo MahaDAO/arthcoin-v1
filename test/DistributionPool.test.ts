@@ -6,16 +6,11 @@ import {
   ContractFactory,
   BigNumber,
   utils,
-  BigNumberish,
-  ContractReceipt,
 } from 'ethers';
-import { EtherscanProvider, Provider, showThrottleMessage } from '@ethersproject/providers';
+import { Provider } from '@ethersproject/providers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address';
 
-import UniswapV2Factory from '@uniswap/v2-core/build/UniswapV2Factory.json';
-import UniswapV2Router from '@uniswap/v2-periphery/build/UniswapV2Router02.json';
-
-import { advanceTimeAndBlock } from './shared/utilities';
+import { advanceTimeAndBlock, latestBlocktime } from './shared/utilities';
 
 
 chai.use(solidity);
@@ -25,17 +20,6 @@ const DAY = 86400;
 const ETH = utils.parseEther('1');
 const ZERO = BigNumber.from(0);
 const ZERO_ADDR = '0x0000000000000000000000000000000000000000';
-
-
-async function latestBlocktime(provider: Provider): Promise<number> {
-  const { timestamp } = await provider.getBlock('latest');
-  return timestamp;
-}
-
-
-function bigmin(a: BigNumber, b: BigNumber): BigNumber {
-  return a.lt(b) ? a : b;
-}
 
 
 describe('Distribution pools', () => {

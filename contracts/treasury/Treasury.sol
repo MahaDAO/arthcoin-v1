@@ -8,7 +8,6 @@ import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
 
 import '../interfaces/ICustomERC20.sol';
 import '../interfaces/IUniswapV2Factory.sol';
-import {ICurve} from '../curve/Curve.sol';
 import {IOracle} from '../interfaces/IOracle.sol';
 import {IMultiUniswapOracle} from '../interfaces/IMultiUniswapOracle.sol';
 import {IUniswapV2Router02} from '../interfaces/IUniswapV2Router02.sol';
@@ -27,7 +26,7 @@ import './TreasurySetters.sol';
 /**
  * @title ARTH Treasury contract
  * @notice Monetary policy logic to adjust supplies of basis cash assets
- * @author Steven Enamakel & Yash Agarwal. Original code written by Summer Smith & Rick Sanchez
+ * @author Steven Enamakel & Yash Agrawal. Original code written by Summer Smith & Rick Sanchez
  */
 contract Treasury is TreasurySetters {
     using SafeERC20 for ICustomERC20;
@@ -44,7 +43,6 @@ contract Treasury is TreasurySetters {
         address _arthBoardroom,
         address _fund,
         address _uniswapRouter,
-        address _curve,
         address _gmuOracle,
         uint256 _startTime,
         uint256 _period
@@ -68,7 +66,6 @@ contract Treasury is TreasurySetters {
 
         // others
         uniswapRouter = _uniswapRouter;
-        curve = _curve;
 
         // _updateCashPrice();
     }
@@ -82,7 +79,7 @@ contract Treasury is TreasurySetters {
     function initialize() public checkOperator {
         require(!initialized, 'Treasury: initialized');
 
-        // set accumulatedSeigniorage to it's balance
+        // set accumulatedSeigniorage to the treasury's balance
         accumulatedSeigniorage = IERC20(cash).balanceOf(address(this));
 
         initialized = true;
@@ -137,8 +134,12 @@ contract Treasury is TreasurySetters {
 
         require(cash1hPrice <= targetPrice, 'Treasury: cash price moved');
         require(
-            cash1hPrice < getBondPurchasePrice(), // price < $0.95
+            cash1hPrice <= getBondPurchasePrice(), // price < $0.95
             'Treasury: cashPrice not eligible for bond purchase'
+        );
+        require(
+            cashToBondConversionLimit > 0,
+            'Treasury: No more bonds to be redeemed'
         );
 
         // Find the expected amount recieved when swapping the following
@@ -291,15 +292,36 @@ contract Treasury is TreasurySetters {
         // update the bond limits
         _updateConversionLimit(cash1hPrice);
 
-        if (cash12hPrice <= getCeilingPrice()) {
+        if (cash12hPrice <= cashTargetPrice) {
             return; // just advance epoch instead revert
         }
 
-        // calculate how much seigniorage should be minted basis deviation from target price
-        uint256 percentage =
-            (cash12hPrice.sub(cashTargetPrice)).mul(1e18).div(cashTargetPrice);
+        if (cash12hPrice <= getExpansionLimitPrice()) {
+            // if we are below the ceiling price (or expansion limit price) but
+            // above the target price, then we try to pay off all the bond holders
+            // as much as possible.
 
-        uint256 seigniorage = arthCirculatingSupply().mul(percentage).div(1e18);
+            // calculate how much seigniorage should be minted basis deviation from target price
+            uint256 seigniorage = estimateSeignorageToMint(cash12hPrice);
+
+            // check how much should we be paying to bond holders
+            uint256 treasuryReserve =
+                Math.min(
+                    seigniorage,
+                    ICustomERC20(bond).totalSupply().sub(accumulatedSeigniorage)
+                );
+
+            // if we don't have to pay them anything return..
+            if (treasuryReserve == 0) return;
+
+            // we have to pay them some amount; so mint, distribute and return
+            IBasisAsset(cash).mint(address(this), treasuryReserve);
+            emit SeigniorageMinted(treasuryReserve);
+            _allocateToBondHolers(treasuryReserve);
+            return;
+        }
+
+        uint256 seigniorage = estimateSeignorageToMint(cash12hPrice);
         IBasisAsset(cash).mint(address(this), seigniorage);
         emit SeigniorageMinted(seigniorage);
 
@@ -308,9 +330,10 @@ contract Treasury is TreasurySetters {
         seigniorage = seigniorage.sub(ecosystemReserve);
 
         // keep 90% of the funds to bond token holders; and send the remaining to the boardroom
-        uint256 allocatedForTreasury =
+        uint256 allocatedForBondHolders =
             seigniorage.mul(bondSeigniorageRate).div(100);
-        uint256 treasuryReserve = _allocateToBondHolers(allocatedForTreasury);
+        uint256 treasuryReserve =
+            _allocateToBondHolers(allocatedForBondHolders);
         seigniorage = seigniorage.sub(treasuryReserve);
 
         // allocate everything else to the boardroom
@@ -330,7 +353,7 @@ contract Treasury is TreasurySetters {
                 ecosystemReserve,
                 'Treasury: Ecosystem Seigniorage Allocation'
             );
-            emit PoolFunded(ecosystemFund, ecosystemReserve);
+            emit PoolFunded(ecosystemFund, ecosystemReserve, 'ecosystemFund');
             return ecosystemReserve;
         }
 
@@ -396,6 +419,8 @@ contract Treasury is TreasurySetters {
             boardroomReserve.mul(arthLiquidityBoardroomAllocationRate).div(100);
         uint256 arthBoardroomReserve =
             boardroomReserve.mul(arthBoardroomAllocationRate).div(100);
+        uint256 mahaLiquidityBoardroomReserve =
+            boardroomReserve.mul(mahaLiquidityBoardroomAllocationRate).div(100);
 
         if (arthLiquidityBoardroomReserve > 0) {
             ICustomERC20(cash).safeApprove(
@@ -407,14 +432,30 @@ contract Treasury is TreasurySetters {
             );
             emit PoolFunded(
                 arthLiquidityBoardroom,
-                arthLiquidityBoardroomReserve
+                arthLiquidityBoardroomReserve,
+                'arthLiquidity'
             );
         }
 
         if (arthBoardroomReserve > 0) {
             ICustomERC20(cash).safeApprove(arthBoardroom, arthBoardroomReserve);
             IBoardroom(arthBoardroom).allocateSeigniorage(arthBoardroomReserve);
-            emit PoolFunded(arthBoardroom, arthBoardroomReserve);
+            emit PoolFunded(arthBoardroom, arthBoardroomReserve, 'arth');
+        }
+
+        if (mahaLiquidityBoardroomReserve > 0) {
+            ICustomERC20(cash).safeApprove(
+                mahaLiquidityBoardroom,
+                mahaLiquidityBoardroomReserve
+            );
+            IBoardroom(mahaLiquidityBoardroom).allocateSeigniorage(
+                mahaLiquidityBoardroomReserve
+            );
+            emit PoolFunded(
+                mahaLiquidityBoardroom,
+                mahaLiquidityBoardroomReserve,
+                'mahaLiquidity'
+            );
         }
     }
 
@@ -429,36 +470,35 @@ contract Treasury is TreasurySetters {
      * next 12h epoch.
      */
     function _updateConversionLimit(uint256 cash1hPrice) internal {
-        // reset this counter so that new bonds can now be minted...
+        // reset this counter so that new bonds can now be minted.
         accumulatedBonds = 0;
 
         uint256 bondPurchasePrice = getBondPurchasePrice();
 
-        // check if we are in expansion or in contraction mode
+        // check if we are in contract mode.
         if (cash1hPrice <= bondPurchasePrice) {
-            // in contraction mode; set a limit to how many bonds are there
+            // in contraction mode -> issue bonds.
+            // set a limit to how many bonds are there.
 
             // understand how much % deviation do we have from target price
-            // if target price is 2.5$ and we are at 2$; then percentage
-            // uint256 percentage =
-            //     cashTargetPrice.sub(cash1hPrice).mul(1e18).div(cashTargetPrice);
+            // if target price is 2.5$ and we are at 2$; then percentage should be 20%
+            uint256 percentage = estimatePercentageOfBondsToIssue(cash1hPrice);
 
             // accordingly set the new conversion limit to be that % from the
-            // current circulating supply of ARTH
-            // cashToBondConversionLimit = arthCirculatingSupply()
-            //     .mul(percentage)
-            //     .div(1e18);
-
+            // current circulating supply of ARTH and if uniswap enabled then uniswap liquidity.
             cashToBondConversionLimit = arthCirculatingSupply()
-                .mul(bondConversionRate)
+                .mul(percentage)
+                .div(100)
+                .mul(getCashSupplyInLiquidity())
                 .div(100);
-            // .mul(getCashSupplyInLiquidity())
-            // .div(100);
 
             emit BondsAllocated(cashToBondConversionLimit);
-        } else {
-            cashToBondConversionLimit = 0;
+
+            return;
         }
+
+        // if not in contraction then we do nothing.
+        cashToBondConversionLimit = 0;
     }
 
     // GOV
@@ -475,6 +515,6 @@ contract Treasury is TreasurySetters {
     event TreasuryFunded(uint256 timestamp, uint256 seigniorage);
     event SeigniorageMinted(uint256 seigniorage);
     event BondsAllocated(uint256 limit);
-    event PoolFunded(address indexed pool, uint256 seigniorage);
+    event PoolFunded(address indexed pool, uint256 seigniorage, string label);
     event StabilityFeesCharged(address indexed from, uint256 stabilityFeeValue);
 }

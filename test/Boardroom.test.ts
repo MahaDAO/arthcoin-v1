@@ -4,11 +4,13 @@ import { solidity } from 'ethereum-waffle';
 import { Contract, ContractFactory, BigNumber, utils } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address';
 
+import { advanceTimeAndBlock, latestBlocktime } from './shared/utilities';
+
 
 chai.use(solidity);
 
 
-describe('ArthBoardroom', () => {
+describe('Boardroom', () => {
   // const DAY = 86400;
 
   const BOARDROOM_LOCK_PERIOD = 5 * 60;
@@ -17,7 +19,7 @@ describe('ArthBoardroom', () => {
   const STAKE_AMOUNT = ETH.mul(5000);
   const SEIGNIORAGE_AMOUNT = ETH.mul(10000);
 
-  // const { provider } = ethers;
+  const { provider } = ethers;
 
   let operator: SignerWithAddress;
   let whale: SignerWithAddress;
@@ -98,9 +100,14 @@ describe('ArthBoardroom', () => {
       }
     });
 
-    await new Promise(resolve => setTimeout(resolve, 1000 * BOARDROOM_LOCK_PERIOD));
+
 
     it('Should work correctly now', async () => {
+      await advanceTimeAndBlock(
+        provider,
+        (await latestBlocktime(provider)) + BOARDROOM_LOCK_PERIOD
+      );
+
       await expect(boardroom.connect(whale).withdraw(STAKE_AMOUNT))
         .to.emit(boardroom, 'Withdrawn')
         .withArgs(whale.address, STAKE_AMOUNT);
@@ -110,12 +117,22 @@ describe('ArthBoardroom', () => {
     });
 
     it('Should fail when user tries to withdraw with zero amount', async () => {
+      await advanceTimeAndBlock(
+        provider,
+        (await latestBlocktime(provider)) + BOARDROOM_LOCK_PERIOD
+      );
+
       await expect(boardroom.connect(whale).withdraw(ZERO)).to.revertedWith(
         'Boardroom: Cannot withdraw 0'
       );
     });
 
     it('Should fail when user tries to withdraw more than staked amount', async () => {
+      await advanceTimeAndBlock(
+        provider,
+        (await latestBlocktime(provider)) + BOARDROOM_LOCK_PERIOD
+      );
+
       await expect(
         boardroom.connect(whale).withdraw(STAKE_AMOUNT.add(1))
       ).to.revertedWith(
@@ -124,6 +141,11 @@ describe('ArthBoardroom', () => {
     });
 
     it('Should fail when non-director tries to withdraw', async () => {
+      await advanceTimeAndBlock(
+        provider,
+        (await latestBlocktime(provider)) + BOARDROOM_LOCK_PERIOD
+      );
+
       await expect(boardroom.connect(abuser).withdraw(ZERO)).to.revertedWith(
         'Boardroom: The director does not exist'
       );

@@ -2,8 +2,8 @@
 
 pragma solidity ^0.6.12;
 
-import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/math/SafeMath.sol';
+import '@openzeppelin/contracts/access/Ownable.sol';
 
 contract StakingTimelock is Ownable {
     using SafeMath for uint256;
@@ -28,18 +28,8 @@ contract StakingTimelock is Ownable {
         require(_stakerDetails.lastStakedOn != 0);
         require(_stakerDetails.lastStakedAmount != 0);
         require(_stakerDetails.totalStakedAmount != 0);
-        require(_stakerDetails.lastStakedOn + duration <= now);
+        require(_stakerDetails.lastStakedOn + duration <= block.timestamp);
         _;
-    }
-
-    function addStakerDetails(uint256 _amount) public {
-        StakingDetails storage _stakerDetails = _stakingDetails[msg.sender];
-
-        _stakerDetails.lastStakedOn = now;
-        _stakerDetails.lastStakedAmount = _amount;
-        _stakerDetails.totalStakedAmount = _stakerDetails.totalStakedAmount.add(
-            _amount
-        );
     }
 
     function getStakerDetails() public view returns (uint256, uint256) {

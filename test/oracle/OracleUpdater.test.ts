@@ -8,9 +8,11 @@ import UniswapV2Router from '@uniswap/v2-periphery/build/UniswapV2Router02.json'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address';
 import { Provider } from '@ethersproject/providers';
 
-import { advanceTimeAndBlock, latestBlocktime } from './shared/utilities';
+import { advanceTimeAndBlock, latestBlocktime } from '../shared/utilities';
+
 
 chai.use(solidity);
+
 
 async function addLiquidity(
   provider: Provider,
@@ -34,24 +36,25 @@ async function addLiquidity(
     );
 }
 
-describe.skip('UniswapOracle', () => {
+describe('Oracle updater', () => {
   const MINUTE = 60;
   const DAY = 86400;
   const ETH = utils.parseEther('1');
+  const ZERO_ADDR = '0x0000000000000000000000000000000000000000';
 
   const { provider } = ethers;
 
   let operator: SignerWithAddress;
-  let whale: SignerWithAddress;
 
   before('setup accounts', async () => {
-    [operator, whale] = await ethers.getSigners();
+    [operator] = await ethers.getSigners();
   });
 
   let Cash: ContractFactory;
   let Share: ContractFactory;
   let UniswapOracle: ContractFactory;
   let MockDAI: ContractFactory;
+  let OracleUpdater: ContractFactory;
 
   // uniswap
   let Factory = new ContractFactory(
@@ -66,12 +69,19 @@ describe.skip('UniswapOracle', () => {
   before('fetch contract factories', async () => {
     Cash = await ethers.getContractFactory('ARTH');
     Share = await ethers.getContractFactory('MahaToken');
-    UniswapOracle = await ethers.getContractFactory('UniswapOracle');
+    UniswapOracle = await ethers.getContractFactory('MultiUniswapOracle');
     MockDAI = await ethers.getContractFactory('MockDai');
+    OracleUpdater = await ethers.getContractFactory('OracleUpdater');
   });
 
   let factory: Contract;
   let router: Contract;
+  let dai: Contract;
+  let cash: Contract;
+  let share: Contract;
+  let oracle: Contract;
+  let updater: Contract;
+  let oracleStartTime: BigNumber;
 
   before('deploy uniswap', async () => {
     factory = await Factory.connect(operator).deploy(operator.address);
@@ -80,12 +90,6 @@ describe.skip('UniswapOracle', () => {
       operator.address
     );
   });
-
-  let dai: Contract;
-  let cash: Contract;
-  let share: Contract;
-  let oracle: Contract;
-  let oracleStartTime: BigNumber;
 
   beforeEach('deploy contracts', async () => {
     dai = await MockDAI.connect(operator).deploy();
@@ -101,12 +105,19 @@ describe.skip('UniswapOracle', () => {
 
     oracleStartTime = BigNumber.from(await latestBlocktime(provider)).add(DAY);
     oracle = await UniswapOracle.connect(operator).deploy(
-      factory.address,
+      router.address,
       cash.address,
       dai.address,
+      ZERO_ADDR,
+      ZERO_ADDR,
+      2,
       DAY,
       oracleStartTime
     );
+
+    updater = await OracleUpdater.connect(operator).deploy(
+      [oracle.address]
+    )
   });
 
   describe('#update', async () => {
@@ -117,19 +128,15 @@ describe.skip('UniswapOracle', () => {
       );
 
       // epoch 0
-      await expect(oracle.update()).to.revertedWith('Epoch: not started yet');
-      expect(await oracle.nextEpochPoint()).to.eq(oracleStartTime);
-      expect(await oracle.getCurrentEpoch()).to.eq(BigNumber.from(0));
+      await expect(updater.update()).to.not.emit(oracle, 'Updated');
 
       await advanceTimeAndBlock(provider, 2 * MINUTE);
 
       // epoch 1
-      await expect(oracle.update()).to.emit(oracle, 'Updated');
+      await expect(updater.update()).to.emit(oracle, 'Updated');
 
-      expect(await oracle.nextEpochPoint()).to.eq(oracleStartTime.add(DAY));
-      expect(await oracle.getCurrentEpoch()).to.eq(BigNumber.from(0));
       // check double update
-      await expect(oracle.update()).to.revertedWith('Epoch: not allowed');
+      await expect(updater.update()).to.not.emit(oracle, 'Updated');
     });
   });
 });

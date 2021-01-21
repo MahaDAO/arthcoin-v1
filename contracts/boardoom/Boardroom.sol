@@ -10,9 +10,9 @@ import '../lib/Safe112.sol';
 import '../owner/Operator.sol';
 import '../utils/ContractGuard.sol';
 import '../interfaces/IBasisAsset.sol';
-import '../StakingTimelock.sol';
+import '../timelock/StakingTimelock.sol';
 
-abstract contract ShareWrapper is StakingTimelock {
+abstract contract ShareWrapper is StakingTimelock, Operator {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -29,11 +29,33 @@ abstract contract ShareWrapper is StakingTimelock {
         return _balances[account];
     }
 
+    function _addStakerDetails(address sender, uint256 _amount) private {
+        StakingDetails storage _stakerDetails = _stakingDetails[sender];
+
+        _stakerDetails.lastStakedOn = block.timestamp;
+        _stakerDetails.lastStakedAmount = _amount;
+        _stakerDetails.totalStakedAmount = _stakerDetails.totalStakedAmount.add(
+            _amount
+        );
+    }
+
     function stake(uint256 amount) public virtual {
-        addStakerDetails(amount);
+        _addStakerDetails(msg.sender, amount);
 
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
+        share.safeTransferFrom(msg.sender, address(this), amount);
+    }
+
+    function stakeFor(address onBehalf, uint256 amount)
+        public
+        virtual
+        onlyOperator
+    {
+        _addStakerDetails(onBehalf, amount);
+
+        _totalSupply = _totalSupply.add(amount);
+        _balances[msg.sender] = _balances[onBehalf].add(amount);
         share.safeTransferFrom(msg.sender, address(this), amount);
     }
 
@@ -51,7 +73,7 @@ abstract contract ShareWrapper is StakingTimelock {
     }
 }
 
-contract Boardroom is ShareWrapper, ContractGuard, Operator {
+contract Boardroom is ShareWrapper, ContractGuard {
     using SafeERC20 for IERC20;
     using Address for address;
     using SafeMath for uint256;

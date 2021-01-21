@@ -2,8 +2,9 @@
 
 pragma solidity ^0.6.12;
 
-import './owner/Operator.sol';
 import '@openzeppelin/contracts/token/ERC20/ERC20Burnable.sol';
+
+import '../owner/Operator.sol';
 
 contract ARTHB is ERC20Burnable, Ownable, Operator {
     /**
