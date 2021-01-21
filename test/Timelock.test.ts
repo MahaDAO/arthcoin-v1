@@ -48,6 +48,7 @@ describe('Timelock', () => {
   let Curve: ContractFactory;
   let DAI: ContractFactory;
   let Timelock: ContractFactory;
+  let MahaLiquidityBoardroom: ContractFactory;
 
   let Factory = new ContractFactory(
     UniswapV2Factory.abi,
@@ -66,6 +67,7 @@ describe('Timelock', () => {
     DevelopmentFund = await ethers.getContractFactory('DevelopmentFund');
     ArthBoardroom = await ethers.getContractFactory('ArthBoardroom');
     ArthLiquidityBoardroom = await ethers.getContractFactory('ArthLiquidityBoardroom');
+    MahaLiquidityBoardroom = await ethers.getContractFactory('MahaLiquidityBoardroom');
     Oracle = await ethers.getContractFactory('MockOracle');
     Curve = await ethers.getContractFactory('MockCurve');
     DAI = await ethers.getContractFactory('MockDai');
@@ -89,6 +91,7 @@ describe('Timelock', () => {
   let uniswap: Contract;
   let uniswapRouter: Contract;
   let timelock: Contract;
+  let mahaLiquidityBoardroom: Contract;
 
   beforeEach('Deploy contracts', async () => {
     cash = await ARTH.connect(operator).deploy();
@@ -139,6 +142,11 @@ describe('Timelock', () => {
       dai_arth_lpt,
       startTime
     );
+    mahaLiquidityBoardroom = await MahaLiquidityBoardroom.connect(operator).deploy(
+      cash.address,
+      dai_arth_lpt,
+      startTime
+    );
 
     treasury = await Treasury.connect(operator).deploy(
       dai.address,
@@ -149,6 +157,7 @@ describe('Timelock', () => {
       arthMahaOracle.address,
       seigniorageOracle.address,
       arthLiquidityBoardroom.address,
+      mahaLiquidityBoardroom.address,
       arthBoardroom.address,
       developmentFund.address,
       uniswapRouter.address,
@@ -183,6 +192,9 @@ describe('Timelock', () => {
 
     await arthLiquidityBoardroom.connect(operator).transferOperator(treasury.address);
     await arthLiquidityBoardroom.connect(operator).transferOwnership(timelock.address);
+
+    await mahaLiquidityBoardroom.connect(operator).transferOperator(treasury.address);
+    await mahaLiquidityBoardroom.connect(operator).transferOwnership(timelock.address);
   });
 
   describe('#Migrate', async () => {
@@ -198,6 +210,7 @@ describe('Timelock', () => {
         arthMahaOracle.address,
         seigniorageOracle.address,
         arthLiquidityBoardroom.address,
+        mahaLiquidityBoardroom.address,
         arthBoardroom.address,
         developmentFund.address,
         uniswapRouter.address,
