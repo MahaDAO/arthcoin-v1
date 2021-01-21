@@ -383,6 +383,7 @@ contract Treasury is TreasurySetters {
         if (accumulatedSeigniorage == 0) return;
 
         // TODO: pay back the holders.
+
         accumulatedSeigniorage = 0;
     }
 
@@ -457,7 +458,7 @@ contract Treasury is TreasurySetters {
      * next 12h epoch.
      */
     function _updateConversionLimit(uint256 cash1hPrice) internal {
-        // reset this counter so that new bonds can now be minted...
+        // reset this counter so that new bonds can now be minted.
         accumulatedBonds = 0;
 
         uint256 bondPurchasePrice = getBondPurchasePrice();
