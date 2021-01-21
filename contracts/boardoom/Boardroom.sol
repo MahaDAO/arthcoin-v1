@@ -10,7 +10,7 @@ import '../lib/Safe112.sol';
 import '../owner/Operator.sol';
 import '../utils/ContractGuard.sol';
 import '../interfaces/IBasisAsset.sol';
-import '../StakingTimelock.sol';
+import '../timelock/StakingTimelock.sol';
 
 abstract contract ShareWrapper is StakingTimelock, Operator {
     using SafeMath for uint256;
