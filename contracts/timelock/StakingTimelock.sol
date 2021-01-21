@@ -23,7 +23,7 @@ contract StakingTimelock is Ownable {
     }
 
     modifier checkLockDuration {
-        StakingDetails memory _stakerDetails = _stakingDetails[msg.sender];
+        StakingDetails storage _stakerDetails = _stakingDetails[msg.sender];
 
         require(_stakerDetails.lastStakedOn != 0);
         require(_stakerDetails.lastStakedAmount != 0);
