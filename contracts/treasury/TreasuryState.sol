@@ -52,6 +52,7 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     uint256 public accumulatedSeigniorage = 0;
     uint256 public accumulatedBonds = 0;
 
+    // flag whether we should considerUniswapLiquidity or not.
     bool public considerUniswapLiquidity = false;
 
     // used to limit how much of the supply is converted into bonds
@@ -64,7 +65,7 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     uint256 public safetyRegion = 5; // in %
 
     // at the most how much % of the supply should be increased
-    uint256 public maxSupplyIncreasePerEpoch = 30;
+    uint256 public maxSupplyIncreasePerEpoch = 15;
 
     // the ecosystem fund recieves seigniorage before anybody else; this
     // value decides how much of the new seigniorage is sent to this fund.

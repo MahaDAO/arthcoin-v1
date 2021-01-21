@@ -10,8 +10,7 @@ import '../lib/Safe112.sol';
 import '../owner/Operator.sol';
 import '../utils/ContractGuard.sol';
 import '../interfaces/IBasisAsset.sol';
-import '../StakingTimelock.sol';
-import '../owner/Operator.sol';
+import '../timelock/StakingTimelock.sol';
 
 abstract contract ShareWrapper is StakingTimelock, Operator {
     using SafeMath for uint256;
@@ -30,8 +29,18 @@ abstract contract ShareWrapper is StakingTimelock, Operator {
         return _balances[account];
     }
 
+    function _addStakerDetails(address sender, uint256 _amount) private {
+        StakingDetails storage _stakerDetails = _stakingDetails[sender];
+
+        _stakerDetails.lastStakedOn = block.timestamp;
+        _stakerDetails.lastStakedAmount = _amount;
+        _stakerDetails.totalStakedAmount = _stakerDetails.totalStakedAmount.add(
+            _amount
+        );
+    }
+
     function stake(uint256 amount) public virtual {
-        addStakerDetails(msg.sender, amount);
+        _addStakerDetails(msg.sender, amount);
 
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
@@ -43,7 +52,7 @@ abstract contract ShareWrapper is StakingTimelock, Operator {
         virtual
         onlyOperator
     {
-        addStakerDetails(onBehalf, amount);
+        _addStakerDetails(onBehalf, amount);
 
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[onBehalf].add(amount);

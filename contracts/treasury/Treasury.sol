@@ -137,6 +137,10 @@ contract Treasury is TreasurySetters {
             cash1hPrice <= getBondPurchasePrice(), // price < $0.95
             'Treasury: cashPrice not eligible for bond purchase'
         );
+        require(
+            cashToBondConversionLimit > 0,
+            'Treasury: No more bonds to be redeemed'
+        );
 
         // Find the expected amount recieved when swapping the following
         // tokens on uniswap.
@@ -317,7 +321,6 @@ contract Treasury is TreasurySetters {
             return;
         }
 
-        // calculate how much seigniorage should be minted basis deviation from target price
         uint256 seigniorage = estimateSeignorageToMint(cash12hPrice);
         IBasisAsset(cash).mint(address(this), seigniorage);
         emit SeigniorageMinted(seigniorage);
@@ -467,21 +470,22 @@ contract Treasury is TreasurySetters {
      * next 12h epoch.
      */
     function _updateConversionLimit(uint256 cash1hPrice) internal {
-        // reset this counter so that new bonds can now be minted...
+        // reset this counter so that new bonds can now be minted.
         accumulatedBonds = 0;
 
         uint256 bondPurchasePrice = getBondPurchasePrice();
 
-        // check if we are in expansion or in contraction mode
+        // check if we are in contract mode.
         if (cash1hPrice <= bondPurchasePrice) {
-            // in contraction mode; set a limit to how many bonds are there
+            // in contraction mode -> issue bonds.
+            // set a limit to how many bonds are there.
 
             // understand how much % deviation do we have from target price
             // if target price is 2.5$ and we are at 2$; then percentage should be 20%
             uint256 percentage = estimatePercentageOfBondsToIssue(cash1hPrice);
 
             // accordingly set the new conversion limit to be that % from the
-            // current circulating supply of ARTH
+            // current circulating supply of ARTH and if uniswap enabled then uniswap liquidity.
             cashToBondConversionLimit = arthCirculatingSupply()
                 .mul(percentage)
                 .div(100)
@@ -489,9 +493,12 @@ contract Treasury is TreasurySetters {
                 .div(100);
 
             emit BondsAllocated(cashToBondConversionLimit);
-        } else {
-            cashToBondConversionLimit = 0;
+
+            return;
         }
+
+        // if not in contraction then we do nothing.
+        cashToBondConversionLimit = 0;
     }
 
     // GOV
