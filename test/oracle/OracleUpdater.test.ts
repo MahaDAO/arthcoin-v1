@@ -36,7 +36,7 @@ async function addLiquidity(
     );
 }
 
-describe('MultiUniswapOracle', () => {
+describe('Oracle updater', () => {
   const MINUTE = 60;
   const DAY = 86400;
   const ETH = utils.parseEther('1');
