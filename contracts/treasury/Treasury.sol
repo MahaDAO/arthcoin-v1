@@ -299,12 +299,12 @@ contract Treasury is TreasurySetters {
             return; // just advance epoch instead of revert
         }
 
-        uint256 seigniorageExpansionPhasePrice = getBondRedemtionPrice();
+        uint256 bondRedemtionPrice = getBondRedemtionPrice();
 
         // check if we are in upper band(> target price but < upper limit)
         if (
             !(cash12hPrice > cashTargetPrice &&
-                cash12hPrice < seigniorageExpansionPhasePrice)
+                cash12hPrice < bondRedemtionPrice)
         ) {
             // if we are not in upper band- don't allocate seigniorage.
             return; // just advance epoch instead of revert
@@ -379,8 +379,11 @@ contract Treasury is TreasurySetters {
         cashTargetPrice = IOracle(gmuOracle).getPrice();
     }
 
-    function _payBackBondHolders(uint256 amount) internal {
-        // TODO: pay back bond holders.
+    function _payBackBondHolders() internal {
+        if (accumulatedSeigniorage == 0) return;
+
+        // TODO: pay back the holders.
+        accumulatedSeigniorage = 0;
     }
 
     /**
@@ -486,10 +489,7 @@ contract Treasury is TreasurySetters {
         // check if in upper band.
         if (cash1hPrice > cashTargetPrice && cash1hPrice < bondRedemtionPrice) {
             // in the upper band- pay back bond holder.
-            // TODO: calculate payback amount;
-            uint256 payBackAmount = 1;
-
-            _payBackBondHolders(payBackAmount);
+            _payBackBondHolders();
 
             return;
         }
