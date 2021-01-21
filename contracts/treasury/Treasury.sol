@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.6.0;
+pragma solidity ^0.6.10;
 
 import '@openzeppelin/contracts/math/Math.sol';
 import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
@@ -88,6 +88,7 @@ contract Treasury is TreasurySetters {
     }
 
     function migrate(address target) public onlyOperator checkOperator {
+        require(target != address(0), 'Treasury: migrate to the zero address');
         require(!migrated, 'Treasury: migrated');
 
         // cash
@@ -174,6 +175,9 @@ contract Treasury is TreasurySetters {
                 msg.sender,
                 block.timestamp
             );
+
+        // set approve to 0 after transfer
+        ICustomERC20(dai).safeApprove(uniswapRouter, 0);
 
         // we do this to understand how much ARTH was bought back as without this, we
         // could witness a flash loan attack. (given that the minted amount of ARTHB
@@ -267,6 +271,8 @@ contract Treasury is TreasurySetters {
                 msg.sender,
                 block.timestamp
             );
+            // set approve to 0 after transfer
+            ICustomERC20(cash).safeApprove(uniswapRouter, 0);
         } else {
             // or just hand over the ARTH directly
             ICustomERC20(cash).safeTransfer(msg.sender, amount);

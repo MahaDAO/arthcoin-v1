@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.6.0;
+pragma solidity ^0.6.12;
 
 import '@openzeppelin/contracts/math/SafeMath.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
@@ -23,7 +23,7 @@ contract StakingTimelock is Ownable {
     }
 
     modifier checkLockDuration {
-        StakingDetails memory _stakerDetails = _stakingDetails[msg.sender];
+        StakingDetails storage _stakerDetails = _stakingDetails[msg.sender];
 
         require(_stakerDetails.lastStakedOn != 0);
         require(_stakerDetails.lastStakedAmount != 0);
