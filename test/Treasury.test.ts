@@ -392,9 +392,10 @@ describe('Treasury', () => {
             (await bond.totalSupply()).sub(accumulatedSeigniorage)
           );
 
-          console.log(oldCashBalanceOfTreasury);
+          // TODO: check emit for all respective events.
+          await expect(treasury.connect(ant).allocateSeigniorage()).to.emit(treasury, 'TreasuryFunded');
 
-          // expect(await cash.totalSupply()).to.eq(oldCashSupply.add(ETH.mul(200)).add(treasuryReserve));
+          expect(await cash.totalSupply()).to.eq(oldCashSupply.add(ETH.mul(200)).add(treasuryReserve));
           expect(await cash.balanceOf(ant.address)).to.eq(oldCashBalanceOfAnt.add(ETH.mul(200)));
           expect(await cash.balanceOf(treasury.address)).to.eq(oldCashBalanceOfTreasury.add(treasuryReserve));
         });
@@ -408,7 +409,7 @@ describe('Treasury', () => {
           const oldCashBalanceOfTreasury = await cash.balanceOf(treasury.address);
 
           let seigniorage = await treasury.estimateSeignorageToMint(cashPrice); // all are same oracle.
-          let accumulatedSeigniorage = await treasury.accumulatedSeigniorage();
+          let accumulatedSeigniorage = await treasury.connect(ant).accumulatedSeigniorage();
           const ecosystemFundAllocationRate = await treasury.ecosystemFundAllocationRate();
           const ecosystemReserve = seigniorage.mul(ecosystemFundAllocationRate).div(100);
 
@@ -427,9 +428,19 @@ describe('Treasury', () => {
           const arthLiquidityBoardroomReserve = seigniorage.mul(await treasury.arthLiquidityBoardroomAllocationRate()).div(100);
           const mahaLiquidityBoardroomReserve = seigniorage.mul(await treasury.mahaLiquidityBoardroomAllocationRate()).div(100);
 
+          // TODO: check emit for all respective events.
+          await expect(treasury.connect(ant).allocateSeigniorage()).to.emit(treasury, 'TreasuryFunded')
+
           expect(await cash.totalSupply()).to.eq(oldCashSupply.add(ETH.mul(200)).add(seigniorage));
           expect(await cash.balanceOf(ant.address)).to.eq(oldCashBalanceOfAnt.add(ETH.mul(200)));
-          expect(await cash.balanceOf(treasury.address)).to.eq(oldCashBalanceOfTreasury.add(seigniorage).sub(ecosystemReserve).sub(arthBoardroomReserve).sub(arthLiquidityBoardroomReserve).sub(mahaLiquidityBoardroomReserve));
+          expect(await cash.balanceOf(treasury.address)).to.eq(
+            oldCashBalanceOfTreasury
+              .add(seigniorage)
+              .sub(ecosystemReserve)
+              .sub(arthBoardroomReserve)
+              .sub(arthLiquidityBoardroomReserve)
+              .sub(mahaLiquidityBoardroomReserve)
+          );
         });
 
         it('should move to next epoch after allocation', async () => {
