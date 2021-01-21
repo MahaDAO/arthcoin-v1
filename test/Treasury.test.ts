@@ -809,7 +809,7 @@ describe('Treasury', () => {
 
           await expect(treasury.connect(ant).redeemBonds(ETH, false))
             .to.emit(treasury, 'RedeemedBonds')
-            .withArgs(ant.address, ETH);
+            .withArgs(ant.address, ETH, false);
 
           expect(await bond.balanceOf(ant.address)).to.eq(ZERO); // 1:1
           expect(await cash.balanceOf(ant.address)).to.eq(ETH);
@@ -824,13 +824,25 @@ describe('Treasury', () => {
           const treasuryBalance = await cash.balanceOf(treasury.address);
           await bond.connect(operator).transfer(ant.address, treasuryBalance);
           await bond.connect(ant).approve(treasury.address, treasuryBalance);
-          await share.connect(operator).mint(ant.address, ETH);
-          await share.connect(ant).approve(treasury.address, ETH);
 
-          await treasury.connect(ant).redeemBonds(treasuryBalance, false);
+          const oldSeigniorage = await treasury.accumulatedSeigniorage()
+          const amount = bigmin(
+            oldSeigniorage,
+            treasuryBalance
+          )
 
-          expect(await bond.balanceOf(ant.address)).to.eq(ZERO);
-          expect(await cash.balanceOf(ant.address)).to.eq(treasuryBalance); // 1:1
+          const stabilityFee = await treasury.stabilityFee();
+          const stabilityFeeInArth = amount.mul(stabilityFee).div(100);
+          const stabilityFeeInMaha = (await treasury.getArthMahaOraclePrice()).mul(stabilityFeeInArth).div(ETH);
+
+          await share.connect(operator).mint(ant.address, stabilityFeeInMaha);
+          await share.connect(ant).approve(treasury.address, stabilityFeeInMaha);
+
+          await treasury.connect(ant).redeemBonds(amount, false);
+
+          expect(await bond.balanceOf(ant.address)).to.eq(treasuryBalance.sub(amount));
+          expect(await cash.balanceOf(ant.address)).to.eq(amount); // 1:1
+          expect(await treasury.accumulatedSeigniorage()).to.eq(oldSeigniorage.sub(amount));
         });
 
         it('should fail if redeem bonds with zero amount', async () => {
