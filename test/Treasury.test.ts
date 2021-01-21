@@ -561,7 +561,7 @@ describe('Treasury', () => {
       });
 
       describe('#buyBonds', () => {
-        it('should not work if cash price below $1 and in band region', async () => {
+        it('should not work if cash price < targetPrice and price > bondPurchasePrice', async () => {
           const cashPrice = ETH.mul(99).div(100); // $0.99
           await oracle.setPrice(cashPrice);
           await oracle.setEpoch(1);
@@ -581,7 +581,7 @@ describe('Treasury', () => {
           expect(await bond.balanceOf(ant.address)).to.eq(ZERO);
         });
 
-        it('should work if cash price below $1 and outside band region', async () => {
+        it('should work if cash price < targetPrice and price < bondPurchasePrice', async () => {
           const cashPrice = ETH.mul(90).div(100); // $0.99
           await oracle.setPrice(cashPrice);
           await oracle.setEpoch(1);
@@ -598,11 +598,10 @@ describe('Treasury', () => {
           expect(treasury.connect(ant).buyBonds(ETH, cashPrice))
 
           expect(await dai.balanceOf(ant.address)).to.eq(ZERO);
-          // TODO: use a proper number;
           expect(await bond.balanceOf(ant.address)).to.gt(ZERO);
         });
 
-        it('should fail if cash price over $1 but inside band', async () => {
+        it('should fail if cash price > targetPrice and price < bondRedemtionPrice', async () => {
           const cashPrice = ETH.mul(101).div(100); // $1.01
           await oracle.setPrice(cashPrice);
 
@@ -615,19 +614,6 @@ describe('Treasury', () => {
           ).to.revertedWith(
             'Treasury: cashPrice not eligible for bond purchase'
           );
-        });
-
-        it('should fail if cash price over $1 but update the conversion limit', async () => {
-          const cashPrice = ETH.mul(110).div(100); // $1.01
-          await oracle.setPrice(cashPrice);
-
-          await dai.connect(operator).transfer(ant.address, ETH);
-          await dai.connect(ant).approve(treasury.address, ETH);
-          await cash.connect(ant).approve(treasury.address, ETH);
-
-          await expect(treasury.connect(ant).buyBonds(ETH, cashPrice)).to.revertedWith(
-            'Treasury: cashPrice not eligible for bond purchase'
-          );;
         });
 
         it('should fail if price changed', async () => {
@@ -652,7 +638,7 @@ describe('Treasury', () => {
           ).to.revertedWith('Treasury: cannot purchase bonds with zero amount');
         });
 
-        it('should not update conversion limit if price is < but inside band', async () => {
+        it('should not update conversion limit if price is < targetPrice and price > bondPurchasePrice', async () => {
           const cashPrice = ETH.mul(99).div(100);
           await oracle.setPrice(cashPrice);
           await oracle.setEpoch(1);
@@ -682,7 +668,7 @@ describe('Treasury', () => {
           expect(status.acc).to.eq(newStatus.acc);
         });
 
-        it('should not update conversion limit if price is > but inside band', async () => {
+        it('should not update conversion limit if price is > targetPrice', async () => {
           const cashPrice = ETH.mul(101).div(100);
           await oracle.setPrice(cashPrice);
           await oracle.setEpoch(1);
@@ -710,7 +696,7 @@ describe('Treasury', () => {
           expect(status.acc).to.eq(newStatus.acc);
         });
 
-        it('should not update conversion limit if price is > but outside band', async () => {
+        it('should not update conversion limit if price is > targetPrice and price > bondRedemtionPrice', async () => {
           const cashPrice = ETH.mul(110).div(100);
           await oracle.setPrice(cashPrice);
           await oracle.setEpoch(1);
@@ -738,7 +724,7 @@ describe('Treasury', () => {
           expect(status.acc).to.eq(newStatus.acc);
         });
 
-        it('should update conversion limit if price < and outside band', async () => {
+        it('should update conversion limit if price < targetPrice and price < bondPurchasePrice', async () => {
           const cashPrice = ETH.mul(90).div(100);
           await oracle.setPrice(cashPrice);
           await oracle.setEpoch(1);
