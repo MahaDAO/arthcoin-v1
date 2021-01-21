@@ -45,13 +45,12 @@ abstract contract TreasuryGetters is TreasuryState {
         return IOracle(arthMahaOracle).getPrice();
     }
 
-    function getPercentDeviationFromTarget(uint256 price)
+    function getPercentDeviationFromTarget(uint256 price, uint256 targetPrice)
         public
         view
         returns (uint256)
     {
-        return
-            cashTargetPrice.sub(price).mul(1e18).mul(100).div(cashTargetPrice);
+        return targetPrice.sub(price).mul(1e18).mul(100).div(cashTargetPrice);
     }
 
     function getSeigniorageOraclePrice() public view returns (uint256) {
@@ -71,7 +70,8 @@ abstract contract TreasuryGetters is TreasuryState {
         returns (uint256)
     {
         if (price <= cashTargetPrice) return 0;
-        uint256 percentage = getPercentDeviationFromTarget(price);
+        uint256 percentage =
+            getPercentDeviationFromTarget(cashTargetPrice, price);
 
         uint256 finalPercentage =
             Math.min(percentage, maxSupplyIncreasePerEpoch);
@@ -85,7 +85,8 @@ abstract contract TreasuryGetters is TreasuryState {
         view
         returns (uint256)
     {
-        uint256 percentage = getPercentDeviationFromTarget(price);
+        uint256 percentage =
+            getPercentDeviationFromTarget(price, cashTargetPrice);
 
         // cap the bonds to be issed; we don't want too many
         return Math.min(percentage, maxDebtIncreasePerEpoch);

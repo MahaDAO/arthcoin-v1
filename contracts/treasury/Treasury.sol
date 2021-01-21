@@ -41,6 +41,7 @@ contract Treasury is TreasurySetters {
         address _arthMahaOracle,
         address _seigniorageOracle,
         address _arthLiquidityBoardroom,
+        address _mahaLiquidityBoardroom,
         address _arthBoardroom,
         address _fund,
         address _uniswapRouter,
@@ -63,6 +64,7 @@ contract Treasury is TreasurySetters {
         // funds
         arthLiquidityBoardroom = _arthLiquidityBoardroom;
         arthBoardroom = _arthBoardroom;
+        mahaLiquidityBoardroom = _mahaLiquidityBoardroom;
         ecosystemFund = _fund;
 
         // others
@@ -329,6 +331,8 @@ contract Treasury is TreasurySetters {
         }
 
         uint256 seigniorage = estimateSeignorageToMint(cash12hPrice);
+        if (seigniorage == 0) return;
+
         IBasisAsset(cash).mint(address(this), seigniorage);
         emit SeigniorageMinted(seigniorage);
 

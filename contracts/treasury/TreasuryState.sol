@@ -49,8 +49,10 @@ abstract contract TreasuryState is ContractGuard, Epoch {
 
     // these govern how much bond tokens are issued
     uint256 public cashToBondConversionLimit = 0;
-    uint256 public accumulatedSeigniorage = 0;
     uint256 public accumulatedBonds = 0;
+
+    // this governs how much cash tokens are issued
+    uint256 public accumulatedSeigniorage = 0;
 
     // flag whether we should considerUniswapLiquidity or not.
     bool public considerUniswapLiquidity = false;
@@ -103,7 +105,8 @@ abstract contract TreasuryState is ContractGuard, Epoch {
             Operator(cash).operator() == address(this) &&
                 Operator(bond).operator() == address(this) &&
                 Operator(arthLiquidityBoardroom).operator() == address(this) &&
-                Operator(arthBoardroom).operator() == address(this),
+                Operator(arthBoardroom).operator() == address(this) &&
+                Operator(mahaLiquidityBoardroom).operator() == address(this),
             'Treasury: need more permission'
         );
         _;
