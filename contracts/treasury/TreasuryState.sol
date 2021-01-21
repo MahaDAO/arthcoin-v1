@@ -54,13 +54,16 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     bool public considerUniswapLiquidity = false;
 
     // used to limit how much of the supply is converted into bonds
-    uint256 public bondConversionRate = 5; // in %
+    uint256 public maxDebtIncreasePerEpoch = 10; // in %
+
     // the discount given to bond purchasers
     uint256 public bondDiscount = 20; // in %
-    // used to trigger bond generation if price > (targetPrice + % ) above it.
+
+    // the band beyond which bond purchase or protocol expansion happens.
     uint256 public safetyRegion = 5; // in %
-    // used to trigger bond generation if price < (targetPrice - %) above it.
-    uint256 public triggerBondAllocationLowerBandRate = 5; // in %
+
+    // at the most how much % of the supply should be increased
+    uint256 public maxSupplyIncreasePerEpoch = 30;
 
     // the ecosystem fund recieves seigniorage before anybody else; this
     // value decides how much of the new seigniorage is sent to this fund.

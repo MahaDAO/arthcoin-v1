@@ -50,12 +50,13 @@ abstract contract TreasuryGetters is TreasuryState {
         return IOracle(arthMahaOracle).getPrice();
     }
 
-    function getPercentDeviationFromTarget(uint256 cash1hPrice)
+    function getPercentDeviationFromTarget(uint256 price)
         public
         view
         returns (uint256)
     {
-        return cashTargetPrice.sub(cash1hPrice).mul(1e18).div(cashTargetPrice);
+        return
+            cashTargetPrice.sub(price).mul(1e18).mul(100).div(cashTargetPrice);
     }
 
     function getSeigniorageOraclePrice() public view returns (uint256) {
@@ -66,12 +67,45 @@ abstract contract TreasuryGetters is TreasuryState {
         return IERC20(cash).totalSupply().sub(accumulatedSeigniorage);
     }
 
+    /**
+     * Understand how much Seignorage should be minted
+     */
+    function estimateSeignorageToMint(uint256 price)
+        public
+        view
+        returns (uint256)
+    {
+        if (price <= cashTargetPrice) return 0;
+        uint256 percentage = getPercentDeviationFromTarget(price);
+
+        uint256 finalPercentage =
+            Math.min(percentage, maxSupplyIncreasePerEpoch);
+
+        // todo consider how much liquidity is there in the ARTH uniswap pool
+        return arthCirculatingSupply().mul(finalPercentage).div(100);
+    }
+
+    function estimatePercentageOfBondsToIssue(uint256 price)
+        public
+        view
+        returns (uint256)
+    {
+        uint256 percentage = getPercentDeviationFromTarget(price);
+
+        // cap the bonds to be issed; we don't want too many
+        return Math.min(percentage, maxDebtIncreasePerEpoch);
+    }
+
     function getBondRedemtionPrice() public view returns (uint256) {
-        return cashTargetPrice.mul(safetyRegion.add(100)).div(100); // 1.05%
+        return cashTargetPrice; // 1$
+    }
+
+    function getExpansionLimitPrice() public view returns (uint256) {
+        return cashTargetPrice.mul(safetyRegion.add(100)).div(100); // 1.05$
     }
 
     function getBondPurchasePrice() public view returns (uint256) {
-        return cashTargetPrice.mul(uint256(100).sub(safetyRegion)).div(100); // 0.95%
+        return cashTargetPrice.mul(uint256(100).sub(safetyRegion)).div(100); // 0.95$
     }
 
     function getCashSupplyInLiquidity() public view returns (uint256) {
