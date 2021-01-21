@@ -6,6 +6,7 @@ const ARTH = artifacts.require('ARTH');
 const MAHA = artifacts.require('MahaToken');
 const MockDai = artifacts.require('MockDai');
 const GMUOracle = artifacts.require('GMUOracle');
+const UniswapV2Factory = artifacts.require('UniswapV2Factory');
 const UniswapV2Router02 = artifacts.require('UniswapV2Router02');
 
 const ArthMahaOracle = artifacts.require("ArthMahaTestnetOracle");
@@ -47,8 +48,13 @@ async function migration(deployer, network, accounts) {
   const cash = await ARTH.deployed();
   const share = await MAHA.deployed();
 
-  // Fetch the deployed uniswap contract.
+  // Fetch the deployed uniswap factory contract.
   const uniswap = network === 'mainnet' || network === 'ropsten'
+    ? await UniswapV2Factory.at(knownContracts.UniswapV2Factory[network])
+    : await UniswapV2Factory.deployed();
+
+  // Fetch the deployed uniswap router contract.
+  const uniswapRouter = network === 'mainnet' || network === 'ropsten'
     ? await UniswapV2Router02.at(knownContracts.UniswapV2Router02[network])
     : await UniswapV2Router02.deployed();
 
@@ -78,7 +84,7 @@ async function migration(deployer, network, accounts) {
   console.log('Deploying mahadai oracle.')
   await deployer.deploy(
     ArthMahaOracle,
-    uniswap.address,
+    uniswapRouter.address,
     cash.address,
     dai.address,
     share.address,
