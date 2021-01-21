@@ -12,7 +12,6 @@ import '../interfaces/IBoardroom.sol';
 import '../interfaces/IBasisAsset.sol';
 import '../interfaces/ISimpleERCFund.sol';
 import '../lib/Babylonian.sol';
-import '../curve/Curve.sol';
 
 import '../lib/FixedPoint.sol';
 import '../lib/Safe112.sol';
@@ -28,10 +27,6 @@ import {IUniswapV2Router02} from '../interfaces/IUniswapV2Router02.sol';
 abstract contract TreasuryGetters is TreasuryState {
     function getReserve() public view returns (uint256) {
         return accumulatedSeigniorage;
-    }
-
-    function getBondConversionRate() public view returns (uint256) {
-        return bondConversionRate;
     }
 
     function getStabilityFee() public view returns (uint256) {
@@ -125,10 +120,6 @@ abstract contract TreasuryGetters is TreasuryState {
             uniswapLiquidityPairCashBalance.mul(100).div(
                 ICustomERC20(cash).totalSupply()
             );
-    }
-
-    function getCeilingPrice() public view returns (uint256) {
-        return ICurve(curve).calcCeiling(arthCirculatingSupply());
     }
 
     function get1hourEpoch() public view returns (uint256) {

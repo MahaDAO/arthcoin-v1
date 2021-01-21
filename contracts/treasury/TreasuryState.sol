@@ -34,6 +34,8 @@ abstract contract TreasuryState is ContractGuard, Epoch {
 
     address public arthLiquidityBoardroom;
     address public arthBoardroom;
+    address public mahaLiquidityBoardroom;
+
     address public ecosystemFund;
 
     // oracles
@@ -46,7 +48,6 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     uint256 public cashTargetPrice = 1e18;
 
     // these govern how much bond tokens are issued
-    address public curve;
     uint256 public cashToBondConversionLimit = 0;
     uint256 public accumulatedSeigniorage = 0;
     uint256 public accumulatedBonds = 0;
@@ -80,7 +81,7 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     // TODO: make one for maha holders and one for the various community pools
     uint256 public arthLiquidityBoardroomAllocationRate = 60; // In %.
     uint256 public arthBoardroomAllocationRate = 40; // IN %.
-    uint256 public mahaBoardroomAllocationRate = 0; // IN %.
+    uint256 public mahaLiquidityBoardroomAllocationRate = 0; // IN %.
 
     // stability fee is a special fee charged by the protocol in MAHA tokens
     // whenever a person is going to redeem his/her bonds. the fee is charged

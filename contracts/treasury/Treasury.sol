@@ -8,7 +8,6 @@ import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
 
 import '../interfaces/ICustomERC20.sol';
 import '../interfaces/IUniswapV2Factory.sol';
-import {ICurve} from '../curve/Curve.sol';
 import {IOracle} from '../interfaces/IOracle.sol';
 import {IMultiUniswapOracle} from '../interfaces/IMultiUniswapOracle.sol';
 import {IUniswapV2Router02} from '../interfaces/IUniswapV2Router02.sol';
@@ -44,7 +43,6 @@ contract Treasury is TreasurySetters {
         address _arthBoardroom,
         address _fund,
         address _uniswapRouter,
-        address _curve,
         address _gmuOracle,
         uint256 _startTime,
         uint256 _period
@@ -68,7 +66,6 @@ contract Treasury is TreasurySetters {
 
         // others
         uniswapRouter = _uniswapRouter;
-        curve = _curve;
 
         // _updateCashPrice();
     }

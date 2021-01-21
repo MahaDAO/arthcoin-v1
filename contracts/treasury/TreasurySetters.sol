@@ -51,12 +51,6 @@ abstract contract TreasurySetters is TreasuryGetters {
         safetyRegion = rate;
     }
 
-    function setBondConversionRate(uint256 rate) public onlyOwner {
-        require(rate >= 0, 'Treasury: rate should be <= 0');
-        require(rate <= 100, 'Treasury: rate should be >= 0');
-        bondConversionRate = rate;
-    }
-
     function setBondSeigniorageRate(uint256 rate) public onlyOwner {
         require(rate >= 0, 'Treasury: rate < 0');
         require(rate <= 100, 'Treasury: rate >= 0');
@@ -73,7 +67,7 @@ abstract contract TreasurySetters is TreasuryGetters {
         arthBoardroom = newFund;
         arthBoardroomAllocationRate = rate;
 
-        emit ArthBoardroomChanged(newFund, rate);
+        emit BoardroomChanged(newFund, rate, 'arth');
     }
 
     function setArthLiquidityBoardroom(address newFund, uint256 rate)
@@ -86,40 +80,60 @@ abstract contract TreasurySetters is TreasuryGetters {
         arthLiquidityBoardroom = newFund;
         arthLiquidityBoardroomAllocationRate = rate;
 
-        emit ArthLiquidityBoardroomChanged(newFund, rate);
+        emit BoardroomChanged(newFund, rate, 'arthLiquidity');
+    }
+
+    function setMahaLiquidityBoardroom(address newFund, uint256 rate)
+        public
+        onlyOwner
+    {
+        require(rate >= 0, 'Treasury: rate < 0');
+        require(rate < 100, 'Treasury: rate >= 0');
+
+        mahaLiquidityBoardroom = newFund;
+        mahaLiquidityBoardroomAllocationRate = rate;
+
+        emit BoardroomChanged(newFund, rate, 'mahaLiquidity');
     }
 
     // ORACLE
-    function setBondOracle(address newOracle) public onlyOperator {
+    function setBondOracle(address newOracle) public onlyOwner {
         address oldOracle = bondOracle;
         bondOracle = newOracle;
-        emit BondOracleChanged(msg.sender, oldOracle, newOracle);
+        emit OracleChanged(msg.sender, oldOracle, newOracle, 'bondOracle');
     }
 
-    function setSeigniorageOracle(address newOracle) public onlyOperator {
+    function setSeigniorageOracle(address newOracle) public onlyOwner {
         address oldOracle = seigniorageOracle;
         seigniorageOracle = newOracle;
-        emit SeigniorageOracleChanged(msg.sender, oldOracle, newOracle);
+        emit OracleChanged(
+            msg.sender,
+            oldOracle,
+            newOracle,
+            'seigniorageOracle'
+        );
     }
 
-    event BondOracleChanged(
+    function setGMUOracle(address newOracle) public onlyOwner {
+        address oldOracle = seigniorageOracle;
+        gmuOracle = newOracle;
+        emit OracleChanged(msg.sender, oldOracle, newOracle, 'gmuOracle');
+    }
+
+    function setArthMahaOracle(address newOracle) public onlyOwner {
+        address oldOracle = seigniorageOracle;
+        arthMahaOracle = newOracle;
+        emit OracleChanged(msg.sender, oldOracle, newOracle, 'arthMahaOracle');
+    }
+
+    event OracleChanged(
         address indexed operator,
         address oldOracle,
-        address newOracle
-    );
-    event SeigniorageOracleChanged(
-        address indexed operator,
-        address oldOracle,
-        address newOracle
-    );
-    event CeilingCurveChanged(
-        address indexed operator,
-        address oldCurve,
-        address newCurve
+        address newOracle,
+        string label
     );
     event EcosystemFundChanged(address newFund, uint256 newRate);
-    event ArthBoardroomChanged(address newFund, uint256 newRate);
-    event ArthLiquidityBoardroomChanged(address newFund, uint256 newRate);
+    event BoardroomChanged(address newFund, uint256 newRate, string label);
     event StabilityFeeChanged(uint256 old, uint256 newRate);
     event BondSeigniorageRateChanged(uint256 newRate);
 }

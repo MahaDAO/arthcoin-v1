@@ -64,7 +64,7 @@ abstract contract ShareWrapper is StakingTimelock, Operator {
     }
 }
 
-contract Boardroom is ShareWrapper, ContractGuard, Operator {
+contract Boardroom is ShareWrapper, ContractGuard {
     using SafeERC20 for IERC20;
     using Address for address;
     using SafeMath for uint256;
