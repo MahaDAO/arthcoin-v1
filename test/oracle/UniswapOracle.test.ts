@@ -40,19 +40,19 @@ describe('Uniswap oracle', () => {
   const MINUTE = 60;
   const DAY = 86400;
   const ETH = utils.parseEther('1');
-  const ZERO_ADDR = '0x0000000000000000000000000000000000000000';
 
   const { provider } = ethers;
 
   let operator: SignerWithAddress;
+  let whale: SignerWithAddress;
 
   before('setup accounts', async () => {
-    [operator] = await ethers.getSigners();
+    [operator, whale] = await ethers.getSigners();
   });
 
   let Cash: ContractFactory;
   let Share: ContractFactory;
-  let UniswapOracle: ContractFactory;
+  let Oracle: ContractFactory;
   let MockDAI: ContractFactory;
 
   // uniswap
@@ -68,7 +68,7 @@ describe('Uniswap oracle', () => {
   before('fetch contract factories', async () => {
     Cash = await ethers.getContractFactory('ARTH');
     Share = await ethers.getContractFactory('MahaToken');
-    UniswapOracle = await ethers.getContractFactory('UniswapOracle');
+    Oracle = await ethers.getContractFactory('UniswapOracle');
     MockDAI = await ethers.getContractFactory('MockDai');
   });
 
@@ -85,12 +85,14 @@ describe('Uniswap oracle', () => {
 
   let dai: Contract;
   let cash: Contract;
+  let share: Contract;
   let oracle: Contract;
   let oracleStartTime: BigNumber;
 
   beforeEach('deploy contracts', async () => {
     dai = await MockDAI.connect(operator).deploy();
     cash = await Cash.connect(operator).deploy();
+    share = await Share.connect(operator).deploy();
 
     await dai.connect(operator).mint(operator.address, ETH.mul(2));
     await dai.connect(operator).approve(router.address, ETH.mul(2));
@@ -100,13 +102,10 @@ describe('Uniswap oracle', () => {
     await addLiquidity(provider, operator, router, cash, dai, ETH);
 
     oracleStartTime = BigNumber.from(await latestBlocktime(provider)).add(DAY);
-    oracle = await UniswapOracle.connect(operator).deploy(
-      router.address,
+    oracle = await Oracle.connect(operator).deploy(
+      factory.address,
       cash.address,
       dai.address,
-      ZERO_ADDR,
-      ZERO_ADDR,
-      2,
       DAY,
       oracleStartTime
     );
@@ -131,7 +130,6 @@ describe('Uniswap oracle', () => {
 
       expect(await oracle.nextEpochPoint()).to.eq(oracleStartTime.add(DAY));
       expect(await oracle.getCurrentEpoch()).to.eq(BigNumber.from(0));
-
       // check double update
       await expect(oracle.update()).to.revertedWith('Epoch: not allowed');
     });
