@@ -152,7 +152,6 @@ describe('Timelock', () => {
       arthBoardroom.address,
       developmentFund.address,
       uniswapRouter.address,
-      curve.address,
       gmuOracle.address,
       startTime,
       5 * 60
@@ -202,7 +201,6 @@ describe('Timelock', () => {
         arthBoardroom.address,
         developmentFund.address,
         uniswapRouter.address,
-        curve.address,
         gmuOracle.address,
         startTime,
         5 * 60

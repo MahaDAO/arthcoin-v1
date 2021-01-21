@@ -159,7 +159,6 @@ describe('Treasury', () => {
       arthBoardroom.address,
       developmentFund.address,
       uniswapRouter.address,
-      curve.address,
       gmuOracle.address,
       startTime,
       period
@@ -181,7 +180,6 @@ describe('Treasury', () => {
       arthBoardroom.address,
       developmentFund.address,
       uniswapRouter.address,
-      curve.address,
       gmuOracle.address,
       startTime,
       period
