@@ -291,15 +291,12 @@ contract Treasury is TreasurySetters {
         // update the bond limits
         _updateConversionLimit(cash1hPrice);
 
-        if (cash12hPrice <= getCeilingPrice()) {
+        if (cash12hPrice <= cashTargetPrice) {
             return; // just advance epoch instead revert
         }
 
         // calculate how much seigniorage should be minted basis deviation from target price
-        uint256 percentage =
-            (cash12hPrice.sub(cashTargetPrice)).mul(1e18).div(cashTargetPrice);
-
-        uint256 seigniorage = arthCirculatingSupply().mul(percentage).div(1e18);
+        uint256 seigniorage = estimateSeignorageToMint(cash12hPrice);
         IBasisAsset(cash).mint(address(this), seigniorage);
         emit SeigniorageMinted(seigniorage);
 
@@ -307,10 +304,19 @@ contract Treasury is TreasurySetters {
         uint256 ecosystemReserve = _allocateToEcosystemFund(seigniorage);
         seigniorage = seigniorage.sub(ecosystemReserve);
 
+        if (cash12hPrice <= getExpansionLimitPrice()) {
+            // if we are below the ceiling price (or expansion limit price) but
+            // above the target price, then we try to pay off all the bond holders
+            // as much as possible.
+            _allocateToBondHolers(seigniorage);
+            return;
+        }
+
         // keep 90% of the funds to bond token holders; and send the remaining to the boardroom
-        uint256 allocatedForTreasury =
+        uint256 allocatedForBondHolders =
             seigniorage.mul(bondSeigniorageRate).div(100);
-        uint256 treasuryReserve = _allocateToBondHolers(allocatedForTreasury);
+        uint256 treasuryReserve =
+            _allocateToBondHolers(allocatedForBondHolders);
         seigniorage = seigniorage.sub(treasuryReserve);
 
         // allocate everything else to the boardroom
@@ -439,13 +445,12 @@ contract Treasury is TreasurySetters {
             // in contraction mode; set a limit to how many bonds are there
 
             // understand how much % deviation do we have from target price
-            // if target price is 2.5$ and we are at 2$; then percentage
-            uint256 percentage = getPercentDeviationFromTarget(cash1hPrice);
+            // if target price is 2.5$ and we are at 2$; then percentage should be 20%
+            uint256 percentage = estimatePercentageOfBondsToIssue(cash1hPrice);
 
             // accordingly set the new conversion limit to be that % from the
             // current circulating supply of ARTH
             cashToBondConversionLimit = arthCirculatingSupply()
-            // .mul(bondConversionRate)
                 .mul(percentage)
                 .div(100)
                 .mul(getCashSupplyInLiquidity())
