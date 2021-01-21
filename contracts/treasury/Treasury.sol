@@ -466,7 +466,14 @@ contract Treasury is TreasurySetters {
         // check if we are in expansion phase.
         if (cash1hPrice >= bondRedemtionPrice) {
             // in expansion mode- expands supply.
-            uint256 percentage = getPercentTargetDevianceFromPrice(cash1hPrice);
+            (DeviationDirection direction, uint256 percentage) =
+                getDeviationFromTarget(cash1hPrice);
+
+            require(
+                direction == DeviationDirection.POSITIVE,
+                'Treasury: invalid state'
+            );
+
             uint256 expandSupplyAmount =
                 arthCirculatingSupply()
                     .mul(percentage)
@@ -501,7 +508,13 @@ contract Treasury is TreasurySetters {
 
             // understand how much % deviation do we have from target price
             // if target price is 2.5$ and we are at 2$; then percentage
-            uint256 percentage = getPercentDeviationFromTarget(cash1hPrice);
+            (DeviationDirection direction, uint256 percentage) =
+                getDeviationFromTarget(cash1hPrice);
+
+            require(
+                direction == DeviationDirection.NEGATIVE,
+                'Treasury: invalid state'
+            );
 
             // accordingly set the new conversion limit to be that % from the
             // current circulating supply of ARTH and if uniswap enabled then uniswap liquidity.

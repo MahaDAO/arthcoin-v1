@@ -62,6 +62,8 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     uint256 public safetyRegion = 5; // in %
     // used to trigger bond generation if price < (targetPrice - %) below it.
     uint256 public triggerBondAllocationLowerBandRate = 5; // in %
+    // used to get direction of deviation.
+    enum DeviationDirection {POSITIVE, NEGATIVE}
 
     // stops seigniorage allocation; when price deviation is > than this.
     uint256 public stopSeigniorageAtDeviationRate = 30; // in %
