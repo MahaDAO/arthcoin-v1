@@ -70,8 +70,9 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     // value decides how much of the new seigniorage is sent to this fund.
     uint256 public ecosystemFundAllocationRate = 2; // in %
 
-    // this controls how much of the new seigniorage is given to bond token holders.
-    // ideally 90% of new seigniorate is given to bond token holders.
+    // this controls how much of the new seigniorage is given to bond token holders
+    // when we are in expansion mode. ideally 90% of new seigniorate is
+    // given to bond token holders.
     uint256 public bondSeigniorageRate = 90; // in %
 
     // we decide how much allocation to give to the boardrooms. there
@@ -79,9 +80,9 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     // ARTH liqudity providers
     //
     // TODO: make one for maha holders and one for the various community pools
-    uint256 public arthLiquidityBoardroomAllocationRate = 60; // In %.
-    uint256 public arthBoardroomAllocationRate = 40; // IN %.
-    uint256 public mahaLiquidityBoardroomAllocationRate = 0; // IN %.
+    uint256 public arthLiquidityBoardroomAllocationRate = 70; // In %.
+    uint256 public arthBoardroomAllocationRate = 20; // IN %.
+    uint256 public mahaLiquidityBoardroomAllocationRate = 10; // IN %.
 
     // stability fee is a special fee charged by the protocol in MAHA tokens
     // whenever a person is going to redeem his/her bonds. the fee is charged

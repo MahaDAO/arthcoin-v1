@@ -79,7 +79,7 @@ contract Treasury is TreasurySetters {
     function initialize() public checkOperator {
         require(!initialized, 'Treasury: initialized');
 
-        // set accumulatedSeigniorage to it's balance
+        // set accumulatedSeigniorage to the treasury's balance
         accumulatedSeigniorage = IERC20(cash).balanceOf(address(this));
 
         initialized = true;
@@ -292,6 +292,31 @@ contract Treasury is TreasurySetters {
             return; // just advance epoch instead revert
         }
 
+        if (cash12hPrice <= getExpansionLimitPrice()) {
+            // if we are below the ceiling price (or expansion limit price) but
+            // above the target price, then we try to pay off all the bond holders
+            // as much as possible.
+
+            // calculate how much seigniorage should be minted basis deviation from target price
+            uint256 seigniorage = estimateSeignorageToMint(cash12hPrice);
+
+            // check how much should we be paying to bond holders
+            uint256 treasuryReserve =
+                Math.min(
+                    seigniorage,
+                    ICustomERC20(bond).totalSupply().sub(accumulatedSeigniorage)
+                );
+
+            // if we don't have to pay them anything return..
+            if (treasuryReserve == 0) return;
+
+            // we have to pay them some amount; so mint, distribute and return
+            IBasisAsset(cash).mint(address(this), treasuryReserve);
+            emit SeigniorageMinted(treasuryReserve);
+            _allocateToBondHolers(treasuryReserve);
+            return;
+        }
+
         // calculate how much seigniorage should be minted basis deviation from target price
         uint256 seigniorage = estimateSeignorageToMint(cash12hPrice);
         IBasisAsset(cash).mint(address(this), seigniorage);
@@ -300,14 +325,6 @@ contract Treasury is TreasurySetters {
         // send funds to the community development fund
         uint256 ecosystemReserve = _allocateToEcosystemFund(seigniorage);
         seigniorage = seigniorage.sub(ecosystemReserve);
-
-        if (cash12hPrice <= getExpansionLimitPrice()) {
-            // if we are below the ceiling price (or expansion limit price) but
-            // above the target price, then we try to pay off all the bond holders
-            // as much as possible.
-            _allocateToBondHolers(seigniorage);
-            return;
-        }
 
         // keep 90% of the funds to bond token holders; and send the remaining to the boardroom
         uint256 allocatedForBondHolders =
@@ -333,7 +350,7 @@ contract Treasury is TreasurySetters {
                 ecosystemReserve,
                 'Treasury: Ecosystem Seigniorage Allocation'
             );
-            emit PoolFunded(ecosystemFund, ecosystemReserve);
+            emit PoolFunded(ecosystemFund, ecosystemReserve, 'ecosystemFund');
             return ecosystemReserve;
         }
 
@@ -399,6 +416,8 @@ contract Treasury is TreasurySetters {
             boardroomReserve.mul(arthLiquidityBoardroomAllocationRate).div(100);
         uint256 arthBoardroomReserve =
             boardroomReserve.mul(arthBoardroomAllocationRate).div(100);
+        uint256 mahaLiquidityBoardroomReserve =
+            boardroomReserve.mul(mahaLiquidityBoardroomAllocationRate).div(100);
 
         if (arthLiquidityBoardroomReserve > 0) {
             ICustomERC20(cash).safeApprove(
@@ -410,14 +429,30 @@ contract Treasury is TreasurySetters {
             );
             emit PoolFunded(
                 arthLiquidityBoardroom,
-                arthLiquidityBoardroomReserve
+                arthLiquidityBoardroomReserve,
+                'arthLiquidity'
             );
         }
 
         if (arthBoardroomReserve > 0) {
             ICustomERC20(cash).safeApprove(arthBoardroom, arthBoardroomReserve);
             IBoardroom(arthBoardroom).allocateSeigniorage(arthBoardroomReserve);
-            emit PoolFunded(arthBoardroom, arthBoardroomReserve);
+            emit PoolFunded(arthBoardroom, arthBoardroomReserve, 'arth');
+        }
+
+        if (mahaLiquidityBoardroomReserve > 0) {
+            ICustomERC20(cash).safeApprove(
+                mahaLiquidityBoardroom,
+                mahaLiquidityBoardroomReserve
+            );
+            IBoardroom(mahaLiquidityBoardroom).allocateSeigniorage(
+                mahaLiquidityBoardroomReserve
+            );
+            emit PoolFunded(
+                mahaLiquidityBoardroom,
+                mahaLiquidityBoardroomReserve,
+                'mahaLiquidity'
+            );
         }
     }
 
@@ -473,6 +508,6 @@ contract Treasury is TreasurySetters {
     event TreasuryFunded(uint256 timestamp, uint256 seigniorage);
     event SeigniorageMinted(uint256 seigniorage);
     event BondsAllocated(uint256 limit);
-    event PoolFunded(address indexed pool, uint256 seigniorage);
+    event PoolFunded(address indexed pool, uint256 seigniorage, string label);
     event StabilityFeesCharged(address indexed from, uint256 stabilityFeeValue);
 }
