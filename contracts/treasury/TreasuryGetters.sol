@@ -4,7 +4,7 @@ pragma solidity ^0.6.10;
 
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
-import '../interfaces/IOracle.sol';
+import '../interfaces/IUniswapOracle.sol';
 import '../interfaces/IBoardroom.sol';
 import '../interfaces/IBasisAsset.sol';
 import '../interfaces/ISimpleERCFund.sol';
@@ -123,7 +123,7 @@ abstract contract TreasuryGetters is TreasuryState {
     }
 
     function _getCashPrice(address oracle) internal view returns (uint256) {
-        try IOracle(oracle).getPrice() returns (uint256 price) {
+        try IUniswapOracle(oracle).consult(cash, 1e18) returns (uint256 price) {
             return price;
         } catch {
             revert('Treasury: failed to consult cash price from the oracle');

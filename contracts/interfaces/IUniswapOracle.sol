@@ -10,5 +10,5 @@ interface IUniswapOracle {
     function consult(address token, uint256 amountIn)
         external
         view
-        returns (uint144 amountOut);
+        returns (uint256 amountOut);
 }

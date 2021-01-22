@@ -3,6 +3,7 @@ const { BigNumber } = require("ethers");
 const { DAY } = require('./config');
 
 
+const MahaLiquidityBoardroom = artifacts.require('MahaLiquidityBoardroom');
 const ArthLiquidityBoardroom = artifacts.require('ArthLiquidityBoardroom');
 const ArthBoardroom = artifacts.require('ArthBoardroom');
 const Treasury = artifacts.require('Treasury');
@@ -29,15 +30,18 @@ module.exports = async (deployer, network, accounts) => {
 
   const arthLiquidityBoardroom = await ArthLiquidityBoardroom.deployed();
   const arthBoardroom = await ArthBoardroom.deployed();
+  const mahaLiquidityBoardroom = await MahaLiquidityBoardroom.deployed();
 
-  for await (const contract of [cash, bond]) {
-    console.log(`transferring operator for ${contract.address} to ${treasury.address}`)
-    await contract.transferOperator(treasury.address);
-    console.log(`transferring ownership for ${contract.address} to ${treasury.address}`)
-    await contract.transferOwnership(treasury.address);
-  }
+
+  // for await (const contract of [bond]) {
+  //   console.log(`transferring operator for ${contract.address} to ${treasury.address}`)
+  //   await contract.transferOperator(treasury.address);
+  //   // console.log(`transferring ownership for ${contract.address} to ${treasury.address}`)
+  //   await contract.transferOwnership(treasury.address);
+  // }
 
   console.log('transferring operator for boardrooms')
+  await mahaLiquidityBoardroom.transferOperator(treasury.address);
   await arthLiquidityBoardroom.transferOperator(treasury.address);
   await arthBoardroom.transferOperator(treasury.address);
 

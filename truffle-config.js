@@ -74,22 +74,22 @@ module.exports = {
         )
       },
       network_id: 42,
-      gasPrice: 10000000000,
-      gas: 6721975, // Any network (default: none)
+      gasPrice: 1 * 1000000000,
+      gas: 12487794, // Any network (default: none)
     },
     ropsten: {
       skipDryRun: true,
       provider: function () {
         return new HDWalletProvider(
           [process.env.METAMASK_WALLET_SECRET],
-          `https://ropsten.infura.io/v3/${process.env.INFURA_PROJECT_ID}`
+          `https://weathered-young-wave.quiknode.io/75809a67-435c-4d8b-a287-649990316295/IHZHq4dJhpdQq85_QIA5Uidl_btMGwikH8tF3VNPZsgoFhaetWDXXdmkavW1TaTf5JrVwFWnMsx8aJ-fR01pTg==/`
         )
       },
       network_id: 3,
       confirmation: 1,
 
       gasPrice: 5 * 1000000000,
-      gas: 6721975, // Any network (default: none)
+      gas: 8000000, // Any network (default: none)
     },
     // Another network with more advanced options...
     // advanced: {
@@ -131,7 +131,7 @@ module.exports = {
       settings: {          // See the solidity docs for advice about optimization and evmVersion
         optimizer: {
           enabled: true,
-          runs: 1500
+          runs: 500
         },
         //  evmVersion: "byzantium"
       }
