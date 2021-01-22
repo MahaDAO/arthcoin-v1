@@ -76,8 +76,13 @@ abstract contract TreasuryGetters is TreasuryState {
         uint256 finalPercentage =
             Math.min(percentage, maxSupplyIncreasePerEpoch);
 
-        // todo consider how much liquidity is there in the ARTH uniswap pool
-        return arthCirculatingSupply().mul(finalPercentage).div(100);
+        // take into consideration uniswap liq. if flag is on, how much liquidity is there in the ARTH uniswap pool
+        return
+            arthCirculatingSupply()
+                .mul(finalPercentage)
+                .div(100)
+                .mul(getCashSupplyInLiquidity())
+                .div(100);
     }
 
     function estimatePercentageOfBondsToIssue(uint256 price)
