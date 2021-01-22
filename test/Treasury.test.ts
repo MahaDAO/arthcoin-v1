@@ -377,23 +377,24 @@ describe('Treasury', () => {
         });
 
         it('should fund all', async () => {
-          const cashPrice = ETH.mul(110).div(100);
+          const cashPrice = ETH.mul(200).div(100);
           await oracle.setPrice(cashPrice);
 
           const oldCashBalanceOfAnt = await cash.balanceOf(ant.address);
 
           const treasuryHoldings = await treasury.getReserve();
-          let expectedSeigniorage = await treasury.estimateSeignorageToMint(cashPrice);
+          // let expectedSeigniorage = await treasury.estimateSeignorageToMint(cashPrice);
 
-          // // calculate with circulating supply
-          // const cashSupply = (await cash.totalSupply()).sub(treasuryHoldings);
-          // const percentage = bigmin(
-          //   cashPrice.sub(ETH).mul(ETH).div(ETH).div(100),
-          //   await treasury.maxSupplyIncreasePerEpoch()
-          // );
-          // let expectedSeigniorage = cashSupply
-          //   .mul(percentage)
-          //   .div(100);
+          // calculate with circulating supply
+          const cashSupply = (await cash.totalSupply()).sub(treasuryHoldings).add(ETH.mul(200));
+          const percentage = bigmin(
+            cashPrice.sub(ETH).mul(ETH).div(ETH).div(100),
+            await treasury.maxSupplyIncreasePerEpoch()
+          );
+          let expectedSeigniorage = cashSupply
+            .mul(percentage)
+            .div(100);
+          const mintedSeigniorage = expectedSeigniorage;
 
           // get all expected reserve
           const expectedFundReserve = expectedSeigniorage
@@ -416,7 +417,7 @@ describe('Treasury', () => {
           if (expectedSeigniorage.gt(ZERO)) {
             await expect(new Promise((resolve) => resolve(allocationResult)))
               .to.emit(treasury, 'SeigniorageMinted')
-              .withArgs(expectedSeigniorage);
+              .withArgs(mintedSeigniorage);
           }
           if (expectedFundReserve.gt(ZERO)) {
             await expect(new Promise((resolve) => resolve(allocationResult)))
@@ -469,7 +470,17 @@ describe('Treasury', () => {
           const oldCashBalanceOfAnt = await cash.balanceOf(ant.address);
           const oldCashBalanceOfTreasury = await cash.balanceOf(treasury.address);
 
-          const seigniorage = await treasury.estimateSeignorageToMint(cashPrice); // all are same oracle.
+          const treasuryHoldings = await treasury.getReserve();
+          const cashSupply = (await cash.totalSupply()).sub(treasuryHoldings).add(ETH.mul(200));
+          const percentage = bigmin(
+            cashPrice.sub(ETH).mul(ETH).div(ETH).div(100),
+            await treasury.maxSupplyIncreasePerEpoch()
+          );
+          let seigniorage = cashSupply
+            .mul(percentage)
+            .div(100);
+
+          // const seigniorage = await treasury.estimateSeignorageToMint(cashPrice); // all are same oracle.
           const accumulatedSeigniorage = await treasury.getReserve();
 
           const treasuryReserve = bigmin(
