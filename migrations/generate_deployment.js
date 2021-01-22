@@ -61,7 +61,7 @@ const UniswapV2Router02 = artifacts.require('UniswapV2Router02');
  * Main migrations
  */
 module.exports = async (callback) => {
-  const network = 'development';
+  const network = 'ropsten';
 
   // Set the main account, you'll be using accross all the files for various
   // important activities to your desired address in the .env file.
@@ -75,11 +75,11 @@ module.exports = async (callback) => {
       ? await IERC20.at(knownContracts.DAI[network])
       : await MockDai.deployed();
 
-    const factory = network === 'mainnet'
+    const factory = network === 'mainnet' || network == 'ropsten'
       ? await UniswapV2Factory.at(knownContracts.UniswapV2Factory[network])
       : await UniswapV2Factory.deployed()
 
-    const router = network === 'mainnet'
+    const router = network === 'mainnet' || network == 'ropsten'
       ? await UniswapV2Router02.at(knownContracts.UniswapV2Router02[network])
       : await UniswapV2Router02.deployed()
 

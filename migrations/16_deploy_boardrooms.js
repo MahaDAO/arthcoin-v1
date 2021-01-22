@@ -39,6 +39,8 @@ async function migration(deployer, network, accounts) {
 
   // Get the oracle pair of ARTH-DAI.
   const dai_arth_lpt = await bondRedemtionOralce.pairFor(uniswap.address, cash.address, dai.address);
+  const maha_weth_lpt = await bondRedemtionOralce.pairFor(uniswap.address, cash.address, dai.address);
+
 
   // Deploy ARTH-DAI liquidity boardroom.
   await deployer.deploy(ArthLiquidityBoardroom, cash.address, dai_arth_lpt, ARTH_LIQUIDITY_BOARDROOM_LOCK_DURATION);

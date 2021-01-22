@@ -9,27 +9,23 @@ import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
 import '../interfaces/ICustomERC20.sol';
 import '../interfaces/IUniswapV2Factory.sol';
 import {IOracle} from '../interfaces/IOracle.sol';
-import {IMultiUniswapOracle} from '../interfaces/IMultiUniswapOracle.sol';
 import {IUniswapOracle} from '../interfaces/IUniswapOracle.sol';
 import {IUniswapV2Router02} from '../interfaces/IUniswapV2Router02.sol';
 import {IBoardroom} from '../interfaces/IBoardroom.sol';
 import {IBasisAsset} from '../interfaces/IBasisAsset.sol';
 import {ISimpleERCFund} from '../interfaces/ISimpleERCFund.sol';
-import {Babylonian} from '../lib/Babylonian.sol';
-import {FixedPoint} from '../lib/FixedPoint.sol';
-import {Safe112} from '../lib/Safe112.sol';
 import {Operator} from '../owner/Operator.sol';
 import {Epoch} from '../utils/Epoch.sol';
 import {ContractGuard} from '../utils/ContractGuard.sol';
 
-import './TreasurySetters.sol';
+import './TreasuryHelpers.sol';
 
 /**
  * @title ARTH Treasury contract
  * @notice Monetary policy logic to adjust supplies of basis cash assets
  * @author Steven Enamakel & Yash Agrawal. Original code written by Summer Smith & Rick Sanchez
  */
-contract Treasury is TreasurySetters {
+contract Treasury is TreasuryHelpers {
     using SafeERC20 for ICustomERC20;
 
     constructor(
@@ -40,83 +36,43 @@ contract Treasury is TreasurySetters {
         address _bondOracle,
         address _arthMahaOracle,
         address _seigniorageOracle,
+        address _gmuOracle,
         address _arthLiquidityBoardroom,
         address _mahaLiquidityBoardroom,
         address _arthBoardroom,
         address _fund,
         address _uniswapRouter,
-        address _gmuOracle,
         uint256 _startTime,
         uint256 _period
-    ) public Epoch(_period, _startTime, 0) {
-        // tokens
-        dai = _dai;
-        cash = _cash;
-        bond = _bond;
-        share = _share;
-
-        // oracles
-        bondOracle = _bondOracle;
-        arthMahaOracle = _arthMahaOracle;
-        seigniorageOracle = _seigniorageOracle;
-        gmuOracle = _gmuOracle;
-
-        // funds
-        arthLiquidityBoardroom = _arthLiquidityBoardroom;
-        arthBoardroom = _arthBoardroom;
-        mahaLiquidityBoardroom = _mahaLiquidityBoardroom;
-        ecosystemFund = _fund;
-
-        // others
-        uniswapRouter = _uniswapRouter;
-
-        // _updateCashPrice();
-    }
-
-    modifier updatePrice {
-        _;
-
-        _updateCashPrice();
-    }
+    )
+        public
+        TreasuryHelpers(
+            _dai,
+            _cash,
+            _bond,
+            _share,
+            _bondOracle,
+            _arthMahaOracle,
+            _seigniorageOracle,
+            _gmuOracle,
+            _arthLiquidityBoardroom,
+            _mahaLiquidityBoardroom,
+            _arthBoardroom,
+            _fund,
+            _uniswapRouter,
+            _startTime,
+            _period
+        )
+    {}
 
     function initialize() public checkOperator {
-        require(!initialized, 'Treasury: initialized');
+        require(!initialized, '!initialized');
 
         // set accumulatedSeigniorage to the treasury's balance
         accumulatedSeigniorage = IERC20(cash).balanceOf(address(this));
 
         initialized = true;
         emit Initialized(msg.sender, block.number);
-    }
-
-    function migrate(address target) public onlyOperator checkOperator {
-        require(target != address(0), 'Treasury: migrate to the zero address');
-        require(!migrated, 'Treasury: migrated');
-
-        // cash
-        Operator(cash).transferOperator(target);
-        Operator(cash).transferOwnership(target);
-        ICustomERC20(cash).transfer(
-            target,
-            ICustomERC20(cash).balanceOf(address(this))
-        );
-
-        // bond
-        Operator(bond).transferOperator(target);
-        Operator(bond).transferOwnership(target);
-        ICustomERC20(bond).transfer(
-            target,
-            ICustomERC20(bond).balanceOf(address(this))
-        );
-
-        // share - disabled ownership and operator functions as MAHA tokens don't have these
-        ICustomERC20(share).transfer(
-            target,
-            ICustomERC20(share).balanceOf(address(this))
-        );
-
-        migrated = true;
-        emit Migration(target);
     }
 
     function buyBonds(uint256 amountInDai, uint256 targetPrice)
@@ -128,23 +84,17 @@ contract Treasury is TreasurySetters {
         updatePrice
         returns (uint256)
     {
-        require(
-            amountInDai > 0,
-            'Treasury: cannot purchase bonds with zero amount'
-        );
+        require(amountInDai > 0, 'zero amount');
 
         // Update the price to latest before using.
         uint256 cash1hPrice = getBondOraclePrice();
 
-        require(cash1hPrice <= targetPrice, 'Treasury: cash price moved');
+        require(cash1hPrice <= targetPrice, 'cash price moved');
         require(
             cash1hPrice <= getBondPurchasePrice(), // price < $0.95
-            'Treasury: cashPrice not eligible for bond purchase'
+            'cash price not eligible'
         );
-        require(
-            cashToBondConversionLimit > 0,
-            'Treasury: No more bonds to be redeemed'
-        );
+        require(cashToBondConversionLimit > 0, 'no more bonds');
 
         // Find the expected amount recieved when swapping the following
         // tokens on uniswap.
@@ -195,11 +145,11 @@ contract Treasury is TreasurySetters {
             );
 
         // if all good then mint ARTHB, burn ARTH and update the counters
-        require(cashToConvert > 0, 'Treasury: No more bonds to be redeemed');
+        require(cashToConvert > 0, 'no more bond limit');
 
         uint256 bondsToIssue =
             cashToConvert.mul(uint256(100).add(bondDiscount)).div(100);
-        accumulatedBonds = accumulatedBonds.add(cashToConvert);
+        accumulatedBonds = accumulatedBonds.add(bondsToIssue);
 
         // 3. Burn bought ARTH cash and mint bonds at the discounted price.
         // TODO: Set the minting amount according to bond price.
@@ -223,16 +173,16 @@ contract Treasury is TreasurySetters {
         checkOperator
         updatePrice
     {
-        require(amount > 0, 'Treasury: cannot redeem bonds with zero amount');
+        require(amount > 0, 'zero amount');
 
         uint256 cashPrice = _getCashPrice(bondOracle);
         require(
             cashPrice > getBondRedemtionPrice(), // price > $1.05
-            'Treasury: cashPrice less than ceiling'
+            'cashPrice less than ceiling'
         );
         require(
             ICustomERC20(cash).balanceOf(address(this)) >= amount,
-            'Treasury: treasury has not enough budget'
+            'treasury has not enough budget'
         );
 
         amount = Math.min(accumulatedSeigniorage, amount);
@@ -350,182 +300,4 @@ contract Treasury is TreasurySetters {
         // allocate everything else to the boardroom
         _allocateToBoardrooms(seigniorage);
     }
-
-    function _allocateToEcosystemFund(uint256 seigniorage)
-        internal
-        returns (uint256)
-    {
-        uint256 ecosystemReserve =
-            seigniorage.mul(ecosystemFundAllocationRate).div(100);
-        if (ecosystemReserve > 0) {
-            ICustomERC20(cash).safeApprove(ecosystemFund, ecosystemReserve);
-            ISimpleERCFund(ecosystemFund).deposit(
-                cash,
-                ecosystemReserve,
-                'Treasury: Ecosystem Seigniorage Allocation'
-            );
-            emit PoolFunded(ecosystemFund, ecosystemReserve, 'ecosystemFund');
-            return ecosystemReserve;
-        }
-
-        return 0;
-    }
-
-    /**
-     * Updates the cash price from the various oracles.
-     * TODO: this function needs to be optimised for gas
-     */
-    function _updateCashPrice() internal {
-        if (Epoch(bondOracle).callable()) {
-            try IUniswapOracle(bondOracle).update() {} catch {}
-        }
-
-        if (Epoch(seigniorageOracle).callable()) {
-            try IUniswapOracle(seigniorageOracle).update() {} catch {}
-        }
-
-        // TODO: do the same for the gmu oracle as well
-        // if (Epoch(seigniorageOracle).callable()) {
-        //     try IOracle(seigniorageOracle).update() {} catch {}
-        // }
-
-        cashTargetPrice = IOracle(gmuOracle).getPrice();
-    }
-
-    /**
-     * Helper function to allocate seigniorage to bond token holders. Seigniorage
-     * before the boardrooms get paid.
-     */
-    function _allocateToBondHolers(uint256 seigniorage)
-        internal
-        returns (uint256)
-    {
-        uint256 treasuryReserve =
-            Math.min(
-                seigniorage,
-                ICustomERC20(bond).totalSupply().sub(accumulatedSeigniorage)
-            );
-
-        if (treasuryReserve > 0) {
-            // update accumulated seigniorage
-            accumulatedSeigniorage = accumulatedSeigniorage.add(
-                treasuryReserve
-            );
-            emit TreasuryFunded(now, treasuryReserve);
-            return treasuryReserve;
-        }
-
-        return 0;
-    }
-
-    /**
-     * Helper function to allocate seigniorage to boardooms. Seigniorage is allocated
-     * after bond token holders have been paid first.
-     */
-    function _allocateToBoardrooms(uint256 boardroomReserve) internal {
-        if (boardroomReserve <= 0) return;
-
-        // Calculate boardroom reserves.
-        uint256 arthLiquidityBoardroomReserve =
-            boardroomReserve.mul(arthLiquidityBoardroomAllocationRate).div(100);
-        uint256 arthBoardroomReserve =
-            boardroomReserve.mul(arthBoardroomAllocationRate).div(100);
-        uint256 mahaLiquidityBoardroomReserve =
-            boardroomReserve.mul(mahaLiquidityBoardroomAllocationRate).div(100);
-
-        if (arthLiquidityBoardroomReserve > 0) {
-            ICustomERC20(cash).safeApprove(
-                arthLiquidityBoardroom,
-                arthLiquidityBoardroomReserve
-            );
-            IBoardroom(arthLiquidityBoardroom).allocateSeigniorage(
-                arthLiquidityBoardroomReserve
-            );
-            emit PoolFunded(
-                arthLiquidityBoardroom,
-                arthLiquidityBoardroomReserve,
-                'arthLiquidity'
-            );
-        }
-
-        if (arthBoardroomReserve > 0) {
-            ICustomERC20(cash).safeApprove(arthBoardroom, arthBoardroomReserve);
-            IBoardroom(arthBoardroom).allocateSeigniorage(arthBoardroomReserve);
-            emit PoolFunded(arthBoardroom, arthBoardroomReserve, 'arth');
-        }
-
-        if (mahaLiquidityBoardroomReserve > 0) {
-            ICustomERC20(cash).safeApprove(
-                mahaLiquidityBoardroom,
-                mahaLiquidityBoardroomReserve
-            );
-            IBoardroom(mahaLiquidityBoardroom).allocateSeigniorage(
-                mahaLiquidityBoardroomReserve
-            );
-            emit PoolFunded(
-                mahaLiquidityBoardroom,
-                mahaLiquidityBoardroomReserve,
-                'mahaLiquidity'
-            );
-        }
-    }
-
-    /**
-     * This function calculates how much bonds should be minted given an epoch
-     * https://github.com/Basis-Cash/basiscash-protocol/issues/27
-     *
-     * The cap will be of the following size: ($1-1hTWAP)*(Circ $BAC),
-     * where 1hTWAP is the 1h TWAP of the $ARTH price and “Circ $ARTH is
-     * the Circulating $ARTH supply. The cap will last for one hour; after
-     * an hour a new TWAP will be calculated and the cap is reset based on
-     * next 12h epoch.
-     */
-    function _updateConversionLimit(uint256 cash1hPrice) internal {
-        // reset this counter so that new bonds can now be minted.
-        accumulatedBonds = 0;
-
-        uint256 bondPurchasePrice = getBondPurchasePrice();
-
-        // check if we are in contract mode.
-        if (cash1hPrice <= bondPurchasePrice) {
-            // in contraction mode -> issue bonds.
-            // set a limit to how many bonds are there.
-
-            // understand how much % deviation do we have from target price
-            // if target price is 2.5$ and we are at 2$; then percentage should be 20%
-            uint256 percentage = estimatePercentageOfBondsToIssue(cash1hPrice);
-
-            // accordingly set the new conversion limit to be that % from the
-            // current circulating supply of ARTH and if uniswap enabled then uniswap liquidity.
-            cashToBondConversionLimit = arthCirculatingSupply()
-                .mul(percentage)
-                .div(100)
-                .mul(getCashSupplyInLiquidity())
-                .div(100);
-
-            emit BondsAllocated(cashToBondConversionLimit);
-
-            return;
-        }
-
-        // if not in contraction then we do nothing.
-        cashToBondConversionLimit = 0;
-    }
-
-    // GOV
-    event Initialized(address indexed executor, uint256 at);
-    event Migration(address indexed target);
-    event RedeemedBonds(address indexed from, uint256 amount, bool sellForDai);
-    event BoughtBonds(
-        address indexed from,
-        uint256 amountDaiIn,
-        uint256 amountBurnt,
-        uint256 bondsIssued
-    );
-    event Log(uint256 data);
-    event TreasuryFunded(uint256 timestamp, uint256 seigniorage);
-    event SeigniorageMinted(uint256 seigniorage);
-    event BondsAllocated(uint256 limit);
-    event PoolFunded(address indexed pool, uint256 seigniorage, string label);
-    event StabilityFeesCharged(address indexed from, uint256 stabilityFeeValue);
 }

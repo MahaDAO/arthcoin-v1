@@ -9,7 +9,7 @@ const BondRedemtionOracle = artifacts.require('BondRedemtionOracle');
 const DevelopmentFund = artifacts.require('DevelopmentFund');
 const GMUOracle = artifacts.require('GMUOracle');
 const MahaToken = artifacts.require('MahaToken');
-const MAHAOracle = artifacts.require("ArthMahaTestnetOracle");
+const ArthMahaOracle = artifacts.require("ArthMahaTestnetOracle");
 const MockDai = artifacts.require('MockDai');
 const SeigniorageOracle = artifacts.require('SeigniorageOracle');
 const Treasury = artifacts.require('Treasury');
@@ -43,21 +43,25 @@ async function migration(deployer, network, accounts) {
 
 
   console.log('Deploying treasury.')
+
   await deployer.deploy(
     Treasury,
     dai.address,
     ARTH.address,
     ARTHB.address,
     MahaToken.address,
+
     BondRedemtionOracle.address,
-    MAHAOracle.address,
+    ArthMahaOracle.address,
     SeigniorageOracle.address,
+    GMUOracle.address,
+
     ArthLiquidityBoardroom.address,
     MahaLiquidityBoardroom.address,
     ArthBoardroom.address,
     DevelopmentFund.address,
+
     uniswapRouter.address,
-    GMUOracle.address,
     POOL_START_DATE,
     TREASURY_PERIOD
   );
