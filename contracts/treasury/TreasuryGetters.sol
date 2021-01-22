@@ -29,11 +29,11 @@ abstract contract TreasuryGetters is TreasuryState {
     }
 
     function getGMUOraclePrice() public view returns (uint256) {
-        return ISimpleOracle(gmuOracle).getPrice();
+        return ISimpleOracle(gmuOracle).consult(1e18);
     }
 
     function getArthMahaOraclePrice() public view returns (uint256) {
-        return ISimpleOracle(arthMahaOracle).getPrice();
+        return ISimpleOracle(arthMahaOracle).consult(1e18);
     }
 
     function getPercentDeviationFromTarget(uint256 price, uint256 targetPrice)

@@ -30,5 +30,9 @@ contract SimpleOracle is Ownable, ISimpleOracle {
         return price;
     }
 
+    function consult(uint256 amountIn) public view override returns (uint256) {
+        return price.mul(amountIn).div(1e18);
+    }
+
     event Updated(uint256 price0CumulativeLast, uint256 price1CumulativeLast);
 }
