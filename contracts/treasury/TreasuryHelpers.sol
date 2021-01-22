@@ -8,7 +8,7 @@ import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
 
 import '../interfaces/ICustomERC20.sol';
 import '../interfaces/IUniswapV2Factory.sol';
-import {IOracle} from '../interfaces/IOracle.sol';
+
 import {IUniswapOracle} from '../interfaces/IUniswapOracle.sol';
 import {IUniswapV2Router02} from '../interfaces/IUniswapV2Router02.sol';
 import {IBoardroom} from '../interfaces/IBoardroom.sol';
@@ -143,7 +143,7 @@ contract TreasuryHelpers is TreasurySetters {
         //     try IOracle(seigniorageOracle).update() {} catch {}
         // }
 
-        cashTargetPrice = IOracle(gmuOracle).getPrice();
+        cashTargetPrice = getGMUOraclePrice();
     }
 
     /**

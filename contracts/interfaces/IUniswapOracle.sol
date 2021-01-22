@@ -2,8 +2,6 @@
 
 pragma solidity ^0.6.12;
 
-import './IOracle.sol';
-
 interface IUniswapOracle {
     function update() external;
 

@@ -8,7 +8,7 @@ const { BigNumber } = require('ethers');
 
 const Arth = artifacts.require('ARTH');
 const MahaToken = artifacts.require('MahaToken');
-// const Oracle = artifacts.require('MockOracle');
+// const Oracle = artifacts.require('MockUniswapOracle');
 const MockDai = artifacts.require('MockDai');
 const IERC20 = artifacts.require('IERC20');
 

@@ -33,12 +33,12 @@ module.exports = async (deployer, network, accounts) => {
   const mahaLiquidityBoardroom = await MahaLiquidityBoardroom.deployed();
 
 
-  // for await (const contract of [bond]) {
-  //   console.log(`transferring operator for ${contract.address} to ${treasury.address}`)
-  //   await contract.transferOperator(treasury.address);
-  //   // console.log(`transferring ownership for ${contract.address} to ${treasury.address}`)
-  //   await contract.transferOwnership(treasury.address);
-  // }
+  for await (const contract of [bond]) {
+    console.log(`transferring operator for ${contract.address} to ${treasury.address}`)
+    await contract.transferOperator(treasury.address);
+    // console.log(`transferring ownership for ${contract.address} to ${treasury.address}`)
+    // await contract.transferOwnership(treasury.address);
+  }
 
   console.log('transferring operator for boardrooms')
   await mahaLiquidityBoardroom.transferOperator(treasury.address);

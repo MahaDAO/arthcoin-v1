@@ -55,7 +55,7 @@ describe('Treasury', () => {
   let Treasury: ContractFactory;
   let DevelopmentFund: ContractFactory;
   let MockBoardroom: ContractFactory;
-  let MockOracle: ContractFactory;
+  let MockUniswapOracle: ContractFactory;
   let DAI: ContractFactory;
   let period: number = 5 * 60
 
@@ -76,7 +76,7 @@ describe('Treasury', () => {
     Treasury = await ethers.getContractFactory('Treasury');
     DevelopmentFund = await ethers.getContractFactory('DevelopmentFund');
     MockBoardroom = await ethers.getContractFactory('MockBoardroom');
-    MockOracle = await ethers.getContractFactory('MockOracle');
+    MockUniswapOracle = await ethers.getContractFactory('MockUniswapOracle');
     DAI = await ethers.getContractFactory('MockDai');
   });
 
@@ -130,10 +130,10 @@ describe('Treasury', () => {
 
     developmentFund = await DevelopmentFund.connect(operator).deploy();
 
-    oracle = await MockOracle.connect(operator).deploy();
+    oracle = await MockUniswapOracle.connect(operator).deploy();
 
-    gmuOracle = await MockOracle.connect(operator).deploy();
-    arthMahaOracle = await MockOracle.connect(operator).deploy();
+    gmuOracle = await MockUniswapOracle.connect(operator).deploy();
+    arthMahaOracle = await MockUniswapOracle.connect(operator).deploy();
 
     arthBoardroom = await MockBoardroom.connect(operator).deploy(cash.address);
     arthLiquidityBoardroom = await MockBoardroom.connect(operator).deploy(cash.address);

@@ -5,6 +5,7 @@ pragma solidity ^0.6.10;
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 import '../interfaces/IUniswapOracle.sol';
+import '../interfaces/ISimpleOracle.sol';
 import '../interfaces/IBoardroom.sol';
 import '../interfaces/IBasisAsset.sol';
 import '../interfaces/ISimpleERCFund.sol';
@@ -28,11 +29,11 @@ abstract contract TreasuryGetters is TreasuryState {
     }
 
     function getGMUOraclePrice() public view returns (uint256) {
-        return IOracle(gmuOracle).getPrice();
+        return ISimpleOracle(gmuOracle).getPrice();
     }
 
     function getArthMahaOraclePrice() public view returns (uint256) {
-        return _getCashPrice(arthMahaOracle);
+        return ISimpleOracle(arthMahaOracle).getPrice();
     }
 
     function getPercentDeviationFromTarget(uint256 price, uint256 targetPrice)

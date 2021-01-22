@@ -4,10 +4,10 @@ pragma solidity ^0.6.12;
 
 import '@openzeppelin/contracts/math/SafeMath.sol';
 
-import '../interfaces/IOracle.sol';
+import '../interfaces/IUniswapOracle.sol';
 import '../lib/UniswapV2Library.sol';
 
-contract MockOracle is IOracle {
+contract MockUniswapOracle is IUniswapOracle {
     using SafeMath for uint256;
 
     uint256 epoch;

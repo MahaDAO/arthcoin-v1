@@ -3,7 +3,7 @@
 pragma solidity ^0.6.12;
 
 import {IUniswapV2Router02} from '../interfaces/IUniswapV2Router02.sol';
-import '../interfaces/IOracle.sol';
+
 import '../interfaces/IBoardroom.sol';
 import '../interfaces/IBasisAsset.sol';
 import '../interfaces/ISimpleERCFund.sol';
