@@ -86,6 +86,10 @@ contract MultiUniswapOracle is IMultiUniswapOracle, Epoch {
         return price;
     }
 
+    function consult(uint256 amountIn) public view override returns (uint256) {
+        return price.mul(amountIn).div(1e18);
+    }
+
     function pairFor(
         address factory,
         address tokenA,
