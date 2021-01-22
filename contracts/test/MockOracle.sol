@@ -72,22 +72,18 @@ contract MockOracle is IOracle {
         error = _error;
     }
 
-    function getPrice() external view override returns (uint256) {
-        return price;
-    }
-
-    function pairFor(
-        address factory,
-        address tokenA,
-        address tokenB
-    ) external pure returns (address lpt) {
-        return UniswapV2Library.pairFor(factory, tokenA, tokenB);
-    }
-
-    function update() public {
+    function update() external override {
         require(!error, 'Oracle: mocked error');
-
         emit Updated(0, 0);
+    }
+
+    function consult(address, uint256 amountIn)
+        external
+        view
+        override
+        returns (uint256)
+    {
+        return price.mul(amountIn).div(1e18);
     }
 
     event Updated(uint256 price0CumulativeLast, uint256 price1CumulativeLast);

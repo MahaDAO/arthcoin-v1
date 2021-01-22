@@ -32,7 +32,7 @@ abstract contract TreasuryGetters is TreasuryState {
     }
 
     function getArthMahaOraclePrice() public view returns (uint256) {
-        return IOracle(arthMahaOracle).getPrice();
+        return _getCashPrice(arthMahaOracle);
     }
 
     function getPercentDeviationFromTarget(uint256 price, uint256 targetPrice)
