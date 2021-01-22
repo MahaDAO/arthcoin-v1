@@ -385,7 +385,7 @@ describe('Treasury', () => {
           const treasuryHoldings = await treasury.getReserve();
           // let expectedSeigniorage = await treasury.estimateSeignorageToMint(cashPrice);
 
-          // calculate with circulating supply
+          // calculate with circulating supply without considering uniswap liq.
           const cashSupply = (await cash.totalSupply()).sub(treasuryHoldings).add(ETH.mul(200));
           const percentage = bigmin(
             cashPrice.sub(ETH).mul(ETH).div(ETH).div(100),
@@ -412,7 +412,7 @@ describe('Treasury', () => {
           const expectedArthLiqBoardroomRes = expectedSeigniorage.mul(await treasury.arthLiquidityBoardroomAllocationRate()).div(100);
           const expectedMahaLiqBoardroomRes = expectedSeigniorage.mul(await treasury.mahaLiquidityBoardroomAllocationRate()).div(100);
 
-          const allocationResult = await treasury.allocateSeigniorage();
+          const allocationResult = await treasury.connect(ant).allocateSeigniorage();
 
           if (expectedSeigniorage.gt(ZERO)) {
             await expect(new Promise((resolve) => resolve(allocationResult)))
@@ -470,6 +470,7 @@ describe('Treasury', () => {
           const oldCashBalanceOfAnt = await cash.balanceOf(ant.address);
           const oldCashBalanceOfTreasury = await cash.balanceOf(treasury.address);
 
+          // calculate with circulating supply without considering uniswap liq.
           const treasuryHoldings = await treasury.getReserve();
           const cashSupply = (await cash.totalSupply()).sub(treasuryHoldings).add(ETH.mul(200));
           const percentage = bigmin(
