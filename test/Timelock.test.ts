@@ -49,6 +49,7 @@ describe('Timelock', () => {
   let DAI: ContractFactory;
   let Timelock: ContractFactory;
   let MahaLiquidityBoardroom: ContractFactory;
+  let SimpleOracle: ContractFactory;
 
   let Factory = new ContractFactory(
     UniswapV2Factory.abi,
@@ -72,6 +73,7 @@ describe('Timelock', () => {
     Curve = await ethers.getContractFactory('MockCurve');
     DAI = await ethers.getContractFactory('MockDai');
     Timelock = await ethers.getContractFactory('Timelock');
+    SimpleOracle = await ethers.getContractFactory('MockSimpleOracle');
   });
 
   let startTime: BigNumber
@@ -132,19 +134,19 @@ describe('Timelock', () => {
     );
     bondRedemtionOracle = await Oracle.connect(operator).deploy();
     seigniorageOracle = await Oracle.connect(operator).deploy();
-    gmuOracle = await Oracle.connect(operator).deploy();
-    arthMahaOracle = await Oracle.connect(operator).deploy();
+    gmuOracle = await SimpleOracle.connect(operator).deploy();
+    arthMahaOracle = await SimpleOracle.connect(operator).deploy();
 
     arthBoardroom = await ArthBoardroom.connect(operator).deploy(cash.address, startTime);
-    const dai_arth_lpt = await bondRedemtionOracle.pairFor(uniswap.address, cash.address, dai.address);
+    // const dai_arth_lpt = await bondRedemtionOracle.pairFor(uniswap.address, cash.address, dai.address);
     arthLiquidityBoardroom = await ArthLiquidityBoardroom.connect(operator).deploy(
       cash.address,
-      dai_arth_lpt,
+      await uniswap.getPair(cash.address, dai.address),
       startTime
     );
     mahaLiquidityBoardroom = await MahaLiquidityBoardroom.connect(operator).deploy(
       cash.address,
-      dai_arth_lpt,
+      await uniswap.getPair(cash.address, dai.address),
       startTime
     );
 
