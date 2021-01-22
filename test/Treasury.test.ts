@@ -731,7 +731,7 @@ describe.only('Treasury', () => {
           // trigger updateConversionRate
           await treasury.allocateSeigniorage();
 
-          await expect(treasury.connect(ant).buyBonds(ETH, cashPrice)).to.revertedWith('cashprice not eligible');
+          await expect(treasury.connect(ant).buyBonds(ETH, cashPrice)).to.revertedWith('cash price not eligible');
           const newStatus = await getStatus();
 
           expect(status.lim).to.eq(newStatus.lim);
