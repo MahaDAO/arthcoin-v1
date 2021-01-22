@@ -147,12 +147,12 @@ describe('Treasury', () => {
       oracle.address,
       arthMahaOracle.address,
       oracle.address,
+      gmuOracle.address,
       arthLiquidityBoardroom.address,
       mahaLiquidityBoardroom.address,
       arthBoardroom.address,
       developmentFund.address,
       uniswapRouter.address,
-      gmuOracle.address,
       startTime,
       period
     );
@@ -169,12 +169,12 @@ describe('Treasury', () => {
       oracle.address,
       arthMahaOracle.address,
       oracle.address,
+      gmuOracle.address,
       arthLiquidityBoardroom.address,
       mahaLiquidityBoardroom.address,
       arthBoardroom.address,
       developmentFund.address,
       uniswapRouter.address,
-      gmuOracle.address,
       startTime,
       period
     );
@@ -235,7 +235,7 @@ describe('Treasury', () => {
 
         await newTreasury.initialize();
         await expect(newTreasury.initialize()).to.revertedWith(
-          'Treasury: initialized'
+          '!initialized'
         );
       });
     });
@@ -285,7 +285,7 @@ describe('Treasury', () => {
 
         await expect(
           treasury.connect(operator).migrate(newTreasury.address)
-        ).to.revertedWith('Treasury: migrated');
+        ).to.revertedWith('!migrated');
       });
     });
   });

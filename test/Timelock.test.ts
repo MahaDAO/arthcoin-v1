@@ -136,7 +136,7 @@ describe('Timelock', () => {
     arthMahaOracle = await Oracle.connect(operator).deploy();
 
     arthBoardroom = await ArthBoardroom.connect(operator).deploy(cash.address, startTime);
-    const dai_arth_lpt = await await bondRedemtionOracle.pairFor(uniswap.address, cash.address, dai.address);
+    const dai_arth_lpt = await bondRedemtionOracle.pairFor(uniswap.address, cash.address, dai.address);
     arthLiquidityBoardroom = await ArthLiquidityBoardroom.connect(operator).deploy(
       cash.address,
       dai_arth_lpt,
@@ -156,12 +156,12 @@ describe('Timelock', () => {
       bondRedemtionOracle.address,
       arthMahaOracle.address,
       seigniorageOracle.address,
+      gmuOracle.address,
       arthLiquidityBoardroom.address,
       mahaLiquidityBoardroom.address,
       arthBoardroom.address,
       developmentFund.address,
       uniswapRouter.address,
-      gmuOracle.address,
       startTime,
       5 * 60
     );
@@ -209,12 +209,12 @@ describe('Timelock', () => {
         bondRedemtionOracle.address,
         arthMahaOracle.address,
         seigniorageOracle.address,
+        gmuOracle.address,
         arthLiquidityBoardroom.address,
         mahaLiquidityBoardroom.address,
         arthBoardroom.address,
         developmentFund.address,
         uniswapRouter.address,
-        gmuOracle.address,
         startTime,
         5 * 60
       );
