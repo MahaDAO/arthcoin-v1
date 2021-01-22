@@ -94,7 +94,7 @@ contract Boardroom is ShareWrapper, ContractGuard {
 
     /* ========== STATE VARIABLES ========== */
 
-    IERC20 private cash;
+    IERC20 public cash;
 
     mapping(address => Boardseat) private directors;
     BoardSnapshot[] private boardHistory;
@@ -232,10 +232,9 @@ contract Boardroom is ShareWrapper, ContractGuard {
         onlyOperator
     {
         require(amount > 0, 'Boardroom: Cannot allocate 0');
-        require(
-            totalSupply() > 0,
-            'Boardroom: Cannot allocate when totalSupply is 0'
-        );
+
+        // 'Boardroom: Cannot allocate when totalSupply is 0'
+        if (totalSupply() == 0) return;
 
         // Create & add new snapshot
         uint256 prevRPS = getLatestSnapshot().rewardPerShare;
