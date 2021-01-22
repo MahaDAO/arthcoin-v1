@@ -14,7 +14,7 @@ const MockDai = artifacts.require('MockDai');
 const SeigniorageOracle = artifacts.require('SeigniorageOracle');
 const Treasury = artifacts.require('Treasury');
 const UniswapV2Router02 = artifacts.require('UniswapV2Router02');
-const Curve = artifacts.require('MockCurve');
+const MahaLiquidityBoardroom = artifacts.require('MahaLiquidityBoardroom');
 
 
 async function migration(deployer, network, accounts) {
@@ -41,15 +41,6 @@ async function migration(deployer, network, accounts) {
     TREASURY_PERIOD = 60 * 60;
   }
 
-  const decimals = BigNumber.from(10).pow(18)
-  await deployer.deploy(Curve,
-    BigNumber.from(105).mul(decimals).div(100),
-    0,
-    0,
-    0,
-    0
-  );
-
 
   console.log('Deploying treasury.')
   await deployer.deploy(
@@ -62,11 +53,11 @@ async function migration(deployer, network, accounts) {
     MAHAOracle.address,
     SeigniorageOracle.address,
     ArthLiquidityBoardroom.address,
+    MahaLiquidityBoardroom.address,
     ArthBoardroom.address,
     DevelopmentFund.address,
     uniswapRouter.address,
     GMUOracle.address,
-    Curve.address,
     POOL_START_DATE,
     TREASURY_PERIOD
   );
