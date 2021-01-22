@@ -241,7 +241,7 @@ describe.only('Treasury', () => {
 
         await newTreasury.initialize();
         await expect(newTreasury.initialize()).to.revertedWith(
-          'Treasury: initialized'
+          '!initialized'
         );
       });
     });
@@ -291,7 +291,7 @@ describe.only('Treasury', () => {
 
         await expect(
           treasury.connect(operator).migrate(newTreasury.address)
-        ).to.revertedWith('Treasury: migrated');
+        ).to.revertedWith('!migrated');
       });
     });
   });
@@ -731,7 +731,7 @@ describe.only('Treasury', () => {
           // trigger updateConversionRate
           await treasury.allocateSeigniorage();
 
-          await expect(treasury.connect(ant).buyBonds(ETH, cashPrice)).to.revertedWith('Treasury: cashPrice not eligible for bond purchase');
+          await expect(treasury.connect(ant).buyBonds(ETH, cashPrice)).to.revertedWith('cashprice not eligible');
           const newStatus = await getStatus();
 
           expect(status.lim).to.eq(newStatus.lim);
@@ -759,7 +759,7 @@ describe.only('Treasury', () => {
           // trigger updateConversionRate
           await treasury.allocateSeigniorage();
 
-          await expect(treasury.connect(ant).buyBonds(ETH, cashPrice)).to.revertedWith('Treasury: cashPrice not eligible for bond purchase');
+          await expect(treasury.connect(ant).buyBonds(ETH, cashPrice)).to.revertedWith('cash price not eligible');
           const newStatus = await getStatus();
 
           expect(newStatus.lim).to.eq(0);
@@ -904,7 +904,7 @@ describe.only('Treasury', () => {
 
           await expect(
             treasury.connect(ant).redeemBonds(redeemAmount, false)
-          ).to.revertedWith('Treasury: treasury has not enough budget');
+          ).to.revertedWith('treasury has not enough budget');
         });
       });
     });

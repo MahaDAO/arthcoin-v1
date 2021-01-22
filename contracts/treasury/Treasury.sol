@@ -28,18 +28,23 @@ contract Treasury is TreasuryHelpers {
     using SafeERC20 for ICustomERC20;
 
     constructor(
+        // tokens
         address _dai,
         address _cash,
         address _bond,
         address _share,
+        // oracles
         address _bondOracle,
         address _arthMahaOracle,
         address _seigniorageOracle,
         address _gmuOracle,
+        // boardrooms
         address _arthLiquidityBoardroom,
         address _mahaLiquidityBoardroom,
         address _arthBoardroom,
+        // ecosystem fund
         address _fund,
+        // uniswap router
         address _uniswapRouter,
         uint256 _startTime,
         uint256 _period
