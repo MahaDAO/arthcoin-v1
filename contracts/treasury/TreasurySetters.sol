@@ -115,13 +115,13 @@ abstract contract TreasurySetters is TreasuryGetters {
     }
 
     function setGMUOracle(address newOracle) public onlyOwner {
-        address oldOracle = seigniorageOracle;
+        address oldOracle = gmuOracle;
         gmuOracle = newOracle;
         emit OracleChanged(msg.sender, oldOracle, newOracle, 'gmuOracle');
     }
 
     function setArthMahaOracle(address newOracle) public onlyOwner {
-        address oldOracle = seigniorageOracle;
+        address oldOracle = arthMahaOracle;
         arthMahaOracle = newOracle;
         emit OracleChanged(msg.sender, oldOracle, newOracle, 'arthMahaOracle');
     }
