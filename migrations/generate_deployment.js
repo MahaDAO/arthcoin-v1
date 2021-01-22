@@ -1,7 +1,3 @@
-const { FACTORY_ADDRESS, INIT_CODE_HASH } = require('@uniswap/sdk')
-const { pack, keccak256 } = require('@ethersproject/solidity')
-const { getCreate2Address } = require('@ethersproject/address')
-
 const fs = require('fs');
 const path = require('path');
 const util = require('util');
@@ -55,9 +51,11 @@ const exportedContracts = [
 
 const Arth = artifacts.require('ARTH');
 const MahaToken = artifacts.require('MahaToken');
-// const Oracle = artifacts.require('MockOracle');
+const SeigniorageOracle = artifacts.require('SeigniorageOracle');
 const MockDai = artifacts.require('MockDai');
 const IERC20 = artifacts.require('IERC20');
+const UniswapV2Factory = artifacts.require('UniswapV2Factory');
+const UniswapV2Router02 = artifacts.require('UniswapV2Router02');
 
 /**
  * Main migrations
@@ -77,34 +75,32 @@ module.exports = async (callback) => {
       ? await IERC20.at(knownContracts.DAI[network])
       : await MockDai.deployed();
 
+    const factory = network === 'mainnet'
+      ? await UniswapV2Factory.at(knownContracts.UniswapV2Factory[network])
+      : await UniswapV2Factory.deployed()
+
+    const router = network === 'mainnet'
+      ? await UniswapV2Router02.at(knownContracts.UniswapV2Router02[network])
+      : await UniswapV2Router02.deployed()
+
     // deployments.DAI = {
     //   address: dai.address,
     //   abi: dai.abi,
     // };
+
+    const oracle = await SeigniorageOracle.deployed();
 
     const arth = await Arth.deployed();
     const mahaToken = network === 'mainnet'
       ? await MahaToken.at(knownContracts.MahaToken[network])
       : await MahaToken.deployed();
 
-    // deployments.MahaToken = {
-    //   address: mahaToken.address,
-    //   abi: mahaToken.abi
-    // }
-
-    const dai_arth_lpt = getCreate2Address(
-      FACTORY_ADDRESS,
-      keccak256(['bytes'], [pack(['address', 'address'], [dai.address, arth.address])]),
-      INIT_CODE_HASH
-    )
-
-    const maha_dai_lpt = getCreate2Address(
-      FACTORY_ADDRESS,
-      keccak256(['bytes'], [pack(['address', 'address'], [dai.address, mahaToken.address])]),
-      INIT_CODE_HASH
-    );
+    const dai_arth_lpt = await oracle.pairFor(factory.address, dai.address, arth.address)
+    const maha_dai_lpt = await oracle.pairFor(factory.address, dai.address, mahaToken.address)
 
     console.log('dai at', dai.address);
+    console.log('uniswap factory at', factory.address);
+    console.log('uniswap router at', router.address);
     console.log('dai_arth_lpt at', dai_arth_lpt);
     console.log('maha_dai_lpt at', maha_dai_lpt);
 

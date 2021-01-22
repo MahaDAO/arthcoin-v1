@@ -66,6 +66,7 @@ module.exports = {
       gas: 6721975, // Any network (default: none)
     },
     kovan: {
+      skipDryRun: true,
       provider: function () {
         return new HDWalletProvider(
           [process.env.METAMASK_WALLET_SECRET],
@@ -73,7 +74,7 @@ module.exports = {
         )
       },
       network_id: 42,
-      gasPrice: 50000000000,
+      gasPrice: 10000000000,
       gas: 6721975, // Any network (default: none)
     },
     ropsten: {
