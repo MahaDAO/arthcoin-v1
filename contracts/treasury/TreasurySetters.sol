@@ -24,6 +24,7 @@ abstract contract TreasurySetters is TreasuryGetters {
     function setStabilityFee(uint256 _stabilityFee) public onlyOwner {
         require(_stabilityFee > 0, 'Treasury: fee < 0');
         require(_stabilityFee < 100, 'Treasury: fee >= 0');
+
         stabilityFee = _stabilityFee;
 
         emit StabilityFeeChanged(stabilityFee, _stabilityFee);
@@ -42,12 +43,36 @@ abstract contract TreasurySetters is TreasuryGetters {
     function setBondDiscount(uint256 rate) public onlyOwner returns (uint256) {
         require(rate >= 0, 'Treasury: rate should be <= 0');
         require(rate <= 100, 'Treasury: rate should be >= 0');
+
         bondDiscount = rate;
+    }
+
+    function setConsiderUniswapLiquidity() public onlyOwner {
+        considerUniswapLiquidity = true;
+    }
+
+    function resetConsiderUniswapLiquidity() public onlyOwner {
+        considerUniswapLiquidity = false;
+    }
+
+    function setMaxDebtIncreasePerEpoch(uint256 rate) public onlyOwner {
+        require(rate >= 0, 'Treasury: rate should be <= 0');
+        require(rate <= 100, 'Treasury: rate should be >= 0');
+
+        maxDebtIncreasePerEpoch = rate;
+    }
+
+    function setMaxSupplyIncreasePerEpoch(uint256 rate) public onlyOwner {
+        require(rate >= 0, 'Treasury: rate should be <= 0');
+        require(rate <= 100, 'Treasury: rate should be >= 0');
+
+        maxSupplyIncreasePerEpoch = rate;
     }
 
     function setSafetyRegion(uint256 rate) public onlyOwner returns (uint256) {
         require(rate >= 0, 'Treasury: rate should be <= 0');
         require(rate <= 100, 'Treasury: rate should be >= 0');
+
         safetyRegion = rate;
     }
 
