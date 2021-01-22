@@ -38,7 +38,7 @@ function bigmin(a: BigNumber, b: BigNumber): BigNumber {
 }
 
 
-describe.only('Treasury', () => {
+describe('Treasury', () => {
   const { provider } = ethers;
 
   let operator: SignerWithAddress;
