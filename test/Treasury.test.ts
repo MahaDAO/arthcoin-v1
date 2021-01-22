@@ -610,7 +610,7 @@ describe('Treasury', () => {
           await cash.connect(ant).approve(treasury.address, ETH);
 
           await expect(treasury.connect(ant).buyBonds(ETH, cashPrice)).to.revertedWith(
-            'Treasury: cashPrice not eligible for bond purchase'
+            'cash price not eligible'
           )
 
           expect(await dai.balanceOf(ant.address)).to.eq(ETH);
@@ -648,7 +648,7 @@ describe('Treasury', () => {
           await expect(
             treasury.connect(ant).buyBonds(ETH, cashPrice)
           ).to.revertedWith(
-            'Treasury: cashPrice not eligible for bond purchase'
+            'cash price not eligible'
           );
         });
 
@@ -662,7 +662,7 @@ describe('Treasury', () => {
 
           await expect(
             treasury.connect(ant).buyBonds(ETH, ETH.mul(98).div(100))
-          ).to.revertedWith('Treasury: cash price moved');
+          ).to.revertedWith('cash price moved');
         });
 
         it('should fail if purchase bonds with zero amount', async () => {
@@ -671,7 +671,7 @@ describe('Treasury', () => {
 
           await expect(
             treasury.connect(ant).buyBonds(ZERO, cashPrice)
-          ).to.revertedWith('Treasury: cannot purchase bonds with zero amount');
+          ).to.revertedWith('zero amount');
         });
 
         it('should not update conversion limit if price is < targetPrice and price > bondPurchasePrice', async () => {
@@ -696,7 +696,7 @@ describe('Treasury', () => {
           await treasury.allocateSeigniorage();
 
           await expect(treasury.connect(ant).buyBonds(ETH, cashPrice)).to.revertedWith(
-            'Treasury: cashPrice not eligible for bond purchase'
+            'cash price not eligible'
           );
           const newStatus = await getStatus();
 
@@ -753,7 +753,7 @@ describe('Treasury', () => {
           // trigger updateConversionRate
           await treasury.allocateSeigniorage();
 
-          await expect(treasury.connect(ant).buyBonds(ETH, cashPrice)).to.revertedWith('Treasury: cashPrice not eligible for bond purchase');
+          await expect(treasury.connect(ant).buyBonds(ETH, cashPrice)).to.revertedWith('cash price not eligible');
           const newStatus = await getStatus();
 
           expect(newStatus.lim).to.eq(0);
@@ -802,7 +802,7 @@ describe('Treasury', () => {
 
           await expect(
             treasury.connect(ant).buyBonds(limit.add(1), cashPrice)
-          ).to.revertedWith('No more bonds to be redeemed');
+          ).to.revertedWith('no more bonds');
         });
       });
 
@@ -872,7 +872,7 @@ describe('Treasury', () => {
           await oracle.setPrice(cashPrice);
 
           await expect(treasury.connect(ant).redeemBonds(ZERO, false)).to.revertedWith(
-            'Treasury: cannot redeem bonds with zero amount'
+            'revert zero amount'
           );
         });
 
@@ -883,7 +883,7 @@ describe('Treasury', () => {
           await bond.connect(operator).transfer(ant.address, ETH);
           await bond.connect(ant).approve(treasury.address, ETH);
           await expect(treasury.connect(ant).redeemBonds(ETH, false)).to.revertedWith(
-            'Treasury: cashPrice less than ceiling'
+            'cashPrice less than ceiling'
           );
         });
 
@@ -898,7 +898,7 @@ describe('Treasury', () => {
 
           await expect(
             treasury.connect(ant).redeemBonds(redeemAmount, false)
-          ).to.revertedWith('Treasury: treasury has not enough budget');
+          ).to.revertedWith('treasury has not enough budget');
         });
       });
     });
