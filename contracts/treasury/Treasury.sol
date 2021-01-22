@@ -179,6 +179,7 @@ contract Treasury is TreasuryHelpers {
             cashPrice > getBondRedemtionPrice(), // price > $1.05
             'cashPrice less than ceiling'
         );
+
         require(
             ICustomERC20(cash).balanceOf(address(this)) >= amount,
             'treasury has not enough budget'

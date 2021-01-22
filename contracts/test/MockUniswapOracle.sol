@@ -68,6 +68,10 @@ contract MockUniswapOracle is IUniswapOracle {
         price = _price;
     }
 
+    function getPrice() external view returns (uint256) {
+        return price;
+    }
+
     function setRevert(bool _error) public {
         error = _error;
     }
