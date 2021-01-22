@@ -376,6 +376,91 @@ describe('Treasury', () => {
           expect(await cash.balanceOf(treasury.address)).to.eq(oldCashBalanceOfTreasury);
         });
 
+        it('should fund all', async () => {
+          const cashPrice = ETH.mul(110).div(100);
+          await oracle.setPrice(cashPrice);
+
+          const oldCashBalanceOfAnt = await cash.balanceOf(ant.address);
+
+          const treasuryHoldings = await treasury.getReserve();
+          let expectedSeigniorage = await treasury.estimateSeignorageToMint(cashPrice);
+
+          // // calculate with circulating supply
+          // const cashSupply = (await cash.totalSupply()).sub(treasuryHoldings);
+          // const percentage = bigmin(
+          //   cashPrice.sub(ETH).mul(ETH).div(ETH).div(100),
+          //   await treasury.maxSupplyIncreasePerEpoch()
+          // );
+          // let expectedSeigniorage = cashSupply
+          //   .mul(percentage)
+          //   .div(100);
+
+          // get all expected reserve
+          const expectedFundReserve = expectedSeigniorage
+            .mul(await treasury.ecosystemFundAllocationRate())
+            .div(100);
+          expectedSeigniorage = expectedSeigniorage.sub(expectedFundReserve)
+
+          const expectedTreasuryReserve = bigmin(
+            expectedSeigniorage.mul(await treasury.bondSeigniorageRate()).div(100),
+            (await bond.totalSupply()).sub(treasuryHoldings)
+          );
+          expectedSeigniorage = expectedSeigniorage.sub(expectedTreasuryReserve);
+
+          const expectedArthBoardroomReserve = expectedSeigniorage.mul(await treasury.arthBoardroomAllocationRate()).div(100);
+          const expectedArthLiqBoardroomRes = expectedSeigniorage.mul(await treasury.arthLiquidityBoardroomAllocationRate()).div(100);
+          const expectedMahaLiqBoardroomRes = expectedSeigniorage.mul(await treasury.mahaLiquidityBoardroomAllocationRate()).div(100);
+
+          const allocationResult = await treasury.allocateSeigniorage();
+
+          if (expectedSeigniorage.gt(ZERO)) {
+            await expect(new Promise((resolve) => resolve(allocationResult)))
+              .to.emit(treasury, 'SeigniorageMinted')
+              .withArgs(expectedSeigniorage);
+          }
+          if (expectedFundReserve.gt(ZERO)) {
+            await expect(new Promise((resolve) => resolve(allocationResult)))
+              .to.emit(treasury, 'PoolFunded')
+          }
+
+          if (expectedTreasuryReserve.gt(ZERO)) {
+            await expect(new Promise((resolve) => resolve(allocationResult)))
+              .to.emit(treasury, 'TreasuryFunded')
+              .withArgs(
+                await latestBlocktime(provider),
+                expectedTreasuryReserve
+              );
+          }
+
+          if (expectedArthBoardroomReserve.gt(ZERO)) {
+            await expect(new Promise((resolve) => resolve(allocationResult)))
+              .to.emit(treasury, 'PoolFunded')
+          }
+
+          if (expectedArthLiqBoardroomRes.gt(ZERO)) {
+            await expect(new Promise((resolve) => resolve(allocationResult)))
+              .to.emit(treasury, 'PoolFunded')
+          }
+
+          if (expectedMahaLiqBoardroomRes.gt(ZERO)) {
+            await expect(new Promise((resolve) => resolve(allocationResult)))
+              .to.emit(treasury, 'PoolFunded')
+          }
+
+          expect(await cash.balanceOf(developmentFund.address)).to.eq(expectedFundReserve);
+          expect(await treasury.getReserve()).to.eq(expectedTreasuryReserve);
+          expect(await cash.balanceOf(arthBoardroom.address)).to.eq(
+            expectedArthBoardroomReserve
+          );
+          expect(await cash.balanceOf(arthLiquidityBoardroom.address)).to.eq(
+            expectedArthLiqBoardroomRes
+          );
+          expect(await cash.balanceOf(mahaLiquidityBoardroom.address)).to.eq(
+            expectedMahaLiqBoardroomRes
+          );
+          expect(await cash.balanceOf(ant.address)).to.eq(oldCashBalanceOfAnt.add(ETH.mul(200)));
+        });
+
         it('should fund only treasury if price > targetPrice and price < expansionLimitPrice', async () => {
           const cashPrice = ETH.mul(103).div(100);
           await oracle.setPrice(cashPrice);
@@ -385,7 +470,7 @@ describe('Treasury', () => {
           const oldCashBalanceOfTreasury = await cash.balanceOf(treasury.address);
 
           const seigniorage = await treasury.estimateSeignorageToMint(cashPrice); // all are same oracle.
-          const accumulatedSeigniorage = await treasury.accumulatedSeigniorage();
+          const accumulatedSeigniorage = await treasury.getReserve();
 
           const treasuryReserve = bigmin(
             seigniorage,
@@ -393,54 +478,14 @@ describe('Treasury', () => {
           );
 
           // TODO: check emit for all respective events.
-          await expect(treasury.connect(ant).allocateSeigniorage()).to.emit(treasury, 'TreasuryFunded');
+          await expect(treasury.connect(ant).allocateSeigniorage())
+            .to.emit(treasury, 'SeigniorageMinted')
+            .to.emit(treasury, 'TreasuryFunded')
+            .to.not.emit(treasury, 'PoolFunded');
 
           expect(await cash.totalSupply()).to.eq(oldCashSupply.add(ETH.mul(200)).add(treasuryReserve));
           expect(await cash.balanceOf(ant.address)).to.eq(oldCashBalanceOfAnt.add(ETH.mul(200)));
           expect(await cash.balanceOf(treasury.address)).to.eq(oldCashBalanceOfTreasury.add(treasuryReserve));
-        });
-
-        it('should fund all funds and no treasury if price > targetPrice and price < expansionLimitPrice', async () => {
-          const cashPrice = ETH.mul(106).div(100);
-          await oracle.setPrice(cashPrice);
-
-          const oldCashSupply = await cash.totalSupply();
-          const oldCashBalanceOfAnt = await cash.balanceOf(ant.address);
-          const oldCashBalanceOfTreasury = await cash.balanceOf(treasury.address);
-
-          let seigniorage = await treasury.estimateSeignorageToMint(cashPrice); // all are same oracle.
-          let accumulatedSeigniorage = await treasury.connect(ant).accumulatedSeigniorage();
-          const ecosystemFundAllocationRate = await treasury.ecosystemFundAllocationRate();
-          const ecosystemReserve = seigniorage.mul(ecosystemFundAllocationRate).div(100);
-
-          seigniorage = seigniorage.sub(ecosystemReserve);
-
-          const allocateToBondHolders = seigniorage.mul(await treasury.bondSeigniorageRate()).div(100);
-          const treasuryReserve = bigmin(
-            allocateToBondHolders,
-            (await bond.totalSupply()).sub(accumulatedSeigniorage)
-          )
-          accumulatedSeigniorage = accumulatedSeigniorage.add(treasuryReserve);
-
-          seigniorage = seigniorage.sub(treasuryReserve);
-
-          const arthBoardroomReserve = seigniorage.mul(await treasury.arthBoardroomAllocationRate()).div(100);
-          const arthLiquidityBoardroomReserve = seigniorage.mul(await treasury.arthLiquidityBoardroomAllocationRate()).div(100);
-          const mahaLiquidityBoardroomReserve = seigniorage.mul(await treasury.mahaLiquidityBoardroomAllocationRate()).div(100);
-
-          // TODO: check emit for all respective events.
-          await expect(treasury.connect(ant).allocateSeigniorage()).to.emit(treasury, 'TreasuryFunded')
-
-          expect(await cash.totalSupply()).to.eq(oldCashSupply.add(ETH.mul(200)).add(seigniorage));
-          expect(await cash.balanceOf(ant.address)).to.eq(oldCashBalanceOfAnt.add(ETH.mul(200)));
-          expect(await cash.balanceOf(treasury.address)).to.eq(
-            oldCashBalanceOfTreasury
-              .add(seigniorage)
-              .sub(ecosystemReserve)
-              .sub(arthBoardroomReserve)
-              .sub(arthLiquidityBoardroomReserve)
-              .sub(mahaLiquidityBoardroomReserve)
-          );
         });
 
         it('should move to next epoch after allocation', async () => {
