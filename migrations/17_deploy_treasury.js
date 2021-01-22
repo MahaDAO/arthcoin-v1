@@ -32,15 +32,15 @@ async function migration(deployer, network, accounts) {
     : await UniswapV2Router02.deployed();
 
   // Set starttime for different networks.
-  let POOL_START_DATE = Math.floor(Date.now() / 1000) + 60;
-  let TREASURY_PERIOD = 12 * 60 * 60;
+  // jan 22nd 4pm GMT
+  let startTime = Math.floor(new Date('2021-01-22T14:00:00Z') / 1000);
 
-  if (network === 'mainnet') {
-    POOL_START_DATE += 5 * DAY;
-  } else {
-    TREASURY_PERIOD = 60 * 60;
-  }
+  const mahaToken = network === 'mainnet'
+  ? await MahaToken.at(knownContracts.MahaToken[network])
+  : await MahaToken.deployed();
 
+  let POOL_START_DATE = network === 'mainnet' ? startTime : Math.floor(Date.now() / 1000) + 60;
+  let TREASURY_PERIOD = network === 'mainnet' ? 12 * 60 * 60 : 1 * 60
 
   console.log('Deploying treasury.')
 
@@ -49,15 +49,15 @@ async function migration(deployer, network, accounts) {
     dai.address,
     ARTH.address,
     ARTHB.address,
-    MahaToken.address,
+    mahaToken.address,
 
     BondRedemtionOracle.address,
     ArthMahaOracle.address,
     SeigniorageOracle.address,
     GMUOracle.address,
 
-    ArthLiquidityBoardroom.address,
-    MahaLiquidityBoardroom.address,
+    ArthBoardroom.address,
+    ArthBoardroom.address,
     ArthBoardroom.address,
     DevelopmentFund.address,
 

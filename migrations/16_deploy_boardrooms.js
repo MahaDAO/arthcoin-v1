@@ -6,6 +6,7 @@ const knownContracts = require('./known-contracts');
 
 
 const ARTH = artifacts.require('ARTH');
+const IERC20 = artifacts.require('IERC20');
 const MockDai = artifacts.require('MockDai');
 const ArthBoardroom = artifacts.require('ArthBoardroom');
 const UniswapV2Factory = artifacts.require('UniswapV2Factory');
@@ -38,8 +39,13 @@ async function migration(deployer, network, accounts) {
     : await UniswapV2Factory.deployed();
 
   // Get the oracle pair of ARTH-DAI.
-  const dai_arth_lpt = await bondRedemtionOralce.pairFor(uniswap.address, cash.address, dai.address);
-  const maha_weth_lpt = await bondRedemtionOralce.pairFor(uniswap.address, cash.address, dai.address);
+  const dai_arth_lpt = network === 'mainnet'
+    ? knownContracts.ARTH_DAI_LP[network]
+    : await bondRedemtionOralce.pairFor(uniswap.address, cash.address, dai.address);
+
+  const maha_weth_lpt = network === 'mainnet'
+    ? knownContracts.MAHA_ETH_LP[network]
+    : await bondRedemtionOralce.pairFor(uniswap.address, cash.address, dai.address);
 
 
   // Deploy ARTH-DAI liquidity boardroom.
@@ -49,7 +55,7 @@ async function migration(deployer, network, accounts) {
   await deployer.deploy(ArthBoardroom, cash.address, ARTH_BOARDROOM_LOCK_DURATION);
 
   // Deploy MAHA-ETH boardroom.
-  await deployer.deploy(MahaLiquidityBoardroom, cash.address, dai_arth_lpt, ARTH_BOARDROOM_LOCK_DURATION);
+  await deployer.deploy(MahaLiquidityBoardroom, cash.address, maha_weth_lpt, ARTH_LIQUIDITY_BOARDROOM_LOCK_DURATION);
 }
 
 

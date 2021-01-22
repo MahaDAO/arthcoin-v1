@@ -5,11 +5,13 @@ const { POOL_START_DATE, DAY } = require('./config');
 const ARTH = artifacts.require('ARTH');
 const MAHA = artifacts.require('MahaToken');
 const MockDai = artifacts.require('MockDai');
+const IERC20 = artifacts.require('IERC20');
+
 const GMUOracle = artifacts.require('GMUOracle');
 const UniswapV2Factory = artifacts.require('UniswapV2Factory');
 const UniswapV2Router02 = artifacts.require('UniswapV2Router02');
 
-const ArthMahaOracle = artifacts.require("ArthMahaTestnetOracle");
+const ArthMahaOracle = artifacts.require("ArthMahaOracle");
 const SeigniorageOracle = artifacts.require('SeigniorageOracle');
 const BondRedemtionOracle = artifacts.require('BondRedemtionOracle');
 const DevelopmentFund = artifacts.require('DevelopmentFund');
@@ -22,9 +24,10 @@ async function migration(deployer, network, accounts) {
   accounts[0] = process.env.WALLET_KEY;
 
   // Set starttime for different networks.
-  let startTime = POOL_START_DATE + 1000;
-  if (network === 'mainnet') {
-    startTime += 5 * DAY;
+  // jan 22nd 3pm GMT
+  let startTime = Math.floor(new Date('2021-01-22T15:00:00Z') / 1000);
+  if (network !== 'mainnet') {
+    startTime = Math.floor(Date.now() / 1000);
   }
 
   // Deploy funds.
@@ -34,7 +37,7 @@ async function migration(deployer, network, accounts) {
   const ORACLE_START_PRICE = web3.utils.toBN(1e18).toString();
   const GMU_ORACLE_START_PRICE = ORACLE_START_PRICE;
 
-  const ORACLE_PERIOD = 5 * 60;
+  const ORACLE_PERIOD = 10 * 60;
   const BOND_ORACLE_PERIOD = ORACLE_PERIOD;
   const SEIGNIORAGE_ORACLE_PERIOD = ORACLE_PERIOD;
 
@@ -46,7 +49,6 @@ async function migration(deployer, network, accounts) {
 
   // Fetching deployed ARTH & MAHA.
   const cash = await ARTH.deployed();
-  const share = await MAHA.deployed();
 
   // Fetch the deployed uniswap factory contract.
   const uniswap = network === 'mainnet' || network === 'ropsten'  || network === 'kovan'
@@ -82,19 +84,11 @@ async function migration(deployer, network, accounts) {
 
   // Deploy maha-dai oracle.
   console.log('Deploying mahadai oracle.')
-  await deployer.deploy(
-    ArthMahaOracle,
-    uniswapRouter.address,
-    cash.address,
-    dai.address,
-    share.address,
-    BOND_ORACLE_PERIOD, // In hours for dev deployment purpose.
-    startTime
-  );
+  await deployer.deploy(ArthMahaOracle);
 
   // Deploy the GMU oracle.
   console.log('Deploying GMU oracle.')
-  await deployer.deploy(GMUOracle, GMU_ORACLE_START_PRICE);
+  await deployer.deploy(GMUOracle);
 }
 
 

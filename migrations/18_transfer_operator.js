@@ -8,7 +8,7 @@ const ArthLiquidityBoardroom = artifacts.require('ArthLiquidityBoardroom');
 const ArthBoardroom = artifacts.require('ArthBoardroom');
 const Treasury = artifacts.require('Treasury');
 const ARTH = artifacts.require('ARTH');
-const ArthMahaOracle = artifacts.require('ArthMahaTestnetOracle');
+const ArthMahaOracle = artifacts.require('ArthMahaOracle');
 const GMUOracle = artifacts.require('GMUOracle');
 const ARTHB = artifacts.require('ARTHB');
 const Timelock = artifacts.require('Timelock');
@@ -32,12 +32,11 @@ module.exports = async (deployer, network, accounts) => {
   const arthBoardroom = await ArthBoardroom.deployed();
   const mahaLiquidityBoardroom = await MahaLiquidityBoardroom.deployed();
 
-
-  for await (const contract of [bond]) {
+  for await (const contract of [cash, bond]) {
     console.log(`transferring operator for ${contract.address} to ${treasury.address}`)
     await contract.transferOperator(treasury.address);
     // console.log(`transferring ownership for ${contract.address} to ${treasury.address}`)
-    // await contract.transferOwnership(treasury.address);
+    await contract.transferOwnership(treasury.address);
   }
 
   console.log('transferring operator for boardrooms')
@@ -47,10 +46,24 @@ module.exports = async (deployer, network, accounts) => {
 
   // If mainnet only then migrate ownership to a timelocked contract; else keep it the same user
   // with no timelock.
+
+  if (network === 'mainnet') {
+    await arthLiquidityBoardroom.transferOwnership(process.env.HARDWARE_WALLET);
+    await arthBoardroom.transferOwnership(process.env.HARDWARE_WALLET);
+    await mahaLiquidityBoardroom.transferOwnership(process.env.HARDWARE_WALLET);
+
+    await mahaOracle.transferOwnership(process.env.HARDWARE_WALLET);
+    await gmuOracle.transferOwnership(process.env.HARDWARE_WALLET);
+
+    await treasury.transferOperator(process.env.HARDWARE_WALLET);
+    await treasury.transferOwnership(process.env.HARDWARE_WALLET);
+  }
+
   if (network === 'mainnet') {
     console.log('creating and adding timelocks')
     const timelock = await deployer.deploy(Timelock, accounts[0], 2 * DAY);
     await arthLiquidityBoardroom.transferOwnership(timelock.address);
+    await mahaLiquidityBoardroom.transferOwnership(timelock.address);
     await arthBoardroom.transferOwnership(timelock.address);
 
     console.log('migrating operator and ownership of treasury to timelock')
@@ -60,12 +73,13 @@ module.exports = async (deployer, network, accounts) => {
     console.log('transfering operator and owenrship of boardroom/treasury to metamask wallets')
     await arthLiquidityBoardroom.transferOwnership(process.env.METAMASK_WALLET);
     await arthBoardroom.transferOwnership(process.env.METAMASK_WALLET);
+    await mahaLiquidityBoardroom.transferOwnership(process.env.METAMASK_WALLET);
+
+    await mahaOracle.transferOwnership(process.env.METAMASK_WALLET);
+    await gmuOracle.transferOwnership(process.env.METAMASK_WALLET);
+
     await treasury.transferOperator(process.env.METAMASK_WALLET);
     await treasury.transferOwnership(process.env.METAMASK_WALLET);
-    await mahaOracle.transferOwnership(process.env.METAMASK_WALLET);
-
-    await gmuOracle.transferOwnership(process.env.METAMASK_WALLET);
-    // await mahaOracle.transferOwnership(process.env.METAMASK_WALLET);
 
     if (network === 'development') {
       console.log('sending 1 eth to the metamask wallet')

@@ -59,6 +59,9 @@ module.exports = {
   MAHA_ETH_LP: {
     mainnet: '0xc0897d6ba893e31f42f658eead777aa15b8f824d',
   },
+  ARTH_DAI_LP: {
+    mainnet: '0x35b6f9e6300aa6c722ea189e096b0b073025806f',
+  },
   ESD: {
     mainnet: '0x36f3fd68e7325a35eb768f1aedaae9ea0689d723',
     ropsten: '0x8da4b92647c7ffeafda80d41799a7cad5a6f12ec',

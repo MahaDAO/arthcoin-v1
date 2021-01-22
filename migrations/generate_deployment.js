@@ -17,16 +17,17 @@ const exportedContracts = [
   // oracles
   'GMUOracle',
   'SeigniorageOracle',
-  'ArthMahaTestnetOracle',
+  'ArthMahaOracle',
   'BondRedemtionOracle',
 
   // boardroom
-  'ArthLiquidityBoardroom',
-  'MahaLiquidityBoardroom',
-  'ArthBoardroom',
+  // 'ArthLiquidityBoardroom',
+  // 'MahaLiquidityBoardroom',
+  // 'ArthBoardroom',
+  // 'Treasury',
 
   'DevelopmentFund',
-  'Treasury',
+
 
   "ARTHBASPool",
   // "ARTHMKRPool",
@@ -61,7 +62,7 @@ const UniswapV2Router02 = artifacts.require('UniswapV2Router02');
  * Main migrations
  */
 module.exports = async (callback) => {
-  const network = 'ropsten';
+  const network = 'mainnet';
 
   // Set the main account, you'll be using accross all the files for various
   // important activities to your desired address in the .env file.
@@ -99,6 +100,8 @@ module.exports = async (callback) => {
     const maha_dai_lpt = await oracle.pairFor(factory.address, dai.address, mahaToken.address)
 
     console.log('dai at', dai.address);
+    console.log('arth at', arth.address);
+    console.log('maha at', mahaToken.address);
     console.log('uniswap factory at', factory.address);
     console.log('uniswap router at', router.address);
     console.log('dai_arth_lpt at', dai_arth_lpt);
