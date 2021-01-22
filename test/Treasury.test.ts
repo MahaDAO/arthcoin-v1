@@ -376,7 +376,7 @@ describe('Treasury', () => {
           expect(await cash.balanceOf(treasury.address)).to.eq(oldCashBalanceOfTreasury);
         });
 
-        it('should fund all', async () => {
+        it('should fund all if price > targetPrice and price > expansionpriceLimit', async () => {
           const cashPrice = ETH.mul(200).div(100);
           await oracle.setPrice(cashPrice);
 
