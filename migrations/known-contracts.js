@@ -9,19 +9,19 @@ module.exports = {
     mainnet: '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f',
     ropsten: '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f',
     rinkeby: '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f',
+    kovan: '0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f',
   },
   UniswapV2Router02: {
     mainnet: '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D',
     ropsten: '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D',
     rinkeby: '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D',
+    kovan: '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D',
   },
   DAI: {
     mainnet: '0x6b175474e89094c44da98b954eedeac495271d0f',
-    ropsten: '0xad6d458402f60fd3bd25163575031acdce07538d',
   },
   yCRV: {
     mainnet: '0xdF5e0e81Dff6FAF3A7e52BA697820c5e32D806A8',
-    ropsten: '0xface8a2e245d91b90fce1e693d23eee688705025',
   },
   BAL: {
     mainnet: '0xba100000625a3754423978a60c9317c58a424e3d',

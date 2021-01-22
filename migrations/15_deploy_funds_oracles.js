@@ -49,12 +49,12 @@ async function migration(deployer, network, accounts) {
   const share = await MAHA.deployed();
 
   // Fetch the deployed uniswap factory contract.
-  const uniswap = network === 'mainnet' || network === 'ropsten'
+  const uniswap = network === 'mainnet' || network === 'ropsten'  || network === 'kovan'
     ? await UniswapV2Factory.at(knownContracts.UniswapV2Factory[network])
     : await UniswapV2Factory.deployed();
 
   // Fetch the deployed uniswap router contract.
-  const uniswapRouter = network === 'mainnet' || network === 'ropsten'
+  const uniswapRouter = network === 'mainnet' || network === 'ropsten'  || network === 'kovan'
     ? await UniswapV2Router02.at(knownContracts.UniswapV2Router02[network])
     : await UniswapV2Router02.deployed();
 

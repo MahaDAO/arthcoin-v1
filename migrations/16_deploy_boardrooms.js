@@ -33,7 +33,7 @@ async function migration(deployer, network, accounts) {
   const bondRedemtionOralce = await BondRedemtionOracle.deployed();
 
   // Fetch the deployed uniswap.
-  const uniswap = network === 'mainnet' || network === 'ropsten'
+  const uniswap = network === 'mainnet' || network === 'ropsten' || network === 'kovan'
     ? await UniswapV2Factory.at(knownContracts.UniswapV2Factory[network])
     : await UniswapV2Factory.deployed();
 

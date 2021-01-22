@@ -32,7 +32,7 @@ async function migration(deployer, network, accounts) {
   const bond = await ARTHB.deployed();
 
   // Fetch deployed uniswap router.
-  const uniswapRouter = network === 'mainnet' || network === 'ropsten'
+  const uniswapRouter = network === 'mainnet' || network === 'ropsten' || network === 'kovan'
     ? await UniswapV2Router02.at(knownContracts.UniswapV2Router02[network])
     : await UniswapV2Router02.deployed();
 
