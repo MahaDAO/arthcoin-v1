@@ -57,7 +57,6 @@ describe('Treasury', () => {
   let MockBoardroom: ContractFactory;
   let MockOracle: ContractFactory;
   let DAI: ContractFactory;
-  let MockCurve: ContractFactory;
   let period: number = 5 * 60
 
 
@@ -77,7 +76,6 @@ describe('Treasury', () => {
     Treasury = await ethers.getContractFactory('Treasury');
     DevelopmentFund = await ethers.getContractFactory('DevelopmentFund');
     MockBoardroom = await ethers.getContractFactory('MockBoardroom');
-    MockCurve = await ethers.getContractFactory('MockCurve');
     MockOracle = await ethers.getContractFactory('MockOracle');
     DAI = await ethers.getContractFactory('MockDai');
   });
@@ -86,7 +84,6 @@ describe('Treasury', () => {
   let cash: Contract;
   let share: Contract;
   let dai: Contract;
-  let curve: Contract;
 
   let oracle: Contract;
   let arthBoardroom: Contract;
@@ -105,13 +102,6 @@ describe('Treasury', () => {
     bond = await ARTHB.connect(operator).deploy();
     share = await MAHA.connect(operator).deploy();
     dai = await DAI.connect(operator).deploy();
-    curve = await MockCurve.connect(operator).deploy(
-      utils.parseEther('1.05'),
-      0,
-      0,
-      0,
-      0
-    );
 
     startTime = BigNumber.from(await latestBlocktime(provider)).add(DAY);
 
