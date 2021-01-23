@@ -2,7 +2,7 @@
 
 pragma solidity ^0.6.12;
 
-import './Boardroom.sol';
+import './core/Boardroom.sol';
 
 contract MahaLiquidityBoardroom is Boardroom {
     constructor(
