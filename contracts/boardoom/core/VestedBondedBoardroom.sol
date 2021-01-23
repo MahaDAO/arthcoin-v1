@@ -22,10 +22,15 @@ contract VestedBondedBoardroom is BondedShareWrapper, ContractGuard {
      */
 
     struct Boardseat {
+        // Total reward earned.
         uint256 rewardEarned;
+        // Reward already claimed.
         uint256 rewardClaimed;
-        uint256 rewardUnclaimed;
+        // Last time reward was claimed.
         uint256 lastClaimedOn;
+        // Reward left to be given.
+        uint256 rewardUnclaimed;
+        // Snapshot of boardroom state when last claimed.
         uint256 lastSnapshotIndex;
     }
 
@@ -40,14 +45,17 @@ contract VestedBondedBoardroom is BondedShareWrapper, ContractGuard {
      */
 
     IERC20 public cash;
+    // Last time when boardroom was funded.
+    uint256 lastFundedOn;
+    // For how much time should vesting take place.
+    uint256 public vestFor = 8 hours;
 
-    mapping(address => Boardseat) private directors;
     BoardSnapshot[] private boardHistory;
+    mapping(address => Boardseat) private directors;
 
     /**
      * Constructor.
      */
-
     constructor(
         IERC20 _cash,
         IERC20 _share,
@@ -66,7 +74,7 @@ contract VestedBondedBoardroom is BondedShareWrapper, ContractGuard {
     }
 
     /**
-     * Modifiers
+     * Modifiers.
      */
 
     modifier directorExists {
@@ -74,20 +82,22 @@ contract VestedBondedBoardroom is BondedShareWrapper, ContractGuard {
             balanceOf(msg.sender) > 0,
             'Boardroom: The director does not exist'
         );
+
         _;
     }
 
     modifier updateReward(address director) {
         if (director != address(0)) {
-            Boardseat storage seat = directors[director];
+            Boardseat memory seat = directors[director];
 
             uint256 reward = earned(director);
-
             seat.rewardEarned = reward;
             seat.rewardUnclaimed = reward.sub(seat.rewardClaimed);
             seat.lastSnapshotIndex = latestSnapshotIndex();
+
             directors[director] = seat;
         }
+
         _;
     }
 
@@ -137,6 +147,15 @@ contract VestedBondedBoardroom is BondedShareWrapper, ContractGuard {
      * Mutations.
      */
 
+    function setVestingPeriod(uint256 period) public onlyOperator {
+        require(period > 0, 'Boardoom: period is 0');
+
+        uint256 oldPeriod = vestFor;
+        vestFor = period;
+
+        emit PeriodChanged(oldPeriod, period);
+    }
+
     function bond(uint256 amount)
         public
         override
@@ -185,6 +204,7 @@ contract VestedBondedBoardroom is BondedShareWrapper, ContractGuard {
             directors[msg.sender].rewardClaimed = (
                 directors[msg.sender].rewardClaimed.add(reward)
             );
+            directors[msg.sender].lastClaimedOn = block.timestamp;
 
             cash.safeTransfer(msg.sender, reward);
 
@@ -199,15 +219,35 @@ contract VestedBondedBoardroom is BondedShareWrapper, ContractGuard {
     }
 
     function claimReward() public updateReward(msg.sender) {
-        uint256 reward = directors[msg.sender].rewardEarned;
+        uint256 reward = directors[msg.sender].rewardUnclaimed;
 
-        // TODO: add vesting
-        if (reward > 0) {
-            directors[msg.sender].rewardEarned = 0;
-            cash.safeTransfer(msg.sender, reward);
+        if (reward <= 0) return;
 
-            emit RewardPaid(msg.sender, reward);
+        // If past the vesting period, then claim all rewards.
+        if (block.timestamp >= lastFundedOn.add(vestFor)) {
+            directors[msg.sender].rewardUnclaimed = 0;
+            directors[msg.sender].rewardClaimed = (
+                directors[msg.sender].rewardClaimed.add(reward)
+            );
+            directors[msg.sender].lastClaimedOn = block.timestamp;
+        } else {
+            // If past the vesting period, then claim all rewards.
+            uint256 timeSinceLastFunded = block.timestamp.sub(lastFundedOn);
+
+            uint256 timelyRewardRatio = timeSinceLastFunded.div(vestFor);
+            if (directors[msg.sender].lastClaimedOn > lastFundedOn)
+                timelyRewardRatio = (
+                    timeSinceLastFunded
+                        .sub(directors[msg.sender].lastClaimedOn)
+                        .div(vestFor)
+                );
+
+            reward = timelyRewardRatio.mul(reward);
         }
+
+        cash.safeTransfer(msg.sender, reward);
+
+        emit RewardPaid(msg.sender, reward);
     }
 
     function allocateSeigniorage(uint256 amount)
@@ -234,6 +274,8 @@ contract VestedBondedBoardroom is BondedShareWrapper, ContractGuard {
 
         cash.safeTransferFrom(msg.sender, address(this), amount);
 
+        lastFundedOn = block.timestamp;
+
         emit RewardAdded(msg.sender, amount);
     }
 
@@ -245,5 +287,6 @@ contract VestedBondedBoardroom is BondedShareWrapper, ContractGuard {
     event Unbonded(address indexed user, uint256 amount);
     event Withdrawn(address indexed user, uint256 amount);
     event RewardPaid(address indexed user, uint256 reward);
+    event PeriodChanged(uint256 oldPeriod, uint256 period);
     event RewardAdded(address indexed user, uint256 reward);
 }
