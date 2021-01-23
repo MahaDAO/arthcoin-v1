@@ -199,17 +199,17 @@ contract VestedBondedBoardroom is BondedShareWrapper, ContractGuard {
     function _claimAndQuit() private updateReward(msg.sender) directorExists {
         uint256 reward = directors[msg.sender].rewardUnclaimed;
 
-        if (reward > 0) {
-            directors[msg.sender].rewardUnclaimed = 0;
-            directors[msg.sender].rewardClaimed = (
-                directors[msg.sender].rewardClaimed.add(reward)
-            );
-            directors[msg.sender].lastClaimedOn = block.timestamp;
+        if (reward <= 0) return;
 
-            cash.safeTransfer(msg.sender, reward);
+        directors[msg.sender].rewardUnclaimed = 0;
+        directors[msg.sender].rewardClaimed = (
+            directors[msg.sender].rewardClaimed.add(reward)
+        );
+        directors[msg.sender].lastClaimedOn = block.timestamp;
 
-            emit RewardPaid(msg.sender, reward);
-        }
+        cash.safeTransfer(msg.sender, reward);
+
+        emit RewardPaid(msg.sender, reward);
     }
 
     function exit() external {
@@ -231,11 +231,14 @@ contract VestedBondedBoardroom is BondedShareWrapper, ContractGuard {
             );
             directors[msg.sender].lastClaimedOn = block.timestamp;
         } else {
-            // If past the vesting period, then claim all rewards.
+            // If not past the vesting period, then claim reward as per time of claiming.
             uint256 timeSinceLastFunded = block.timestamp.sub(lastFundedOn);
 
-            uint256 timelyRewardRatio = timeSinceLastFunded.div(vestFor);
+            //Calculate reward to be given every second.
+            uint256 timelyRewardRatio = timeSinceLastFunded.sub(0).div(vestFor);
             if (directors[msg.sender].lastClaimedOn > lastFundedOn)
+                // If user has claimed atleast once after the new vesting kicks in, then
+                // we need to find the ratio for current time.
                 timelyRewardRatio = (
                     timeSinceLastFunded
                         .sub(directors[msg.sender].lastClaimedOn)
