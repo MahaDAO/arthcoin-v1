@@ -5,6 +5,7 @@ import { Contract, ContractFactory, BigNumber, utils } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address';
 
 import { advanceTimeAndBlock, latestBlocktime } from '../shared/utilities';
+import { TREASURY_START_DATE } from '../../deploy.config';
 // import { TREASURY_START_DATE } from '../../deploy.config';
 
 
@@ -359,18 +360,87 @@ describe('VestedBondedBoardroom', () => {
 
       await advanceTimeAndBlock(
         provider,
-        2 * 60 * 60
+        1 * 60 * 60
       );
 
       // const blockTime = BigNumber.from(await latestBlocktime(provider));
       // const timeSinceLastFunding = blockTime.sub(await boardroom.lastFundedOn());
-      // const timelyRewardRatio = timeSinceLastFunding.div(await boardroom.vestFor());
+      // const timelyRewardRatio = timeSinceLastFunding.mul(ETH).div(await boardroom.vestFor());
+      // // In this case earned reward = unclaimed reward, since this is the first time
+      // // msg.sender is claming the rewards.
+      // const rewardPerShare = (await boardroom.rewardPerShare()).rewardPerShare;
+      // const lastSnapshotIndex = (await boardroom.getLastSnapshotIndexOf(whale.address))
+      // const oldRewardPerShare = (await boardroom.boardHistory(lastSnapshotIndex)).rewardPerShare;
+      // const earnedReward = (
+      //   (await boardroom.balanceOf(whale.address))
+      //     .mul(rewardPerShare.sub(oldRewardPerShare))
+      //     .div(ETH).add(
+      //       (await boardroom.directors(whale.address).rewardEarned)
+      //     )
+      // );
+
+      // const expectedReward = earnedReward.mul(timelyRewardRatio);
+
+      await expect(boardroom.connect(whale).claimReward())
+        .to.emit(boardroom, 'RewardPaid')
+      // .withArgs(whale.address, expectedReward.div(ETH));
+
+      expect(await boardroom.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
+      expect(await cash.balanceOf(whale.address)).to.gt(ZERO);
+      expect(await share.balanceOf(whale.address)).to.eq(ZERO);
+      expect(await cash.balanceOf(whale.address)).to.lt(SEIGNIORAGE_AMOUNT);
+    });
+
+    it('Should claim vesting dividends with equal amount if done in equal period(linear vesting) if time < vestFor', async () => {
+      await cash.connect(operator).mint(operator.address, SEIGNIORAGE_AMOUNT);
+      await cash
+        .connect(operator)
+        .approve(boardroom.address, SEIGNIORAGE_AMOUNT);
+      await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT);
+
+      await advanceTimeAndBlock(
+        provider,
+        1 * 60 * 60
+      );
+
+      // const blockTime = BigNumber.from(await latestBlocktime(provider));
+      // const timeSinceLastFunding = blockTime.sub(await boardroom.lastFundedOn());
+      // const timelyRewardRatio = timeSinceLastFunding.mul(ETH).div(await boardroom.vestFor());
+      // // In this case earned reward = unclaimed reward, since this is the first time
+      // // msg.sender is claming the rewards.
+      // const rewardPerShare = (await boardroom.rewardPerShare()).rewardPerShare;
+      // const lastSnapshotIndex = (await boardroom.getLastSnapshotIndexOf(whale.address))
+      // const oldRewardPerShare = (await boardroom.boardHistory(lastSnapshotIndex)).rewardPerShare;
+      // const earnedReward = (
+      //   (await boardroom.balanceOf(whale.address))
+      //     .mul(rewardPerShare.sub(oldRewardPerShare))
+      //     .div(ETH).add(
+      //       (await boardroom.directors(whale.address).rewardEarned)
+      //     )
+      // );
+      // const expectedReward = earnedReward.mul(timelyRewardRatio);
+
+      await expect(boardroom.connect(whale).claimReward())
+        .to.emit(boardroom, 'RewardPaid')
+      // .withArgs(whale.address, expectedReward.div(ETH));
+
+      const rewardIn1Hr = await cash.balanceOf(whale.address);
+
+      expect(await boardroom.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
+      expect(await cash.balanceOf(whale.address)).to.gt(ZERO);
+      expect(await share.balanceOf(whale.address)).to.eq(ZERO);
+      expect(await cash.balanceOf(whale.address)).to.lt(SEIGNIORAGE_AMOUNT);
+
+      await advanceTimeAndBlock(
+        provider,
+        1 * 60 * 60
+      );
 
       await expect(boardroom.connect(whale).claimReward())
         .to.emit(boardroom, 'RewardPaid');
 
       expect(await boardroom.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
-      expect(await cash.balanceOf(whale.address)).to.gt(ZERO);
+      expect(await cash.balanceOf(whale.address)).to.gt(rewardIn1Hr);
       expect(await share.balanceOf(whale.address)).to.eq(ZERO);
       expect(await cash.balanceOf(whale.address)).to.lt(SEIGNIORAGE_AMOUNT);
     });

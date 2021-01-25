@@ -235,7 +235,7 @@ contract VestedBondedBoardroom is BondedShareWrapper, ContractGuard {
             uint256 timelyRewardRatio =
                 timeSinceLastFunded.mul(1e18).div(vestFor);
 
-            if (directors[msg.sender].lastClaimedOn > lastFundedOn)
+            if (directors[msg.sender].lastClaimedOn > lastFundedOn) {
                 /*
                   And if msg.sender has claimed atleast once after the new vesting kicks in,
                   then we need to find the ratio for current time.
@@ -249,13 +249,10 @@ contract VestedBondedBoardroom is BondedShareWrapper, ContractGuard {
                   For 2nd second: (2-1)/10
                   and so on.
                 */
-                timelyRewardRatio = (
-                    block
-                        .timestamp
-                        .sub(directors[msg.sender].lastClaimedOn)
-                        .mul(1e18)
-                        .div(vestFor)
-                );
+                uint256 timeSinceLastClaimed =
+                    block.timestamp.sub(directors[msg.sender].lastClaimedOn);
+                timelyRewardRatio = timeSinceLastClaimed.mul(1e18).div(vestFor);
+            }
 
             // Update reward as per vesting.
             reward = timelyRewardRatio.mul(reward).div(1e18);
