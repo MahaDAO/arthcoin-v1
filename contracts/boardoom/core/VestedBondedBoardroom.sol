@@ -22,21 +22,24 @@ contract VestedBondedBoardroom is BondedShareWrapper, ContractGuard {
      */
 
     struct Boardseat {
-        // Total reward earned.
+        // Pending reward from the previous epochs.
+        uint256 rewardPending;
+        // Total reward earned in this epoch.
         uint256 rewardEarned;
-        // Reward already claimed.
-        uint256 rewardClaimed;
-        // Last time reward was claimed.
+        // Last time reward was claimed(not bound by current epoch).
         uint256 lastClaimedOn;
-        // Reward left to be given.
-        uint256 rewardUnclaimed;
-        // Snapshot of boardroom state when last claimed.
+        // Snapshot of boardroom state when last claimed(not bound by current epoch).
         uint256 lastSnapshotIndex;
     }
 
     struct BoardSnapshot {
+        // Block number when recording a snapshot.
+        uint256 number;
+        // Block timestamp when recording a snapshot.
         uint256 time;
+        // Amount of funds received.
         uint256 rewardReceived;
+        // Equivalent amount per share staked.
         uint256 rewardPerShare;
     }
 
@@ -45,8 +48,6 @@ contract VestedBondedBoardroom is BondedShareWrapper, ContractGuard {
      */
 
     IERC20 public cash;
-    // Last time when boardroom was funded.
-    uint256 public lastFundedOn;
     // For how much time should vesting take place.
     uint256 public vestFor = 8 hours;
 
@@ -66,7 +67,8 @@ contract VestedBondedBoardroom is BondedShareWrapper, ContractGuard {
 
         BoardSnapshot memory genesisSnapshot =
             BoardSnapshot({
-                time: block.number,
+                number: block.number,
+                time: 0,
                 rewardReceived: 0,
                 rewardPerShare: 0
             });
@@ -88,14 +90,29 @@ contract VestedBondedBoardroom is BondedShareWrapper, ContractGuard {
 
     modifier updateReward(address director) {
         if (director != address(0)) {
-            Boardseat memory seat = directors[director];
+            Boardseat storage seat = directors[director];
 
-            uint256 reward = earned(director);
-            seat.rewardEarned = reward;
-            seat.rewardUnclaimed = reward.sub(seat.rewardClaimed);
+            uint256 latestFundingTime =
+                boardHistory[boardHistory.length - 1].time;
+            uint256 previousFundingTime =
+                (
+                    boardHistory.length > 1
+                        ? boardHistory[boardHistory.length - 2].time
+                        : 0
+                );
+
+            // If rewards are updated before epoch start of the current,
+            // then we mark claimable rewards as pending and set the
+            // current earned rewards to 0.
+            if (seat.lastClaimedOn < latestFundingTime) {
+                seat.rewardPending = seat.rewardEarned;
+                seat.rewardEarned = 0;
+            }
+
+            uint256 freshReward = earned(director);
+
+            seat.rewardEarned = freshReward;
             seat.lastSnapshotIndex = latestSnapshotIndex();
-
-            directors[director] = seat;
         }
 
         _;
@@ -137,9 +154,20 @@ contract VestedBondedBoardroom is BondedShareWrapper, ContractGuard {
         uint256 latestRPS = getLatestSnapshot().rewardPerShare;
         uint256 storedRPS = getLastSnapshotOf(director).rewardPerShare;
 
+        // If last time rewards claimed were less than the latest epoch start time,
+        // then we don't consider those rewards in further calculations and mark them
+        // as pending.
+        uint256 latestFundingTime = boardHistory[boardHistory.length - 1].time;
+        uint256 rewardEarned =
+            (
+                directors[director].lastClaimedOn < latestFundingTime
+                    ? 0
+                    : directors[director].rewardEarned
+            );
+
         return
             balanceOf(director).mul(latestRPS.sub(storedRPS)).div(1e18).add(
-                directors[director].rewardEarned
+                rewardEarned
             );
     }
 
@@ -198,14 +226,16 @@ contract VestedBondedBoardroom is BondedShareWrapper, ContractGuard {
     }
 
     function _claimAndQuit() private updateReward(msg.sender) {
-        uint256 reward = directors[msg.sender].rewardUnclaimed;
+        uint256 rewardLeftToClaim = directors[msg.sender].rewardEarned;
+        uint256 rewardPending = directors[msg.sender].rewardPending;
 
+        uint256 reward = rewardLeftToClaim.add(rewardPending);
         if (reward <= 0) return;
 
-        directors[msg.sender].rewardUnclaimed = 0;
-        directors[msg.sender].rewardClaimed = (
-            directors[msg.sender].rewardClaimed.add(reward)
-        );
+        // All rewards are claimed, whether pending or claimable under
+        // current epoch.
+        directors[msg.sender].rewardEarned = 0;
+        directors[msg.sender].rewardPending = 0;
         directors[msg.sender].lastClaimedOn = block.timestamp;
 
         cash.safeTransfer(msg.sender, reward);
@@ -220,22 +250,25 @@ contract VestedBondedBoardroom is BondedShareWrapper, ContractGuard {
     }
 
     function claimReward() public updateReward(msg.sender) {
-        uint256 reward = directors[msg.sender].rewardUnclaimed;
-
+        uint256 reward = directors[msg.sender].rewardEarned;
         if (reward <= 0) return;
 
+        uint256 latestFundingTime = boardHistory[boardHistory.length - 1].time;
+
         // If past the vesting period, then claim entire reward.
-        if (block.timestamp >= lastFundedOn.add(vestFor)) {
-            directors[msg.sender].rewardUnclaimed = 0;
-        } else {
-            // If not past the vesting period, then claim reward as per linear vesting.
-            uint256 timeSinceLastFunded = block.timestamp.sub(lastFundedOn);
+        if (block.timestamp >= latestFundingTime.add(vestFor)) {
+            directors[msg.sender].rewardEarned = 0;
+        }
+        // If not past the vesting period, then claim reward as per linear vesting.
+        else {
+            uint256 timeSinceLastFunded =
+                block.timestamp.sub(latestFundingTime);
             // Calculate reward to be given assuming msg.sender has not claimed in current
             // vesting cycle(8hr cycle).
             uint256 timelyRewardRatio =
                 timeSinceLastFunded.mul(1e18).div(vestFor);
 
-            if (directors[msg.sender].lastClaimedOn > lastFundedOn) {
+            if (directors[msg.sender].lastClaimedOn > latestFundingTime) {
                 /*
                   And if msg.sender has claimed atleast once after the new vesting kicks in,
                   then we need to find the ratio for current time.
@@ -256,16 +289,15 @@ contract VestedBondedBoardroom is BondedShareWrapper, ContractGuard {
 
             // Update reward as per vesting.
             reward = timelyRewardRatio.mul(reward).div(1e18);
+            // If this is the first claim inside this vesting period, then we also
+            // give away 100% of previous vesting period's pending rewards.
+            if (directors[msg.sender].lastClaimedOn < latestFundingTime)
+                reward = reward.add(directors[msg.sender].rewardPending);
 
-            directors[msg.sender].rewardUnclaimed = directors[msg.sender]
-                .rewardUnclaimed
-                .sub(reward);
+            directors[msg.sender].rewardEarned = (
+                directors[msg.sender].rewardEarned.sub(reward)
+            );
         }
-
-        // Update the tx sender's details.
-        directors[msg.sender].rewardClaimed = (
-            directors[msg.sender].rewardClaimed.add(reward)
-        );
         directors[msg.sender].lastClaimedOn = block.timestamp;
 
         cash.safeTransfer(msg.sender, reward);
@@ -280,24 +312,23 @@ contract VestedBondedBoardroom is BondedShareWrapper, ContractGuard {
     {
         require(amount > 0, 'Boardroom: Cannot allocate 0');
 
-        // 'Boardroom: Cannot allocate when totalSupply is 0'
+        // Boardroom: Cannot allocate when totalSupply is 0.
         if (totalSupply() == 0) return;
 
-        // Create & add new snapshot
+        // Create & add new snapshot.
         uint256 prevRPS = getLatestSnapshot().rewardPerShare;
         uint256 nextRPS = prevRPS.add(amount.mul(1e18).div(totalSupply()));
 
         BoardSnapshot memory newSnapshot =
             BoardSnapshot({
-                time: block.number,
+                number: block.number,
+                time: block.timestamp,
                 rewardReceived: amount,
                 rewardPerShare: nextRPS
             });
         boardHistory.push(newSnapshot);
 
         cash.safeTransferFrom(msg.sender, address(this), amount);
-
-        lastFundedOn = block.timestamp;
 
         emit RewardAdded(msg.sender, amount);
     }
