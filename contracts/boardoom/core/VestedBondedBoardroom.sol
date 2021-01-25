@@ -241,7 +241,8 @@ contract VestedBondedBoardroom is BondedShareWrapper, ContractGuard {
                 // If user has claimed atleast once after the new vesting kicks in, then
                 // we need to find the ratio for current time.
                 timelyRewardRatio = (
-                    timeSinceLastFunded
+                    block
+                        .timestamp
                         .sub(directors[msg.sender].lastClaimedOn)
                         .div(vestFor)
                 );
