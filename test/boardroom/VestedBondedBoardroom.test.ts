@@ -443,6 +443,10 @@ describe('VestedBondedBoardroom', () => {
       expect(await cash.balanceOf(whale.address)).to.gt(rewardIn1Hr);
       expect(await share.balanceOf(whale.address)).to.eq(ZERO);
       expect(await cash.balanceOf(whale.address)).to.lt(SEIGNIORAGE_AMOUNT);
+      // Reward should decrease linearly with increasing time in vesting period.
+      // Hence when we claim with same interval as the first, we should not receive
+      // the exact amount.
+      expect(await cash.balanceOf(whale.address)).to.lt(rewardIn1Hr.mul(2));
     });
 
     it('Should claim vesting devidends correctly even after time > vestFor', async () => {
