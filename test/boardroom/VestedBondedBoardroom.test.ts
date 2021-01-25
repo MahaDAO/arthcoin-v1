@@ -5,6 +5,7 @@ import { Contract, ContractFactory, BigNumber, utils } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address';
 
 import { advanceTimeAndBlock, latestBlocktime } from '../shared/utilities';
+import { TREASURY_START_DATE } from '../../deploy.config';
 
 
 chai.use(solidity);
@@ -358,7 +359,7 @@ describe('Vested and bonded boardroom', () => {
 
       await advanceTimeAndBlock(
         provider,
-        (await latestBlocktime(provider)) + 1 * 60 * 60
+        2 * 60 * 60
       );
 
       const blockTime = BigNumber.from(await latestBlocktime(provider));
@@ -366,12 +367,12 @@ describe('Vested and bonded boardroom', () => {
       const timelyRewardRatio = timeSinceLastFunding.div(await boardroom.vestFor());
 
       await expect(boardroom.connect(whale).claimReward())
-        .to.emit(boardroom, 'RewardPaid')
+        .to.emit(boardroom, 'RewardPaid');
 
       expect(await boardroom.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
       expect(await cash.balanceOf(whale.address)).to.gt(ZERO);
       expect(await share.balanceOf(whale.address)).to.eq(ZERO);
-      console.log((await cash.balanceOf(whale.address)).toString())
+      expect(await cash.balanceOf(whale.address)).to.lt(SEIGNIORAGE_AMOUNT);
     });
 
     it('Should claim vesting devidends correctly even after time > vestFor', async () => {
@@ -381,11 +382,9 @@ describe('Vested and bonded boardroom', () => {
         .approve(boardroom.address, SEIGNIORAGE_AMOUNT);
       await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT);
 
-      await boardroom.connect(abuser).bond(STAKE_AMOUNT);
-
       await advanceTimeAndBlock(
         provider,
-        (await latestBlocktime(provider)) + 8 * 60 * 60
+        8 * 60 * 60
       );
 
       await expect(boardroom.connect(whale).claimReward())
