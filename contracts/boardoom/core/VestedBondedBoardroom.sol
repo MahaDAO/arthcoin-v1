@@ -253,6 +253,7 @@ contract VestedBondedBoardroom is BondedShareWrapper, ContractGuard {
                     block
                         .timestamp
                         .sub(directors[msg.sender].lastClaimedOn)
+                        .mul(1e18)
                         .div(vestFor)
                 );
 
