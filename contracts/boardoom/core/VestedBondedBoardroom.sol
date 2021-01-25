@@ -175,7 +175,7 @@ contract VestedBondedBoardroom is BondedShareWrapper, ContractGuard {
         onlyOneBlock
         updateReward(msg.sender)
     {
-        require(amount > 0, 'Boardroom: Cannot stake 0');
+        require(amount > 0, 'Boardroom: Cannot unstake 0');
 
         super.unbond(amount);
 

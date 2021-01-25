@@ -55,6 +55,13 @@ abstract contract BondedShareWrapper is StakingTimelock, Operator {
     }
 
     function unbond(uint256 amount) public virtual {
+        uint256 directorShare = _balances[msg.sender];
+
+        require(
+            directorShare >= amount,
+            'Boardroom: unbond request greater than staked amount'
+        );
+
         _addStakerDetails(msg.sender, amount);
     }
 
