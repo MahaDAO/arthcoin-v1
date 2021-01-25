@@ -348,21 +348,24 @@ describe('Vested and bonded boardroom', () => {
       await boardroom.connect(whale).bond(STAKE_AMOUNT);
     });
 
-    it('Should claim devidends', async () => {
+    it('Should claim vesting dividends if time < vestFor', async () => {
       await cash.connect(operator).mint(operator.address, SEIGNIORAGE_AMOUNT);
       await cash
         .connect(operator)
         .approve(boardroom.address, SEIGNIORAGE_AMOUNT);
       await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT);
 
+      // const blockTime = BigNumber.from(await latestBlocktime(provider));
+      // const timeSinceLastFunding = blockTime.sub(await boardroom.lastFundedOn());
+      // const timelyRewardRatio = blockTime.div(await boardroom.vestFor());
+
       await expect(boardroom.connect(whale).claimReward())
         .to.emit(boardroom, 'RewardPaid')
-      // .withArgs(whale.address, SEIGNIORAGE_AMOUNT);
 
       expect(await boardroom.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
     });
 
-    it('Should claim devidends correctly even after other person stakes after snapshot', async () => {
+    it('Should claim vesting devidends correctly even after other person stakes after snapshot and time < vestFor', async () => {
       await cash.connect(operator).mint(operator.address, SEIGNIORAGE_AMOUNT);
       await cash
         .connect(operator)
@@ -373,7 +376,6 @@ describe('Vested and bonded boardroom', () => {
 
       await expect(boardroom.connect(whale).claimReward())
         .to.emit(boardroom, 'RewardPaid')
-      // .withArgs(whale.address, SEIGNIORAGE_AMOUNT);
 
       expect(await boardroom.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
     });

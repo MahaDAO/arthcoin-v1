@@ -46,7 +46,7 @@ contract VestedBondedBoardroom is BondedShareWrapper, ContractGuard {
 
     IERC20 public cash;
     // Last time when boardroom was funded.
-    uint256 lastFundedOn;
+    uint256 public lastFundedOn;
     // For how much time should vesting take place.
     uint256 public vestFor = 8 hours;
 
