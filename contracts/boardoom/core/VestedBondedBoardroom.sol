@@ -224,20 +224,20 @@ contract VestedBondedBoardroom is BondedShareWrapper, ContractGuard {
 
         if (reward <= 0) return;
 
-        // If past the vesting period, then claim all rewards.
+        // If past the vesting period, then claim entire reward.
         if (block.timestamp >= lastFundedOn.add(vestFor)) {
             directors[msg.sender].rewardUnclaimed = 0;
         } else {
-            // If not past the vesting period, then claim reward as per time of claiming.
+            // If not past the vesting period, then claim reward as per linear vesting.
             uint256 timeSinceLastFunded = block.timestamp.sub(lastFundedOn);
-
-            // Calculate reward to be given every second.
+            // Calculate reward to be given assuming msg.sender has not claimed in current
+            // vesting cycle(8hr cycle).
             uint256 timelyRewardRatio =
                 timeSinceLastFunded.mul(1e18).div(vestFor);
 
             if (directors[msg.sender].lastClaimedOn > lastFundedOn)
-                // If user has claimed atleast once after the new vesting kicks in, then
-                // we need to find the ratio for current time.
+                // And if msg.sender has claimed atleast once after the new vesting kicks in,
+                // then we need to find the ratio for current time.
                 timelyRewardRatio = (
                     block
                         .timestamp
@@ -245,6 +245,7 @@ contract VestedBondedBoardroom is BondedShareWrapper, ContractGuard {
                         .div(vestFor)
                 );
 
+            // Update reward as per vesting.
             reward = timelyRewardRatio.mul(reward).div(1e18);
 
             directors[msg.sender].rewardUnclaimed = directors[msg.sender]
@@ -252,6 +253,7 @@ contract VestedBondedBoardroom is BondedShareWrapper, ContractGuard {
                 .sub(reward);
         }
 
+        // Update the tx sender's details.
         directors[msg.sender].rewardClaimed = (
             directors[msg.sender].rewardClaimed.add(reward)
         );

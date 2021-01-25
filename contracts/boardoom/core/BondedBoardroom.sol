@@ -138,9 +138,10 @@ contract BondedBoardroom is BondedShareWrapper, ContractGuard {
         public
         override
         onlyOneBlock
+        directorExists
         updateReward(msg.sender)
     {
-        require(amount > 0, 'Boardroom: Cannot stake 0');
+        require(amount > 0, 'Boardroom: Cannot unbond 0');
 
         super.unbond(amount);
 
