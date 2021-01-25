@@ -147,7 +147,7 @@ contract VestedBondedBoardroom is BondedShareWrapper, ContractGuard {
      * Mutations.
      */
 
-    function setVestingPeriod(uint256 period) public onlyOperator {
+    function setVestFor(uint256 period) public onlyOperator {
         require(period > 0, 'Boardoom: period is 0');
 
         uint256 oldPeriod = vestFor;
