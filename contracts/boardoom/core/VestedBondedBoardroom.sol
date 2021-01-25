@@ -257,7 +257,12 @@ contract VestedBondedBoardroom is BondedShareWrapper, ContractGuard {
 
         // If past the vesting period, then claim entire reward.
         if (block.timestamp >= latestFundingTime.add(vestFor)) {
+            // If past latest funding time and vesting period then we claim entire 100%
+            // reward from both previous and current.
+            reward = reward.add(directors[msg.sender].rewardPending);
+
             directors[msg.sender].rewardEarned = 0;
+            directors[msg.sender].rewardPending = 0;
         }
         // If not past the vesting period, then claim reward as per linear vesting.
         else {
@@ -289,14 +294,17 @@ contract VestedBondedBoardroom is BondedShareWrapper, ContractGuard {
 
             // Update reward as per vesting.
             reward = timelyRewardRatio.mul(reward).div(1e18);
-            // If this is the first claim inside this vesting period, then we also
-            // give away 100% of previous vesting period's pending rewards.
-            if (directors[msg.sender].lastClaimedOn < latestFundingTime)
-                reward = reward.add(directors[msg.sender].rewardPending);
 
             directors[msg.sender].rewardEarned = (
                 directors[msg.sender].rewardEarned.sub(reward)
             );
+
+            // If this is the first claim inside this vesting period, then we also
+            // give away 100% of previous vesting period's pending rewards.
+            if (directors[msg.sender].lastClaimedOn < latestFundingTime) {
+                reward = reward.add(directors[msg.sender].rewardPending);
+                directors[msg.sender].rewardPending = 0;
+            }
         }
         directors[msg.sender].lastClaimedOn = block.timestamp;
 
