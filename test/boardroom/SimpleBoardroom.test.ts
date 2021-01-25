@@ -4,13 +4,13 @@ import { solidity } from 'ethereum-waffle';
 import { Contract, ContractFactory, BigNumber, utils } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address';
 
-import { advanceTimeAndBlock, latestBlocktime } from './shared/utilities';
+import { advanceTimeAndBlock, latestBlocktime } from '../shared/utilities';
 
 
 chai.use(solidity);
 
 
-describe('Boardroom', () => {
+describe('Simple Boardroom', () => {
   // const DAY = 86400;
 
   const BOARDROOM_LOCK_PERIOD = 5 * 60;

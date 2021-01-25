@@ -163,6 +163,7 @@ contract BondedBoardroom is BondedShareWrapper, ContractGuard {
 
     function exit() external {
         withdraw(balanceOf(msg.sender));
+
         claimReward();
     }
 

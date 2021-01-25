@@ -234,7 +234,7 @@ contract VestedBondedBoardroom is BondedShareWrapper, ContractGuard {
             // If not past the vesting period, then claim reward as per time of claiming.
             uint256 timeSinceLastFunded = block.timestamp.sub(lastFundedOn);
 
-            //Calculate reward to be given every second.
+            // Calculate reward to be given every second.
             uint256 timelyRewardRatio = timeSinceLastFunded.sub(0).div(vestFor);
             if (directors[msg.sender].lastClaimedOn > lastFundedOn)
                 // If user has claimed atleast once after the new vesting kicks in, then
