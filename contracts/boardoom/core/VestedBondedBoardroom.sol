@@ -173,9 +173,10 @@ contract VestedBondedBoardroom is BondedShareWrapper, ContractGuard {
         public
         override
         onlyOneBlock
+        directorExists
         updateReward(msg.sender)
     {
-        require(amount > 0, 'Boardroom: Cannot unstake 0');
+        require(amount > 0, 'Boardroom: Cannot unbond 0');
 
         super.unbond(amount);
 
@@ -196,7 +197,7 @@ contract VestedBondedBoardroom is BondedShareWrapper, ContractGuard {
         emit Withdrawn(msg.sender, amount);
     }
 
-    function _claimAndQuit() private updateReward(msg.sender) directorExists {
+    function _claimAndQuit() private updateReward(msg.sender) {
         uint256 reward = directors[msg.sender].rewardUnclaimed;
 
         if (reward <= 0) return;
