@@ -272,7 +272,7 @@ describe('Vested and bonded boardroom', () => {
 
       await advanceTimeAndBlock(
         provider,
-        (await latestBlocktime(provider)) + BOARDROOM_LOCK_PERIOD
+        (await latestBlocktime(provider)) + 2 * BOARDROOM_LOCK_PERIOD
       );
 
       await expect(boardroom.connect(whale).withdraw(STAKE_AMOUNT))
@@ -281,6 +281,7 @@ describe('Vested and bonded boardroom', () => {
 
       expect(await share.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
       expect(await boardroom.balanceOf(whale.address)).to.eq(ZERO);
+      expect(await cash.balanceOf(whale.address)).to.gte(ZERO); // Since no seigniorage is allocated.
     });
 
     it('Should fail when non-director tries to exit', async () => {
@@ -355,14 +356,22 @@ describe('Vested and bonded boardroom', () => {
         .approve(boardroom.address, SEIGNIORAGE_AMOUNT);
       await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT);
 
-      // const blockTime = BigNumber.from(await latestBlocktime(provider));
-      // const timeSinceLastFunding = blockTime.sub(await boardroom.lastFundedOn());
-      // const timelyRewardRatio = blockTime.div(await boardroom.vestFor());
+      const blockTime = BigNumber.from(await latestBlocktime(provider));
+      const timeSinceLastFunding = blockTime.sub(await boardroom.lastFundedOn());
+      const timelyRewardRatio = blockTime.div(await boardroom.vestFor());
+
+      await advanceTimeAndBlock(
+        provider,
+        (await latestBlocktime(provider)) + 1 * 60 * 60
+      );
 
       await expect(boardroom.connect(whale).claimReward())
         .to.emit(boardroom, 'RewardPaid')
 
       expect(await boardroom.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
+      expect(await cash.balanceOf(whale.address)).to.gt(ZERO);
+      expect(await share.balanceOf(whale.address)).to.eq(ZERO);
+      // expect(await cash.balanceOf(whale.address)).to.lt(SEIGNIORAGE_AMOUNT);
     });
 
     it('Should claim vesting devidends correctly even after other person stakes after snapshot and time < vestFor', async () => {
@@ -374,9 +383,16 @@ describe('Vested and bonded boardroom', () => {
 
       await boardroom.connect(abuser).bond(STAKE_AMOUNT);
 
-      await expect(boardroom.connect(whale).claimReward())
-        .to.emit(boardroom, 'RewardPaid')
+      await advanceTimeAndBlock(
+        provider,
+        (await latestBlocktime(provider)) + 8 * 60 * 60
+      );
 
+      await expect(boardroom.connect(whale).claimReward())
+        .to.emit(boardroom, 'RewardPaid');
+
+      expect(await share.balanceOf(whale.address)).to.eq(ZERO);
+      expect(await cash.balanceOf(whale.address)).to.eq(SEIGNIORAGE_AMOUNT);
       expect(await boardroom.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
     });
   });
