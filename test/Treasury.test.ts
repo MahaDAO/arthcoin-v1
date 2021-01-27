@@ -382,11 +382,11 @@ describe('Treasury', () => {
           // let expectedSeigniorage = await treasury.estimateSeignorageToMint(cashPrice);
 
           // calculate with circulating supply without considering uniswap liq.
-          const cashSupply = (await cash.totalSupply()).sub(treasuryHoldings).add(ETH.mul(200));
-          const percentage = bigmin(
-            cashPrice.sub(ETH).mul(100).div(ETH),
-            await treasury.maxSupplyIncreasePerEpoch()
-          );
+          // const cashSupply = (await cash.totalSupply()).sub(treasuryHoldings).add(ETH.mul(200));
+          // const percentage = bigmin(
+          //   cashPrice.sub(ETH).mul(100).div(ETH),
+          //   await treasury.maxSupplyIncreasePerEpoch()
+          // );
 
           // We are minting INITIAL_BAC_AMOUNT, 2 times in beforeEach.
           // 1st minting of INITIAL_BAC_AMOUNT is to operator and 2nd to treasury(treasuryReserves).
