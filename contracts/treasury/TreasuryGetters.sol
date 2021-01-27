@@ -42,12 +42,8 @@ abstract contract TreasuryGetters is TreasuryState {
         returns (uint256)
     {
         if (price > cashTargetPrice)
-            return
-                price.sub(cashTargetPrice).mul(1e18).mul(100).div(
-                    cashTargetPrice
-                );
-        return
-            cashTargetPrice.sub(price).mul(1e18).mul(100).div(cashTargetPrice);
+            return price.sub(cashTargetPrice).mul(100).div(cashTargetPrice);
+        return cashTargetPrice.sub(price).mul(100).div(cashTargetPrice);
     }
 
     function getSeigniorageOraclePrice() public view returns (uint256) {
