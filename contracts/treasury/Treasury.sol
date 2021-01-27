@@ -250,13 +250,12 @@ contract Treasury is TreasuryHelpers {
     {
         _updateCashPrice();
         uint256 cash12hPrice = getSeigniorageOraclePrice();
-        uint256 cash1hPrice = getBondOraclePrice();
 
         // send 200 ARTH reward to the person advancing the epoch to compensate for gas
         IBasisAsset(cash).mint(msg.sender, uint256(200).mul(1e18));
 
         // update the bond limits
-        _updateConversionLimit(cash1hPrice);
+        _updateConversionLimit(cash12hPrice);
 
         if (cash12hPrice <= cashTargetPrice) {
             return; // just advance epoch instead revert
