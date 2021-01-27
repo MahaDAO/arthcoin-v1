@@ -373,7 +373,7 @@ describe('Treasury', () => {
         });
 
         it('should fund all if price > targetPrice and price > expansionpriceLimit', async () => {
-          const cashPrice = ETH.mul(200).div(100);
+          const cashPrice = ETH.mul(110).div(100);
           await oracle.setPrice(cashPrice);
 
           const oldCashBalanceOfAnt = await cash.balanceOf(ant.address);
@@ -384,7 +384,7 @@ describe('Treasury', () => {
           // calculate with circulating supply without considering uniswap liq.
           const cashSupply = (await cash.totalSupply()).sub(treasuryHoldings).add(ETH.mul(200));
           const percentage = bigmin(
-            cashPrice.sub(ETH).mul(ETH).div(ETH).div(100),
+            cashPrice.sub(ETH).mul(100).div(ETH),
             await treasury.maxSupplyIncreasePerEpoch()
           );
           let expectedSeigniorage = cashSupply
@@ -470,7 +470,7 @@ describe('Treasury', () => {
           const treasuryHoldings = await treasury.getReserve();
           const cashSupply = (await cash.totalSupply()).sub(treasuryHoldings).add(ETH.mul(200));
           const percentage = bigmin(
-            cashPrice.sub(ETH).mul(ETH).div(ETH).div(100),
+            cashPrice.sub(ETH).mul(100).div(ETH),
             await treasury.maxSupplyIncreasePerEpoch()
           );
           let seigniorage = cashSupply
