@@ -33,8 +33,8 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     address public uniswapRouter;
 
     address public arthLiquidityBoardroom;
-    address public arthBoardroom;
     address public mahaLiquidityBoardroom;
+    address public arthBoardroom;
 
     address public ecosystemFund;
 

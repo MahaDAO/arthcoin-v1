@@ -43,8 +43,9 @@ contract TreasuryHelpers is TreasurySetters {
         address _fund,
         address _uniswapRouter,
         uint256 _startTime,
-        uint256 _period
-    ) public Epoch(_period, _startTime, 0) {
+        uint256 _period,
+        uint256 _startEpoch
+    ) public Epoch(_period, _startTime, _startEpoch) {
         // tokens
         dai = _dai;
         cash = _cash;

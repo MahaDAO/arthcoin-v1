@@ -47,7 +47,8 @@ contract Treasury is TreasuryHelpers {
         // uniswap router
         address _uniswapRouter,
         uint256 _startTime,
-        uint256 _period
+        uint256 _period,
+        uint256 _startEpoch
     )
         public
         TreasuryHelpers(
@@ -65,7 +66,8 @@ contract Treasury is TreasuryHelpers {
             _fund,
             _uniswapRouter,
             _startTime,
-            _period
+            _period,
+            _startEpoch
         )
     {}
 
