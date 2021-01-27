@@ -41,6 +41,8 @@ abstract contract TreasuryGetters is TreasuryState {
         pure
         returns (uint256)
     {
+        if (price > targetPrice)
+            return price.sub(targetPrice).mul(1e18).mul(100).div(targetPrice);
         return targetPrice.sub(price).mul(1e18).mul(100).div(targetPrice);
     }
 
