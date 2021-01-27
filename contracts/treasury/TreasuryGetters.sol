@@ -56,7 +56,7 @@ abstract contract TreasuryGetters is TreasuryState {
     }
 
     function bondCirculatingSupply() public view returns (uint256) {
-        return ICustomERC20(bond).totalSupply();
+        return ICustomERC20(bond).totalSupply().sub(accumulatedSeigniorage);
     }
 
     /**
