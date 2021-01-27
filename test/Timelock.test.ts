@@ -154,7 +154,8 @@ describe('Timelock', () => {
       developmentFund.address,
       uniswapRouter.address,
       startTime,
-      5 * 60
+      5 * 60,
+      0
     );
 
     // await developmentFund.connect(operator).transferOperator(treasury.address);
@@ -210,7 +211,8 @@ describe('Timelock', () => {
         developmentFund.address,
         uniswapRouter.address,
         startTime,
-        5 * 60
+        5 * 60,
+        0
       );
     });
 

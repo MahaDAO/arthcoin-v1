@@ -157,7 +157,8 @@ describe('Treasury', () => {
       developmentFund.address,
       uniswapRouter.address,
       startTime,
-      period
+      period,
+      0
     );
   });
 
@@ -182,7 +183,8 @@ describe('Treasury', () => {
       developmentFund.address,
       uniswapRouter.address,
       startTime,
-      period
+      period,
+      0
     );
   });
 
