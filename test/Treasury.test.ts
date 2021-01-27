@@ -393,6 +393,7 @@ describe('Treasury', () => {
           // Awarding gas fees compensation of 200 ARTH.
           // And Minting 10 arth while deploying.
           // And we are not considering uniswap liquidity.
+          // Price deviation is actually 100%; but a max cap sets it to 15 only.
           let expectedSeigniorage = INITIAL_BAC_AMOUNT.mul(2).add(ETH.mul(211)).mul(15).div(100);
           const mintedSeigniorage = expectedSeigniorage;
 
@@ -569,7 +570,13 @@ describe('Treasury', () => {
           //   await treasury.maxSupplyIncreasePerEpoch()
           // );
 
-          let seigniorage = INITIAL_BAC_AMOUNT.mul(2).add(ETH.mul(211)).mul(10).div(100);
+          // We are minting INITIAL_BAC_AMOUNT, 2 times in beforeEach.
+          // 1st minting of INITIAL_BAC_AMOUNT is to operator and 2nd to treasury(treasuryReserves).
+          // Awarding gas fees compensation of 200 ARTH.
+          // And Minting 10 arth while deploying.
+          // And we are not considering uniswap liquidity.
+          // Price divation is 3%;
+          let seigniorage = INITIAL_BAC_AMOUNT.mul(2).add(ETH.mul(211)).mul(3).div(100);
           const accumulatedSeigniorage = await treasury.getReserve();
 
           const treasuryReserve = bigmin(
