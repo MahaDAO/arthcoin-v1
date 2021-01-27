@@ -13,7 +13,7 @@ async function main() {
   const [operator,] = await ethers.getSigners();
 
   // Fetch already deployed contracts.
-  const deployements = require(`../build/deployments.${network.name}.json`);
+  const deployements = require(`../deployments/2021-01-21.json`);
 
   // Fetch contract factories.
   const Treasury = await ethers.getContractFactory('Treasury');
@@ -22,7 +22,8 @@ async function main() {
   const treasury = await ethers.getContractAt('Treasury', deployements.Treasury.address);
 
   // Deploy new treasury.
-  const newTreasury = await Treasury.connect(operator).deploy(
+
+  const params = [
     await treasury.dai(),
     await treasury.cash(),
     await treasury.bond(),
@@ -39,14 +40,18 @@ async function main() {
     await treasury.ecosystemFund(),
 
     await treasury.uniswapRouter(),
-    await treasury.startTime(),
-    await treasury.period(),
-    0
-  );
+    1611331200,
+    43200,
+    9
+  ]
+
+  const newTreasury = await Treasury.connect(operator).deploy(...params);
 
   console.log(`\nTreasury details: `)
-  console.log(` - Old treasury was at address(${treasury.address})`)
-  console.log(` - New treasury was at address(${newTreasury.address})`)
+  console.log(` - Old treasury at address(${treasury.address})`)
+  console.log(` - New treasury at address(${newTreasury.address})`)
+
+  console.log(` - New treasury params: ${JSON.stringify(params)}`)
 }
 
 
