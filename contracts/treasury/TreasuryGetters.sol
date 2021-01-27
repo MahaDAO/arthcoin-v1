@@ -41,13 +41,10 @@ abstract contract TreasuryGetters is TreasuryState {
         view
         returns (uint256)
     {
-        if (price > cashTargetPrice)
-            return
-                price.sub(cashTargetPrice).mul(1e18).mul(100).div(
-                    cashTargetPrice
-                );
-        return
-            cashTargetPrice.sub(price).mul(1e18).mul(100).div(cashTargetPrice);
+        uint256 target = getGMUOraclePrice();
+
+        if (price > target) return price.sub(target).mul(100).div(target);
+        return target.sub(price).mul(100).div(target);
     }
 
     function getSeigniorageOraclePrice() public view returns (uint256) {
@@ -58,6 +55,10 @@ abstract contract TreasuryGetters is TreasuryState {
         return IERC20(cash).totalSupply().sub(accumulatedSeigniorage);
     }
 
+    function bondCirculatingSupply() public view returns (uint256) {
+        return ICustomERC20(bond).totalSupply();
+    }
+
     /**
      * Understand how much Seignorage should be minted
      */
@@ -66,30 +67,49 @@ abstract contract TreasuryGetters is TreasuryState {
         view
         returns (uint256)
     {
-        if (price <= cashTargetPrice) return 0;
+        if (price <= cashTargetPrice) return 0; // < $1.00
         uint256 percentage = getPercentDeviationFromTarget(price);
 
+        // cap the max supply increase per epoch to only 30%
         uint256 finalPercentage =
             Math.min(percentage, maxSupplyIncreasePerEpoch);
 
-        // take into consideration uniswap liq. if flag is on, how much liquidity is there in the ARTH uniswap pool
+        // take into consideration uniswap liq. if flag is on, ie how much liquidity is there in the ARTH uniswap pool
+        uint256 toMint = arthCirculatingSupply().mul(finalPercentage).div(100);
+
+        // if we are below the expansion price limit; only pay back bond holders if we are within the right price range
+        // < $1.05
+        if (price <= getExpansionLimitPrice()) {
+            return Math.min(toMint, bondCirculatingSupply());
+        }
+
+        return toMint;
+    }
+
+    function estimateBondsToIssue(uint256 price) public view returns (uint256) {
+        uint256 bondPurchasePrice = getBondPurchasePrice();
+
+        // check if we are in contract mode.
+        if (price > bondPurchasePrice) return 0; // <= $0.95?
+
+        // in contraction mode -> issue bonds.
+        // set a limit to how many bonds are there.
+
+        uint256 percentage = getPercentDeviationFromTarget(price);
+
+        // understand how much % deviation do we have from target price
+        // if target price is 2.5$ and we are at 2$; then percentage should be 20%
+        // cap the bonds to be issed; we don't want too many
+        uint256 finalPercentage = Math.min(percentage, maxDebtIncreasePerEpoch);
+
+        // accordingly set the new conversion limit to be that % from the
+        // current circulating supply of ARTH and if uniswap enabled then uniswap liquidity.
         return
             arthCirculatingSupply()
                 .mul(finalPercentage)
                 .div(100)
                 .mul(getCashSupplyInLiquidity())
                 .div(100);
-    }
-
-    function estimatePercentageOfBondsToIssue(uint256 price)
-        public
-        view
-        returns (uint256)
-    {
-        uint256 percentage = getPercentDeviationFromTarget(price);
-
-        // cap the bonds to be issed; we don't want too many
-        return Math.min(percentage, maxDebtIncreasePerEpoch);
     }
 
     function getBondRedemtionPrice() public view returns (uint256) {

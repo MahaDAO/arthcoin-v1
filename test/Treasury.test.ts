@@ -555,6 +555,182 @@ describe('Treasury', () => {
     });
   });
 
+  describe('getPercentDeviationFromTarget', () => {
+    it('returns 0 at 1$ price with a target of 1$', async () => {
+      const price = utils.parseEther('1')
+      await expect(await treasury.getPercentDeviationFromTarget(price)).to.be.eq(0);
+    });
+
+    it('returns 10 at 1.1$ price with a target of 1$', async () => {
+      const price = utils.parseEther('11').div(10)
+      await expect(await treasury.getPercentDeviationFromTarget(price)).to.be.eq(10);
+    });
+
+    it('returns 20 at 1.2$ price with a target of 1$', async () => {
+      const price = utils.parseEther('12').div(10)
+      await expect(await treasury.getPercentDeviationFromTarget(price)).to.be.eq(20);
+    });
+
+    it('returns 100 at 0$ price with a target of 1$', async () => {
+      await expect(await treasury.getPercentDeviationFromTarget(0)).to.be.eq(100);
+    });
+
+    it('returns 100 at 2$ price with a target of 1$', async () => {
+      const price = utils.parseEther('2')
+      await expect(await treasury.getPercentDeviationFromTarget(price)).to.be.eq(100);
+    });
+
+    it('returns 10 at 0.9$ price with a target of 1$', async () => {
+      const price = utils.parseEther('9').div(10)
+      await expect(await treasury.getPercentDeviationFromTarget(price)).to.be.eq(10);
+    });
+
+    it('returns 50 at 0.5$ price with a target of 1$', async () => {
+      const price = utils.parseEther('5').div(10)
+      await expect(await treasury.getPercentDeviationFromTarget(price)).to.be.eq(50);
+    });
+
+    it('returns 200 at 3$ price with a target of 1$', async () => {
+      const price = utils.parseEther('30').div(10)
+      await expect(await treasury.getPercentDeviationFromTarget(price)).to.be.eq(200);
+    });
+
+    it('returns 50 at 1$ price with a target of 2$', async () => {
+      const price = utils.parseEther('1')
+      await gmuOracle.setPrice(utils.parseEther('2'));
+      await expect(await treasury.getPercentDeviationFromTarget(price)).to.be.eq(50);
+    });
+
+    it('returns 75 at 3.5$ price with a target of 2$', async () => {
+      const price = utils.parseEther('35').div(10)
+      await gmuOracle.setPrice(utils.parseEther('2'));
+      await expect(await treasury.getPercentDeviationFromTarget(price)).to.be.eq(75);
+    });
+  })
+
+  describe('estimateSeignorageToMint', () => {
+    it('at 1$ and 0 ARTHB we mint 0 ARTH', async () => {
+      const price = utils.parseEther('10').div(10)
+      await expect(await treasury.estimateSeignorageToMint(price)).to.be.eq(0);
+    });
+
+    it('at 0.99$ and 0 ARTHB we mint 0 ARTH', async () => {
+      const price = utils.parseEther('99').div(100)
+      await expect(await treasury.estimateSeignorageToMint(price)).to.be.eq(0);
+    });
+
+    it('at 1.01$ and 0 ARTHB we mint 0 ARTH', async () => {
+      const price = utils.parseEther('101').div(100)
+      await expect(await treasury.estimateSeignorageToMint(price)).to.be.eq(0);
+    });
+
+    it('at 1.01$ and 5% ARTHB we mint 1% more ARTH', async () => {
+      const arthSupply = await cash.totalSupply()
+
+      const price = utils.parseEther('101').div(100)
+      await bond.mint(operator.address, arthSupply.mul(5).div(100));
+
+      await expect(await treasury.getPercentDeviationFromTarget(price)).to.be.eq(1);
+      await expect(await treasury.estimateSeignorageToMint(price)).to.be.eq(arthSupply.mul(1).div(100));
+    });
+
+    it('at 1.05$ and 5% ARTHB we mint 5% ARTH', async () => {
+      const arthSupply = await cash.totalSupply()
+
+      const price = utils.parseEther('105').div(100)
+      await bond.mint(operator.address, arthSupply.mul(5).div(100));
+
+      await expect(await treasury.getPercentDeviationFromTarget(price)).to.be.eq(5);
+      await expect(await treasury.estimateSeignorageToMint(price)).to.be.eq(arthSupply.mul(5).div(100));
+    });
+
+    it('at 1.05$ and 10% ARTHB we mint 5% ARTH', async () => {
+      const arthSupply = await cash.totalSupply()
+
+      const price = utils.parseEther('105').div(100)
+      await bond.mint(operator.address, arthSupply.mul(10).div(100));
+
+      await expect(await treasury.getPercentDeviationFromTarget(price)).to.be.eq(5);
+      await expect(await treasury.estimateSeignorageToMint(price)).to.be.eq(arthSupply.mul(5).div(100));
+    });
+
+    it('at 1.10$ and 10% ARTHB we mint 10% ARTH', async () => {
+      const arthSupply = await cash.totalSupply()
+
+      const price = utils.parseEther('110').div(100)
+      await bond.mint(operator.address, arthSupply.mul(10).div(100));
+
+      await expect(await treasury.getPercentDeviationFromTarget(price)).to.be.eq(10);
+      await expect(await treasury.estimateSeignorageToMint(price)).to.be.eq(arthSupply.mul(10).div(100));
+    });
+
+    it('at 1.04$ and 3% ARTHB we mint 10% ARTH', async () => {
+      const arthSupply = await cash.totalSupply()
+
+      const price = utils.parseEther('104').div(100)
+      await bond.mint(operator.address, arthSupply.mul(3).div(100));
+
+      await expect(await treasury.getPercentDeviationFromTarget(price)).to.be.eq(4);
+      await expect(await treasury.estimateSeignorageToMint(price)).to.be.eq(arthSupply.mul(3).div(100));
+    });
+
+    it('at 1.10$ and 0% ARTHB we mint 10% ARTH', async () => {
+      const arthSupply = await cash.totalSupply()
+
+      const price = utils.parseEther('110').div(100)
+
+      await expect(await treasury.getPercentDeviationFromTarget(price)).to.be.eq(10);
+      await expect(await treasury.estimateSeignorageToMint(price)).to.be.eq(arthSupply.mul(10).div(100));
+    });
+
+    it('at 1.50$ and 0% ARTHB we mint 30% ARTH', async () => {
+      const arthSupply = await cash.totalSupply()
+
+      const price = utils.parseEther('150').div(100)
+
+      await expect(await treasury.getPercentDeviationFromTarget(price)).to.be.eq(50);
+      await expect(await treasury.estimateSeignorageToMint(price)).to.be.eq(arthSupply.mul(30).div(100));
+    });
+  })
+
+  describe('estimateBondsToIssue', () => {
+    it('at 1$ a we issue 0 ARTHB', async () => {
+      const price = utils.parseEther('10').div(10)
+      await expect(await treasury.estimateBondsToIssue(price)).to.be.eq(0);
+    });
+
+    it('at 0.99$ a we issue 0 ARTHB', async () => {
+      const price = utils.parseEther('99').div(100)
+      await expect(await treasury.estimateBondsToIssue(price)).to.be.eq(0);
+    });
+
+    it('at 1.99$ a we issue 0 ARTHB', async () => {
+      const price = utils.parseEther('199').div(100)
+      await expect(await treasury.estimateBondsToIssue(price)).to.be.eq(0);
+    });
+
+    it('at 0.96$ a we issue 0% ARTHB', async () => {
+      const arthSupply = await cash.totalSupply()
+
+      const price = utils.parseEther('96').div(100)
+      await expect(await treasury.estimateBondsToIssue(price)).to.be.eq(0);
+    });
+
+    it('at 0.95$ a we issue 5% ARTHB', async () => {
+      const arthSupply = await cash.totalSupply()
+
+      const price = utils.parseEther('95').div(100)
+      await expect(await treasury.estimateBondsToIssue(price)).to.be.eq(arthSupply.mul(5).div(100));
+    });
+
+    it('at 0.90$ a we issue 5% ARTHB', async () => {
+      const arthSupply = await cash.totalSupply()
+
+      const price = utils.parseEther('90').div(100)
+      await expect(await treasury.estimateBondsToIssue(price)).to.be.eq(arthSupply.mul(5).div(100));
+    });
+  })
+
   describe('bonds', async () => {
     beforeEach('transfer permissions', async () => {
       await cash.mint(operator.address, INITIAL_BAC_AMOUNT);

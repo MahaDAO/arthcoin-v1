@@ -268,20 +268,14 @@ contract Treasury is TreasuryHelpers {
             // calculate how much seigniorage should be minted basis deviation from target price
             uint256 seigniorage = estimateSeignorageToMint(cash12hPrice);
 
-            // check how much should we be paying to bond holders
-            uint256 treasuryReserve =
-                Math.min(
-                    seigniorage,
-                    ICustomERC20(bond).totalSupply().sub(accumulatedSeigniorage)
-                );
-
-            // if we don't have to pay them anything return..
-            if (treasuryReserve == 0) return;
+            // if we don't have to pay bond holders anything then simply return.
+            if (seigniorage == 0) return;
 
             // we have to pay them some amount; so mint, distribute and return
-            IBasisAsset(cash).mint(address(this), treasuryReserve);
-            emit SeigniorageMinted(treasuryReserve);
-            _allocateToBondHolers(treasuryReserve);
+            IBasisAsset(cash).mint(address(this), seigniorage);
+            emit SeigniorageMinted(seigniorage);
+
+            _allocateToBondHolders(seigniorage);
             return;
         }
 
@@ -299,7 +293,7 @@ contract Treasury is TreasuryHelpers {
         uint256 allocatedForBondHolders =
             seigniorage.mul(bondSeigniorageRate).div(100);
         uint256 treasuryReserve =
-            _allocateToBondHolers(allocatedForBondHolders);
+            _allocateToBondHolders(allocatedForBondHolders);
         seigniorage = seigniorage.sub(treasuryReserve);
 
         // allocate everything else to the boardroom
