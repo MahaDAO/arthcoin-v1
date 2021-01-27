@@ -372,8 +372,8 @@ describe('Treasury', () => {
           expect(await cash.balanceOf(treasury.address)).to.eq(oldCashBalanceOfTreasury);
         });
 
-        it('should fund all if price > targetPrice and price > expansionpriceLimit', async () => {
-          const cashPrice = ETH.mul(110).div(100);
+        it('should fund all if price > targetPrice and price > expansionpriceLimit and deviation > 30%', async () => {
+          const cashPrice = ETH.mul(200).div(100);
           await oracle.setPrice(cashPrice);
 
           const oldCashBalanceOfAnt = await cash.balanceOf(ant.address);
@@ -387,9 +387,104 @@ describe('Treasury', () => {
             cashPrice.sub(ETH).mul(100).div(ETH),
             await treasury.maxSupplyIncreasePerEpoch()
           );
-          let expectedSeigniorage = cashSupply
-            .mul(percentage)
+
+          // We are minting INITIAL_BAC_AMOUNT, 2 times in beforeEach.
+          // 1st minting of INITIAL_BAC_AMOUNT is to operator and 2nd to treasury(treasuryReserves).
+          // Awarding gas fees compensation of 200 ARTH.
+          // And Minting 10 arth while deploying.
+          // And we are not considering uniswap liquidity.
+          let expectedSeigniorage = INITIAL_BAC_AMOUNT.mul(2).add(ETH.mul(211)).mul(15).div(100);
+          const mintedSeigniorage = expectedSeigniorage;
+
+          // get all expected reserve
+          const expectedFundReserve = expectedSeigniorage
+            .mul(await treasury.ecosystemFundAllocationRate())
             .div(100);
+          expectedSeigniorage = expectedSeigniorage.sub(expectedFundReserve)
+
+          const expectedTreasuryReserve = bigmin(
+            expectedSeigniorage.mul(await treasury.bondSeigniorageRate()).div(100),
+            (await bond.totalSupply()).sub(treasuryHoldings)
+          );
+          expectedSeigniorage = expectedSeigniorage.sub(expectedTreasuryReserve);
+
+          const expectedArthBoardroomReserve = expectedSeigniorage.mul(await treasury.arthBoardroomAllocationRate()).div(100);
+          const expectedArthLiqBoardroomRes = expectedSeigniorage.mul(await treasury.arthLiquidityBoardroomAllocationRate()).div(100);
+          const expectedMahaLiqBoardroomRes = expectedSeigniorage.mul(await treasury.mahaLiquidityBoardroomAllocationRate()).div(100);
+
+          const allocationResult = await treasury.connect(ant).allocateSeigniorage();
+
+          if (expectedSeigniorage.gt(ZERO)) {
+            await expect(new Promise((resolve) => resolve(allocationResult)))
+              .to.emit(treasury, 'SeigniorageMinted')
+              .withArgs(mintedSeigniorage);
+          }
+          if (expectedFundReserve.gt(ZERO)) {
+            await expect(new Promise((resolve) => resolve(allocationResult)))
+              .to.emit(treasury, 'PoolFunded')
+          }
+
+          if (expectedTreasuryReserve.gt(ZERO)) {
+            await expect(new Promise((resolve) => resolve(allocationResult)))
+              .to.emit(treasury, 'TreasuryFunded')
+              .withArgs(
+                await latestBlocktime(provider),
+                expectedTreasuryReserve
+              );
+          }
+
+          if (expectedArthBoardroomReserve.gt(ZERO)) {
+            await expect(new Promise((resolve) => resolve(allocationResult)))
+              .to.emit(treasury, 'PoolFunded')
+          }
+
+          if (expectedArthLiqBoardroomRes.gt(ZERO)) {
+            await expect(new Promise((resolve) => resolve(allocationResult)))
+              .to.emit(treasury, 'PoolFunded')
+          }
+
+          if (expectedMahaLiqBoardroomRes.gt(ZERO)) {
+            await expect(new Promise((resolve) => resolve(allocationResult)))
+              .to.emit(treasury, 'PoolFunded')
+          }
+
+          expect(await cash.balanceOf(developmentFund.address)).to.eq(expectedFundReserve);
+          expect(await treasury.getReserve()).to.eq(expectedTreasuryReserve);
+          expect(await cash.balanceOf(arthBoardroom.address)).to.eq(
+            expectedArthBoardroomReserve
+          );
+          expect(await cash.balanceOf(arthLiquidityBoardroom.address)).to.eq(
+            expectedArthLiqBoardroomRes
+          );
+          expect(await cash.balanceOf(mahaLiquidityBoardroom.address)).to.eq(
+            expectedMahaLiqBoardroomRes
+          );
+          expect(await cash.balanceOf(ant.address)).to.eq(oldCashBalanceOfAnt.add(ETH.mul(200)));
+        });
+
+        it('should fund all if price > targetPrice and price > expansionpriceLimit and deviation = 10%', async () => {
+          const cashPrice = ETH.mul(110).div(100);
+          await oracle.setPrice(cashPrice);
+
+          const oldCashBalanceOfAnt = await cash.balanceOf(ant.address);
+
+          const treasuryHoldings = await treasury.getReserve();
+          // let expectedSeigniorage = await treasury.estimateSeignorageToMint(cashPrice);
+
+          // calculate with circulating supply without considering uniswap liq.
+          // const cashSupply = (await cash.totalSupply()).sub(treasuryHoldings).add(ETH.mul(200));
+          // const percentage = bigmin(
+          //   cashPrice.sub(ETH).mul(100).div(ETH),
+          //   await treasury.maxSupplyIncreasePerEpoch()
+          // );
+
+          // We are minting INITIAL_BAC_AMOUNT, 2 times in beforeEach.
+          // 1st minting of INITIAL_BAC_AMOUNT is to operator and 2nd to treasury(treasuryReserves).
+          // Awarding gas fees compensation of 200 ARTH.
+          // And Minting 10 arth while deploying.
+          // And we are not considering uniswap liquidity.
+          // Price divation is 10%;
+          let expectedSeigniorage = INITIAL_BAC_AMOUNT.mul(2).add(ETH.mul(211)).mul(10).div(100);
           const mintedSeigniorage = expectedSeigniorage;
 
           // get all expected reserve
@@ -467,17 +562,14 @@ describe('Treasury', () => {
           const oldCashBalanceOfTreasury = await cash.balanceOf(treasury.address);
 
           // calculate with circulating supply without considering uniswap liq.
-          const treasuryHoldings = await treasury.getReserve();
-          const cashSupply = (await cash.totalSupply()).sub(treasuryHoldings).add(ETH.mul(200));
-          const percentage = bigmin(
-            cashPrice.sub(ETH).mul(100).div(ETH),
-            await treasury.maxSupplyIncreasePerEpoch()
-          );
-          let seigniorage = cashSupply
-            .mul(percentage)
-            .div(100);
+          // const treasuryHoldings = await treasury.getReserve();
+          // const cashSupply = (await cash.totalSupply()).sub(treasuryHoldings).add(ETH.mul(200));
+          // const percentage = bigmin(
+          //   cashPrice.sub(ETH).mul(100).div(ETH),
+          //   await treasury.maxSupplyIncreasePerEpoch()
+          // );
 
-          // const seigniorage = await treasury.estimateSeignorageToMint(cashPrice); // all are same oracle.
+          let seigniorage = INITIAL_BAC_AMOUNT.mul(2).add(ETH.mul(211)).mul(10).div(100);
           const accumulatedSeigniorage = await treasury.getReserve();
 
           const treasuryReserve = bigmin(
