@@ -79,14 +79,11 @@ describe('Timelock', () => {
   let cash: Contract;
   let share: Contract;
   let dai: Contract;
-  let bondRedemtionOracle: Contract;
-  let seigniorageOracle: Contract;
+  let oracle: Contract;
   let arthBoardroom: Contract;
   let arthLiquidityBoardroom: Contract;
   let developmentFund: Contract;
-  let gmuOracle: Contract;
-  let curve: Contract;
-  let arthMahaOracle: Contract;
+
   let treasury: Contract;
   let uniswap: Contract;
   let uniswapRouter: Contract;
@@ -123,20 +120,11 @@ describe('Timelock', () => {
     )
 
     developmentFund = await DevelopmentFund.connect(operator).deploy();
-    curve = await Curve.connect(operator).deploy(
-      utils.parseEther('1.05'),
-      0,
-      0,
-      0,
-      0
-    );
-    bondRedemtionOracle = await Oracle.connect(operator).deploy();
-    seigniorageOracle = await Oracle.connect(operator).deploy();
-    gmuOracle = await Oracle.connect(operator).deploy();
-    arthMahaOracle = await Oracle.connect(operator).deploy();
+
+    oracle = await Oracle.connect(operator).deploy();
 
     arthBoardroom = await ArthBoardroom.connect(operator).deploy(cash.address, startTime);
-    const dai_arth_lpt = await await bondRedemtionOracle.pairFor(uniswap.address, cash.address, dai.address);
+    const dai_arth_lpt = await await oracle.pairFor(uniswap.address, cash.address, dai.address);
     arthLiquidityBoardroom = await ArthLiquidityBoardroom.connect(operator).deploy(
       cash.address,
       dai_arth_lpt,
@@ -153,15 +141,18 @@ describe('Timelock', () => {
       cash.address,
       bond.address,
       share.address,
-      bondRedemtionOracle.address,
-      arthMahaOracle.address,
-      seigniorageOracle.address,
+
+      oracle.address,
+      oracle.address,
+      oracle.address,
+      oracle.address,
+
       arthLiquidityBoardroom.address,
       mahaLiquidityBoardroom.address,
       arthBoardroom.address,
+
       developmentFund.address,
       uniswapRouter.address,
-      gmuOracle.address,
       startTime,
       5 * 60
     );
@@ -206,15 +197,18 @@ describe('Timelock', () => {
         cash.address,
         bond.address,
         share.address,
-        bondRedemtionOracle.address,
-        arthMahaOracle.address,
-        seigniorageOracle.address,
+
+        oracle.address,
+        oracle.address,
+        oracle.address,
+        oracle.address,
+
         arthLiquidityBoardroom.address,
         mahaLiquidityBoardroom.address,
         arthBoardroom.address,
+
         developmentFund.address,
         uniswapRouter.address,
-        gmuOracle.address,
         startTime,
         5 * 60
       );
