@@ -403,10 +403,12 @@ describe('Treasury', () => {
             .div(100);
           expectedSeigniorage = expectedSeigniorage.sub(expectedFundReserve)
 
-          const expectedTreasuryReserve = bigmin(
-            expectedSeigniorage.mul(await treasury.bondSeigniorageRate()).div(100),
-            (await bond.totalSupply()).sub(treasuryHoldings)
-          );
+          const expectedTreasuryReserve = ethers.utils.parseEther('13257.915300000000');
+          // const expectedTreasuryReserve = bigmin(
+          //   expectedSeigniorage.mul(await treasury.bondSeigniorageRate()).div(100),
+          //   (await bond.totalSupply()).sub(treasuryHoldings)
+          // );
+
           expectedSeigniorage = expectedSeigniorage.sub(expectedTreasuryReserve);
 
           const expectedArthBoardroomReserve = expectedSeigniorage.mul(await treasury.arthBoardroomAllocationRate()).div(100);
@@ -494,10 +496,12 @@ describe('Treasury', () => {
             .div(100);
           expectedSeigniorage = expectedSeigniorage.sub(expectedFundReserve)
 
-          const expectedTreasuryReserve = bigmin(
-            expectedSeigniorage.mul(await treasury.bondSeigniorageRate()).div(100),
-            (await bond.totalSupply()).sub(treasuryHoldings)
-          );
+          const expectedTreasuryReserve = ethers.utils.parseEther('8838.610200000000');
+          // const expectedTreasuryReserve = bigmin(
+          //   expectedSeigniorage.mul(await treasury.bondSeigniorageRate()).div(100),
+          //   (await bond.totalSupply()).sub(treasuryHoldings)
+          // );
+
           expectedSeigniorage = expectedSeigniorage.sub(expectedTreasuryReserve);
 
           const expectedArthBoardroomReserve = expectedSeigniorage.mul(await treasury.arthBoardroomAllocationRate()).div(100);
@@ -579,11 +583,12 @@ describe('Treasury', () => {
           let seigniorage = INITIAL_BAC_AMOUNT.mul(2).add(ETH.mul(211)).mul(3).div(100);
           const accumulatedSeigniorage = await treasury.getReserve();
 
-          const treasuryReserve = bigmin(
-            seigniorage,
-            (await bond.totalSupply()).sub(accumulatedSeigniorage)
-          );
-
+          const treasuryReserve = ethers.utils.parseEther('3006.33');
+          // const treasuryReserve = bigmin(
+          //   expectedSeigniorage.mul(await treasury.bondSeigniorageRate()).div(100),
+          //   (await bond.totalSupply()).sub(treasuryHoldings)
+          // );
+          // const treasuryReserve = bigmin()
           // TODO: check emit for all respective events.
           await expect(treasury.connect(ant).allocateSeigniorage())
             .to.emit(treasury, 'SeigniorageMinted')
