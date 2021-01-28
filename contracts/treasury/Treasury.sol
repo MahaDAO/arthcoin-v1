@@ -192,7 +192,47 @@ contract Treasury is TreasuryHelpers {
             'treasury has not enough budget'
         );
 
-        amount = Math.min(accumulatedSeigniorage, amount);
+        // If in redeem cliff period, then redeem bonds according to a linear scale.
+        if (
+            block.timestamp > lastSeigniorageAllocatedOn &&
+            block.timestamp < lastSeigniorageAllocatedOn.add(redeemCliffPeriod)
+        ) {
+            // if in the cliff period, then amount to be redeem has to be capped out on a linear scale
+            // of the accumulatedSeigniorage.
+
+            // set default maximum rate as 1.
+            uint256 linearRedeemRate = uint256(1e18);
+
+            // Check if last redemtion was after the allocation or not.
+            if (lastRedeemedOn >= lastSeigniorageAllocatedOn) {
+                // if so then calculate the linear ratio as per last redeemtion time.
+                linearRedeemRate = block
+                    .timestamp
+                    .sub(lastRedeemedOn)
+                    .mul(1e18)
+                    .div(redeemCliffPeriod);
+            } else {
+                // else calculate linear ratio as per start time of redeem cliff period.
+                block.timestamp.sub(lastSeigniorageAllocatedOn).mul(1e18).div(
+                    redeemCliffPeriod
+                );
+
+                // just safety check so that linear rate is not greater than 1.
+                linearRedeemRate = Math.min(
+                    linearRedeemRate,
+                    uint256(1).mul(1e18)
+                );
+            }
+
+            // calculate the linear seigniorage amount as per linear rate.
+            uint256 linearRedeemAmount =
+                linearRedeemRate.mul(accumulatedSeigniorage).div(1e18);
+
+            amount = Math.min(linearRedeemAmount, amount);
+        } else {
+            // if not in cliff period then redeem has to be capped at 100% of accumulatedSeigniorage
+            amount = Math.min(accumulatedSeigniorage, amount);
+        }
 
         // charge stabilty fees in MAHA
         if (stabilityFee > 0) {
@@ -237,6 +277,9 @@ contract Treasury is TreasuryHelpers {
             ICustomERC20(cash).safeTransfer(msg.sender, amount);
         }
 
+        // set the last redemtion time to current redemtion time.
+        lastRedeemedOn = block.timestamp;
+
         emit RedeemedBonds(msg.sender, amount, sellForDai);
     }
 
@@ -277,6 +320,9 @@ contract Treasury is TreasuryHelpers {
             emit SeigniorageMinted(seigniorage);
 
             _allocateToBondHolders(seigniorage);
+
+            lastSeigniorageAllocatedOn = block.timestamp;
+
             return;
         }
 
@@ -299,5 +345,7 @@ contract Treasury is TreasuryHelpers {
 
         // allocate everything else to the boardroom
         _allocateToBoardrooms(seigniorage);
+
+        lastSeigniorageAllocatedOn = block.timestamp;
     }
 }

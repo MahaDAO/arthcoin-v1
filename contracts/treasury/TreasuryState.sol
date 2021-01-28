@@ -53,6 +53,12 @@ abstract contract TreasuryState is ContractGuard, Epoch {
 
     // this governs how much cash tokens are issued
     uint256 public accumulatedSeigniorage = 0;
+    // tracks the time when seigniorage was last allocated on.
+    uint256 public lastSeigniorageAllocatedOn = 0;
+    // tracks the time when last redemtion of bonds took place.
+    uint256 public lastRedeemedOn = 0;
+    // period accross which redeemtion has to be on a linear scale.
+    uint256 public redeemCliffPeriod = 8 hours;
 
     // flag whether we should considerUniswapLiquidity or not.
     bool public considerUniswapLiquidity = false;
