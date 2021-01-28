@@ -36,8 +36,8 @@ async function migration(deployer, network, accounts) {
   let startTime = Math.floor(new Date('2021-01-22T14:00:00Z') / 1000);
 
   const mahaToken = network === 'mainnet'
-  ? await MahaToken.at(knownContracts.MahaToken[network])
-  : await MahaToken.deployed();
+    ? await MahaToken.at(knownContracts.MahaToken[network])
+    : await MahaToken.deployed();
 
   let POOL_START_DATE = network === 'mainnet' ? startTime : Math.floor(Date.now() / 1000) + 60;
   let TREASURY_PERIOD = network === 'mainnet' ? 12 * 60 * 60 : 1 * 60
@@ -56,14 +56,15 @@ async function migration(deployer, network, accounts) {
     SeigniorageOracle.address,
     GMUOracle.address,
 
-    ArthBoardroom.address,
-    ArthBoardroom.address,
+    ArthLiquidityBoardroom.address,
+    MahaLiquidityBoardroom.address,
     ArthBoardroom.address,
     DevelopmentFund.address,
 
     uniswapRouter.address,
     POOL_START_DATE,
-    TREASURY_PERIOD
+    TREASURY_PERIOD,
+    0
   );
 }
 

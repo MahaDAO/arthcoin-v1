@@ -33,8 +33,8 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     address public uniswapRouter;
 
     address public arthLiquidityBoardroom;
-    address public arthBoardroom;
     address public mahaLiquidityBoardroom;
+    address public arthBoardroom;
 
     address public ecosystemFund;
 
@@ -67,7 +67,7 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     uint256 public safetyRegion = 5; // in %
 
     // at the most how much % of the supply should be increased
-    uint256 public maxSupplyIncreasePerEpoch = 15; // in %
+    uint256 public maxSupplyIncreasePerEpoch = 30; // in %
 
     // the ecosystem fund recieves seigniorage before anybody else; this
     // value decides how much of the new seigniorage is sent to this fund.

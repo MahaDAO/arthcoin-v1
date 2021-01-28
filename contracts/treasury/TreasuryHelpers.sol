@@ -43,8 +43,9 @@ contract TreasuryHelpers is TreasurySetters {
         address _fund,
         address _uniswapRouter,
         uint256 _startTime,
-        uint256 _period
-    ) public Epoch(_period, _startTime, 0) {
+        uint256 _period,
+        uint256 _startEpoch
+    ) public Epoch(_period, _startTime, _startEpoch) {
         // tokens
         dai = _dai;
         cash = _cash;
@@ -150,7 +151,7 @@ contract TreasuryHelpers is TreasurySetters {
      * Helper function to allocate seigniorage to bond token holders. Seigniorage
      * before the boardrooms get paid.
      */
-    function _allocateToBondHolers(uint256 seigniorage)
+    function _allocateToBondHolders(uint256 seigniorage)
         internal
         returns (uint256)
     {
@@ -235,33 +236,7 @@ contract TreasuryHelpers is TreasurySetters {
     function _updateConversionLimit(uint256 cash1hPrice) internal {
         // reset this counter so that new bonds can now be minted.
         accumulatedBonds = 0;
-
-        uint256 bondPurchasePrice = getBondPurchasePrice();
-
-        // check if we are in contract mode.
-        if (cash1hPrice <= bondPurchasePrice) {
-            // in contraction mode -> issue bonds.
-            // set a limit to how many bonds are there.
-
-            // understand how much % deviation do we have from target price
-            // if target price is 2.5$ and we are at 2$; then percentage should be 20%
-            uint256 percentage = estimatePercentageOfBondsToIssue(cash1hPrice);
-
-            // accordingly set the new conversion limit to be that % from the
-            // current circulating supply of ARTH and if uniswap enabled then uniswap liquidity.
-            cashToBondConversionLimit = arthCirculatingSupply()
-                .mul(percentage)
-                .div(100)
-                .mul(getCashSupplyInLiquidity())
-                .div(100);
-
-            emit BondsAllocated(cashToBondConversionLimit);
-
-            return;
-        }
-
-        // if not in contraction then we do nothing.
-        cashToBondConversionLimit = 0;
+        cashToBondConversionLimit = estimateBondsToIssue(cash1hPrice);
     }
 
     // GOV

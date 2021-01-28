@@ -47,7 +47,8 @@ contract Treasury is TreasuryHelpers {
         // uniswap router
         address _uniswapRouter,
         uint256 _startTime,
-        uint256 _period
+        uint256 _period,
+        uint256 _startEpoch
     )
         public
         TreasuryHelpers(
@@ -65,7 +66,8 @@ contract Treasury is TreasuryHelpers {
             _fund,
             _uniswapRouter,
             _startTime,
-            _period
+            _period,
+            _startEpoch
         )
     {}
 
@@ -248,13 +250,12 @@ contract Treasury is TreasuryHelpers {
     {
         _updateCashPrice();
         uint256 cash12hPrice = getSeigniorageOraclePrice();
-        uint256 cash1hPrice = getBondOraclePrice();
 
         // send 200 ARTH reward to the person advancing the epoch to compensate for gas
         IBasisAsset(cash).mint(msg.sender, uint256(200).mul(1e18));
 
         // update the bond limits
-        _updateConversionLimit(cash1hPrice);
+        _updateConversionLimit(cash12hPrice);
 
         if (cash12hPrice <= cashTargetPrice) {
             return; // just advance epoch instead revert
@@ -268,20 +269,14 @@ contract Treasury is TreasuryHelpers {
             // calculate how much seigniorage should be minted basis deviation from target price
             uint256 seigniorage = estimateSeignorageToMint(cash12hPrice);
 
-            // check how much should we be paying to bond holders
-            uint256 treasuryReserve =
-                Math.min(
-                    seigniorage,
-                    ICustomERC20(bond).totalSupply().sub(accumulatedSeigniorage)
-                );
-
-            // if we don't have to pay them anything return..
-            if (treasuryReserve == 0) return;
+            // if we don't have to pay bond holders anything then simply return.
+            if (seigniorage == 0) return;
 
             // we have to pay them some amount; so mint, distribute and return
-            IBasisAsset(cash).mint(address(this), treasuryReserve);
-            emit SeigniorageMinted(treasuryReserve);
-            _allocateToBondHolers(treasuryReserve);
+            IBasisAsset(cash).mint(address(this), seigniorage);
+            emit SeigniorageMinted(seigniorage);
+
+            _allocateToBondHolders(seigniorage);
             return;
         }
 
@@ -299,7 +294,7 @@ contract Treasury is TreasuryHelpers {
         uint256 allocatedForBondHolders =
             seigniorage.mul(bondSeigniorageRate).div(100);
         uint256 treasuryReserve =
-            _allocateToBondHolers(allocatedForBondHolders);
+            _allocateToBondHolders(allocatedForBondHolders);
         seigniorage = seigniorage.sub(treasuryReserve);
 
         // allocate everything else to the boardroom
