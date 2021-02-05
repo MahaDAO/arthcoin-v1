@@ -88,7 +88,7 @@ module.exports = {
       network_id: 42,
       gasPrice: 1 * 1000000000,
       gas: 12487794, // Any network (default: none)
-    }
+    },
     ropsten: {
       skipDryRun: true,
       provider: function () {
