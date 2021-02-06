@@ -4,13 +4,13 @@ import { solidity } from 'ethereum-waffle';
 import { Contract, ContractFactory, BigNumber, utils } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address';
 
-import { advanceTimeAndBlock, latestBlocktime } from './shared/utilities';
+import { advanceTimeAndBlock, latestBlocktime } from '../shared/utilities';
 
 
 chai.use(solidity);
 
 
-describe('Boardroom', () => {
+describe('Simple Boardroom', () => {
   // const DAY = 86400;
 
   const BOARDROOM_LOCK_PERIOD = 5 * 60;
@@ -86,21 +86,11 @@ describe('Boardroom', () => {
     });
 
     it('Should not be able to withdraw before withdrawal duration is satisifed', async () => {
-      try {
-        await expect(boardroom.connect(whale).withdraw(STAKE_AMOUNT))
-          .to.emit(boardroom, 'Withdrawn')
-          .withArgs(whale.address, STAKE_AMOUNT);
+      await expect(boardroom.connect(whale).withdraw(STAKE_AMOUNT)).revertedWith('')
 
-        expect(await cash.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
-        expect(await boardroom.balanceOf(whale.address)).to.eq(ZERO);
-
-        return false;
-      } catch (e) {
-        return true;
-      }
+      expect(await cash.balanceOf(whale.address)).to.eq(ZERO);
+      expect(await boardroom.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
     });
-
-
 
     it('Should work correctly now', async () => {
       await advanceTimeAndBlock(
