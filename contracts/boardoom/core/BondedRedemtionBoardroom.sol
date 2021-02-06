@@ -113,6 +113,34 @@ contract BondedRedemtionBoardroom is BondedTokenWrapper, ContractGuard {
         return arthMahaOracle.getPrice();
     }
 
+    function modifyArthMahaOracle(address newOracle) public onlyOwner {
+        require(newOracle != address(0), 'Pool: invalid oracle');
+
+        address oldOracle = address(arthMahaOracle);
+        arthMahaOracle = ISimpleOracle(newOracle);
+
+        emit OracleChanged(oldOracle, newOracle);
+    }
+
+    function modifyFeeToken(address newToken) public onlyOwner {
+        require(newToken != address(0), 'Pool: invalid token');
+
+        address oldToken = address(feeToken);
+        feeToken = IERC20(newToken);
+
+        emit FeeTokenChanged(oldToken, newToken);
+    }
+
+    function modifyStabilityFee(uint256 newFee) public onlyOwner {
+        require(newFee >= 0, 'Pool: invalid fee range');
+        require(newFee <= 0, 'Pool: invalid fee range');
+
+        uint256 oldFee = stabilityFee;
+        stabilityFee = newFee;
+
+        emit StabilityFeesChanged(oldFee, newFee);
+    }
+
     function latestSnapshotIndex() public view returns (uint256) {
         return boardHistory.length.sub(1);
     }
@@ -251,4 +279,7 @@ contract BondedRedemtionBoardroom is BondedTokenWrapper, ContractGuard {
     event RewardPaid(address indexed user, uint256 reward);
     event RewardAdded(address indexed user, uint256 reward);
     event StabilityFeesCharged(address indexed user, uint256 amount);
+    event FeeTokenChanged(address oldToken, address newToken);
+    event StabilityFeesChanged(uint256 oldFee, uint256 newFee);
+    event OracleChanged(address oldOracle, address newOracle);
 }
