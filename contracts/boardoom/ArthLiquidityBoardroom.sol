@@ -2,12 +2,12 @@
 
 pragma solidity ^0.6.12;
 
-import './core/SimpleBoardroom.sol';
+import './core/VestedBondedBoardroom.sol';
 
-contract ArthLiquidityBoardroom is SimpleBoardroom {
+contract ArthLiquidityBoardroom is VestedBondedBoardroom {
     constructor(
         IERC20 _cash,
         IERC20 _share,
         uint256 _duration
-    ) public SimpleBoardroom(_cash, _share, _duration) {}
+    ) public VestedBondedBoardroom(_cash, _share, _duration) {}
 }
