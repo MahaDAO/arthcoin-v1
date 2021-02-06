@@ -77,6 +77,18 @@ module.exports = {
       gasPrice: 1 * 1000000000,
       gas: 12487794, // Any network (default: none)
     },
+    goerli: {
+      skipDryRun: true,
+      provider: function () {
+        return new HDWalletProvider(
+          [process.env.METAMASK_WALLET_SECRET],
+          `https://goerli.infura.io/v3/${process.env.INFURA_PROJECT_ID}`
+        )
+      },
+      network_id: 5,
+      gasPrice: 1 * 1000000000,
+      gas: 8000000, // Any network (default: none)
+    },
     ropsten: {
       skipDryRun: true,
       provider: function () {
