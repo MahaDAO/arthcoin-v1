@@ -6,6 +6,7 @@ pragma solidity ^0.6.12;
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 import './BondedRedemtionBoardroom.sol';
+import '../../interfaces/ISimpleOracle.sol';
 
 contract VestedBondedRedemtionBoardroom is BondedRedemtionBoardroom {
     // For how much time should vesting take place.
@@ -15,10 +16,17 @@ contract VestedBondedRedemtionBoardroom is BondedRedemtionBoardroom {
         IERC20 _bondToken,
         IERC20 _share,
         IERC20 _feeToken,
+        ISimpleOracle _arthMahaOracle,
         uint256 _duration
     )
         public
-        BondedRedemtionBoardroom(_bondToken, _share, _feeToken, _duration)
+        BondedRedemtionBoardroom(
+            _bondToken,
+            _share,
+            _feeToken,
+            _arthMahaOracle,
+            _duration
+        )
     {}
 
     modifier updateVestedReward(address director) {

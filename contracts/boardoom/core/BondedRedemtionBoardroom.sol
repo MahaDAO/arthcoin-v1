@@ -10,6 +10,7 @@ import '../../lib/Safe112.sol';
 import './BondedTokenWrapper.sol';
 import '../../utils/ContractGuard.sol';
 import '../../interfaces/IBasisAsset.sol';
+import '../../interfaces/ISimpleOracle.sol';
 
 contract BondedRedemtionBoardroom is BondedTokenWrapper, ContractGuard {
     using SafeERC20 for IERC20;
@@ -43,10 +44,17 @@ contract BondedRedemtionBoardroom is BondedTokenWrapper, ContractGuard {
 
     /* ========== STATE VARIABLES ========== */
 
+    // eg: a 1% fee means that while redeeming 100 ARTHB, 1 ARTH worth of MAHA is
+    // deducted to pay for stability fees.
+    uint256 public stabilityFee = 1; // IN %;
+
     // This token will be used to charge stability fee.
     IERC20 public feeToken;
     // This is the main fund token.
     IERC20 public bondToken;
+
+    // Oracle used to track cash and share prices.
+    ISimpleOracle arthMahaOracle;
 
     mapping(address => Boardseat) internal directors;
     BoardSnapshot[] internal boardHistory;
@@ -57,11 +65,14 @@ contract BondedRedemtionBoardroom is BondedTokenWrapper, ContractGuard {
         IERC20 _bondToken,
         IERC20 _share,
         IERC20 _feeToken,
+        ISimpleOracle _arthMahaOracle,
         uint256 _duration
     ) public StakingTimelock(_duration) {
         bondToken = _bondToken;
         feeToken = _feeToken;
         share = _share;
+
+        arthMahaOracle = _arthMahaOracle;
 
         BoardSnapshot memory genesisSnapshot =
             BoardSnapshot({
@@ -96,6 +107,10 @@ contract BondedRedemtionBoardroom is BondedTokenWrapper, ContractGuard {
     /* ========== VIEW FUNCTIONS ========== */
 
     // =========== Snapshot getters
+
+    function getArthMahaOraclePrice() public view returns (uint256) {
+        return arthMahaOracle.getPrice();
+    }
 
     function latestSnapshotIndex() public view returns (uint256) {
         return boardHistory.length.sub(1);
