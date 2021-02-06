@@ -85,9 +85,9 @@ module.exports = {
           `https://goerli.infura.io/v3/${process.env.INFURA_PROJECT_ID}`
         )
       },
-      network_id: 42,
+      network_id: 5,
       gasPrice: 1 * 1000000000,
-      gas: 12487794, // Any network (default: none)
+      gas: 8000000, // Any network (default: none)
     },
     ropsten: {
       skipDryRun: true,
