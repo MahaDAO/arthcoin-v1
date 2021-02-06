@@ -15,7 +15,11 @@ export default {
       accounts: [`0x${process.env.METAMASK_WALLET_SECRET}`]
     },
     ropsten: {
-      url: `https://mainnet.infura.io/v3/69666afe933b4175afe4999170158a5f`,
+      url: `https://ropsten.infura.io/v3/69666afe933b4175afe4999170158a5f`,
+      accounts: [`0x${process.env.METAMASK_WALLET_SECRET}`]
+    },
+    goerli: {
+      url: `https://goerli.infura.io/v3/69666afe933b4175afe4999170158a5f`,
       accounts: [`0x${process.env.METAMASK_WALLET_SECRET}`]
     },
     development: {

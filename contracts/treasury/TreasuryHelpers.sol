@@ -80,6 +80,8 @@ contract TreasuryHelpers is TreasurySetters {
         require(target != address(0), 'migrate to zero');
         require(!migrated, '!migrated');
 
+        // TODO: check if the destination is a treasury or not
+
         // cash
         Operator(cash).transferOperator(target);
         Operator(cash).transferOwnership(target);

@@ -42,7 +42,7 @@ async function main() {
     await treasury.uniswapRouter(),
     1611331200,
     43200,
-    9
+    11
   ]
 
   const newTreasury = await Treasury.connect(operator).deploy(...params);
