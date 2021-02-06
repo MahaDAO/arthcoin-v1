@@ -139,11 +139,7 @@ contract BondedBoardroom is BondedTokenWrapper, ContractGuard {
         onlyOneBlock
         updateReward(msg.sender)
     {
-        require(amount > 0, 'Boardroom: Cannot stake 0');
-
         super.bond(amount);
-
-        emit Bonded(msg.sender, amount);
     }
 
     function unbond(uint256 amount)
@@ -153,30 +149,21 @@ contract BondedBoardroom is BondedTokenWrapper, ContractGuard {
         directorExists
         updateReward(msg.sender)
     {
-        require(amount > 0, 'Boardroom: Cannot unbond 0');
-
         super.unbond(amount);
-
-        emit Unbonded(msg.sender, amount);
     }
 
-    function withdraw(uint256 amount)
+    function withdraw()
         public
         override
         onlyOneBlock
         directorExists
         updateReward(msg.sender)
     {
-        require(amount > 0, 'Boardroom: Cannot withdraw 0');
-
-        super.withdraw(amount);
-
-        emit Withdrawn(msg.sender, amount);
+        super.withdraw();
     }
 
     function exit() external virtual {
-        withdraw(balanceOf(msg.sender));
-
+        withdraw();
         claimReward();
     }
 
@@ -221,9 +208,6 @@ contract BondedBoardroom is BondedTokenWrapper, ContractGuard {
 
     /* ========== EVENTS ========== */
 
-    event Bonded(address indexed user, uint256 amount);
-    event Unbonded(address indexed user, uint256 amount);
-    event Withdrawn(address indexed user, uint256 amount);
     event RewardPaid(address indexed user, uint256 reward);
     event RewardAdded(address indexed user, uint256 reward);
 }

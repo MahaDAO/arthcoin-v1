@@ -96,7 +96,7 @@ contract VestedBondedBoardroom is BondedBoardroom {
     }
 
     function exit() external override {
-        withdraw(balanceOf(msg.sender));
+        withdraw();
         _claimAndQuit();
     }
 
@@ -119,6 +119,7 @@ contract VestedBondedBoardroom is BondedBoardroom {
         else {
             uint256 timeSinceLastFunded =
                 block.timestamp.sub(latestFundingTime);
+
             // Calculate reward to be given assuming msg.sender has not claimed in current
             // vesting cycle(8hr cycle).
             uint256 timelyRewardRatio =
@@ -157,6 +158,7 @@ contract VestedBondedBoardroom is BondedBoardroom {
                 directors[msg.sender].rewardPending = 0;
             }
         }
+
         directors[msg.sender].lastClaimedOn = block.timestamp;
 
         cash.safeTransfer(msg.sender, reward);

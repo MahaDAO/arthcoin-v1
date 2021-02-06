@@ -9,12 +9,18 @@ import './BaseBoardroom.sol';
 
 abstract contract BondedTokenWrapper is BaseBoardroom {
     function bond(uint256 amount) public virtual depositsEnabled {
+        require(amount > 0, 'Boardroom: Cannot stake 0');
+
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
         share.safeTransferFrom(msg.sender, address(this), amount);
+
+        emit Bonded(msg.sender, amount);
     }
 
     function unbond(uint256 amount) public virtual {
+        require(amount > 0, 'Boardroom: Cannot unbond 0');
+
         uint256 directorShare = _balances[msg.sender];
 
         require(
@@ -23,18 +29,29 @@ abstract contract BondedTokenWrapper is BaseBoardroom {
         );
 
         _updateStakerDetails(msg.sender, block.timestamp, amount);
+
+        emit Unbonded(msg.sender, amount);
     }
 
-    function withdraw(uint256 amount) public virtual checkLockDuration {
+    function withdraw() public virtual checkLockDuration {
         uint256 directorShare = _balances[msg.sender];
+        uint256 amount = getStakedAmount(msg.sender);
 
         require(
             directorShare >= amount,
-            'Boardroom: withdraw request greater than staked amount'
+            'Boardroom: withdraw request greater than unbonded amount'
         );
 
         _totalSupply = _totalSupply.sub(amount);
         _balances[msg.sender] = directorShare.sub(amount);
         share.safeTransfer(msg.sender, amount);
+
+        _updateStakerDetails(msg.sender, block.timestamp, 0);
+
+        emit Withdrawn(msg.sender, amount);
     }
+
+    event Bonded(address indexed user, uint256 amount);
+    event Unbonded(address indexed user, uint256 amount);
+    event Withdrawn(address indexed user, uint256 amount);
 }

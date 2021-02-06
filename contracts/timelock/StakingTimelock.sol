@@ -48,6 +48,11 @@ contract StakingTimelock is Ownable {
         return (_stakerDetails.date, _stakerDetails.amount);
     }
 
+    function getStakedAmount(address who) public view returns (uint256) {
+        StakingDetails storage _stakerDetails = _stakingDetails[who];
+        return _stakerDetails.amount;
+    }
+
     function _updateStakerDetails(
         address who,
         uint256 _date,
