@@ -11,9 +11,8 @@ contract StakingTimelock is Ownable {
     uint256 public duration = 1 days;
 
     struct StakingDetails {
-        uint256 lastStakedOn;
-        uint256 lastStakedAmount;
-        uint256 totalStakedAmount;
+        uint256 date;
+        uint256 amount;
     }
 
     mapping(address => StakingDetails) public _stakingDetails;
@@ -25,17 +24,38 @@ contract StakingTimelock is Ownable {
     modifier checkLockDuration {
         StakingDetails storage _stakerDetails = _stakingDetails[msg.sender];
 
-        require(_stakerDetails.lastStakedOn != 0);
-        require(_stakerDetails.lastStakedAmount != 0);
-        require(_stakerDetails.totalStakedAmount != 0);
-        require(_stakerDetails.lastStakedOn + duration <= block.timestamp);
+        require(_stakerDetails.date != 0);
+        require(_stakerDetails.amount != 0);
+        require(_stakerDetails.date + duration <= block.timestamp);
         _;
     }
 
-    function getStakerDetails() public view returns (uint256, uint256) {
+    modifier checkLockDurationWithAmount(uint256 amount) {
         StakingDetails storage _stakerDetails = _stakingDetails[msg.sender];
 
-        return (_stakerDetails.lastStakedOn, _stakerDetails.lastStakedAmount);
+        require(_stakerDetails.date != 0);
+        require(_stakerDetails.amount <= amount);
+        require(_stakerDetails.date + duration <= block.timestamp);
+        _;
+    }
+
+    function getStakerDetails(address who)
+        public
+        view
+        returns (uint256, uint256)
+    {
+        StakingDetails storage _stakerDetails = _stakingDetails[who];
+        return (_stakerDetails.date, _stakerDetails.amount);
+    }
+
+    function _updateStakerDetails(
+        address who,
+        uint256 _date,
+        uint256 _amount
+    ) internal returns (uint256, uint256) {
+        StakingDetails storage _stakerDetails = _stakingDetails[who];
+        _stakerDetails.date = _date;
+        _stakerDetails.amount = _amount;
     }
 
     function changeLockDuration(uint256 _duration) public onlyOwner {

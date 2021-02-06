@@ -6,12 +6,12 @@ pragma solidity ^0.6.12;
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 
-import './SimpleShareWrapper.sol';
+import './SimpleTokenWrapper.sol';
 import '../../lib/Safe112.sol';
 import '../../utils/ContractGuard.sol';
 import '../../interfaces/IBasisAsset.sol';
 
-contract SimpleBoardroom is SimpleShareWrapper, ContractGuard {
+contract SimpleBoardroom is SimpleTokenWrapper, ContractGuard {
     using SafeERC20 for IERC20;
     using Address for address;
     using SafeMath for uint256;

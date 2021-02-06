@@ -7,11 +7,11 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 
 import '../../lib/Safe112.sol';
-import './BondedShareWrapper.sol';
+import './BondedTokenWrapper.sol';
 import '../../utils/ContractGuard.sol';
 import '../../interfaces/IBasisAsset.sol';
 
-contract BondedBoardroom is BondedShareWrapper, ContractGuard {
+contract BondedBoardroom is BondedTokenWrapper, ContractGuard {
     using SafeERC20 for IERC20;
     using Address for address;
     using SafeMath for uint256;
@@ -20,13 +20,24 @@ contract BondedBoardroom is BondedShareWrapper, ContractGuard {
     /* ========== DATA STRUCTURES ========== */
 
     struct Boardseat {
-        uint256 lastSnapshotIndex;
+        // Pending reward from the previous epochs.
+        uint256 rewardPending;
+        // Total reward earned in this epoch.
         uint256 rewardEarned;
+        // Last time reward was claimed(not bound by current epoch).
+        uint256 lastClaimedOn;
+        // Snapshot of boardroom state when last claimed(not bound by current epoch).
+        uint256 lastSnapshotIndex;
     }
 
     struct BoardSnapshot {
+        // Block number when recording a snapshot.
+        uint256 number;
+        // Block timestamp when recording a snapshot.
         uint256 time;
+        // Amount of funds received.
         uint256 rewardReceived;
+        // Equivalent amount per share staked.
         uint256 rewardPerShare;
     }
 
@@ -34,8 +45,8 @@ contract BondedBoardroom is BondedShareWrapper, ContractGuard {
 
     IERC20 public cash;
 
-    mapping(address => Boardseat) private directors;
-    BoardSnapshot[] private boardHistory;
+    mapping(address => Boardseat) internal directors;
+    BoardSnapshot[] internal boardHistory;
 
     /* ========== CONSTRUCTOR ========== */
 
@@ -49,7 +60,8 @@ contract BondedBoardroom is BondedShareWrapper, ContractGuard {
 
         BoardSnapshot memory genesisSnapshot =
             BoardSnapshot({
-                time: block.number,
+                number: block.number,
+                time: 0,
                 rewardReceived: 0,
                 rewardPerShare: 0
             });
@@ -109,7 +121,7 @@ contract BondedBoardroom is BondedShareWrapper, ContractGuard {
         return getLatestSnapshot().rewardPerShare;
     }
 
-    function earned(address director) public view returns (uint256) {
+    function earned(address director) public view virtual returns (uint256) {
         uint256 latestRPS = getLatestSnapshot().rewardPerShare;
         uint256 storedRPS = getLastSnapshotOf(director).rewardPerShare;
 
@@ -162,13 +174,13 @@ contract BondedBoardroom is BondedShareWrapper, ContractGuard {
         emit Withdrawn(msg.sender, amount);
     }
 
-    function exit() external {
+    function exit() external virtual {
         withdraw(balanceOf(msg.sender));
 
         claimReward();
     }
 
-    function claimReward() public updateReward(msg.sender) {
+    function claimReward() public virtual updateReward(msg.sender) {
         uint256 reward = directors[msg.sender].rewardEarned;
 
         if (reward > 0) {
@@ -195,7 +207,8 @@ contract BondedBoardroom is BondedShareWrapper, ContractGuard {
 
         BoardSnapshot memory newSnapshot =
             BoardSnapshot({
-                time: block.number,
+                number: block.number,
+                time: block.timestamp,
                 rewardReceived: amount,
                 rewardPerShare: nextRPS
             });
