@@ -13,7 +13,7 @@ contract VestedBondedRedemtionBoardroom is BondedRedemtionBoardroom {
     uint256 public vestFor = 8 hours;
 
     constructor(
-        IERC20 _bondToken,
+        IERC20 _cash,
         IERC20 _share,
         IERC20 _feeToken,
         ISimpleOracle _arthMahaOracle,
@@ -21,7 +21,7 @@ contract VestedBondedRedemtionBoardroom is BondedRedemtionBoardroom {
     )
         public
         BondedRedemtionBoardroom(
-            _bondToken,
+            _cash,
             _share,
             _feeToken,
             _arthMahaOracle,
@@ -102,7 +102,7 @@ contract VestedBondedRedemtionBoardroom is BondedRedemtionBoardroom {
         directors[msg.sender].rewardPending = 0;
         directors[msg.sender].lastClaimedOn = block.timestamp;
 
-        bondToken.safeTransfer(msg.sender, reward);
+        cash.safeTransfer(msg.sender, reward);
 
         emit RewardPaid(msg.sender, reward);
     }
@@ -173,7 +173,7 @@ contract VestedBondedRedemtionBoardroom is BondedRedemtionBoardroom {
 
         directors[msg.sender].lastClaimedOn = block.timestamp;
 
-        bondToken.safeTransfer(msg.sender, reward);
+        cash.safeTransfer(msg.sender, reward);
 
         emit RewardPaid(msg.sender, reward);
     }

@@ -51,7 +51,7 @@ contract BondedRedemtionBoardroom is BondedTokenWrapper, ContractGuard {
     // This token will be used to charge stability fee.
     IERC20 public feeToken;
     // This is the main fund token.
-    IERC20 public bondToken;
+    IERC20 public cash;
 
     // Oracle used to track cash and share prices.
     ISimpleOracle arthMahaOracle;
@@ -62,13 +62,13 @@ contract BondedRedemtionBoardroom is BondedTokenWrapper, ContractGuard {
     /* ========== CONSTRUCTOR ========== */
 
     constructor(
-        IERC20 _bondToken,
+        IERC20 _cash,
         IERC20 _share,
         IERC20 _feeToken,
         ISimpleOracle _arthMahaOracle,
         uint256 _duration
     ) public StakingTimelock(_duration) {
-        bondToken = _bondToken;
+        cash = _cash;
         feeToken = _feeToken;
         share = _share;
 
@@ -193,7 +193,7 @@ contract BondedRedemtionBoardroom is BondedTokenWrapper, ContractGuard {
 
         if (reward > 0) {
             directors[msg.sender].rewardEarned = 0;
-            bondToken.safeTransfer(msg.sender, reward);
+            cash.safeTransfer(msg.sender, reward);
 
             emit RewardPaid(msg.sender, reward);
         }
@@ -218,7 +218,7 @@ contract BondedRedemtionBoardroom is BondedTokenWrapper, ContractGuard {
             });
         boardHistory.push(newSnapshot);
 
-        bondToken.safeTransferFrom(msg.sender, address(this), amount);
+        cash.safeTransferFrom(msg.sender, address(this), amount);
 
         emit RewardAdded(msg.sender, amount);
     }
