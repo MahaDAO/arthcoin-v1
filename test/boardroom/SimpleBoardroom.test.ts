@@ -10,7 +10,7 @@ import { advanceTimeAndBlock, latestBlocktime } from '../shared/utilities';
 chai.use(solidity);
 
 
-describe('Simple Boardroom', () => {
+describe.only('Simple Boardroom', () => {
   // const DAY = 86400;
 
   const BOARDROOM_LOCK_PERIOD = 5 * 60;
@@ -30,11 +30,11 @@ describe('Simple Boardroom', () => {
   });
 
   let ARTH: ContractFactory;
-  let ArthBoardroom: ContractFactory;
+  let SimpleBoardroom: ContractFactory;
 
   before('Fetch contract factories', async () => {
     ARTH = await ethers.getContractFactory('ARTH');
-    ArthBoardroom = await ethers.getContractFactory('ArthBoardroom');
+    SimpleBoardroom = await ethers.getContractFactory('SimpleBoardroom');
   });
 
   let cash: Contract;
@@ -42,7 +42,8 @@ describe('Simple Boardroom', () => {
 
   beforeEach('Deploy contracts', async () => {
     cash = await ARTH.connect(operator).deploy();
-    boardroom = await ArthBoardroom.connect(operator).deploy(
+    boardroom = await SimpleBoardroom.connect(operator).deploy(
+      cash.address,
       cash.address,
       BOARDROOM_LOCK_PERIOD
     );
