@@ -10,6 +10,7 @@ import '../../lib/Safe112.sol';
 import './BondedTokenWrapper.sol';
 import '../../utils/ContractGuard.sol';
 import '../../interfaces/IBasisAsset.sol';
+import '../../interfaces/ICustomERC20.sol';
 import '../../interfaces/ISimpleOracle.sol';
 
 contract BondedRedemtionBoardroom is BondedTokenWrapper, ContractGuard {
@@ -188,12 +189,34 @@ contract BondedRedemtionBoardroom is BondedTokenWrapper, ContractGuard {
         claimReward();
     }
 
+    function chargeStabilityFee(uint256 amount) internal {
+        uint256 stabilityFeeInARTH = amount.mul(stabilityFee).div(100);
+        uint256 stabilityFeeInMAHA =
+            getArthMahaOraclePrice().mul(stabilityFeeInARTH).div(1e18);
+
+        // charge the stability fee
+        ICustomERC20(address(feeToken)).burnFrom(
+            msg.sender,
+            stabilityFeeInMAHA
+        );
+
+        emit StabilityFeesCharged(msg.sender, stabilityFeeInMAHA);
+    }
+
     function claimReward() public virtual updateReward(msg.sender) {
         uint256 reward = directors[msg.sender].rewardEarned;
 
         if (reward > 0) {
             directors[msg.sender].rewardEarned = 0;
             cash.safeTransfer(msg.sender, reward);
+
+            // If stability fee is there, then we charge the stability fee.
+            if (stabilityFee > 0) chargeStabilityFee(reward);
+
+            // Should we do this?
+            // ICustomERC20(address(share)).burnFrom(reward);
+            // _balances[msg.sender] = _balances[msg.sender].sub(reward);
+            // _totalSupply = _totalSupply.sub(reward);
 
             emit RewardPaid(msg.sender, reward);
         }
@@ -227,4 +250,5 @@ contract BondedRedemtionBoardroom is BondedTokenWrapper, ContractGuard {
 
     event RewardPaid(address indexed user, uint256 reward);
     event RewardAdded(address indexed user, uint256 reward);
+    event StabilityFeesCharged(address indexed user, uint256 amount);
 }

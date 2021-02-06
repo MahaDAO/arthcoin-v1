@@ -104,6 +104,16 @@ contract VestedBondedRedemtionBoardroom is BondedRedemtionBoardroom {
 
         cash.safeTransfer(msg.sender, reward);
 
+        // If stability fee is there, then we charge the stability fee.
+        if (stabilityFee > 0) chargeStabilityFee(reward);
+
+        // Should we do this?
+        // ICustomERC20(address(share)).burnFrom(reward);
+
+        // No need to do below statements, as they will be done by withdraw.
+        // // _balances[msg.sender] = _balances[msg.sender].sub(reward);
+        // // _totalSupply = _totalSupply.sub(reward);
+
         emit RewardPaid(msg.sender, reward);
     }
 
@@ -174,6 +184,14 @@ contract VestedBondedRedemtionBoardroom is BondedRedemtionBoardroom {
         directors[msg.sender].lastClaimedOn = block.timestamp;
 
         cash.safeTransfer(msg.sender, reward);
+
+        // If stability fee is there, then we charge the stability fee.
+        if (stabilityFee > 0) chargeStabilityFee(reward);
+
+        // Should we do this?
+        // ICustomERC20(address(share)).burnFrom(reward);
+        // _balances[msg.sender] = _balances[msg.sender].sub(reward);
+        // _totalSupply = _totalSupply.sub(reward);
 
         emit RewardPaid(msg.sender, reward);
     }
