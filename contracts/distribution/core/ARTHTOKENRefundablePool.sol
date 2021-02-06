@@ -11,10 +11,7 @@ import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import './TOKENWrapper.sol';
 import '../../interfaces/IRewardDistributionRecipient.sol';
 
-contract ARTHTOKENARTHTOKENRefundablePool is
-    TOKENWrapper,
-    IRewardDistributionRecipient
-{
+contract ARTHTOKENRefundablePool is TOKENWrapper, IRewardDistributionRecipient {
     IERC20 public cash;
 
     string public poolName;
