@@ -1,8 +1,3 @@
-const { BigNumber } = require("ethers");
-
-const { DAY } = require('./config');
-
-
 const MahaLiquidityBoardroom = artifacts.require('MahaLiquidityBoardroomV2');
 const ArthLiquidityBoardroom = artifacts.require('ArthLiquidityBoardroomV2');
 const ArthBoardroom = artifacts.require('ArthBoardroomV2');
@@ -61,7 +56,7 @@ module.exports = async (deployer, network, accounts) => {
 
   if (network === 'mainnet') {
     console.log('creating and adding timelocks')
-    const timelock = await deployer.deploy(Timelock, accounts[0], 2 * DAY);
+    const timelock = await deployer.deploy(Timelock, accounts[0], 2 * 86400);
     await arthLiquidityBoardroom.transferOwnership(timelock.address);
     await mahaLiquidityBoardroom.transferOwnership(timelock.address);
     await arthBoardroom.transferOwnership(timelock.address);

@@ -1,4 +1,3 @@
-const { BigNumber } = require('ethers');
 const knownContracts = require('./known-contracts');
 
 const ARTH = artifacts.require('ARTH');

@@ -57,12 +57,15 @@ const MockDai = artifacts.require('MockDai');
 const IERC20 = artifacts.require('IERC20');
 const UniswapV2Factory = artifacts.require('UniswapV2Factory');
 const UniswapV2Router02 = artifacts.require('UniswapV2Router02');
+const Multicall  = artifacts.require('Multicall');
+
 
 /**
  * Main migrations
  */
 module.exports = async (callback) => {
-  const network = 'development';
+  const isMainnet = process.argv.includes('mainnet')
+  const isDevelopment = process.argv.includes('development')
 
   // Set the main account, you'll be using accross all the files for various
   // important activities to your desired address in the .env file.
@@ -72,15 +75,15 @@ module.exports = async (callback) => {
 
 
   try {
-    const dai = network === 'mainnet'
+    const dai = !isDevelopment
       ? await IERC20.at(knownContracts.DAI[network])
       : await MockDai.deployed();
 
-    const factory = network === 'mainnet' || network == 'ropsten'
+    const factory = !isDevelopment
       ? await UniswapV2Factory.at(knownContracts.UniswapV2Factory[network])
       : await UniswapV2Factory.deployed()
 
-    const router = network === 'mainnet' || network == 'ropsten'
+    const router = !isDevelopment
       ? await UniswapV2Router02.at(knownContracts.UniswapV2Router02[network])
       : await UniswapV2Router02.deployed()
 
@@ -92,7 +95,7 @@ module.exports = async (callback) => {
     const oracle = await SeigniorageOracle.deployed();
 
     const arth = await Arth.deployed();
-    const mahaToken = network === 'mainnet'
+    const mahaToken = isMainnet
       ? await MahaToken.at(knownContracts.MahaToken[network])
       : await MahaToken.deployed();
 
@@ -106,6 +109,11 @@ module.exports = async (callback) => {
     console.log('uniswap router at', router.address);
     console.log('dai_arth_lpt at', dai_arth_lpt);
     console.log('maha_dai_lpt at', maha_dai_lpt);
+
+    if (isDevelopment) {
+      const mutlicall = await Multicall.deployed()
+      console.log('multicall at', mutlicall.address);
+    }
 
     for (const name of exportedContracts) {
       const contract = artifacts.require(name);

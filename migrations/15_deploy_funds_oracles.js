@@ -1,6 +1,4 @@
 const knownContracts = require('./known-contracts');
-const { POOL_START_DATE, DAY } = require('./config');
-
 
 const ARTH = artifacts.require('ARTH');
 const MAHA = artifacts.require('MahaToken');
