@@ -2,7 +2,7 @@ const Artifactor = require('@truffle/artifactor');
 
 
 const Migrations = artifacts.require('Migrations')
-
+const Multicall = artifacts.require('Multicall')
 
 const artifactor = new Artifactor(`${__dirname}/../build/contracts`);
 
@@ -14,7 +14,7 @@ const InitialArtifacts = {
 };
 
 
-module.exports = async function (deployer) {
+module.exports = async function (deployer, network) {
   for await ([contractName, legacyArtifact] of Object.entries(InitialArtifacts)) {
     await artifactor.save({
       contractName,
@@ -22,5 +22,6 @@ module.exports = async function (deployer) {
     });
   }
 
-  await deployer.deploy(Migrations)
+  await deployer.deploy(Migrations);
+  if (network === 'development') await deployer.deploy(Multicall);
 }

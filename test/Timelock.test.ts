@@ -65,9 +65,9 @@ describe('Timelock', () => {
     MAHA = await ethers.getContractFactory('MahaToken');
     Treasury = await ethers.getContractFactory('Treasury');
     DevelopmentFund = await ethers.getContractFactory('DevelopmentFund');
-    ArthBoardroom = await ethers.getContractFactory('ArthBoardroomV2');
-    ArthLiquidityBoardroom = await ethers.getContractFactory('ArthLiquidityBoardroomV2');
-    MahaLiquidityBoardroom = await ethers.getContractFactory('MahaLiquidityBoardroomV2');
+    ArthBoardroom = await ethers.getContractFactory('MockBoardroom');
+    ArthLiquidityBoardroom = await ethers.getContractFactory('MockBoardroom');
+    MahaLiquidityBoardroom = await ethers.getContractFactory('MockBoardroom');
     Oracle = await ethers.getContractFactory('MockUniswapOracle');
     Curve = await ethers.getContractFactory('MockCurve');
     DAI = await ethers.getContractFactory('MockDai');
@@ -123,17 +123,12 @@ describe('Timelock', () => {
 
     oracle = await Oracle.connect(operator).deploy();
 
-    arthBoardroom = await ArthBoardroom.connect(operator).deploy(cash.address, startTime);
-    const dai_arth_lpt = await await oracle.pairFor(uniswap.address, cash.address, dai.address);
+    arthBoardroom = await ArthBoardroom.connect(operator).deploy(cash.address);
     arthLiquidityBoardroom = await ArthLiquidityBoardroom.connect(operator).deploy(
-      cash.address,
-      dai_arth_lpt,
-      startTime
+      cash.address
     );
     mahaLiquidityBoardroom = await MahaLiquidityBoardroom.connect(operator).deploy(
-      cash.address,
-      dai_arth_lpt,
-      startTime
+      cash.address
     );
 
     treasury = await Treasury.connect(operator).deploy(

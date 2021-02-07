@@ -15,6 +15,7 @@ chai.use(solidity);
 describe('VestedBondedBoardroom', () => {
   // const DAY = 86400;
 
+  const REWARDS_VESTING = 8 * 3600
   const BOARDROOM_LOCK_PERIOD = 5 * 60;
   const ETH = utils.parseEther('1');
   const ZERO = BigNumber.from(0);
@@ -51,7 +52,8 @@ describe('VestedBondedBoardroom', () => {
     boardroom = await VestedBondedBoardroom.connect(operator).deploy(
       cash.address,
       share.address,
-      BOARDROOM_LOCK_PERIOD
+      BOARDROOM_LOCK_PERIOD,
+      REWARDS_VESTING
     );
   });
 

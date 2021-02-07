@@ -1,7 +1,3 @@
-const {
-  ARTH_LIQUIDITY_BOARDROOM_LOCK_DURATION,
-  ARTH_BOARDROOM_LOCK_DURATION
-} = require('./config');
 const knownContracts = require('./known-contracts');
 
 
@@ -20,6 +16,12 @@ async function migration(deployer, network, accounts) {
   // various important activities to your desired address in the .env
   // file.
   accounts[0] = process.env.WALLET_KEY;
+
+  const DAY = 86400;
+  const HOUR = 3600;
+  const REWARDS_VESTING = network === 'mainnet' ? 8 * HOUR : HOUR;
+  const ARTH_BOARDROOM_LOCK_DURATION = network === 'mainnet' ? 5 * DAY : HOUR * 5;
+  const LIQUIDITY_BOARDROOM_LOCK_DURATION = network === 'mainnet' ? 1 * DAY : HOUR * 5;
 
   // Deploy dai or fetch deployed dai.
   console.log(`Fetching dai on ${network} network.`);
@@ -47,15 +49,14 @@ async function migration(deployer, network, accounts) {
     ? knownContracts.MAHA_ETH_LP[network]
     : await bondRedemtionOralce.pairFor(uniswap.address, cash.address, dai.address);
 
-
   // Deploy ARTH-DAI liquidity boardroom.
-  await deployer.deploy(ArthLiquidityBoardroom, cash.address, dai_arth_lpt, ARTH_LIQUIDITY_BOARDROOM_LOCK_DURATION);
+  await deployer.deploy(ArthLiquidityBoardroom, cash.address, dai_arth_lpt, LIQUIDITY_BOARDROOM_LOCK_DURATION, REWARDS_VESTING);
 
   // Deploy arth boardroom.
-  await deployer.deploy(ArthBoardroom, cash.address, ARTH_BOARDROOM_LOCK_DURATION);
+  await deployer.deploy(ArthBoardroom, cash.address, ARTH_BOARDROOM_LOCK_DURATION, REWARDS_VESTING);
 
   // Deploy MAHA-ETH boardroom.
-  await deployer.deploy(MahaLiquidityBoardroom, cash.address, maha_weth_lpt, ARTH_LIQUIDITY_BOARDROOM_LOCK_DURATION);
+  await deployer.deploy(MahaLiquidityBoardroom, cash.address, maha_weth_lpt, LIQUIDITY_BOARDROOM_LOCK_DURATION, REWARDS_VESTING);
 }
 
 
