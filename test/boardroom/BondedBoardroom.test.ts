@@ -76,7 +76,7 @@ describe('BondedBoardroom', () => {
 
     it('Should fail when user tries to bond with zero amount', async () => {
       await expect(boardroom.connect(whale).bond(ZERO)).to.revertedWith(
-        'Boardroom: Cannot stake 0'
+        'Boardroom: Cannot bond 0'
       );
     });
   });

@@ -20,8 +20,8 @@ async function migration(deployer, network, accounts) {
   const DAY = 86400;
   const HOUR = 3600;
   const REWARDS_VESTING = network === 'mainnet' ? 8 * HOUR : HOUR;
-  const ARTH_BOARDROOM_LOCK_DURATION = network === 'mainnet' ? 5 * DAY : HOUR * 5;
-  const LIQUIDITY_BOARDROOM_LOCK_DURATION = network === 'mainnet' ? 1 * DAY : HOUR * 5;
+  const ARTH_BOARDROOM_LOCK_DURATION = network === 'mainnet' ? 5 * DAY : 60 * 5;
+  const LIQUIDITY_BOARDROOM_LOCK_DURATION = network === 'mainnet' ? 1 * DAY : 60 * 5;
 
   // Deploy dai or fetch deployed dai.
   console.log(`Fetching dai on ${network} network.`);

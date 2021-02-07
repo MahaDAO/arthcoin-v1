@@ -37,7 +37,7 @@ abstract contract BondedTokenWrapper is BaseBoardroom {
             'Boardroom: unbond request greater than staked amount'
         );
 
-        _updateStakerDetails(msg.sender, block.timestamp, amount);
+        _updateStakerDetails(msg.sender, block.timestamp + duration, amount);
 
         emit Unbonded(msg.sender, amount);
     }

@@ -11,8 +11,9 @@ contract StakingTimelock is Ownable {
     uint256 public duration = 1 days;
 
     struct StakingDetails {
-        uint256 date;
+        uint256 deadline;
         uint256 amount;
+        uint256 updatedOn;
     }
 
     mapping(address => StakingDetails) public _stakingDetails;
@@ -24,28 +25,36 @@ contract StakingTimelock is Ownable {
     modifier checkLockDuration {
         StakingDetails storage _stakerDetails = _stakingDetails[msg.sender];
 
-        require(_stakerDetails.date != 0);
+        require(_stakerDetails.deadline != 0);
         require(_stakerDetails.amount != 0);
-        require(_stakerDetails.date + duration <= block.timestamp);
+        require(_stakerDetails.deadline + duration <= block.timestamp);
         _;
     }
 
     modifier checkLockDurationWithAmount(uint256 amount) {
         StakingDetails storage _stakerDetails = _stakingDetails[msg.sender];
 
-        require(_stakerDetails.date != 0);
+        require(_stakerDetails.deadline != 0);
         require(_stakerDetails.amount <= amount);
-        require(_stakerDetails.date + duration <= block.timestamp);
+        require(_stakerDetails.deadline + duration <= block.timestamp);
         _;
     }
 
     function getStakerDetails(address who)
         public
         view
-        returns (uint256, uint256)
+        returns (
+            uint256,
+            uint256,
+            uint256
+        )
     {
         StakingDetails storage _stakerDetails = _stakingDetails[who];
-        return (_stakerDetails.date, _stakerDetails.amount);
+        return (
+            _stakerDetails.amount,
+            _stakerDetails.deadline,
+            _stakerDetails.updatedOn
+        );
     }
 
     function getStakedAmount(address who) public view returns (uint256) {
@@ -59,7 +68,8 @@ contract StakingTimelock is Ownable {
         uint256 _amount
     ) internal returns (uint256, uint256) {
         StakingDetails storage _stakerDetails = _stakingDetails[who];
-        _stakerDetails.date = _date;
+        _stakerDetails.deadline = _date;
+        _stakerDetails.updatedOn = block.timestamp;
         _stakerDetails.amount = _amount;
     }
 
