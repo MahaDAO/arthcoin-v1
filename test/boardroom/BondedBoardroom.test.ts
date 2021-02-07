@@ -147,7 +147,7 @@ describe('BondedBoardroom', () => {
     });
 
     it('Should not be able to withdraw without unbonding and time < boardroomLockPeriod', async () => {
-      await expect(boardroom.connect(whale).withdraw(STAKE_AMOUNT)).revertedWith('')
+      await expect(boardroom.connect(whale).withdraw()).revertedWith('')
 
       expect(await share.balanceOf(whale.address)).to.eq(ZERO);
       expect(await boardroom.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
@@ -159,7 +159,7 @@ describe('BondedBoardroom', () => {
         (await latestBlocktime(provider)) + BOARDROOM_LOCK_PERIOD
       );
 
-      await expect(boardroom.connect(whale).withdraw(STAKE_AMOUNT)).revertedWith('')
+      await expect(boardroom.connect(whale).withdraw()).revertedWith('')
 
       expect(await share.balanceOf(whale.address)).to.eq(ZERO);
       expect(await boardroom.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
@@ -168,7 +168,7 @@ describe('BondedBoardroom', () => {
     it('Should not be able to withdraw with unbonding and time < boardroomLockPeriod', async () => {
       await boardroom.connect(whale).unbond(STAKE_AMOUNT);
 
-      await expect(boardroom.connect(whale).withdraw(STAKE_AMOUNT)).revertedWith('')
+      await expect(boardroom.connect(whale).withdraw()).revertedWith('')
 
       expect(await share.balanceOf(whale.address)).to.eq(ZERO);
       expect(await boardroom.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
@@ -182,40 +182,12 @@ describe('BondedBoardroom', () => {
         (await latestBlocktime(provider)) + BOARDROOM_LOCK_PERIOD
       );
 
-      await expect(boardroom.connect(whale).withdraw(STAKE_AMOUNT))
+      await expect(boardroom.connect(whale).withdraw())
         .to.emit(boardroom, 'Withdrawn')
         .withArgs(whale.address, STAKE_AMOUNT);
 
       expect(await share.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
       expect(await boardroom.balanceOf(whale.address)).to.eq(ZERO);
-    });
-
-    it('Should fail when user tries to withdraw with zero amount', async () => {
-      await boardroom.connect(whale).unbond(STAKE_AMOUNT);
-
-      await advanceTimeAndBlock(
-        provider,
-        (await latestBlocktime(provider)) + BOARDROOM_LOCK_PERIOD
-      );
-
-      await expect(boardroom.connect(whale).withdraw(ZERO)).to.revertedWith(
-        'Boardroom: Cannot withdraw 0'
-      );
-    });
-
-    it('Should fail when user tries to withdraw more than staked amount', async () => {
-      await boardroom.connect(whale).unbond(STAKE_AMOUNT);
-
-      await advanceTimeAndBlock(
-        provider,
-        (await latestBlocktime(provider)) + BOARDROOM_LOCK_PERIOD
-      );
-
-      await expect(
-        boardroom.connect(whale).withdraw(STAKE_AMOUNT.add(1))
-      ).to.revertedWith(
-        'Boardroom: withdraw request greater than staked amount'
-      );
     });
 
     it('Should fail when non-director tries to withdraw', async () => {
@@ -224,7 +196,7 @@ describe('BondedBoardroom', () => {
         (await latestBlocktime(provider)) + BOARDROOM_LOCK_PERIOD
       );
 
-      await expect(boardroom.connect(abuser).withdraw(ZERO)).to.revertedWith(
+      await expect(boardroom.connect(abuser).withdraw()).to.revertedWith(
         'Boardroom: The director does not exist'
       );
     });
@@ -276,7 +248,7 @@ describe('BondedBoardroom', () => {
         (await latestBlocktime(provider)) + 2 * BOARDROOM_LOCK_PERIOD
       );
 
-      await expect(boardroom.connect(whale).withdraw(STAKE_AMOUNT))
+      await expect(boardroom.connect(whale).withdraw())
         .to.emit(boardroom, 'Withdrawn')
         .withArgs(whale.address, STAKE_AMOUNT);
 

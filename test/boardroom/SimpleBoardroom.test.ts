@@ -10,7 +10,7 @@ import { advanceTimeAndBlock, latestBlocktime } from '../shared/utilities';
 chai.use(solidity);
 
 
-describe.only('Simple Boardroom', () => {
+describe('Simple Boardroom', () => {
   // const DAY = 86400;
 
   const BOARDROOM_LOCK_PERIOD = 5 * 60;

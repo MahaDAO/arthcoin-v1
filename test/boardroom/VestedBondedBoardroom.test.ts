@@ -274,7 +274,7 @@ describe('VestedBondedBoardroom', () => {
         2 * BOARDROOM_LOCK_PERIOD
       );
 
-      await expect(boardroom.connect(whale).withdraw(STAKE_AMOUNT))
+      await expect(boardroom.connect(whale).exit())
         .to.emit(boardroom, 'Withdrawn')
         .withArgs(whale.address, STAKE_AMOUNT);
 
@@ -293,6 +293,11 @@ describe('VestedBondedBoardroom', () => {
         'Boardroom: The director does not exist'
       );
     });
+
+    it.skip('Should fail when director has already exited once', async () => {
+      // TODO yash
+    });
+
   });
 
   describe('#AllocateSeigniorage', () => {
