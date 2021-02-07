@@ -9,13 +9,16 @@ import './BondedBoardroom.sol';
 
 contract VestedBondedBoardroom is BondedBoardroom {
     // For how much time should vesting take place.
-    uint256 public vestFor = 8 hours;
+    uint256 public vestFor;
 
     constructor(
         IERC20 _cash,
         IERC20 _share,
-        uint256 _duration
-    ) public BondedBoardroom(_cash, _share, _duration) {}
+        uint256 _duration,
+        uint256 _vestFor
+    ) public BondedBoardroom(_cash, _share, _duration) {
+        vestFor = _vestFor;
+    }
 
     function updateVestedReward(address director) private {
         if (director != address(0)) {

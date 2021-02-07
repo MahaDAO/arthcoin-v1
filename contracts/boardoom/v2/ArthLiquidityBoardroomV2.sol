@@ -8,6 +8,7 @@ contract ArthLiquidityBoardroomV2 is VestedBondedBoardroom {
     constructor(
         IERC20 _cash,
         IERC20 _share,
-        uint256 _duration
-    ) public VestedBondedBoardroom(_cash, _share, _duration) {}
+        uint256 _duration,
+        uint256 _vestFor
+    ) public VestedBondedBoardroom(_cash, _share, _duration, _vestFor) {}
 }
