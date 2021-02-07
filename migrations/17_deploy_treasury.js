@@ -3,8 +3,8 @@ const knownContracts = require('./known-contracts');
 
 const ARTH = artifacts.require('ARTH');
 const ARTHB = artifacts.require('ARTHB');
-const ArthBoardroom = artifacts.require('ArthBoardroom');
-const ArthLiquidityBoardroom = artifacts.require('ArthLiquidityBoardroom');
+const ArthBoardroom = artifacts.require('ArthBoardroomV2');
+const ArthLiquidityBoardroom = artifacts.require('ArthLiquidityBoardroomV2');
 const BondRedemtionOracle = artifacts.require('BondRedemtionOracle');
 const DevelopmentFund = artifacts.require('DevelopmentFund');
 const GMUOracle = artifacts.require('GMUOracle');
@@ -14,7 +14,7 @@ const MockDai = artifacts.require('MockDai');
 const SeigniorageOracle = artifacts.require('SeigniorageOracle');
 const Treasury = artifacts.require('Treasury');
 const UniswapV2Router02 = artifacts.require('UniswapV2Router02');
-const MahaLiquidityBoardroom = artifacts.require('MahaLiquidityBoardroom');
+const MahaLiquidityBoardroom = artifacts.require('MahaLiquidityBoardroomV2');
 
 
 async function migration(deployer, network, accounts) {

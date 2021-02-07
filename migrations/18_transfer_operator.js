@@ -3,9 +3,9 @@ const { BigNumber } = require("ethers");
 const { DAY } = require('./config');
 
 
-const MahaLiquidityBoardroom = artifacts.require('MahaLiquidityBoardroom');
-const ArthLiquidityBoardroom = artifacts.require('ArthLiquidityBoardroom');
-const ArthBoardroom = artifacts.require('ArthBoardroom');
+const MahaLiquidityBoardroom = artifacts.require('MahaLiquidityBoardroomV2');
+const ArthLiquidityBoardroom = artifacts.require('ArthLiquidityBoardroomV2');
+const ArthBoardroom = artifacts.require('ArthBoardroomV2');
 const Treasury = artifacts.require('Treasury');
 const ARTH = artifacts.require('ARTH');
 const ArthMahaOracle = artifacts.require('ArthMahaOracle');

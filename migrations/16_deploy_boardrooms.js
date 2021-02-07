@@ -8,11 +8,11 @@ const knownContracts = require('./known-contracts');
 const ARTH = artifacts.require('ARTH');
 const IERC20 = artifacts.require('IERC20');
 const MockDai = artifacts.require('MockDai');
-const ArthBoardroom = artifacts.require('ArthBoardroom');
+const ArthBoardroom = artifacts.require('ArthBoardroomV2');
 const UniswapV2Factory = artifacts.require('UniswapV2Factory');
 const BondRedemtionOracle = artifacts.require('BondRedemtionOracle');
-const ArthLiquidityBoardroom = artifacts.require('ArthLiquidityBoardroom');
-const MahaLiquidityBoardroom = artifacts.require('MahaLiquidityBoardroom');
+const ArthLiquidityBoardroom = artifacts.require('ArthLiquidityBoardroomV2');
+const MahaLiquidityBoardroom = artifacts.require('MahaLiquidityBoardroomV2');
 
 
 async function migration(deployer, network, accounts) {
