@@ -99,6 +99,7 @@ describe('ERC20Fund', () => {
         .withArgs(txHash, ...calldata)
         .to.emit(fund, 'Withdrawal')
         .withArgs(
+          token.address,
           timelock.address,
           whale.address,
           await latestBlocktime(provider),
