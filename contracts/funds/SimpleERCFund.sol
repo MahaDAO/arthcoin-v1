@@ -33,14 +33,14 @@ contract SimpleERCFund is ISimpleERCFund, Ownable {
     event Deposit(
         address indexed token,
         address indexed from,
-        uint256 indexed at,
+        uint256 at,
         string reason
     );
     event Withdrawal(
         address indexed token,
         address indexed from,
         address indexed to,
-        uint256 indexed at,
+        uint256 at,
         string reason
     );
 }
