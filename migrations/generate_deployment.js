@@ -12,7 +12,6 @@ const writeFile = util.promisify(fs.writeFile);
 const exportedContracts = [
   'ARTH',
   'ARTHB',
-  'MahaToken',
 
   // oracles
   'GMUOracle',
@@ -21,9 +20,10 @@ const exportedContracts = [
   'BondRedemtionOracle',
 
   // boardroom
-  'ArthLiquidityBoardroom',
-  'MahaLiquidityBoardroom',
-  'ArthBoardroom',
+  'ArthLiquidityBoardroomV2',
+  'MahaLiquidityBoardroomV2',
+  'ArthBoardroomV2',
+
   'Treasury',
 
   'DevelopmentFund',
@@ -64,6 +64,7 @@ const Multicall  = artifacts.require('Multicall');
  * Main migrations
  */
 module.exports = async (callback) => {
+  const network = 'development'
   const isMainnet = process.argv.includes('mainnet')
   const isDevelopment = process.argv.includes('development')
 
@@ -99,6 +100,10 @@ module.exports = async (callback) => {
       ? await MahaToken.at(knownContracts.MahaToken[network])
       : await MahaToken.deployed();
 
+    const multicall = isMainnet
+      ? await MahaToken.at(knownContracts.Multicall[network])
+      : await MahaToken.deployed();
+
     const dai_arth_lpt = await oracle.pairFor(factory.address, dai.address, arth.address)
     const maha_dai_lpt = await oracle.pairFor(factory.address, dai.address, mahaToken.address)
 
@@ -109,11 +114,40 @@ module.exports = async (callback) => {
     console.log('uniswap router at', router.address);
     console.log('dai_arth_lpt at', dai_arth_lpt);
     console.log('maha_dai_lpt at', maha_dai_lpt);
+    console.log('multicall at', multicall.address);
 
-    if (isDevelopment) {
-      const mutlicall = await Multicall.deployed()
-      console.log('multicall at', mutlicall.address);
-    }
+    deployments.Multicall = {
+      address: multicall.address,
+      abi: multicall.abi,
+    };
+
+    deployments.UniswapV2Router02 = {
+      address: router.address,
+      abi: router.abi,
+    };
+
+    deployments.UniswapV2Factory = {
+      address: factory.address,
+      abi: factory.abi,
+    };
+
+    deployments.DAI = {
+      address: dai.address,
+      abi: dai.abi,
+    };
+
+    deployments.MahaToken = {
+      address: mahaToken.address,
+      abi: mahaToken.abi,
+    };
+
+    deployments.ArthDaiLP = {
+      address: dai_arth_lpt
+    };
+
+    deployments.MahaEthLP = {
+      address: maha_dai_lpt
+    };
 
     for (const name of exportedContracts) {
       const contract = artifacts.require(name);

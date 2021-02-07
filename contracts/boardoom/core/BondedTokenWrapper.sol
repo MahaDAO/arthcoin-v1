@@ -18,7 +18,7 @@ abstract contract BondedTokenWrapper is BaseBoardroom {
     }
 
     function _bond(uint256 amount) internal virtual depositsEnabled {
-        require(amount > 0, 'Boardroom: Cannot stake 0');
+        require(amount > 0, 'Boardroom: Cannot bond 0');
 
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
