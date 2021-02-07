@@ -17,7 +17,7 @@ contract VestedBondedBoardroom is BondedBoardroom {
         uint256 _duration
     ) public BondedBoardroom(_cash, _share, _duration) {}
 
-    modifier updateVestedReward(address director) {
+    function updateVestedReward(address director) private {
         if (director != address(0)) {
             Boardseat storage seat = directors[director];
 
@@ -43,8 +43,6 @@ contract VestedBondedBoardroom is BondedBoardroom {
             seat.rewardEarned = freshReward;
             seat.lastSnapshotIndex = latestSnapshotIndex();
         }
-
-        _;
     }
 
     function earned(address director) public view override returns (uint256) {
@@ -63,9 +61,10 @@ contract VestedBondedBoardroom is BondedBoardroom {
             );
 
         return
-            balanceOf(director).mul(latestRPS.sub(storedRPS)).div(1e18).add(
-                rewardEarned
-            );
+            balanceWithoutBonded(director)
+                .mul(latestRPS.sub(storedRPS))
+                .div(1e18)
+                .add(rewardEarned);
     }
 
     /**
@@ -77,7 +76,9 @@ contract VestedBondedBoardroom is BondedBoardroom {
         vestFor = period;
     }
 
-    function _claimAndQuit() private updateVestedReward(msg.sender) {
+    function _claimAndQuit() private {
+        updateVestedReward(msg.sender);
+
         uint256 rewardLeftToClaim = directors[msg.sender].rewardEarned;
         uint256 rewardPending = directors[msg.sender].rewardPending;
 
@@ -95,12 +96,34 @@ contract VestedBondedBoardroom is BondedBoardroom {
         emit RewardPaid(msg.sender, reward);
     }
 
+    function bond(uint256 amount) external override onlyOneBlock {
+        updateVestedReward(msg.sender);
+        _bond(amount);
+    }
+
+    function unbond(uint256 amount)
+        external
+        override
+        onlyOneBlock
+        directorExists
+    {
+        updateVestedReward(msg.sender);
+        _unbond(amount);
+    }
+
+    function withdraw() public override onlyOneBlock directorExists {
+        updateVestedReward(msg.sender);
+        _withdraw();
+    }
+
     function exit() external override {
         withdraw();
         _claimAndQuit();
     }
 
-    function claimReward() public override updateVestedReward(msg.sender) {
+    function claimReward() public override {
+        updateVestedReward(msg.sender);
+
         uint256 reward = directors[msg.sender].rewardEarned;
         if (reward <= 0) return;
 

@@ -8,7 +8,16 @@ import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import './BaseBoardroom.sol';
 
 abstract contract BondedTokenWrapper is BaseBoardroom {
-    function bond(uint256 amount) public virtual depositsEnabled {
+    function balanceWithoutBonded(address account)
+        public
+        view
+        returns (uint256)
+    {
+        uint256 amount = getStakedAmount(msg.sender);
+        return _balances[account].sub(amount);
+    }
+
+    function _bond(uint256 amount) internal virtual depositsEnabled {
         require(amount > 0, 'Boardroom: Cannot stake 0');
 
         _totalSupply = _totalSupply.add(amount);
@@ -18,7 +27,7 @@ abstract contract BondedTokenWrapper is BaseBoardroom {
         emit Bonded(msg.sender, amount);
     }
 
-    function unbond(uint256 amount) public virtual {
+    function _unbond(uint256 amount) internal virtual {
         require(amount > 0, 'Boardroom: Cannot unbond 0');
 
         uint256 directorShare = _balances[msg.sender];
@@ -33,7 +42,7 @@ abstract contract BondedTokenWrapper is BaseBoardroom {
         emit Unbonded(msg.sender, amount);
     }
 
-    function withdraw() public virtual checkLockDuration {
+    function _withdraw() internal checkLockDuration {
         uint256 directorShare = _balances[msg.sender];
         uint256 amount = getStakedAmount(msg.sender);
 

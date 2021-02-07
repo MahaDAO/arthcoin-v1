@@ -77,14 +77,13 @@ contract BondedBoardroom is BondedTokenWrapper, ContractGuard {
         _;
     }
 
-    modifier updateReward(address director) {
+    function updateReward(address director) private {
         if (director != address(0)) {
             Boardseat memory seat = directors[director];
             seat.rewardEarned = earned(director);
             seat.lastSnapshotIndex = latestSnapshotIndex();
             directors[director] = seat;
         }
-        _;
     }
 
     /* ========== VIEW FUNCTIONS ========== */
@@ -126,40 +125,32 @@ contract BondedBoardroom is BondedTokenWrapper, ContractGuard {
         uint256 storedRPS = getLastSnapshotOf(director).rewardPerShare;
 
         return
-            balanceOf(director).mul(latestRPS.sub(storedRPS)).div(1e18).add(
-                directors[director].rewardEarned
-            );
+            balanceWithoutBonded(director)
+                .mul(latestRPS.sub(storedRPS))
+                .div(1e18)
+                .add(directors[director].rewardEarned);
     }
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
-    function bond(uint256 amount)
-        public
-        override
-        onlyOneBlock
-        updateReward(msg.sender)
-    {
-        super.bond(amount);
+    function bond(uint256 amount) external virtual onlyOneBlock {
+        updateReward(msg.sender);
+        _bond(amount);
     }
 
     function unbond(uint256 amount)
-        public
-        override
+        external
+        virtual
         onlyOneBlock
         directorExists
-        updateReward(msg.sender)
     {
-        super.unbond(amount);
+        updateReward(msg.sender);
+        _unbond(amount);
     }
 
-    function withdraw()
-        public
-        override
-        onlyOneBlock
-        directorExists
-        updateReward(msg.sender)
-    {
-        super.withdraw();
+    function withdraw() public virtual onlyOneBlock directorExists {
+        updateReward(msg.sender);
+        _withdraw();
     }
 
     function exit() external virtual {
@@ -167,7 +158,8 @@ contract BondedBoardroom is BondedTokenWrapper, ContractGuard {
         claimReward();
     }
 
-    function claimReward() public virtual updateReward(msg.sender) {
+    function claimReward() public virtual {
+        updateReward(msg.sender);
         uint256 reward = directors[msg.sender].rewardEarned;
 
         if (reward > 0) {
