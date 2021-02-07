@@ -17,8 +17,7 @@ contract SimpleERCFund is ISimpleERCFund, Ownable {
         string memory reason
     ) public override {
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
-
-        emit Deposit(msg.sender, now, reason);
+        emit Deposit(token, msg.sender, now, reason);
     }
 
     function withdraw(
@@ -28,12 +27,17 @@ contract SimpleERCFund is ISimpleERCFund, Ownable {
         string memory reason
     ) public override onlyOwner {
         IERC20(token).safeTransfer(to, amount);
-
-        emit Withdrawal(msg.sender, to, now, reason);
+        emit Withdrawal(token, msg.sender, to, now, reason);
     }
 
-    event Deposit(address indexed from, uint256 indexed at, string reason);
+    event Deposit(
+        address indexed token,
+        address indexed from,
+        uint256 indexed at,
+        string reason
+    );
     event Withdrawal(
+        address indexed token,
         address indexed from,
         address indexed to,
         uint256 indexed at,
