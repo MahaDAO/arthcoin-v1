@@ -21,10 +21,10 @@ const exportedContracts = [
   'BondRedemtionOracle',
 
   // boardroom
-  // 'ArthLiquidityBoardroom',
-  // 'MahaLiquidityBoardroom',
-  // 'ArthBoardroom',
-  // 'Treasury',
+  'ArthLiquidityBoardroom',
+  'MahaLiquidityBoardroom',
+  'ArthBoardroom',
+  'Treasury',
 
   'DevelopmentFund',
 
@@ -62,7 +62,7 @@ const UniswapV2Router02 = artifacts.require('UniswapV2Router02');
  * Main migrations
  */
 module.exports = async (callback) => {
-  const network = 'mainnet';
+  const network = 'development';
 
   // Set the main account, you'll be using accross all the files for various
   // important activities to your desired address in the .env file.
