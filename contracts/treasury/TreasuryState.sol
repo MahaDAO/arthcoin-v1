@@ -32,7 +32,8 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     address public share;
     address public uniswapRouter;
 
-    address public arthLiquidityBoardroom;
+    address public arthLiquidityUniBoardroom;
+    address public arthLiquidityMlpBoardroom;
     address public mahaLiquidityBoardroom;
     address public arthBoardroom;
 
@@ -83,7 +84,8 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     // ARTH liqudity providers
     //
     // TODO: make one for maha holders and one for the various community pools
-    uint256 public arthLiquidityBoardroomAllocationRate = 70; // In %.
+    uint256 public arthLiquidityUniAllocationRate = 5; // In %.
+    uint256 public arthLiquidityMlpAllocationRate = 65; // In %.
     uint256 public arthBoardroomAllocationRate = 20; // IN %.
     uint256 public mahaLiquidityBoardroomAllocationRate = 10; // IN %.
 

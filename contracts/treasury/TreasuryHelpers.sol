@@ -183,33 +183,53 @@ contract TreasuryHelpers is TreasurySetters {
         if (boardroomReserve <= 0) return;
 
         // Calculate boardroom reserves.
-        uint256 arthLiquidityBoardroomReserve =
-            boardroomReserve.mul(arthLiquidityBoardroomAllocationRate).div(100);
+        uint256 arthLiquidityUniBoardroomReserve =
+            boardroomReserve.mul(arthLiquidityUniAllocationRate).div(100);
+        uint256 arthLiquidityMlpBoardroomReserve =
+            boardroomReserve.mul(arthLiquidityMlpAllocationRate).div(100);
         uint256 arthBoardroomReserve =
             boardroomReserve.mul(arthBoardroomAllocationRate).div(100);
         uint256 mahaLiquidityBoardroomReserve =
             boardroomReserve.mul(mahaLiquidityBoardroomAllocationRate).div(100);
 
-        if (arthLiquidityBoardroomReserve > 0) {
+        // arth-dai uniswap lp
+        if (arthLiquidityUniBoardroomReserve > 0) {
             ICustomERC20(cash).safeApprove(
-                arthLiquidityBoardroom,
-                arthLiquidityBoardroomReserve
+                arthLiquidityUniBoardroom,
+                arthLiquidityUniBoardroomReserve
             );
-            IBoardroom(arthLiquidityBoardroom).allocateSeigniorage(
-                arthLiquidityBoardroomReserve
+            IBoardroom(arthLiquidityUniBoardroom).allocateSeigniorage(
+                arthLiquidityUniBoardroomReserve
             );
             emit PoolFunded(
-                arthLiquidityBoardroom,
-                arthLiquidityBoardroomReserve
+                arthLiquidityUniBoardroom,
+                arthLiquidityUniBoardroomReserve
             );
         }
 
+        // arth-dai mahaswap lp
+        if (arthLiquidityMlpBoardroomReserve > 0) {
+            ICustomERC20(cash).safeApprove(
+                arthLiquidityMlpBoardroom,
+                arthLiquidityMlpBoardroomReserve
+            );
+            IBoardroom(arthLiquidityMlpBoardroom).allocateSeigniorage(
+                arthLiquidityMlpBoardroomReserve
+            );
+            emit PoolFunded(
+                arthLiquidityMlpBoardroom,
+                arthLiquidityMlpBoardroomReserve
+            );
+        }
+
+        // arth only lp
         if (arthBoardroomReserve > 0) {
             ICustomERC20(cash).safeApprove(arthBoardroom, arthBoardroomReserve);
             IBoardroom(arthBoardroom).allocateSeigniorage(arthBoardroomReserve);
             emit PoolFunded(arthBoardroom, arthBoardroomReserve);
         }
 
+        // maha only lp
         if (mahaLiquidityBoardroomReserve > 0) {
             ICustomERC20(cash).safeApprove(
                 mahaLiquidityBoardroom,

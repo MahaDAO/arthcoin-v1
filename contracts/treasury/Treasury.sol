@@ -183,7 +183,7 @@ contract Treasury is TreasuryHelpers {
 
         uint256 cashPrice = _getCashPrice(bondOracle);
         require(
-            cashPrice > getBondRedemtionPrice(), // price > $1.05
+            cashPrice > getBondRedemtionPrice(), // price > $1.00
             'cashPrice less than ceiling'
         );
 
@@ -251,7 +251,7 @@ contract Treasury is TreasuryHelpers {
             emit SeigniorageMinted(seigniorage);
 
             if (enableSurprise) {
-                // surprise!! send 5% to boardoom and 95% to bond holders
+                // surprise!! send 5% to boardooms and 95% to bond holders
                 _allocateToBondHolders(seigniorage.mul(95).div(100));
                 _allocateToBoardrooms(seigniorage.mul(5).div(100));
             } else {
