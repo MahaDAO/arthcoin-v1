@@ -55,7 +55,7 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     uint256 public accumulatedSeigniorage = 0;
 
     // flag whether we should considerUniswapLiquidity or not.
-    bool public considerUniswapLiquidity = false;
+    bool public considerUniswapLiquidity = true;
 
     // used to limit how much of the supply is converted into bonds
     uint256 public maxDebtIncreasePerEpoch = 5; // in %
@@ -67,7 +67,7 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     uint256 public safetyRegion = 5; // in %
 
     // at the most how much % of the supply should be increased
-    uint256 public maxSupplyIncreasePerEpoch = 30; // in %
+    uint256 public maxSupplyIncreasePerEpoch = 10; // in %
 
     // the ecosystem fund recieves seigniorage before anybody else; this
     // value decides how much of the new seigniorage is sent to this fund.
@@ -94,6 +94,8 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     // eg: a 1% fee means that while redeeming 100 ARTHB, 1 ARTH worth of MAHA is
     // deducted to pay for stability fees.
     uint256 public stabilityFee = 1; // IN %;
+
+    uint256 bool enableSurprise = false;
 
     modifier checkMigration {
         require(!migrated, 'Treasury: migrated');

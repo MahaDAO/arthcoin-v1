@@ -171,7 +171,7 @@ contract Treasury is TreasuryHelpers {
     /**
      * Redeeming bonds happen when
      */
-    function redeemBonds(uint256 amount, bool sellForDai)
+    function redeemBonds(uint256 amount)
         external
         onlyOneBlock
         checkMigration
@@ -206,36 +206,10 @@ contract Treasury is TreasuryHelpers {
             emit StabilityFeesCharged(msg.sender, stabilityFeeInMAHA);
         }
 
+        // hand over the ARTH directly
         accumulatedSeigniorage = accumulatedSeigniorage.sub(amount);
         IBasisAsset(bond).burnFrom(msg.sender, amount);
-
-        // sell the ARTH for Dai right away
-        if (sellForDai) {
-            // calculate how much DAI will we get from Uniswap by selling ARTH
-            address[] memory path = new address[](2);
-            path[0] = address(cash);
-            path[1] = address(dai);
-            uint256[] memory amountsOut =
-                IUniswapV2Router02(uniswapRouter).getAmountsOut(amount, path);
-            uint256 expectedDaiAmount = amountsOut[1];
-
-            // TODO: write some checkes over here
-
-            // send it!
-            ICustomERC20(cash).safeApprove(uniswapRouter, amount);
-            IUniswapV2Router02(uniswapRouter).swapExactTokensForTokens(
-                amount,
-                expectedDaiAmount,
-                path,
-                msg.sender,
-                block.timestamp
-            );
-            // set approve to 0 after transfer
-            ICustomERC20(cash).safeApprove(uniswapRouter, 0);
-        } else {
-            // or just hand over the ARTH directly
-            ICustomERC20(cash).safeTransfer(msg.sender, amount);
-        }
+        ICustomERC20(cash).safeTransfer(msg.sender, amount);
 
         emit RedeemedBonds(msg.sender, amount, sellForDai);
     }
@@ -251,8 +225,8 @@ contract Treasury is TreasuryHelpers {
         _updateCashPrice();
         uint256 cash12hPrice = getSeigniorageOraclePrice();
 
-        // send 200 ARTH reward to the person advancing the epoch to compensate for gas
-        IBasisAsset(cash).mint(msg.sender, uint256(200).mul(1e18));
+        // send 300 ARTH reward to the person advancing the epoch to compensate for gas
+        IBasisAsset(cash).mint(msg.sender, uint256(300).mul(1e18));
 
         // update the bond limits
         _updateConversionLimit(cash12hPrice);
@@ -276,7 +250,14 @@ contract Treasury is TreasuryHelpers {
             IBasisAsset(cash).mint(address(this), seigniorage);
             emit SeigniorageMinted(seigniorage);
 
-            _allocateToBondHolders(seigniorage);
+            if (enableSurprise) {
+                // surprise!! send 5% to boardoom and 95% to bond holders
+                _allocateToBondHolders(seigniorage.mul(95).div(100));
+                _allocateToBoardrooms(seigniorage.mul(5).div(100));
+            } else {
+                _allocateToBondHolders(seigniorage);
+            }
+
             return;
         }
 

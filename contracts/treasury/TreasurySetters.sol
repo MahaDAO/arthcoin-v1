@@ -48,6 +48,10 @@ abstract contract TreasurySetters is TreasuryGetters {
         maxSupplyIncreasePerEpoch = rate;
     }
 
+    function enableSurprise(bool val) public onlyOwner {
+        enableSurprise = val;
+    }
+
     function setSafetyRegion(uint256 rate) public onlyOwner returns (uint256) {
         require(rate <= 100, 'rate >= 0');
 
