@@ -86,13 +86,15 @@ abstract contract TreasurySetters is TreasuryGetters {
     }
 
     // ORACLE
-    function setBondOracle(address newOracle) public onlyOwner {
-        bondOracle = newOracle;
+    function setUniswap1hrOracle(address newOracle) public onlyOwner {
+        uniswap1hrOracle = newOracle;
+        
         emit OracleChanged(newOracle, '1hr');
     }
 
-    function setSeigniorageOracle(address newOracle) public onlyOwner {
-        seigniorageOracle = newOracle;
+    function setUniswap12hrOracle(address newOracle) public onlyOwner {
+        uniswap12hrOracle = newOracle;
+
         emit OracleChanged(newOracle, '12hr');
     }
 

@@ -20,8 +20,8 @@ abstract contract TreasuryGetters is TreasuryState {
         return accumulatedSeigniorage();
     }
 
-    function getBondOraclePrice() public view returns (uint256) {
-        return _getCashPrice(bondOracle);
+    function getUniswap1hrOraclePrice() public view returns (uint256) {
+        return _getCashPrice(uniswap1hrOracle);
     }
 
     function getGMUOraclePrice() public view returns (uint256) {
@@ -39,8 +39,8 @@ abstract contract TreasuryGetters is TreasuryState {
         return target.sub(price).mul(100).div(target);
     }
 
-    function getSeigniorageOraclePrice() public view returns (uint256) {
-        return _getCashPrice(seigniorageOracle);
+    function getUniswap12hrOraclePrice() public view returns (uint256) {
+        return _getCashPrice(uniswap12hrOracle);
     }
 
     function accumulatedSeigniorage() public view returns (uint256) {
@@ -140,7 +140,7 @@ abstract contract TreasuryGetters is TreasuryState {
     }
 
     function get1hourEpoch() public view returns (uint256) {
-        return Epoch(bondOracle).getLastEpoch();
+        return Epoch(uniswap1hrOracle).getLastEpoch();
     }
 
     function _getCashPrice(address oracle) internal view returns (uint256) {

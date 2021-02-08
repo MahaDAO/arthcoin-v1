@@ -34,9 +34,9 @@ contract Treasury is TreasuryHelpers {
         address _bond,
         address _share,
         // oracles
-        address _bondOracle,
+        address _uniswap1hrOracle,
         address _arthMahaOracle,
-        address _seigniorageOracle,
+        address _uniswap12hrOracle,
         address _gmuOracle,
         // // boardrooms
         // address _arthLiquidityBoardroom,
@@ -58,8 +58,8 @@ contract Treasury is TreasuryHelpers {
             _cash,
             _bond,
             _share,
-            _bondOracle,
-            _seigniorageOracle,
+            _uniswap1hrOracle,
+            _uniswap12hrOracle,
             _gmuOracle,
             // _arthLiquidityBoardroom,
             // _mahaLiquidityBoardroom,
@@ -93,7 +93,7 @@ contract Treasury is TreasuryHelpers {
         require(amountInDai > 0, 'zero amount');
 
         // Update the price to latest before using.
-        uint256 cash1hPrice = getBondOraclePrice();
+        uint256 cash1hPrice = getUniswap1hrOraclePrice();
 
         require(cash1hPrice <= targetPrice, 'cash price moved');
         require(
@@ -177,7 +177,7 @@ contract Treasury is TreasuryHelpers {
         checkOperator
     {
         _updateCashPrice();
-        uint256 cash12hPrice = getSeigniorageOraclePrice();
+        uint256 cash12hPrice = getUniswap12hrOraclePrice();
 
         // send 200 ARTH reward to the person advancing the epoch to compensate for gas
         IBasisAsset(cash).mint(msg.sender, uint256(200).mul(1e18));

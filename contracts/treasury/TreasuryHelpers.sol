@@ -33,8 +33,8 @@ contract TreasuryHelpers is TreasurySetters {
         address _cash,
         address _bond,
         address _share,
-        address _bondOracle,
-        address _seigniorageOracle,
+        address _uniswap1hrOracle,
+        address _uniswap12hrOracle,
         address _gmuOracle,
         // address _arthLiquidityBoardroom,
         // address _mahaLiquidityBoardroom,
@@ -54,8 +54,8 @@ contract TreasuryHelpers is TreasurySetters {
         share = _share;
 
         // oracles
-        bondOracle = _bondOracle;
-        seigniorageOracle = _seigniorageOracle;
+        uniswap1hrOracle = _uniswap1hrOracle;
+        uniswap12hrOracle = _uniswap12hrOracle;
         gmuOracle = _gmuOracle;
 
         // // funds
@@ -135,12 +135,12 @@ contract TreasuryHelpers is TreasurySetters {
      * TODO: this function needs to be optimised for gas
      */
     function _updateCashPrice() internal {
-        if (Epoch(bondOracle).callable()) {
-            try IUniswapOracle(bondOracle).update() {} catch {}
+        if (Epoch(uniswap1hrOracle).callable()) {
+            try IUniswapOracle(uniswap1hrOracle).update() {} catch {}
         }
 
-        if (Epoch(seigniorageOracle).callable()) {
-            try IUniswapOracle(seigniorageOracle).update() {} catch {}
+        if (Epoch(uniswap12hrOracle).callable()) {
+            try IUniswapOracle(uniswap12hrOracle).update() {} catch {}
         }
 
         // TODO: do the same for the gmu oracle as well

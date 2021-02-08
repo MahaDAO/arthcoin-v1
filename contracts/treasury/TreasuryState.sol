@@ -41,8 +41,8 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     address public rainyDayFund;
 
     // oracles
-    address public bondOracle;
-    address public seigniorageOracle;
+    address public uniswap1hrOracle;
+    address public uniswap12hrOracle;
     address public gmuOracle;
 
     // cash price tracking vars
