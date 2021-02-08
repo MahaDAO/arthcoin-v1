@@ -95,7 +95,8 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     // deducted to pay for stability fees.
     uint256 public stabilityFee = 1; // IN %;
 
-    uint256 bool enableSurprise = false;
+    // wut? algo coin surprise sheeet?
+    bool public enableSurprise = false;
 
     modifier checkMigration {
         require(!migrated, 'Treasury: migrated');
