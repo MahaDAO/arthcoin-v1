@@ -11,7 +11,7 @@ import '../../owner/Router.sol';
 import './BaseBoardroom.sol';
 
 abstract contract SimpleTokenWrapper is BaseBoardroom {
-    function stake(uint256 amount) public virtual depositsEnabled {
+    function _stake(uint256 amount) internal virtual depositsEnabled {
         _updateStakerDetails(msg.sender, block.timestamp, amount);
 
         _totalSupply = _totalSupply.add(amount);
@@ -19,7 +19,7 @@ abstract contract SimpleTokenWrapper is BaseBoardroom {
         share.safeTransferFrom(msg.sender, address(this), amount);
     }
 
-    function withdraw(uint256 amount) public virtual checkLockDuration {
+    function _withdraw(uint256 amount) internal virtual checkLockDuration {
         uint256 directorShare = _balances[msg.sender];
 
         require(

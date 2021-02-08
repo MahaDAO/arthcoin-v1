@@ -123,26 +123,22 @@ contract SimpleBoardroom is SimpleTokenWrapper, ContractGuard {
 
     function stake(uint256 amount)
         public
-        override
         onlyOneBlock
         updateReward(msg.sender)
     {
         require(amount > 0, 'Boardroom: Cannot stake 0');
-        super.stake(amount);
+        _stake(amount);
         emit Staked(msg.sender, amount);
     }
 
     function withdraw(uint256 amount)
         public
-        override
         onlyOneBlock
         directorExists
         updateReward(msg.sender)
     {
         require(amount > 0, 'Boardroom: Cannot withdraw 0');
-
-        super.withdraw(amount);
-
+        _withdraw(amount);
         emit Withdrawn(msg.sender, amount);
     }
 
@@ -157,13 +153,13 @@ contract SimpleBoardroom is SimpleTokenWrapper, ContractGuard {
         if (reward > 0) {
             directors[msg.sender].rewardEarned = 0;
             cash.safeTransfer(msg.sender, reward);
-
             emit RewardPaid(msg.sender, reward);
         }
     }
 
     function allocateSeigniorage(uint256 amount)
         external
+        override
         onlyOneBlock
         onlyOperator
     {

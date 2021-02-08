@@ -180,6 +180,7 @@ contract BondedBoardroom is BondedTokenWrapper, ContractGuard {
 
     function allocateSeigniorage(uint256 amount)
         external
+        override
         onlyOneBlock
         onlyOperator
     {

@@ -17,11 +17,7 @@ import {IUniswapV2Router02} from '../interfaces/IUniswapV2Router02.sol';
 
 abstract contract TreasuryGetters is TreasuryState {
     function getReserve() public view returns (uint256) {
-        return accumulatedSeigniorage;
-    }
-
-    function getStabilityFee() public view returns (uint256) {
-        return stabilityFee;
+        return accumulatedSeigniorage();
     }
 
     function getBondOraclePrice() public view returns (uint256) {
@@ -30,10 +26,6 @@ abstract contract TreasuryGetters is TreasuryState {
 
     function getGMUOraclePrice() public view returns (uint256) {
         return ISimpleOracle(gmuOracle).getPrice();
-    }
-
-    function getArthMahaOraclePrice() public view returns (uint256) {
-        return ISimpleOracle(arthMahaOracle).getPrice();
     }
 
     function getPercentDeviationFromTarget(uint256 price)
@@ -51,12 +43,16 @@ abstract contract TreasuryGetters is TreasuryState {
         return _getCashPrice(seigniorageOracle);
     }
 
+    function accumulatedSeigniorage() public view returns (uint256) {
+        return IERC20(cash).balanceOf(bondRedeemptionBoardroom);
+    }
+
     function arthCirculatingSupply() public view returns (uint256) {
-        return IERC20(cash).totalSupply().sub(accumulatedSeigniorage);
+        return IERC20(cash).totalSupply().sub(accumulatedSeigniorage());
     }
 
     function bondCirculatingSupply() public view returns (uint256) {
-        return ICustomERC20(bond).totalSupply().sub(accumulatedSeigniorage);
+        return ICustomERC20(bond).totalSupply().sub(accumulatedSeigniorage());
     }
 
     /**

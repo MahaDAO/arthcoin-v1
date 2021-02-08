@@ -9,8 +9,14 @@ import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import '../../owner/Operator.sol';
 import '../../owner/Router.sol';
 import '../../timelock/StakingTimelock.sol';
+import '../../interfaces/IBoardroom.sol';
 
-abstract contract BaseBoardroom is StakingTimelock, Router, Operator {
+abstract contract BaseBoardroom is
+    StakingTimelock,
+    Router,
+    Operator,
+    IBoardroom
+{
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 

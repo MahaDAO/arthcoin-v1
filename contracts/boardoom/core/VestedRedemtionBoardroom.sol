@@ -5,10 +5,10 @@ pragma solidity ^0.6.12;
 
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
-import './BondedRedemtionBoardroom.sol';
+import './RedemtionBoardroom.sol';
 import '../../interfaces/ISimpleOracle.sol';
 
-contract VestedBondedRedemtionBoardroom is BondedRedemtionBoardroom {
+contract VestedRedemtionBoardroom is RedemtionBoardroom {
     // For how much time should vesting take place.
     uint256 public vestFor = 8 hours;
 
@@ -16,18 +16,8 @@ contract VestedBondedRedemtionBoardroom is BondedRedemtionBoardroom {
         IERC20 _cash,
         IERC20 _share,
         IERC20 _feeToken,
-        ISimpleOracle _arthMahaOracle,
-        uint256 _duration
-    )
-        public
-        BondedRedemtionBoardroom(
-            _cash,
-            _share,
-            _feeToken,
-            _arthMahaOracle,
-            _duration
-        )
-    {}
+        ISimpleOracle _arthMahaOracle
+    ) public RedemtionBoardroom(_cash, _share, _feeToken, _arthMahaOracle) {}
 
     modifier updateVestedReward(address director) {
         if (director != address(0)) {
@@ -59,7 +49,7 @@ contract VestedBondedRedemtionBoardroom is BondedRedemtionBoardroom {
         _;
     }
 
-    function earned(address director) public view override returns (uint256) {
+    function earned(address director) public view returns (uint256) {
         uint256 latestRPS = getLatestSnapshot().rewardPerShare;
         uint256 storedRPS = getLastSnapshotOf(director).rewardPerShare;
 
@@ -117,12 +107,7 @@ contract VestedBondedRedemtionBoardroom is BondedRedemtionBoardroom {
         emit RewardPaid(msg.sender, reward);
     }
 
-    function exit() external override {
-        withdraw();
-        _claimAndQuit();
-    }
-
-    function claimReward() public override updateVestedReward(msg.sender) {
+    function claimReward() public updateVestedReward(msg.sender) {
         uint256 reward = directors[msg.sender].rewardEarned;
         if (reward <= 0) return;
 
@@ -183,18 +168,36 @@ contract VestedBondedRedemtionBoardroom is BondedRedemtionBoardroom {
 
         directors[msg.sender].lastClaimedOn = block.timestamp;
 
-        cash.safeTransfer(msg.sender, reward);
+        processValue(msg.sender, reward);
+    }
 
-        // If stability fee is there, then we charge the stability fee.
-        if (stabilityFee > 0) chargeStabilityFee(reward);
-
+    function processValue(address who, uint256 reward) private {
         // Should we do this?
         // ICustomERC20(address(share)).burnFrom(reward);
         // _balances[msg.sender] = _balances[msg.sender].sub(reward);
         // _totalSupply = _totalSupply.sub(reward);
 
-        emit RewardPaid(msg.sender, reward);
+        cash.safeTransfer(who, reward);
+
+        // If stability fee is there, then we charge the stability fee.
+        if (stabilityFee > 0) chargeStabilityFee(reward);
+
+        emit RewardPaid(who, reward);
     }
+
+    function withdraw(uint256 amount)
+        public
+        onlyOneBlock
+        directorExists
+        updateVestedReward(msg.sender)
+    {
+        _withdraw(amount);
+    }
+
+    // function exit() external virtual {
+    //     withdraw();
+    //     claimReward();
+    // }
 
     /**
      * Events

@@ -7,13 +7,13 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 
 import '../../lib/Safe112.sol';
-import './BondedTokenWrapper.sol';
+import './SimpleTokenWrapper.sol';
 import '../../utils/ContractGuard.sol';
 import '../../interfaces/IBasisAsset.sol';
 import '../../interfaces/ICustomERC20.sol';
 import '../../interfaces/ISimpleOracle.sol';
 
-contract BondedRedemtionBoardroom is BondedTokenWrapper, ContractGuard {
+abstract contract RedemtionBoardroom is SimpleTokenWrapper, ContractGuard {
     using SafeERC20 for IERC20;
     using Address for address;
     using SafeMath for uint256;
@@ -45,6 +45,10 @@ contract BondedRedemtionBoardroom is BondedTokenWrapper, ContractGuard {
 
     /* ========== STATE VARIABLES ========== */
 
+    // stability fee is a special fee charged by the protocol in MAHA tokens
+    // whenever a person is going to redeem his/her bonds. the fee is charged
+    // basis how much ARTHB is being redeemed.
+    //
     // eg: a 1% fee means that while redeeming 100 ARTHB, 1 ARTH worth of MAHA is
     // deducted to pay for stability fees.
     uint256 public stabilityFee = 1; // IN %;
@@ -66,9 +70,8 @@ contract BondedRedemtionBoardroom is BondedTokenWrapper, ContractGuard {
         IERC20 _cash,
         IERC20 _share,
         IERC20 _feeToken,
-        ISimpleOracle _arthMahaOracle,
-        uint256 _duration
-    ) public StakingTimelock(_duration) {
+        ISimpleOracle _arthMahaOracle
+    ) public StakingTimelock(0) {
         cash = _cash;
         feeToken = _feeToken;
         share = _share;
@@ -91,17 +94,6 @@ contract BondedRedemtionBoardroom is BondedTokenWrapper, ContractGuard {
             balanceOf(msg.sender) > 0,
             'Boardroom: The director does not exist'
         );
-        _;
-    }
-
-    modifier updateReward(address director) {
-        if (director != address(0)) {
-            Boardseat memory seat = directors[director];
-            seat.rewardEarned = earned(director);
-            seat.lastSnapshotIndex = latestSnapshotIndex();
-            directors[director] = seat;
-        }
-
         _;
     }
 
@@ -133,12 +125,8 @@ contract BondedRedemtionBoardroom is BondedTokenWrapper, ContractGuard {
 
     function modifyStabilityFee(uint256 newFee) public onlyOwner {
         require(newFee >= 0, 'Pool: invalid fee range');
-        require(newFee <= 0, 'Pool: invalid fee range');
-
-        uint256 oldFee = stabilityFee;
         stabilityFee = newFee;
-
-        emit StabilityFeesChanged(oldFee, newFee);
+        emit StabilityFeesChanged(newFee);
     }
 
     function latestSnapshotIndex() public view returns (uint256) {
@@ -171,51 +159,7 @@ contract BondedRedemtionBoardroom is BondedTokenWrapper, ContractGuard {
         return getLatestSnapshot().rewardPerShare;
     }
 
-    function earned(address director) public view virtual returns (uint256) {
-        uint256 latestRPS = getLatestSnapshot().rewardPerShare;
-        uint256 storedRPS = getLastSnapshotOf(director).rewardPerShare;
-
-        return
-            balanceOf(director).mul(latestRPS.sub(storedRPS)).div(1e18).add(
-                directors[director].rewardEarned
-            );
-    }
-
     /* ========== MUTATIVE FUNCTIONS ========== */
-
-    function bond(uint256 amount)
-        public
-        override
-        onlyOneBlock
-        updateReward(msg.sender)
-    {
-        super.bond(amount);
-    }
-
-    function unbond(uint256 amount)
-        public
-        override
-        onlyOneBlock
-        directorExists
-        updateReward(msg.sender)
-    {
-        super.unbond(amount);
-    }
-
-    function withdraw()
-        public
-        override
-        onlyOneBlock
-        directorExists
-        updateReward(msg.sender)
-    {
-        super.withdraw();
-    }
-
-    function exit() external virtual {
-        withdraw();
-        claimReward();
-    }
 
     function chargeStabilityFee(uint256 amount) internal {
         uint256 stabilityFeeInARTH = amount.mul(stabilityFee).div(100);
@@ -231,26 +175,12 @@ contract BondedRedemtionBoardroom is BondedTokenWrapper, ContractGuard {
         emit StabilityFeesCharged(msg.sender, stabilityFeeInMAHA);
     }
 
-    function claimReward() public virtual updateReward(msg.sender) {
-        uint256 reward = directors[msg.sender].rewardEarned;
-
-        if (reward > 0) {
-            directors[msg.sender].rewardEarned = 0;
-            cash.safeTransfer(msg.sender, reward);
-
-            // If stability fee is there, then we charge the stability fee.
-            if (stabilityFee > 0) chargeStabilityFee(reward);
-
-            // Should we do this?
-            // ICustomERC20(address(share)).burnFrom(reward);
-            // _balances[msg.sender] = _balances[msg.sender].sub(reward);
-            // _totalSupply = _totalSupply.sub(reward);
-
-            emit RewardPaid(msg.sender, reward);
-        }
-    }
-
-    function allocateBonds(uint256 amount) external onlyOneBlock onlyOperator {
+    function allocateSeigniorage(uint256 amount)
+        external
+        override
+        onlyOneBlock
+        onlyOperator
+    {
         require(amount > 0, 'Boardroom: Cannot allocate 0');
 
         // 'Boardroom: Cannot allocate when totalSupply is 0'
@@ -280,6 +210,6 @@ contract BondedRedemtionBoardroom is BondedTokenWrapper, ContractGuard {
     event RewardAdded(address indexed user, uint256 reward);
     event StabilityFeesCharged(address indexed user, uint256 amount);
     event FeeTokenChanged(address oldToken, address newToken);
-    event StabilityFeesChanged(uint256 oldFee, uint256 newFee);
+    event StabilityFeesChanged(uint256 newFee);
     event OracleChanged(address oldOracle, address newOracle);
 }

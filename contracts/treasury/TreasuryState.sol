@@ -35,14 +35,15 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     address public arthLiquidityBoardroom;
     address public mahaLiquidityBoardroom;
     address public arthBoardroom;
+    address public bondRedeemptionBoardroom;
 
     address public ecosystemFund;
+    address public rainyDayFund;
 
     // oracles
     address public bondOracle;
     address public seigniorageOracle;
     address public gmuOracle;
-    address public arthMahaOracle;
 
     // cash price tracking vars
     uint256 public cashTargetPrice = 1e18;
@@ -51,14 +52,8 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     uint256 public cashToBondConversionLimit = 0;
     uint256 public accumulatedBonds = 0;
 
-    // this governs how much cash tokens are issued
-    uint256 public accumulatedSeigniorage = 0;
-    // tracks the time when seigniorage was last allocated on.
-    uint256 public lastSeigniorageAllocatedOn = 0;
-    // tracks the time when last redemtion of bonds took place.
-    uint256 public lastRedeemedOn = 0;
-    // period accross which redeemtion has to be on a linear scale.
-    uint256 public redeemCliffPeriod = 8 hours;
+    // // this governs how much cash tokens are issued
+    // uint256 public accumulatedSeigniorage = 0;
 
     // flag whether we should considerUniswapLiquidity or not.
     bool public considerUniswapLiquidity = false;
@@ -78,6 +73,7 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     // the ecosystem fund recieves seigniorage before anybody else; this
     // value decides how much of the new seigniorage is sent to this fund.
     uint256 public ecosystemFundAllocationRate = 2; // in %
+    uint256 public rainyDayFundAllocationRate = 2; // in %
 
     // this controls how much of the new seigniorage is given to bond token holders
     // when we are in expansion mode. ideally 90% of new seigniorate is
@@ -92,14 +88,6 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     uint256 public arthLiquidityBoardroomAllocationRate = 70; // In %.
     uint256 public arthBoardroomAllocationRate = 20; // IN %.
     uint256 public mahaLiquidityBoardroomAllocationRate = 10; // IN %.
-
-    // stability fee is a special fee charged by the protocol in MAHA tokens
-    // whenever a person is going to redeem his/her bonds. the fee is charged
-    // basis how much ARTHB is being redeemed.
-    //
-    // eg: a 1% fee means that while redeeming 100 ARTHB, 1 ARTH worth of MAHA is
-    // deducted to pay for stability fees.
-    uint256 public stabilityFee = 1; // IN %;
 
     modifier checkMigration {
         require(!migrated, 'Treasury: migrated');

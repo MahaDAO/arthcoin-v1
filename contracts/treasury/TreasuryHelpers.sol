@@ -34,13 +34,14 @@ contract TreasuryHelpers is TreasurySetters {
         address _bond,
         address _share,
         address _bondOracle,
-        address _arthMahaOracle,
         address _seigniorageOracle,
         address _gmuOracle,
-        address _arthLiquidityBoardroom,
-        address _mahaLiquidityBoardroom,
-        address _arthBoardroom,
-        address _fund,
+        // address _arthLiquidityBoardroom,
+        // address _mahaLiquidityBoardroom,
+        // address _arthBoardroom,
+        // address _bondRedeemptionBoardroom,
+        // address _ecosystemFund,
+        // address _rainyDayFund,
         address _uniswapRouter,
         uint256 _startTime,
         uint256 _period,
@@ -54,15 +55,16 @@ contract TreasuryHelpers is TreasurySetters {
 
         // oracles
         bondOracle = _bondOracle;
-        arthMahaOracle = _arthMahaOracle;
         seigniorageOracle = _seigniorageOracle;
         gmuOracle = _gmuOracle;
 
-        // funds
-        arthLiquidityBoardroom = _arthLiquidityBoardroom;
-        mahaLiquidityBoardroom = _mahaLiquidityBoardroom;
-        arthBoardroom = _arthBoardroom;
-        ecosystemFund = _fund;
+        // // funds
+        // arthLiquidityBoardroom = _arthLiquidityBoardroom;
+        // mahaLiquidityBoardroom = _mahaLiquidityBoardroom;
+        // arthBoardroom = _arthBoardroom;
+        // bondRedeemptionBoardroom = _bondRedeemptionBoardroom;
+        // ecosystemFund = _ecosystemFund;
+        // rainyDayFund = _rainyDayFund;
 
         // others
         uniswapRouter = _uniswapRouter;
@@ -157,19 +159,23 @@ contract TreasuryHelpers is TreasurySetters {
         internal
         returns (uint256)
     {
-        uint256 treasuryReserve =
+        uint256 seigniorageToAllocate =
             Math.min(
                 seigniorage,
-                ICustomERC20(bond).totalSupply().sub(accumulatedSeigniorage)
+                ICustomERC20(bond).totalSupply().sub(accumulatedSeigniorage())
             );
 
-        if (treasuryReserve > 0) {
+        if (seigniorageToAllocate > 0) {
             // update accumulated seigniorage
-            accumulatedSeigniorage = accumulatedSeigniorage.add(
-                treasuryReserve
+            ICustomERC20(cash).safeApprove(
+                bondRedeemptionBoardroom,
+                seigniorageToAllocate
             );
-            emit TreasuryFunded(now, treasuryReserve);
-            return treasuryReserve;
+            IBoardroom(bondRedeemptionBoardroom).allocateSeigniorage(
+                seigniorageToAllocate
+            );
+            emit TreasuryFunded(now, seigniorageToAllocate);
+            return seigniorageToAllocate;
         }
 
         return 0;
