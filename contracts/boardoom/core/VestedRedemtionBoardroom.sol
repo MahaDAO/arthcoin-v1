@@ -13,9 +13,9 @@ contract VestedRedemtionBoardroom is RedemtionBoardroom {
     uint256 public vestFor = 8 hours;
 
     constructor(
-        IERC20 _cash,  // NOTE: share tokens in redemtion contracts represent cash tokens(ARTH).
-        IERC20 _share, // NOTE: share tokens in redemtion contracts represent bond tokens(ARTHB).
-        IERC20 _feeToken, // NOTE: share tokens in redemtion contracts represent share tokens(MAHA).
+        IERC20 _cash,  // NOTE: cash tokens in redemtion contracts represent cash tokens(ARTH).
+        IERC20 _share,  // NOTE: share tokens in redemtion contracts represent bond tokens(ARTHB).
+        IERC20 _feeToken,  // NOTE: feeToken tokens in redemtion contracts represent share tokens(MAHA).
         ISimpleOracle _arthMahaOracle
     ) public RedemtionBoardroom(_cash, _share, _feeToken, _arthMahaOracle) {}
 
@@ -167,7 +167,7 @@ contract VestedRedemtionBoardroom is RedemtionBoardroom {
     function processValue(address who, uint256 reward) private {
         // NOTE: here share represents the share in boardroom (i.e bond tokens.)
         // Burn the equivalent amount of bond tokens.
-        ICustomERC20(address(share)).burnFrom(reward);
+        ICustomERC20(address(share)).burnFrom(who, reward);
         
         // // This is already done in the while withdrawing.
         // _balances[msg.sender] = _balances[msg.sender].sub(reward);

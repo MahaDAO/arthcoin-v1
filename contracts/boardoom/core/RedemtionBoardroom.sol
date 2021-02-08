@@ -53,9 +53,9 @@ abstract contract RedemtionBoardroom is SimpleTokenWrapper, ContractGuard {
     // deducted to pay for stability fees.
     uint256 public stabilityFee = 1; // IN %;
 
-    // This token will be used to charge stability fee.
+    // This token will be used to charge stability fee(MAHA).
     IERC20 public feeToken;
-    // This is the main fund token.
+    // This is the main fund token (ARTH).
     IERC20 public cash;
 
     // Oracle used to track cash and share prices.
@@ -67,9 +67,9 @@ abstract contract RedemtionBoardroom is SimpleTokenWrapper, ContractGuard {
     /* ========== CONSTRUCTOR ========== */
 
     constructor(
-        IERC20 _cash,
-        IERC20 _share,
-        IERC20 _feeToken,
+        IERC20 _cash,  // NOTE: cash tokens in redemtion contracts represent cash tokens(ARTH).
+        IERC20 _share,  // NOTE: share tokens in redemtion contracts represent bond tokens(ARTHB).
+        IERC20 _feeToken,  // NOTE: feeToken tokens in redemtion contracts represent share tokens(MAHA).
         ISimpleOracle _arthMahaOracle
     ) public StakingTimelock(0) {
         cash = _cash;
@@ -94,6 +94,7 @@ abstract contract RedemtionBoardroom is SimpleTokenWrapper, ContractGuard {
             balanceOf(msg.sender) > 0,
             'Boardroom: The director does not exist'
         );
+        
         _;
     }
 
