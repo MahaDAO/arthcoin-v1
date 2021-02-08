@@ -167,6 +167,7 @@ abstract contract RedemtionBoardroom is SimpleTokenWrapper, ContractGuard {
             getArthMahaOraclePrice().mul(stabilityFeeInARTH).div(1e18);
 
         // charge the stability fee
+        // NOTE: here feeToken represents the MAHA tokens.
         ICustomERC20(address(feeToken)).burnFrom(
             msg.sender,
             stabilityFeeInMAHA
@@ -199,6 +200,7 @@ abstract contract RedemtionBoardroom is SimpleTokenWrapper, ContractGuard {
             });
         boardHistory.push(newSnapshot);
 
+        // NOTE: here cash represents the actual cash ARTH tokens.
         cash.safeTransferFrom(msg.sender, address(this), amount);
 
         emit RewardAdded(msg.sender, amount);

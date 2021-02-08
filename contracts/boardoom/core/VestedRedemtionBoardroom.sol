@@ -13,9 +13,9 @@ contract VestedRedemtionBoardroom is RedemtionBoardroom {
     uint256 public vestFor = 8 hours;
 
     constructor(
-        IERC20 _cash,
-        IERC20 _share,
-        IERC20 _feeToken,
+        IERC20 _cash,  // NOTE: share tokens in redemtion contracts represent cash tokens(ARTH).
+        IERC20 _share, // NOTE: share tokens in redemtion contracts represent bond tokens(ARTHB).
+        IERC20 _feeToken, // NOTE: share tokens in redemtion contracts represent share tokens(MAHA).
         ISimpleOracle _arthMahaOracle
     ) public RedemtionBoardroom(_cash, _share, _feeToken, _arthMahaOracle) {}
 
@@ -76,6 +76,7 @@ contract VestedRedemtionBoardroom is RedemtionBoardroom {
 
     function setVestFor(uint256 period) public onlyOwner {
         emit VestingPeriodChanged(vestFor, period);
+
         vestFor = period;
     }
 
@@ -92,19 +93,9 @@ contract VestedRedemtionBoardroom is RedemtionBoardroom {
         directors[msg.sender].rewardPending = 0;
         directors[msg.sender].lastClaimedOn = block.timestamp;
 
-        cash.safeTransfer(msg.sender, reward);
-
-        // If stability fee is there, then we charge the stability fee.
-        if (stabilityFee > 0) chargeStabilityFee(reward);
-
-        // Should we do this?
-        // ICustomERC20(address(share)).burnFrom(reward);
-
-        // No need to do below statements, as they will be done by withdraw.
-        // // _balances[msg.sender] = _balances[msg.sender].sub(reward);
-        // // _totalSupply = _totalSupply.sub(reward);
-
-        emit RewardPaid(msg.sender, reward);
+        // Give away the reward, charge the stability fee 
+        // and burn the redeemed eq. amount of bonds.
+        processValue(msg.sender, reward);
     }
 
     function claimReward() public updateVestedReward(msg.sender) {
@@ -168,15 +159,21 @@ contract VestedRedemtionBoardroom is RedemtionBoardroom {
 
         directors[msg.sender].lastClaimedOn = block.timestamp;
 
+        // Give away the reward, charge the stability fee 
+        // and burn the redeemed eq. amount of bonds.
         processValue(msg.sender, reward);
     }
 
     function processValue(address who, uint256 reward) private {
-        // Should we do this?
-        // ICustomERC20(address(share)).burnFrom(reward);
+        // NOTE: here share represents the share in boardroom (i.e bond tokens.)
+        // Burn the equivalent amount of bond tokens.
+        ICustomERC20(address(share)).burnFrom(reward);
+        
+        // // This is already done in the while withdrawing.
         // _balances[msg.sender] = _balances[msg.sender].sub(reward);
         // _totalSupply = _totalSupply.sub(reward);
 
+        // Give the reward.
         cash.safeTransfer(who, reward);
 
         // If stability fee is there, then we charge the stability fee.
