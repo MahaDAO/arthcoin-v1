@@ -7,6 +7,7 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 import './RedemtionBoardroom.sol';
 import '../../interfaces/ISimpleOracle.sol';
+import '../../interfaces/IUniswapOracle.sol';
 
 contract VestedRedemtionBoardroom is RedemtionBoardroom {
     // For how much time should vesting take place.
@@ -16,8 +17,9 @@ contract VestedRedemtionBoardroom is RedemtionBoardroom {
         IERC20 _cash,  // NOTE: cash tokens in redemtion contracts represent cash tokens(ARTH).
         IERC20 _share,  // NOTE: share tokens in redemtion contracts represent bond tokens(ARTHB).
         IERC20 _feeToken,  // NOTE: feeToken tokens in redemtion contracts represent share tokens(MAHA).
-        ISimpleOracle _arthMahaOracle
-    ) public RedemtionBoardroom(_cash, _share, _feeToken, _arthMahaOracle) {}
+        ISimpleOracle _arthMahaOracle  // ,
+        // IUniswapOracle _uniswap1hrOracle
+    ) public RedemtionBoardroom(_cash, _share, _feeToken, _arthMahaOracle /* , _uniswap1hrOracle*/) {}
 
     modifier updateVestedReward(address director) {
         if (director != address(0)) {

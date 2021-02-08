@@ -12,6 +12,7 @@ import '../../utils/ContractGuard.sol';
 import '../../interfaces/IBasisAsset.sol';
 import '../../interfaces/ICustomERC20.sol';
 import '../../interfaces/ISimpleOracle.sol';
+import '../../interfaces/IUniswapOracle.sol';
 
 abstract contract RedemtionBoardroom is SimpleTokenWrapper, ContractGuard {
     using SafeERC20 for IERC20;
@@ -60,6 +61,7 @@ abstract contract RedemtionBoardroom is SimpleTokenWrapper, ContractGuard {
 
     // Oracle used to track cash and share prices.
     ISimpleOracle arthMahaOracle;
+    IUniswapOracle uniswap1hrOracle;
 
     mapping(address => Boardseat) internal directors;
     BoardSnapshot[] internal boardHistory;
@@ -70,14 +72,16 @@ abstract contract RedemtionBoardroom is SimpleTokenWrapper, ContractGuard {
         IERC20 _cash,  // NOTE: cash tokens in redemtion contracts represent cash tokens(ARTH).
         IERC20 _share,  // NOTE: share tokens in redemtion contracts represent bond tokens(ARTHB).
         IERC20 _feeToken,  // NOTE: feeToken tokens in redemtion contracts represent share tokens(MAHA).
-        ISimpleOracle _arthMahaOracle
+        ISimpleOracle _arthMahaOracle  // ,
+       // IUniswapOracle _uniswap1hrOracle
     ) public StakingTimelock(0) {
         cash = _cash;
         feeToken = _feeToken;
         share = _share;
 
+        // uniswap1hrOracle = _uniswap1hrOracle;
         arthMahaOracle = _arthMahaOracle;
-
+        
         BoardSnapshot memory genesisSnapshot =
             BoardSnapshot({
                 number: block.number,
