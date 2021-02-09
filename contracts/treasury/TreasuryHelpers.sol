@@ -161,10 +161,10 @@ contract TreasuryHelpers is TreasurySetters {
             seigniorage.mul(rainyDayFundAllocationRate).div(100);
         if (rainyDayReserve > 0) {
             ICustomERC20(cash).safeApprove(rainyDayFund, rainyDayReserve);
-            ISimpleERCFund(ecosystemFund).deposit(
+            ISimpleERCFund(rainyDayFund).deposit(
                 cash,
                 rainyDayReserve,
-                'Treasury: Ecosystem Seigniorage Allocation'
+                'Treasury: Rainyday Seigniorage Allocation'
             );
             emit PoolFunded(rainyDayFund, rainyDayReserve);
             return rainyDayReserve;
