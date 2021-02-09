@@ -39,7 +39,8 @@ contract Treasury is TreasuryHelpers {
         address _seigniorageOracle,
         address _gmuOracle,
         // boardrooms
-        address _arthLiquidityBoardroom,
+        address _arthUniLiquidityBoardroom,
+        address _arthMlpLiquidityBoardroom,
         address _mahaLiquidityBoardroom,
         address _arthBoardroom,
         // ecosystem fund
@@ -60,7 +61,8 @@ contract Treasury is TreasuryHelpers {
             _arthMahaOracle,
             _seigniorageOracle,
             _gmuOracle,
-            _arthLiquidityBoardroom,
+            _arthUniLiquidityBoardroom,
+            _arthMlpLiquidityBoardroom,
             _mahaLiquidityBoardroom,
             _arthBoardroom,
             _fund,

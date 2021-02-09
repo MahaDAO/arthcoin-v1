@@ -37,7 +37,8 @@ contract TreasuryHelpers is TreasurySetters {
         address _arthMahaOracle,
         address _seigniorageOracle,
         address _gmuOracle,
-        address _arthLiquidityBoardroom,
+        address _arthUniLiquidityBoardroom,
+        address _arthMlpLiquidityBoardroom,
         address _mahaLiquidityBoardroom,
         address _arthBoardroom,
         address _fund,
@@ -59,8 +60,8 @@ contract TreasuryHelpers is TreasurySetters {
         gmuOracle = _gmuOracle;
 
         // funds
-        arthLiquidityBoardroom = _arthLiquidityBoardroom;
-        mahaLiquidityBoardroom = _mahaLiquidityBoardroom;
+        arthLiquidityUniBoardroom = _arthUniLiquidityBoardroom;
+        arthLiquidityMlpBoardroom = _arthMlpLiquidityBoardroom;
         arthBoardroom = _arthBoardroom;
         ecosystemFund = _fund;
 

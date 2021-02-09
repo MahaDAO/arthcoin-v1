@@ -68,21 +68,28 @@ abstract contract TreasurySetters is TreasuryGetters {
 
     function setArthBoardroom(address newFund, uint256 rate) public onlyOwner {
         require(rate <= 100, 'rate >= 0');
-
         arthBoardroom = newFund;
         arthBoardroomAllocationRate = rate;
         emit BoardroomChanged(newFund, rate);
     }
 
-    function setArthLiquidityBoardroom(address newFund, uint256 rate)
+    function setArthLiquidityUniBoardroom(address newFund, uint256 rate)
         public
         onlyOwner
     {
         require(rate <= 100, 'rate >= 0');
+        arthLiquidityUniBoardroom = newFund;
+        arthLiquidityUniAllocationRate = rate;
+        emit BoardroomChanged(newFund, rate);
+    }
 
-        arthLiquidityBoardroom = newFund;
-        arthLiquidityBoardroomAllocationRate = rate;
-
+    function setArthLiquidityMlpBoardroom(address newFund, uint256 rate)
+        public
+        onlyOwner
+    {
+        require(rate <= 100, 'rate >= 0');
+        arthLiquidityMlpBoardroom = newFund;
+        arthLiquidityMlpAllocationRate = rate;
         emit BoardroomChanged(newFund, rate);
     }
 
