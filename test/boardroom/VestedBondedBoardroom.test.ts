@@ -427,9 +427,9 @@ describe('VestedBondedBoardroom', () => {
       const timelyRewardRatio = timeSinceLastFunding.mul(ETH).div(await boardroom.vestFor());
       const rewardPerShare = SEIGNIORAGE_AMOUNT.mul(ETH).div(STAKE_AMOUNT);
       const earnedReward = rewardPerShare.mul(STAKE_AMOUNT).div(ETH);
-
       const expectedReward = earnedReward.mul(timelyRewardRatio);
 
+      const claimedOn = BigNumber.from(await latestBlocktime(provider));
       await expect(boardroom.connect(whale).claimReward())
         .to.emit(boardroom, 'RewardPaid')
         .withArgs(whale.address, expectedReward.div(ETH));
@@ -446,13 +446,25 @@ describe('VestedBondedBoardroom', () => {
         1 * 60 * 60
       );
 
+      const earned = await boardroom.connect(whale).earned(whale.address);
+      const blockTime2 = BigNumber.from(await latestBlocktime(provider));
+      const timeSinceLastClaiming2 = blockTime2.sub(claimedOn);
+      const timelyRewardRatio2 = timeSinceLastClaiming2.mul(ETH).div(await boardroom.vestFor());
+      const rewardPerShare2 = SEIGNIORAGE_AMOUNT.mul(ETH).div(STAKE_AMOUNT);
+      const earnedReward2 = rewardPerShare2.mul(STAKE_AMOUNT).div(ETH);
+
+      // NOTE: this is considering the fact that
+      const expectedReward2 = earnedReward2.sub(expectedReward.div(ETH)).mul(timelyRewardRatio2);
+
       await expect(boardroom.connect(whale).claimReward())
-        .to.emit(boardroom, 'RewardPaid');
+        .to.emit(boardroom, 'RewardPaid')
+        .withArgs(whale.address, expectedReward2.div(ETH));
 
       expect(await boardroom.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
       expect(await cash.balanceOf(whale.address)).to.gt(rewardIn1Hr);
       expect(await share.balanceOf(whale.address)).to.eq(ZERO);
       expect(await cash.balanceOf(whale.address)).to.lt(SEIGNIORAGE_AMOUNT);
+
       // Reward should decrease linearly with increasing time in vesting period.
       // Hence when we claim with same interval as the first, we should not receive
       // the exact amount.
