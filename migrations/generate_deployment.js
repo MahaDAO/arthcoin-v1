@@ -20,7 +20,8 @@ const exportedContracts = [
   'BondRedemtionOracle',
 
   // boardroom
-  'ArthLiquidityBoardroomV2',
+  'ArthUniLiquidityBoardroomV2',
+  'ArthMlpLiquidityBoardroomV2',
   'MahaLiquidityBoardroomV2',
   'ArthBoardroomV2',
 
@@ -148,6 +149,10 @@ module.exports = async (callback) => {
     deployments.MahaEthLP = {
       address: maha_dai_lpt
     };
+
+    if (network === 'development') {
+      exportedContracts.push('ArthBoardroomV1', 'ArthLiquidityBoardroomV1', 'MahaLiquidityBoardroomV1')
+    }
 
     for (const name of exportedContracts) {
       const contract = artifacts.require(name);

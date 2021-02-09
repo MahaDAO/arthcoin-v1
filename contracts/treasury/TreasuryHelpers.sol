@@ -37,11 +37,6 @@ contract TreasuryHelpers is TreasurySetters {
         address _arthMahaOracle,
         address _seigniorageOracle,
         address _gmuOracle,
-        address _arthUniLiquidityBoardroom,
-        address _arthMlpLiquidityBoardroom,
-        address _mahaLiquidityBoardroom,
-        address _arthBoardroom,
-        address _fund,
         address _uniswapRouter,
         uint256 _startTime,
         uint256 _period,
@@ -59,12 +54,6 @@ contract TreasuryHelpers is TreasurySetters {
         seigniorageOracle = _seigniorageOracle;
         gmuOracle = _gmuOracle;
 
-        // funds
-        arthLiquidityUniBoardroom = _arthUniLiquidityBoardroom;
-        arthLiquidityMlpBoardroom = _arthMlpLiquidityBoardroom;
-        arthBoardroom = _arthBoardroom;
-        ecosystemFund = _fund;
-
         // others
         uniswapRouter = _uniswapRouter;
 
@@ -75,6 +64,21 @@ contract TreasuryHelpers is TreasurySetters {
         _;
 
         _updateCashPrice();
+    }
+
+    function setBoardrooms(
+        address _arthUniLiquidityBoardroom,
+        address _arthMlpLiquidityBoardroom,
+        address _mahaLiquidityBoardroom,
+        address _arthBoardroom,
+        address _fund
+    ) public onlyOwner {
+        // funds
+        arthLiquidityUniBoardroom = _arthUniLiquidityBoardroom;
+        arthLiquidityMlpBoardroom = _arthMlpLiquidityBoardroom;
+        mahaLiquidityBoardroom = _mahaLiquidityBoardroom;
+        arthBoardroom = _arthBoardroom;
+        ecosystemFund = _fund;
     }
 
     function migrate(address target) public onlyOperator checkOperator {

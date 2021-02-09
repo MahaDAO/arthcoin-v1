@@ -4,11 +4,17 @@ const knownContracts = require('./known-contracts');
 const ARTH = artifacts.require('ARTH');
 const IERC20 = artifacts.require('IERC20');
 const MockDai = artifacts.require('MockDai');
-const ArthBoardroom = artifacts.require('ArthBoardroomV2');
 const UniswapV2Factory = artifacts.require('UniswapV2Factory');
 const BondRedemtionOracle = artifacts.require('BondRedemtionOracle');
-const ArthLiquidityBoardroom = artifacts.require('ArthLiquidityBoardroomV2');
-const MahaLiquidityBoardroom = artifacts.require('MahaLiquidityBoardroomV2');
+
+const ArthBoardroomV2 = artifacts.require('ArthBoardroomV2');
+const ArthUniLiquidityBoardroomV2 = artifacts.require('ArthUniLiquidityBoardroomV2');
+const ArthMlpLiquidityBoardroomV2 = artifacts.require('ArthMlpLiquidityBoardroomV2');
+const MahaLiquidityBoardroomV2 = artifacts.require('MahaLiquidityBoardroomV2');
+
+const ArthBoardroom = artifacts.require('ArthBoardroomV1');
+const ArthLiquidityBoardroom = artifacts.require('ArthLiquidityBoardroomV1');
+const MahaLiquidityBoardroom = artifacts.require('MahaLiquidityBoardroomV1');
 
 
 async function migration(deployer, network, accounts) {
@@ -50,13 +56,22 @@ async function migration(deployer, network, accounts) {
     : await bondRedemtionOralce.pairFor(uniswap.address, cash.address, dai.address);
 
   // Deploy ARTH-DAI liquidity boardroom.
-  await deployer.deploy(ArthLiquidityBoardroom, cash.address, dai_arth_lpt, LIQUIDITY_BOARDROOM_LOCK_DURATION, REWARDS_VESTING);
+  await deployer.deploy(ArthUniLiquidityBoardroomV2, cash.address, dai_arth_lpt, LIQUIDITY_BOARDROOM_LOCK_DURATION, REWARDS_VESTING);
+  await deployer.deploy(ArthMlpLiquidityBoardroomV2, cash.address, dai_arth_lpt, LIQUIDITY_BOARDROOM_LOCK_DURATION, REWARDS_VESTING);
+  await deployer.deploy(ArthBoardroomV2, cash.address, ARTH_BOARDROOM_LOCK_DURATION, REWARDS_VESTING);
+  await deployer.deploy(MahaLiquidityBoardroomV2, cash.address, maha_weth_lpt, LIQUIDITY_BOARDROOM_LOCK_DURATION, REWARDS_VESTING);
 
-  // Deploy arth boardroom.
-  await deployer.deploy(ArthBoardroom, cash.address, ARTH_BOARDROOM_LOCK_DURATION, REWARDS_VESTING);
 
-  // Deploy MAHA-ETH boardroom.
-  await deployer.deploy(MahaLiquidityBoardroom, cash.address, maha_weth_lpt, LIQUIDITY_BOARDROOM_LOCK_DURATION, REWARDS_VESTING);
+  if (network === 'development') {
+    // Deploy ARTH-DAI liquidity boardroom.
+    await deployer.deploy(ArthLiquidityBoardroom, cash.address, dai_arth_lpt, LIQUIDITY_BOARDROOM_LOCK_DURATION);
+
+    // Deploy arth boardroom.
+    await deployer.deploy(ArthBoardroom, cash.address, ARTH_BOARDROOM_LOCK_DURATION);
+
+    // Deploy MAHA-ETH boardroom.
+    await deployer.deploy(MahaLiquidityBoardroom, cash.address, maha_weth_lpt, LIQUIDITY_BOARDROOM_LOCK_DURATION);
+  }
 }
 
 
