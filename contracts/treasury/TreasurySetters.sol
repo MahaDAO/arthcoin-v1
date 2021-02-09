@@ -18,6 +18,44 @@ abstract contract TreasurySetters is TreasuryGetters {
         emit StabilityFeeChanged(stabilityFee, _stabilityFee);
     }
 
+    function setAllFunds(
+        // boardrooms
+        address _arthUniLiquidityBoardroom,
+        address _arthMlpLiquidityBoardroom,
+        address _mahaLiquidityBoardroom,
+        address _arthBoardroom,
+        // ecosystem fund
+        address _fund,
+        address _rainyDayFund
+    ) public onlyOwner {
+        // funds
+        require(
+            address(0) != _arthUniLiquidityBoardroom &&
+                address(0) != _arthMlpLiquidityBoardroom &&
+                address(0) != _arthBoardroom &&
+                address(0) != _fund &&
+                address(0) != _rainyDayFund,
+            'Treasury: invalid addresses'
+        );
+
+        arthLiquidityUniBoardroom = _arthUniLiquidityBoardroom;
+        arthLiquidityMlpBoardroom = _arthMlpLiquidityBoardroom;
+        arthBoardroom = _arthBoardroom;
+        ecosystemFund = _fund;
+        rainyDayFund = _rainyDayFund;
+
+        emit InitializedFunds(
+            // boardrooms
+            _arthUniLiquidityBoardroom,
+            _arthMlpLiquidityBoardroom,
+            _mahaLiquidityBoardroom,
+            _arthBoardroom,
+            // ecosystem fund
+            _fund,
+            _rainyDayFund
+        );
+    }
+
     function setFund(address newFund, uint256 rate) public onlyOwner {
         require(rate <= 100, 'rate >= 0');
 

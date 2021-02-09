@@ -37,11 +37,12 @@ contract TreasuryHelpers is TreasurySetters {
         address _arthMahaOracle,
         address _seigniorageOracle,
         address _gmuOracle,
-        address _arthUniLiquidityBoardroom,
-        address _arthMlpLiquidityBoardroom,
-        address _mahaLiquidityBoardroom,
-        address _arthBoardroom,
-        address _fund,
+        // address _arthUniLiquidityBoardroom,
+        // address _arthMlpLiquidityBoardroom,
+        // address _mahaLiquidityBoardroom,
+        // address _arthBoardroom,
+        // address _fund,
+        // address _rainyDayFund,
         address _uniswapRouter,
         uint256 _startTime,
         uint256 _period,
@@ -60,10 +61,11 @@ contract TreasuryHelpers is TreasurySetters {
         gmuOracle = _gmuOracle;
 
         // funds
-        arthLiquidityUniBoardroom = _arthUniLiquidityBoardroom;
-        arthLiquidityMlpBoardroom = _arthMlpLiquidityBoardroom;
-        arthBoardroom = _arthBoardroom;
-        ecosystemFund = _fund;
+        // arthLiquidityUniBoardroom = _arthUniLiquidityBoardroom;
+        // arthLiquidityMlpBoardroom = _arthMlpLiquidityBoardroom;
+        // arthBoardroom = _arthBoardroom;
+        // ecosystemFund = _fund;
+        // rainyDayFund = _rainyDayFund;
 
         // others
         uniswapRouter = _uniswapRouter;
@@ -107,6 +109,28 @@ contract TreasuryHelpers is TreasurySetters {
 
         migrated = true;
         emit Migration(target);
+    }
+
+    function initializeFunds(
+        // boardrooms
+        address _arthUniLiquidityBoardroom,
+        address _arthMlpLiquidityBoardroom,
+        address _mahaLiquidityBoardroom,
+        address _arthBoardroom,
+        // ecosystem fund
+        address _fund,
+        address _rainyDayFund
+    ) public onlyOwner {
+        setAllFunds(
+            // boardrooms
+            _arthUniLiquidityBoardroom,
+            _arthMlpLiquidityBoardroom,
+            _mahaLiquidityBoardroom,
+            _arthBoardroom,
+            // ecosystem fund
+            _fund,
+            _rainyDayFund
+        );
     }
 
     function _allocateToEcosystemFund(uint256 seigniorage)
