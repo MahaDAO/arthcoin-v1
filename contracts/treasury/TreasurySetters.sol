@@ -48,7 +48,7 @@ abstract contract TreasurySetters is TreasuryGetters {
         maxSupplyIncreasePerEpoch = rate;
     }
 
-    function enableSurprise(bool val) public onlyOwner {
+    function setEnableSurprise(bool val) public onlyOwner {
         enableSurprise = val;
     }
 

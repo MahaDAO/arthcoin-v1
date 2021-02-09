@@ -213,7 +213,7 @@ contract Treasury is TreasuryHelpers {
         IBasisAsset(bond).burnFrom(msg.sender, amount);
         ICustomERC20(cash).safeTransfer(msg.sender, amount);
 
-        emit RedeemedBonds(msg.sender, amount, sellForDai);
+        emit RedeemedBonds(msg.sender, amount);
     }
 
     function allocateSeigniorage()

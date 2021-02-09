@@ -265,7 +265,7 @@ contract TreasuryHelpers is TreasurySetters {
     // GOV
     event Initialized(address indexed executor, uint256 at);
     event Migration(address indexed target);
-    event RedeemedBonds(address indexed from, uint256 amount, bool sellForDai);
+    event RedeemedBonds(address indexed from, uint256 amount);
     event BoughtBonds(
         address indexed from,
         uint256 amountDaiIn,

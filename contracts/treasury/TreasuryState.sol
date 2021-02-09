@@ -109,7 +109,10 @@ abstract contract TreasuryState is ContractGuard, Epoch {
         require(
             Operator(cash).operator() == address(this) &&
                 Operator(bond).operator() == address(this) &&
-                Operator(arthLiquidityBoardroom).operator() == address(this) &&
+                Operator(arthLiquidityMlpBoardroom).operator() ==
+                address(this) &&
+                Operator(arthLiquidityUniBoardroom).operator() ==
+                address(this) &&
                 Operator(arthBoardroom).operator() == address(this) &&
                 Operator(mahaLiquidityBoardroom).operator() == address(this),
             'Treasury: need more permission'
