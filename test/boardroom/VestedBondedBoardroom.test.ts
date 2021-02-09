@@ -440,7 +440,7 @@ describe('VestedBondedBoardroom', () => {
 
       await expect(boardroom.connect(whale).claimReward())
         .to.emit(boardroom, 'RewardPaid')
-      // .withArgs(whale.address, expectedReward.div(ETH));
+      //.withArgs(whale.address, expectedReward.div(ETH));
 
       const rewardIn1Hr = await cash.balanceOf(whale.address);
 

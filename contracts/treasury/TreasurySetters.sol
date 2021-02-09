@@ -28,17 +28,6 @@ abstract contract TreasurySetters is TreasuryGetters {
         address _fund,
         address _rainyDayFund
     ) public onlyOwner {
-        // funds
-        require(
-            address(0) != _arthUniLiquidityBoardroom &&
-                address(0) != _arthMlpLiquidityBoardroom &&
-                address(0) != _arthBoardroom &&
-                address(0) != _mahaLiquidityBoardroom &&
-                address(0) != _fund &&
-                address(0) != _rainyDayFund,
-            'Treasury: invalid addresses'
-        );
-
         arthLiquidityUniBoardroom = _arthUniLiquidityBoardroom;
         arthLiquidityMlpBoardroom = _arthMlpLiquidityBoardroom;
         arthBoardroom = _arthBoardroom;
@@ -55,6 +44,10 @@ abstract contract TreasurySetters is TreasuryGetters {
             _fund,
             _rainyDayFund
         );
+    }
+
+    function setUniswapRouter(address newRouter) public onlyOwner {
+      uniswapRouter = newRouter;
     }
 
     function setFund(address newFund, uint256 rate) public onlyOwner {
