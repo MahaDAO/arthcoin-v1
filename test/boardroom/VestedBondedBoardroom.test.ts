@@ -383,22 +383,38 @@ describe('VestedBondedBoardroom', () => {
         .connect(operator)
         .approve(boardroom.address, SEIGNIORAGE_AMOUNT);
 
+      // This will get the really close timestamp of when we actually fund
+      // the boardroom.
       const lastFundedOn = BigNumber.from(await latestBlocktime(provider));
+
       await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT);
 
+      // Now, let's move 1hr after the funding happened.
+      // This will help us check we get correct amount as per 1hr vesting.
       await advanceTimeAndBlock(
         provider,
         1 * 60 * 60
       );
 
-      const blockTime = BigNumber.from(await latestBlocktime(provider));
-      const timeSinceLastFunding = blockTime.sub(lastFundedOn);
-      const timelyRewardRatio = timeSinceLastFunding.mul(ETH).div(await boardroom.vestFor());
-      const rewardPerShare = SEIGNIORAGE_AMOUNT.mul(ETH).div(STAKE_AMOUNT);
-      const earnedReward = rewardPerShare.mul(STAKE_AMOUNT).div(ETH);
+      // NOTE: all mul and div from 1e18 are done for retaining
+      // the precison
 
+      // Calculate the time of block now when we are claiming.
+      // This is really close to 1hr after funding the boardroom.
+      const blockTime = BigNumber.from(await latestBlocktime(provider));
+      // Calculate the time since funding, again ~1hour.
+      const timeSinceLastFunding = blockTime.sub(lastFundedOn);
+      // Calculate the ratio to reward as per time(current - (previousClaim or fundedTime)/vesting period).
+      const timelyRewardRatio = timeSinceLastFunding.mul(ETH).div(await boardroom.vestFor());
+      // Calcualte the reward per share.
+      const rewardPerShare = SEIGNIORAGE_AMOUNT.mul(ETH).div(STAKE_AMOUNT);
+      // According to reward per share and staked amount, calculate the earned rewards.
+      const earnedReward = rewardPerShare.mul(STAKE_AMOUNT).div(ETH);
+      // Now for vesting take calcuate the amount as per ratio we deserve.
       const expectedReward = earnedReward.mul(timelyRewardRatio);
 
+      // NOTE: all mul and div from 1e18 are done for retaining
+      // the precison
       await expect(boardroom.connect(whale).claimReward())
         .to.emit(boardroom, 'RewardPaid')
         .withArgs(whale.address, expectedReward.div(ETH));
@@ -414,46 +430,67 @@ describe('VestedBondedBoardroom', () => {
       await cash
         .connect(operator)
         .approve(boardroom.address, SEIGNIORAGE_AMOUNT);
+      // This will get the really close timestamp of when we actually fund
+      // the boardroom.
       const lastFundedOn = BigNumber.from(await latestBlocktime(provider));
+
       await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT);
 
+      // Now, let's move 1hr after the funding happened.
+      // This will help us check we get correct amount as per 1hr vesting.
       await advanceTimeAndBlock(
         provider,
         1 * 60 * 60
       );
 
+      // NOTE: all mul and div from 1e18 are done for retaining
+      // the precison
+
+      // Calculate the time of block now when we are claiming.
+      // This is really close to 1hr after funding the boardroom.
       const blockTime = BigNumber.from(await latestBlocktime(provider));
+      // Calculate the time since funding, again ~1hour.
       const timeSinceLastFunding = blockTime.sub(lastFundedOn);
+      // Calculate the ratio to reward as per time(current - (previousClaim or fundedTime)/vesting period).
       const timelyRewardRatio = timeSinceLastFunding.mul(ETH).div(await boardroom.vestFor());
+      // Calcualte the reward per share.
       const rewardPerShare = SEIGNIORAGE_AMOUNT.mul(ETH).div(STAKE_AMOUNT);
+      // According to reward per share and staked amount, calculate the earned rewards.
       const earnedReward = rewardPerShare.mul(STAKE_AMOUNT).div(ETH);
+      // Now for vesting take calcuate the amount as per ratio we deserve.
       const expectedReward = earnedReward.mul(timelyRewardRatio);
 
-      const claimedOn = BigNumber.from(await latestBlocktime(provider));
+      // Calculate the time we are claiming.
+      // This will be useful when we claim next time and we are in the vesting period.
+      const lastClaimedOn = BigNumber.from(await latestBlocktime(provider));
+
+      // NOTE: all mul and div from 1e18 are done for retaining
+      // the precison
       await expect(boardroom.connect(whale).claimReward())
         .to.emit(boardroom, 'RewardPaid')
         .withArgs(whale.address, expectedReward.div(ETH));
 
       const rewardIn1Hr = await cash.balanceOf(whale.address);
 
-      expect(await boardroom.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
-      expect(await cash.balanceOf(whale.address)).to.gt(ZERO);
-      expect(await share.balanceOf(whale.address)).to.eq(ZERO);
-      expect(await cash.balanceOf(whale.address)).to.lt(SEIGNIORAGE_AMOUNT);
-
       await advanceTimeAndBlock(
         provider,
         1 * 60 * 60
       );
 
-      const earned = await boardroom.connect(whale).earned(whale.address);
+      // Save the blocktime for when we are making another claim.
+      // This is ~1hr after the first claim and ~2hr after the funding of boardroom.
       const blockTime2 = BigNumber.from(await latestBlocktime(provider));
-      const timeSinceLastClaiming2 = blockTime2.sub(claimedOn);
+      // Since, we have claimed once before calculate the time diff from when we claimed last.
+      const timeSinceLastClaiming2 = blockTime2.sub(lastClaimedOn);
+      // Accordingly calcualte the ratio of rewards we can take now, in the vesting period.
       const timelyRewardRatio2 = timeSinceLastClaiming2.mul(ETH).div(await boardroom.vestFor());
+
+      // Calcualte the entire reward once again.
       const rewardPerShare2 = SEIGNIORAGE_AMOUNT.mul(ETH).div(STAKE_AMOUNT);
       const earnedReward2 = rewardPerShare2.mul(STAKE_AMOUNT).div(ETH);
 
-      // NOTE: this is considering the fact that
+      // Here we are subtracting the reward we claimed before, from the fresh and up to date
+      // 100% of the rewards we deserve and then taking the ratio we calculated earlier.
       const expectedReward2 = earnedReward2.sub(expectedReward.div(ETH)).mul(timelyRewardRatio2);
 
       await expect(boardroom.connect(whale).claimReward())
@@ -487,6 +524,8 @@ describe('VestedBondedBoardroom', () => {
         .to.emit(boardroom, 'RewardPaid');
 
       expect(await share.balanceOf(whale.address)).to.eq(ZERO);
+      // As there is only one time fund allocation, and only one staker
+      // the staker should get entire rewards generated till now.
       expect(await cash.balanceOf(whale.address)).to.eq(SEIGNIORAGE_AMOUNT);
       expect(await boardroom.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
     });
@@ -496,21 +535,51 @@ describe('VestedBondedBoardroom', () => {
       await cash
         .connect(operator)
         .approve(boardroom.address, SEIGNIORAGE_AMOUNT);
+      // This will get the really close timestamp of when we actually fund
+      // the boardroom.
+      const lastFundedOn = BigNumber.from(await latestBlocktime(provider));
+
       await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT);
 
-      await boardroom.connect(abuser).bond(STAKE_AMOUNT);
-
+      // Now, let's move 1hr after the funding happened.
+      // This will help us check we get correct amount as per 1hr vesting.
       await advanceTimeAndBlock(
         provider,
-        2 * 60 * 60
+        1 * 60 * 60
       );
 
-      // const blockTime = BigNumber.from(await latestBlocktime(provider));
-      // const timeSinceLastFunding = blockTime.sub(await boardroom.lastFundedOn());
-      // const timelyRewardRatio = timeSinceLastFunding.div(await boardroom.vestFor());
+      // Abuser has also taken part in the distribution now
+      // however this should not change the rewards for whale.
+      await boardroom.connect(abuser).bond(STAKE_AMOUNT);
 
+      // NOTE: all mul and div from 1e18 are done for retaining
+      // the precison
+
+      // Calculate the time of block now when we are claiming.
+      // This is really close to 1hr after funding the boardroom.
+      const blockTime = BigNumber.from(await latestBlocktime(provider));
+      // Calculate the time since funding, again ~1hour.
+      const timeSinceLastFunding = blockTime.sub(lastFundedOn);
+      // Calculate the ratio to reward as per time(current - (previousClaim or fundedTime)/vesting period).
+      const timelyRewardRatio = timeSinceLastFunding.mul(ETH).div(await boardroom.vestFor());
+      // Calcualte the reward per share.
+      const rewardPerShare = SEIGNIORAGE_AMOUNT.mul(ETH).div(STAKE_AMOUNT);
+      // According to reward per share and staked amount, calculate the earned rewards.
+      const earnedReward = rewardPerShare.mul(STAKE_AMOUNT).div(ETH);
+      // Now for vesting take calcuate the amount as per ratio we deserve.
+      const expectedReward = earnedReward.mul(timelyRewardRatio);
+
+      // Calculate the time we are claiming.
+      // This will be useful when we claim next time and we are in the vesting period.
+      const lastClaimedOn = BigNumber.from(await latestBlocktime(provider));
+
+      console.log(expectedReward.div(ETH).toString());
+
+      // NOTE: all mul and div from 1e18 are done for retaining
+      // the precison
       await expect(boardroom.connect(whale).claimReward())
-        .to.emit(boardroom, 'RewardPaid');
+        .to.emit(boardroom, 'RewardPaid')
+        .withArgs(whale.address, expectedReward.div(ETH));
 
       expect(await boardroom.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
       expect(await boardroom.balanceOf(abuser.address)).to.eq(STAKE_AMOUNT);
