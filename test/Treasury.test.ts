@@ -54,6 +54,7 @@ describe('Treasury', () => {
   let MAHA: ContractFactory;
   let Treasury: ContractFactory;
   let DevelopmentFund: ContractFactory;
+  let RainyDayFund: ContractFactory;
   let MockBoardroom: ContractFactory;
   let MockUniswapOracle: ContractFactory;
   let DAI: ContractFactory;
@@ -75,6 +76,7 @@ describe('Treasury', () => {
     MAHA = await ethers.getContractFactory('MahaToken');
     Treasury = await ethers.getContractFactory('Treasury');
     DevelopmentFund = await ethers.getContractFactory('DevelopmentFund');
+    RainyDayFund = await ethers.getContractFactory('RainyDayFund')
     MockBoardroom = await ethers.getContractFactory('MockBoardroom');
     MockUniswapOracle = await ethers.getContractFactory('MockUniswapOracle');
     DAI = await ethers.getContractFactory('MockDai');
@@ -96,6 +98,8 @@ describe('Treasury', () => {
   let uniswap: Contract;
   let uniswapRouter: Contract;
   let mahaLiquidityBoardroom: Contract;
+  let rainyDayFund: Contract;
+  let arthMahaswapLiquidityBoardroom: Contract;
 
   beforeEach('Deploy contracts', async () => {
     cash = await ARTH.connect(operator).deploy();
@@ -129,12 +133,14 @@ describe('Treasury', () => {
     )
 
     developmentFund = await DevelopmentFund.connect(operator).deploy();
+    rainyDayFund = await RainyDayFund.connect(operator).deploy();
 
     oracle = await MockUniswapOracle.connect(operator).deploy();
 
     gmuOracle = await MockUniswapOracle.connect(operator).deploy();
     arthMahaOracle = await MockUniswapOracle.connect(operator).deploy();
 
+    arthMahaswapLiquidityBoardroom = await MockBoardroom.connect(operator).deploy(cash.address);
     arthBoardroom = await MockBoardroom.connect(operator).deploy(cash.address);
     arthLiquidityBoardroom = await MockBoardroom.connect(operator).deploy(cash.address);
     mahaLiquidityBoardroom = await MockBoardroom.connect(operator).deploy(cash.address);
@@ -150,11 +156,13 @@ describe('Treasury', () => {
       oracle.address,
       gmuOracle.address,
 
-      arthLiquidityBoardroom.address,
-      mahaLiquidityBoardroom.address,
-      arthBoardroom.address,
+      // arthLiquidityBoardroom.address,
+      // arthMahaswapLiquidityBoardroom.address,
+      // mahaLiquidityBoardroom.address,
+      // arthBoardroom.address,
 
-      developmentFund.address,
+      // developmentFund.address,
+      // rainyDayFund.address,
       uniswapRouter.address,
       startTime,
       period,
@@ -176,11 +184,13 @@ describe('Treasury', () => {
       oracle.address,
       gmuOracle.address,
 
-      arthLiquidityBoardroom.address,
-      mahaLiquidityBoardroom.address,
-      arthBoardroom.address,
+      // arthLiquidityBoardroom.address,
+      // arthMahaswapLiquidityBoardroom.address,
+      // mahaLiquidityBoardroom.address,
+      // arthBoardroom.address,
 
-      developmentFund.address,
+      // developmentFund.address,
+      // rainyDayFund.address,
       uniswapRouter.address,
       startTime,
       period,
@@ -190,6 +200,24 @@ describe('Treasury', () => {
 
   describe('Governance', () => {
     beforeEach('Deploy new treasury', async () => {
+      await treasury.initializeFunds(
+        arthLiquidityBoardroom.address,
+        arthMahaswapLiquidityBoardroom.address,
+        mahaLiquidityBoardroom.address,
+        arthBoardroom.address,
+        developmentFund.address,
+        rainyDayFund.address,
+      );
+
+      await newTreasury.initializeFunds(
+        arthLiquidityBoardroom.address,
+        arthMahaswapLiquidityBoardroom.address,
+        mahaLiquidityBoardroom.address,
+        arthBoardroom.address,
+        developmentFund.address,
+        rainyDayFund.address,
+      );
+
       await share.connect(operator).mint(treasury.address, ETH);
 
       for await (const token of [cash, bond]) {
@@ -198,6 +226,7 @@ describe('Treasury', () => {
         await token.connect(operator).transferOwnership(treasury.address);
       }
 
+      await arthMahaswapLiquidityBoardroom.connect(operator).transferOperator(treasury.address);
       await arthBoardroom.connect(operator).transferOperator(treasury.address);
       await arthLiquidityBoardroom.connect(operator).transferOperator(treasury.address);
       await mahaLiquidityBoardroom.connect(operator).transferOperator(treasury.address);
@@ -206,6 +235,8 @@ describe('Treasury', () => {
     describe('#Initialize', () => {
       it('Should works correctly', async () => {
         await treasury.connect(operator).migrate(newTreasury.address);
+
+        await arthMahaswapLiquidityBoardroom.connect(operator).transferOperator(newTreasury.address);
         await arthBoardroom.connect(operator).transferOperator(newTreasury.address);
         await arthLiquidityBoardroom.connect(operator).transferOperator(newTreasury.address);
         await mahaLiquidityBoardroom.connect(operator).transferOperator(newTreasury.address);
@@ -233,10 +264,17 @@ describe('Treasury', () => {
         await expect(newTreasury.initialize()).to.revertedWith(
           'Treasury: need more permission'
         );
+
+        await arthMahaswapLiquidityBoardroom.connect(operator).transferOperator(ant.address);
+        await expect(newTreasury.initialize()).to.revertedWith(
+          'Treasury: need more permission'
+        );
       });
 
       it('Should fail if abuser tries to initialize twice', async () => {
         await treasury.connect(operator).migrate(newTreasury.address);
+
+        await arthMahaswapLiquidityBoardroom.connect(operator).transferOperator(newTreasury.address);
         await arthBoardroom.connect(operator).transferOperator(newTreasury.address);
         await arthLiquidityBoardroom.connect(operator).transferOperator(newTreasury.address);
         await mahaLiquidityBoardroom.connect(operator).transferOperator(newTreasury.address);
@@ -278,15 +316,22 @@ describe('Treasury', () => {
         await expect(
           treasury.connect(operator).migrate(newTreasury.address)
         ).to.revertedWith('Treasury: need more permission');
+
+        await arthMahaswapLiquidityBoardroom.connect(operator).transferOperator(ant.address);
+        await expect(
+          treasury.connect(operator).migrate(newTreasury.address)
+        ).to.revertedWith('Treasury: need more permission');
       });
 
       it('should fail if already migrated', async () => {
         await treasury.connect(operator).migrate(newTreasury.address);
+        await arthMahaswapLiquidityBoardroom.connect(operator).transferOperator(newTreasury.address);
         await arthBoardroom.connect(operator).transferOperator(newTreasury.address);
         await arthLiquidityBoardroom.connect(operator).transferOperator(newTreasury.address);
         await mahaLiquidityBoardroom.connect(operator).transferOperator(newTreasury.address);
 
         await newTreasury.connect(operator).migrate(treasury.address);
+        await arthMahaswapLiquidityBoardroom.connect(operator).transferOperator(treasury.address);
         await arthBoardroom.connect(operator).transferOperator(treasury.address);
         await arthLiquidityBoardroom.connect(operator).transferOperator(treasury.address);
         await mahaLiquidityBoardroom.connect(operator).transferOperator(treasury.address);
@@ -305,7 +350,7 @@ describe('Treasury', () => {
         await cash.mint(operator.address, INITIAL_BAC_AMOUNT);
         await cash.mint(treasury.address, INITIAL_BAC_AMOUNT);
         await share.mint(operator.address, INITIAL_BAS_AMOUNT);
-        for await (const contract of [cash, bond, arthLiquidityBoardroom, arthBoardroom, mahaLiquidityBoardroom]) {
+        for await (const contract of [cash, bond, arthMahaswapLiquidityBoardroom, arthLiquidityBoardroom, arthBoardroom, mahaLiquidityBoardroom]) {
           await contract.connect(operator).transferOperator(treasury.address);
         }
       });
@@ -581,7 +626,7 @@ describe('Treasury', () => {
             await oracle.setPrice(cashPrice);
             await oracle.setEpoch(1);
 
-            for await (const target of [cash, bond, arthBoardroom, arthLiquidityBoardroom, mahaLiquidityBoardroom]) {
+            for await (const target of [cash, bond, arthMahaswapLiquidityBoardroom, arthBoardroom, arthLiquidityBoardroom, mahaLiquidityBoardroom]) {
               await target.connect(operator).transferOperator(ant.address);
               await expect(treasury.allocateSeigniorage()).to.revertedWith(
                 'Treasury: need more permission'
@@ -784,7 +829,7 @@ describe('Treasury', () => {
     beforeEach('transfer permissions', async () => {
       await cash.mint(operator.address, INITIAL_BAC_AMOUNT);
       await bond.mint(operator.address, INITIAL_BAB_AMOUNT);
-      for await (const contract of [cash, bond, arthBoardroom, arthLiquidityBoardroom, mahaLiquidityBoardroom]) {
+      for await (const contract of [cash, bond, arthMahaswapLiquidityBoardroom, arthBoardroom, arthLiquidityBoardroom, mahaLiquidityBoardroom]) {
         await contract.connect(operator).transferOperator(treasury.address);
       }
     });

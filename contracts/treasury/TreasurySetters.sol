@@ -33,6 +33,7 @@ abstract contract TreasurySetters is TreasuryGetters {
             address(0) != _arthUniLiquidityBoardroom &&
                 address(0) != _arthMlpLiquidityBoardroom &&
                 address(0) != _arthBoardroom &&
+                address(0) != _mahaLiquidityBoardroom &&
                 address(0) != _fund &&
                 address(0) != _rainyDayFund,
             'Treasury: invalid addresses'
