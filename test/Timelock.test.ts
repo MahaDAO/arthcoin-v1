@@ -355,5 +355,69 @@ describe('Timelock', () => {
 
       expect(await arthLiquidityBoardroom.operator()).to.eq(operator.address);
     });
+
+    it('Should work correctly for arth mahaswap liquidity boardroom', async () => {
+      const eta = (await latestBlocktime(provider)) + 2 * DAY + 30;
+      const signature = 'transferOperator(address)';
+      const data = encodeParameters(ethers, ['address'], [operator.address]);
+
+      const calldata = [arthMahaswapLiquidityBoardroom.address, 0, signature, data, eta];
+      const txHash = ethers.utils.keccak256(
+        encodeParameters(
+          ethers,
+          ['address', 'uint256', 'string', 'bytes', 'uint256'],
+          calldata
+        )
+      );
+
+      await expect(timelock.connect(operator).queueTransaction(...calldata))
+        .to.emit(timelock, 'QueueTransaction')
+        .withArgs(txHash, ...calldata);
+
+      await advanceTimeAndBlock(
+        provider,
+        eta - (await latestBlocktime(provider))
+      );
+
+      await expect(timelock.connect(operator).executeTransaction(...calldata))
+        .to.emit(timelock, 'ExecuteTransaction')
+        .withArgs(txHash, ...calldata)
+        .to.emit(arthMahaswapLiquidityBoardroom, 'OperatorTransferred')
+        .withArgs(ZERO_ADDR, operator.address);
+
+      expect(await arthMahaswapLiquidityBoardroom.operator()).to.eq(operator.address);
+    });
+
+    it('Should work correctly for maha liquidity boardroom', async () => {
+      const eta = (await latestBlocktime(provider)) + 2 * DAY + 30;
+      const signature = 'transferOperator(address)';
+      const data = encodeParameters(ethers, ['address'], [operator.address]);
+
+      const calldata = [mahaLiquidityBoardroom.address, 0, signature, data, eta];
+      const txHash = ethers.utils.keccak256(
+        encodeParameters(
+          ethers,
+          ['address', 'uint256', 'string', 'bytes', 'uint256'],
+          calldata
+        )
+      );
+
+      await expect(timelock.connect(operator).queueTransaction(...calldata))
+        .to.emit(timelock, 'QueueTransaction')
+        .withArgs(txHash, ...calldata);
+
+      await advanceTimeAndBlock(
+        provider,
+        eta - (await latestBlocktime(provider))
+      );
+
+      await expect(timelock.connect(operator).executeTransaction(...calldata))
+        .to.emit(timelock, 'ExecuteTransaction')
+        .withArgs(txHash, ...calldata)
+        .to.emit(mahaLiquidityBoardroom, 'OperatorTransferred')
+        .withArgs(ZERO_ADDR, operator.address);
+
+      expect(await mahaLiquidityBoardroom.operator()).to.eq(operator.address);
+    });
   });
 });
