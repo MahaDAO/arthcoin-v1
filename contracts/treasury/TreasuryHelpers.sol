@@ -176,6 +176,27 @@ contract TreasuryHelpers is TreasurySetters {
         return 0;
     }
 
+    function _allocateToRainyDayFund(uint256 seigniorage)
+        internal
+        returns (uint256)
+    {
+        uint256 rainyDayReserve =
+            seigniorage.mul(rainyDayFundAllocationRate).div(100);
+        if (rainyDayReserve > 0) {
+            ICustomERC20(cash).safeApprove(rainyDayFund, rainyDayReserve);
+            ISimpleERCFund(rainyDayFund).deposit(
+                cash,
+                rainyDayReserve,
+                'Treasury: Rainy day Seigniorage Allocation'
+            );
+
+            emit PoolFunded(rainyDayFund, rainyDayReserve);
+            return rainyDayReserve;
+        }
+
+        return 0;
+    }
+
     /**
      * Updates the cash price from the various oracles.
      * TODO: this function needs to be optimised for gas
