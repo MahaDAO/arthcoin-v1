@@ -267,6 +267,26 @@ describe('BondedBoardroom', () => {
         'Boardroom: The director does not exist'
       );
     });
+
+
+    it('Should fail when director has already exited once', async () => {
+      await boardroom.connect(whale).unbond(STAKE_AMOUNT);
+
+      await advanceTimeAndBlock(
+        provider,
+        (await latestBlocktime(provider)) + 2 * BOARDROOM_LOCK_PERIOD
+      );
+
+      await expect(boardroom.connect(whale).withdraw())
+        .to.emit(boardroom, 'Withdrawn')
+        .withArgs(whale.address, STAKE_AMOUNT);
+
+      expect(await share.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
+      expect(await boardroom.balanceOf(whale.address)).to.eq(ZERO);
+      expect(await cash.balanceOf(whale.address)).to.gte(ZERO); // Since no seigniorage is allocated.
+
+      await expect(boardroom.connect(whale).exit()).to.reverted;
+    });
   });
 
   describe('#AllocateSeigniorage', () => {

@@ -79,7 +79,7 @@ describe('VestedBondedBoardroom', () => {
 
     it('Should fail when user tries to bond with zero amount', async () => {
       await expect(boardroom.connect(whale).bond(ZERO)).to.revertedWith(
-        'Boardroom: Cannot stake 0'
+        'Boardroom: Cannot bond 0'
       );
     });
   });
@@ -296,10 +296,24 @@ describe('VestedBondedBoardroom', () => {
       );
     });
 
-    it.skip('Should fail when director has already exited once', async () => {
-      // TODO yash
-    });
+    it('Should fail when director has already exited once', async () => {
+      await boardroom.connect(whale).unbond(STAKE_AMOUNT);
 
+      await advanceTimeAndBlock(
+        provider,
+        2 * BOARDROOM_LOCK_PERIOD
+      );
+
+      await expect(boardroom.connect(whale).exit())
+        .to.emit(boardroom, 'Withdrawn')
+        .withArgs(whale.address, STAKE_AMOUNT);
+
+      expect(await share.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
+      expect(await boardroom.balanceOf(whale.address)).to.eq(ZERO);
+      expect(await cash.balanceOf(whale.address)).to.gte(ZERO); // Since no seigniorage is allocated.
+
+      await expect(boardroom.connect(whale).exit()).to.reverted;
+    });
   });
 
   describe('#AllocateSeigniorage', () => {
