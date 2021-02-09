@@ -45,6 +45,7 @@ contract Treasury is TreasuryHelpers {
         // address _bondRedeemptionBoardroom,
         // // ecosystem fund
         // address _fund,
+        // // A rainy-day fund
         // address _rainyfund,
         // uniswap router
         address _uniswapRouter,

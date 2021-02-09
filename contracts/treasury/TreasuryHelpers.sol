@@ -78,6 +78,52 @@ contract TreasuryHelpers is TreasurySetters {
         _updateCashPrice();
     }
 
+    function initializeFunds(
+        // Boardrooms
+        address _arthLiquidityBoardroom,
+        address _mahaLiquidityBoardroom,
+        address _arthBoardroom,
+        address _bondRedemtionBoardroom,
+        // The Ecosystem fund
+        address _ecosystemFund,
+        // A rainy-day fund.
+        address _rainyDayFund
+    ) public onlyOwner {
+        // Initilize different funds.
+
+        require(
+            _arthLiquidityBoardroom != address(0) &&
+                _mahaLiquidityBoardroom != address(0) &&
+                _arthBoardroom != address(0) &&
+                _bondRedemtionBoardroom != address(0),
+            'Treasury: invalid address'
+        );
+
+        require(
+            _ecosystemFund != address(0) && _rainyDayFund != address(0),
+            'Treasury: invalid address'
+        );
+
+        arthLiquidityBoardroom = _arthLiquidityBoardroom;
+        mahaLiquidityBoardroom = _mahaLiquidityBoardroom;
+        arthBoardroom = _arthBoardroom;
+        bondRedeemptionBoardroom = _bondRedemtionBoardroom;
+        ecosystemFund = _ecosystemFund;
+        rainyDayFund = _rainyDayFund;
+
+        emit FundsInitialied(
+            // Boardrooms
+            _arthLiquidityBoardroom,
+            _mahaLiquidityBoardroom,
+            _arthBoardroom,
+            _bondRedemtionBoardroom,
+            // The Ecosystem fund
+            _ecosystemFund,
+            // A rainy-day fund.
+            _rainyDayFund
+        );
+    }
+
     function migrate(address target) public onlyOperator checkOperator {
         require(target != address(0), 'migrate to zero');
         require(!migrated, '!migrated');
@@ -263,4 +309,15 @@ contract TreasuryHelpers is TreasurySetters {
     event BondsAllocated(uint256 limit);
     event PoolFunded(address indexed pool, uint256 seigniorage);
     event StabilityFeesCharged(address indexed from, uint256 stabilityFeeValue);
+    event FundsInitialied(
+        // Boardrooms
+        address _arthLiquidityBoardroom,
+        address _mahaLiquidityBoardroom,
+        address _arthBoardroom,
+        address _bondRedeemptionBoardroom,
+        // The Ecosystem fund
+        address _fund,
+        // A rainy-day fund.
+        address _rainyfund
+    );
 }
