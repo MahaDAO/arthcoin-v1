@@ -168,6 +168,15 @@ describe('Treasury', () => {
       period,
       0
     );
+
+    await treasury.initializeFunds(
+      arthLiquidityBoardroom.address,
+      arthMahaswapLiquidityBoardroom.address,
+      mahaLiquidityBoardroom.address,
+      arthBoardroom.address,
+      developmentFund.address,
+      rainyDayFund.address,
+    );
   });
 
   let newTreasury: Contract;
@@ -196,28 +205,19 @@ describe('Treasury', () => {
       period,
       0
     );
+
+    await newTreasury.initializeFunds(
+      arthLiquidityBoardroom.address,
+      arthMahaswapLiquidityBoardroom.address,
+      mahaLiquidityBoardroom.address,
+      arthBoardroom.address,
+      developmentFund.address,
+      rainyDayFund.address,
+    );
   });
 
   describe('Governance', () => {
     beforeEach('Deploy new treasury', async () => {
-      await treasury.initializeFunds(
-        arthLiquidityBoardroom.address,
-        arthMahaswapLiquidityBoardroom.address,
-        mahaLiquidityBoardroom.address,
-        arthBoardroom.address,
-        developmentFund.address,
-        rainyDayFund.address,
-      );
-
-      await newTreasury.initializeFunds(
-        arthLiquidityBoardroom.address,
-        arthMahaswapLiquidityBoardroom.address,
-        mahaLiquidityBoardroom.address,
-        arthBoardroom.address,
-        developmentFund.address,
-        rainyDayFund.address,
-      );
-
       await share.connect(operator).mint(treasury.address, ETH);
 
       for await (const token of [cash, bond]) {
