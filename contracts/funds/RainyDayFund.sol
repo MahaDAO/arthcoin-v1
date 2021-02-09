@@ -4,4 +4,4 @@ pragma solidity ^0.6.12;
 
 import './core/SimpleERCFund.sol';
 
-contract DevelopmentFund is SimpleERCFund {}
+contract RainyDayFund is SimpleERCFund {}
