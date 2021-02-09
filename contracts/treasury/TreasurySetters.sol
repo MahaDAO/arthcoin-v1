@@ -30,6 +30,8 @@ abstract contract TreasurySetters is TreasuryGetters {
     ) public onlyOwner {
         arthLiquidityUniBoardroom = _arthUniLiquidityBoardroom;
         arthLiquidityMlpBoardroom = _arthMlpLiquidityBoardroom;
+        mahaLiquidityBoardroom = _mahaLiquidityBoardroom;
+
         arthBoardroom = _arthBoardroom;
         ecosystemFund = _fund;
         rainyDayFund = _rainyDayFund;
@@ -47,7 +49,7 @@ abstract contract TreasurySetters is TreasuryGetters {
     }
 
     function setUniswapRouter(address newRouter) public onlyOwner {
-      uniswapRouter = newRouter;
+        uniswapRouter = newRouter;
     }
 
     function setFund(address newFund, uint256 rate) public onlyOwner {
