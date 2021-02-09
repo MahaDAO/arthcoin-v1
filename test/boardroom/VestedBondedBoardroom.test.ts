@@ -382,6 +382,8 @@ describe('VestedBondedBoardroom', () => {
       await cash
         .connect(operator)
         .approve(boardroom.address, SEIGNIORAGE_AMOUNT);
+
+      const lastFundedOn = BigNumber.from(await latestBlocktime(provider));
       await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT);
 
       await advanceTimeAndBlock(
@@ -389,27 +391,17 @@ describe('VestedBondedBoardroom', () => {
         1 * 60 * 60
       );
 
-      // const blockTime = BigNumber.from(await latestBlocktime(provider));
-      // const timeSinceLastFunding = blockTime.sub(await boardroom.lastFundedOn());
-      // const timelyRewardRatio = timeSinceLastFunding.mul(ETH).div(await boardroom.vestFor());
-      // // In this case earned reward = unclaimed reward, since this is the first time
-      // // msg.sender is claming the rewards.
-      // const rewardPerShare = (await boardroom.rewardPerShare()).rewardPerShare;
-      // const lastSnapshotIndex = (await boardroom.getLastSnapshotIndexOf(whale.address))
-      // const oldRewardPerShare = (await boardroom.boardHistory(lastSnapshotIndex)).rewardPerShare;
-      // const earnedReward = (
-      //   (await boardroom.balanceOf(whale.address))
-      //     .mul(rewardPerShare.sub(oldRewardPerShare))
-      //     .div(ETH).add(
-      //       (await boardroom.directors(whale.address).rewardEarned)
-      //     )
-      // );
+      const blockTime = BigNumber.from(await latestBlocktime(provider));
+      const timeSinceLastFunding = blockTime.sub(lastFundedOn);
+      const timelyRewardRatio = timeSinceLastFunding.mul(ETH).div(await boardroom.vestFor());
+      const rewardPerShare = SEIGNIORAGE_AMOUNT.mul(ETH).div(STAKE_AMOUNT);
+      const earnedReward = rewardPerShare.mul(STAKE_AMOUNT).div(ETH);
 
-      // const expectedReward = earnedReward.mul(timelyRewardRatio);
+      const expectedReward = earnedReward.mul(timelyRewardRatio);
 
       await expect(boardroom.connect(whale).claimReward())
         .to.emit(boardroom, 'RewardPaid')
-      // .withArgs(whale.address, expectedReward.div(ETH));
+        .withArgs(whale.address, expectedReward.div(ETH));
 
       expect(await boardroom.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
       expect(await cash.balanceOf(whale.address)).to.gt(ZERO);
@@ -422,6 +414,7 @@ describe('VestedBondedBoardroom', () => {
       await cash
         .connect(operator)
         .approve(boardroom.address, SEIGNIORAGE_AMOUNT);
+      const lastFundedOn = BigNumber.from(await latestBlocktime(provider));
       await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT);
 
       await advanceTimeAndBlock(
@@ -429,26 +422,17 @@ describe('VestedBondedBoardroom', () => {
         1 * 60 * 60
       );
 
-      // const blockTime = BigNumber.from(await latestBlocktime(provider));
-      // const timeSinceLastFunding = blockTime.sub(await boardroom.lastFundedOn());
-      // const timelyRewardRatio = timeSinceLastFunding.mul(ETH).div(await boardroom.vestFor());
-      // // In this case earned reward = unclaimed reward, since this is the first time
-      // // msg.sender is claming the rewards.
-      // const rewardPerShare = (await boardroom.rewardPerShare()).rewardPerShare;
-      // const lastSnapshotIndex = (await boardroom.getLastSnapshotIndexOf(whale.address))
-      // const oldRewardPerShare = (await boardroom.boardHistory(lastSnapshotIndex)).rewardPerShare;
-      // const earnedReward = (
-      //   (await boardroom.balanceOf(whale.address))
-      //     .mul(rewardPerShare.sub(oldRewardPerShare))
-      //     .div(ETH).add(
-      //       (await boardroom.directors(whale.address).rewardEarned)
-      //     )
-      // );
-      // const expectedReward = earnedReward.mul(timelyRewardRatio);
+      const blockTime = BigNumber.from(await latestBlocktime(provider));
+      const timeSinceLastFunding = blockTime.sub(lastFundedOn);
+      const timelyRewardRatio = timeSinceLastFunding.mul(ETH).div(await boardroom.vestFor());
+      const rewardPerShare = SEIGNIORAGE_AMOUNT.mul(ETH).div(STAKE_AMOUNT);
+      const earnedReward = rewardPerShare.mul(STAKE_AMOUNT).div(ETH);
+
+      const expectedReward = earnedReward.mul(timelyRewardRatio);
 
       await expect(boardroom.connect(whale).claimReward())
         .to.emit(boardroom, 'RewardPaid')
-      //.withArgs(whale.address, expectedReward.div(ETH));
+        .withArgs(whale.address, expectedReward.div(ETH));
 
       const rewardIn1Hr = await cash.balanceOf(whale.address);
 
