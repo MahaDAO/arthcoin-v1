@@ -82,6 +82,14 @@ describe('VestedBondedBoardroom', () => {
         'Boardroom: Cannot bond 0'
       );
     });
+
+    it('Should fail when deposits are disabled', async () => {
+      await boardroom.connect(operator).toggleDeposits(false);
+
+      await expect(boardroom.connect(whale).bond(STAKE_AMOUNT)).to.revertedWith(
+        'boardroom: deposits are disabled'
+      );
+    });
   });
 
   describe('#Unbond', async () => {

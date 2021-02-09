@@ -74,6 +74,14 @@ describe('Simple Boardroom', () => {
         'Boardroom: Cannot stake 0'
       );
     });
+
+    it('Should fail when deposits are disabled', async () => {
+      await boardroom.connect(operator).toggleDeposits(false);
+
+      await expect(boardroom.connect(whale).stake(STAKE_AMOUNT)).to.revertedWith(
+        'boardroom: deposits are disabled'
+      );
+    });
   });
 
   describe('#Withdraw', async () => {
