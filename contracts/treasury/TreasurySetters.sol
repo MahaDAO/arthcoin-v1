@@ -177,4 +177,14 @@ abstract contract TreasurySetters is TreasuryGetters {
     event BoardroomChanged(address newFund, uint256 newRate);
     event StabilityFeeChanged(uint256 old, uint256 newRate);
     event BondSeigniorageRateChanged(uint256 newRate);
+    event InitializedFunds(
+        // boardrooms
+        address _arthUniLiquidityBoardroom,
+        address _arthMlpLiquidityBoardroom,
+        address _mahaLiquidityBoardroom,
+        address _arthBoardroom,
+        // ecosystem fund
+        address _fund,
+        address _rainyDayFund
+    );
 }
