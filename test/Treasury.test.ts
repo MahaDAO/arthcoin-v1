@@ -399,8 +399,8 @@ describe('Treasury', () => {
 
           await expect(treasury.connect(ant).allocateSeigniorage()).to.not.emit(treasury, 'TreasuryFunded')
 
-          expect(await cash.totalSupply()).to.eq(oldCashSupply.add(ETH.mul(200)));
-          expect(await cash.balanceOf(ant.address)).to.eq(oldCashBalanceOfAnt.add(ETH.mul(200)));
+          expect(await cash.totalSupply()).to.eq(oldCashSupply.add(ETH.mul(300)));
+          expect(await cash.balanceOf(ant.address)).to.eq(oldCashBalanceOfAnt.add(ETH.mul(300)));
           expect(await cash.balanceOf(treasury.address)).to.eq(oldCashBalanceOfTreasury);
         });
 
@@ -414,8 +414,8 @@ describe('Treasury', () => {
 
           await expect(treasury.connect(ant).allocateSeigniorage()).to.not.emit(treasury, 'TreasuryFunded')
 
-          expect(await cash.totalSupply()).to.eq(oldCashSupply.add(ETH.mul(200)));
-          expect(await cash.balanceOf(ant.address)).to.eq(oldCashBalanceOfAnt.add(ETH.mul(200)));
+          expect(await cash.totalSupply()).to.eq(oldCashSupply.add(ETH.mul(300)));
+          expect(await cash.balanceOf(ant.address)).to.eq(oldCashBalanceOfAnt.add(ETH.mul(300)));
           expect(await cash.balanceOf(treasury.address)).to.eq(oldCashBalanceOfTreasury);
         });
 
@@ -429,7 +429,7 @@ describe('Treasury', () => {
           // let expectedSeigniorage = await treasury.estimateSeignorageToMint(cashPrice);
 
           // calculate with circulating supply without considering uniswap liq.
-          const cashSupply = (await cash.totalSupply()).sub(treasuryHoldings).add(ETH.mul(200));
+          const cashSupply = (await cash.totalSupply()).sub(treasuryHoldings).add(ETH.mul(300));
           const percentage = bigmin(
             cashPrice.sub(ETH).mul(ETH).div(ETH).div(100),
             await treasury.maxSupplyIncreasePerEpoch()
@@ -502,7 +502,7 @@ describe('Treasury', () => {
           expect(await cash.balanceOf(mahaLiquidityBoardroom.address)).to.eq(
             expectedMahaLiqBoardroomRes
           );
-          expect(await cash.balanceOf(ant.address)).to.eq(oldCashBalanceOfAnt.add(ETH.mul(200)));
+          expect(await cash.balanceOf(ant.address)).to.eq(oldCashBalanceOfAnt.add(ETH.mul(300)));
         });
 
         it.skip('should not fund treasury if price > targetPrice and price < expansionLimitPrice with 0% bonds', async () => {
@@ -559,7 +559,7 @@ describe('Treasury', () => {
 
           // calculate with circulating supply without considering uniswap liq.
           const treasuryHoldings = await treasury.getReserve();
-          const cashSupply = (await cash.totalSupply()).sub(treasuryHoldings).add(ETH.mul(200));
+          const cashSupply = (await cash.totalSupply()).sub(treasuryHoldings).add(ETH.mul(300));
 
           const percentage = bigmin(
             cashPrice.sub(ETH).mul(100).div(ETH),
@@ -585,8 +585,8 @@ describe('Treasury', () => {
             .to.not.emit(treasury, 'PoolFunded');
 
 
-          expect(await cash.totalSupply()).to.eq(oldCashSupply.add(ETH.mul(200).add(finalSeigniorageToMint)));
-          expect(await cash.balanceOf(ant.address)).to.eq(ETH.mul(200)); // 200 ARTH bonus
+          expect(await cash.totalSupply()).to.eq(oldCashSupply.add(ETH.mul(300).add(finalSeigniorageToMint)));
+          expect(await cash.balanceOf(ant.address)).to.eq(ETH.mul(300)); // 200 ARTH bonus
           expect(await cash.balanceOf(treasury.address)).to.eq(oldCashBalanceOfTreasury.add(finalSeigniorageToMint));
         });
 
