@@ -45,10 +45,6 @@ abstract contract TreasurySetters is TreasuryGetters {
         );
     }
 
-    function setUniswapRouter(address newRouter) public onlyOwner {
-        uniswapRouter = newRouter;
-    }
-
     function setFund(address newFund, uint256 rate) public onlyOwner {
         require(rate <= 100, 'rate >= 0');
         ecosystemFund = newFund;

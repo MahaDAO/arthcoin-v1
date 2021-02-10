@@ -2,11 +2,11 @@
 
 pragma solidity ^0.6.12;
 
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
+import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 
-import '../owner/Operator.sol';
-import '../interfaces/IBoardroom.sol';
+import {Operator} from '../owner/Operator.sol';
+import {IBoardroom} from '../interfaces/IBoardroom.sol';
 
 contract MockBoardroom is IBoardroom, Operator {
     using SafeERC20 for IERC20;

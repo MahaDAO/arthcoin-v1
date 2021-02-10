@@ -3,6 +3,7 @@
 pragma solidity ^0.6.10;
 
 import {Math} from '@openzeppelin/contracts/math/Math.sol';
+import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import {
     ReentrancyGuard
