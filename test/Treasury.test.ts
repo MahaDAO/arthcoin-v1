@@ -777,13 +777,13 @@ describe('Treasury', () => {
       await expect(await treasury.estimateSeignorageToMint(price)).to.be.eq(arthSupply.mul(10).div(100));
     });
 
-    it('at 1.50$ and 0% ARTHB we mint 30% ARTH', async () => {
+    it('at 1.50$ and 0% ARTHB we mint 10% ARTH', async () => {
       const arthSupply = await cash.totalSupply()
 
       const price = utils.parseEther('150').div(100)
 
       await expect(await treasury.getPercentDeviationFromTarget(price)).to.be.eq(50);
-      await expect(await treasury.estimateSeignorageToMint(price)).to.be.eq(arthSupply.mul(30).div(100));
+      await expect(await treasury.estimateSeignorageToMint(price)).to.be.eq(arthSupply.mul(10).div(100));
     });
   })
 
@@ -813,15 +813,37 @@ describe('Treasury', () => {
     it('at 0.95$ a we issue 5% ARTHB', async () => {
       const arthSupply = await cash.totalSupply()
 
+      const uniswapLiquidityPair =
+        await uniswap.getPair(cash.address, dai.address);
+      const uniswapLiquidity = await cash.balanceOf(uniswapLiquidityPair);
+
+      const percentUniswapLiq = await treasury.considerUniswapLiquidity
+        ? uniswapLiquidity.mul(100).div(await cash.totalSupply())
+        : 100;
+
       const price = utils.parseEther('95').div(100)
-      await expect(await treasury.estimateBondsToIssue(price)).to.be.eq(arthSupply.mul(5).div(100));
+      await expect(await treasury.estimateBondsToIssue(price))
+        .to
+        .be
+        .eq(arthSupply.mul(5).div(100).mul(percentUniswapLiq).div(100));
     });
 
     it('at 0.90$ a we issue 5% ARTHB', async () => {
       const arthSupply = await cash.totalSupply()
 
+      const uniswapLiquidityPair =
+        await uniswap.getPair(cash.address, dai.address);
+      const uniswapLiquidity = await cash.balanceOf(uniswapLiquidityPair);
+
+      const percentUniswapLiq = await treasury.considerUniswapLiquidity
+        ? uniswapLiquidity.mul(100).div(await cash.totalSupply())
+        : 100;
+
       const price = utils.parseEther('90').div(100)
-      await expect(await treasury.estimateBondsToIssue(price)).to.be.eq(arthSupply.mul(5).div(100));
+      await expect(await treasury.estimateBondsToIssue(price))
+        .to
+        .be
+        .eq(arthSupply.mul(5).div(100).mul(percentUniswapLiq).div(100));
     });
   })
 
