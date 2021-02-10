@@ -148,41 +148,21 @@ contract TreasuryHelpers is TreasurySetters {
         );
     }
 
-    function _allocateToEcosystemFund(uint256 seigniorage)
-        internal
-        returns (uint256)
-    {
-        uint256 ecosystemReserve =
-            seigniorage.mul(ecosystemFundAllocationRate).div(100);
-        if (ecosystemReserve > 0) {
-            ICustomERC20(cash).safeApprove(ecosystemFund, ecosystemReserve);
-            ISimpleERCFund(ecosystemFund).deposit(
+    function _allocateToFund(
+        address fund,
+        uint256 rate,
+        uint256 seigniorage
+    ) internal returns (uint256) {
+        uint256 allocation = seigniorage.mul(rate).div(100);
+        if (allocation > 0) {
+            ICustomERC20(cash).safeApprove(fund, allocation);
+            ISimpleERCFund(fund).deposit(
                 cash,
-                ecosystemReserve,
-                'Treasury: Ecosystem Seigniorage Allocation'
+                allocation,
+                'Treasury: Fund Seigniorage Allocation'
             );
-            emit PoolFunded(ecosystemFund, ecosystemReserve);
-            return ecosystemReserve;
-        }
-
-        return 0;
-    }
-
-    function _allocateToRainyDayFund(uint256 seigniorage)
-        internal
-        returns (uint256)
-    {
-        uint256 rainyDayReserve =
-            seigniorage.mul(rainyDayFundAllocationRate).div(100);
-        if (rainyDayReserve > 0) {
-            ICustomERC20(cash).safeApprove(rainyDayFund, rainyDayReserve);
-            ISimpleERCFund(rainyDayFund).deposit(
-                cash,
-                rainyDayReserve,
-                'Treasury: Rainyday Seigniorage Allocation'
-            );
-            emit PoolFunded(rainyDayFund, rainyDayReserve);
-            return rainyDayReserve;
+            emit PoolFunded(fund, allocation);
+            return allocation;
         }
 
         return 0;
@@ -239,70 +219,50 @@ contract TreasuryHelpers is TreasurySetters {
      * Helper function to allocate seigniorage to boardooms. Seigniorage is allocated
      * after bond token holders have been paid first.
      */
+    function _allocateToBoardroom(
+        address boardroom,
+        uint256 rate,
+        uint256 seigniorage
+    ) internal {
+        if (seigniorage == 0) return;
+
+        // Calculate boardroom reserves.
+        uint256 reserve = seigniorage.mul(rate).div(100);
+
+        // arth-dai uniswap lp
+        if (reserve > 0) {
+            ICustomERC20(cash).safeApprove(boardroom, reserve);
+            IBoardroom(boardroom).allocateSeigniorage(reserve);
+            emit PoolFunded(boardroom, reserve);
+        }
+    }
+
     function _allocateToBoardrooms(uint256 boardroomReserve) internal {
         if (boardroomReserve <= 0) return;
 
-        // Calculate boardroom reserves.
-        uint256 arthLiquidityUniBoardroomReserve =
-            boardroomReserve.mul(arthLiquidityUniAllocationRate).div(100);
-        uint256 arthLiquidityMlpBoardroomReserve =
-            boardroomReserve.mul(arthLiquidityMlpAllocationRate).div(100);
-        uint256 arthBoardroomReserve =
-            boardroomReserve.mul(arthBoardroomAllocationRate).div(100);
-        uint256 mahaLiquidityBoardroomReserve =
-            boardroomReserve.mul(mahaLiquidityBoardroomAllocationRate).div(100);
+        _allocateToBoardroom(
+            arthLiquidityUniBoardroom,
+            arthLiquidityUniAllocationRate,
+            boardroomReserve
+        );
 
-        // arth-dai uniswap lp
-        if (arthLiquidityUniBoardroomReserve > 0) {
-            ICustomERC20(cash).safeApprove(
-                arthLiquidityUniBoardroom,
-                arthLiquidityUniBoardroomReserve
-            );
-            IBoardroom(arthLiquidityUniBoardroom).allocateSeigniorage(
-                arthLiquidityUniBoardroomReserve
-            );
-            emit PoolFunded(
-                arthLiquidityUniBoardroom,
-                arthLiquidityUniBoardroomReserve
-            );
-        }
+        _allocateToBoardroom(
+            arthLiquidityMlpBoardroom,
+            arthLiquidityMlpAllocationRate,
+            boardroomReserve
+        );
 
-        // arth-dai mahaswap lp
-        if (arthLiquidityMlpBoardroomReserve > 0) {
-            ICustomERC20(cash).safeApprove(
-                arthLiquidityMlpBoardroom,
-                arthLiquidityMlpBoardroomReserve
-            );
-            IBoardroom(arthLiquidityMlpBoardroom).allocateSeigniorage(
-                arthLiquidityMlpBoardroomReserve
-            );
-            emit PoolFunded(
-                arthLiquidityMlpBoardroom,
-                arthLiquidityMlpBoardroomReserve
-            );
-        }
+        _allocateToBoardroom(
+            arthBoardroom,
+            arthBoardroomAllocationRate,
+            boardroomReserve
+        );
 
-        // arth only lp
-        if (arthBoardroomReserve > 0) {
-            ICustomERC20(cash).safeApprove(arthBoardroom, arthBoardroomReserve);
-            IBoardroom(arthBoardroom).allocateSeigniorage(arthBoardroomReserve);
-            emit PoolFunded(arthBoardroom, arthBoardroomReserve);
-        }
-
-        // maha only lp
-        if (mahaLiquidityBoardroomReserve > 0) {
-            ICustomERC20(cash).safeApprove(
-                mahaLiquidityBoardroom,
-                mahaLiquidityBoardroomReserve
-            );
-            IBoardroom(mahaLiquidityBoardroom).allocateSeigniorage(
-                mahaLiquidityBoardroomReserve
-            );
-            emit PoolFunded(
-                mahaLiquidityBoardroom,
-                mahaLiquidityBoardroomReserve
-            );
-        }
+        _allocateToBoardroom(
+            mahaLiquidityBoardroom,
+            mahaLiquidityBoardroomAllocationRate,
+            boardroomReserve
+        );
     }
 
     /**

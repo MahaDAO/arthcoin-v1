@@ -573,8 +573,6 @@ describe('VestedBondedBoardroom', () => {
       // This will be useful when we claim next time and we are in the vesting period.
       const lastClaimedOn = BigNumber.from(await latestBlocktime(provider));
 
-      console.log(expectedReward.div(ETH).toString());
-
       // NOTE: all mul and div from 1e18 are done for retaining
       // the precison
       await expect(boardroom.connect(whale).claimReward())

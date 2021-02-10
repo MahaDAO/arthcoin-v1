@@ -2,12 +2,14 @@
 
 pragma solidity ^0.6.10;
 
-import '@openzeppelin/contracts/math/Math.sol';
-import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
-import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
+import {Math} from '@openzeppelin/contracts/math/Math.sol';
+import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
+import {
+    ReentrancyGuard
+} from '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
 
-import '../interfaces/ICustomERC20.sol';
-import '../interfaces/IUniswapV2Factory.sol';
+import {ICustomERC20} from '../interfaces/ICustomERC20.sol';
+import {IUniswapV2Factory} from '../interfaces/IUniswapV2Factory.sol';
 import {IUniswapOracle} from '../interfaces/IUniswapOracle.sol';
 import {IUniswapV2Router02} from '../interfaces/IUniswapV2Router02.sol';
 import {IBoardroom} from '../interfaces/IBoardroom.sol';
@@ -16,8 +18,7 @@ import {ISimpleERCFund} from '../interfaces/ISimpleERCFund.sol';
 import {Operator} from '../owner/Operator.sol';
 import {Epoch} from '../utils/Epoch.sol';
 import {ContractGuard} from '../utils/ContractGuard.sol';
-
-import './TreasuryHelpers.sol';
+import {TreasuryHelpers} from './TreasuryHelpers.sol';
 
 /**
  * @title ARTH Treasury contract
@@ -38,15 +39,6 @@ contract Treasury is TreasuryHelpers {
         address _arthMahaOracle,
         address _seigniorageOracle,
         address _gmuOracle,
-        // // boardrooms
-        // address _arthUniLiquidityBoardroom,
-        // address _arthMlpLiquidityBoardroom,
-        // address _mahaLiquidityBoardroom,
-        // address _arthBoardroom,
-        // // ecosystem fund
-        // address _fund,
-        // address _rainyDayFund,
-        // uniswap router
         address _uniswapRouter,
         uint256 _startTime,
         uint256 _period,
@@ -62,12 +54,6 @@ contract Treasury is TreasuryHelpers {
             _arthMahaOracle,
             _seigniorageOracle,
             _gmuOracle,
-            // _arthUniLiquidityBoardroom,
-            // _arthMlpLiquidityBoardroom,
-            // _mahaLiquidityBoardroom,
-            // _arthBoardroom,
-            // _fund,
-            // _rainyDayFund,
             _uniswapRouter,
             _startTime,
             _period,
@@ -273,9 +259,22 @@ contract Treasury is TreasuryHelpers {
         IBasisAsset(cash).mint(address(this), seigniorage);
         emit SeigniorageMinted(seigniorage);
 
-        // send funds to the community development fund
-        uint256 ecosystemReserve = _allocateToEcosystemFund(seigniorage);
-        seigniorage = seigniorage.sub(ecosystemReserve);
+        // send funds to the ecosystem development and raindy fund
+        uint256 ecosystemReserve =
+            _allocateToFund(
+                ecosystemFund,
+                ecosystemFundAllocationRate,
+                seigniorage
+            );
+
+        uint256 raindayReserve =
+            _allocateToFund(
+                rainyDayFund,
+                rainyDayFundAllocationRate,
+                seigniorage
+            );
+
+        seigniorage = seigniorage.sub(ecosystemReserve).sub(raindayReserve);
 
         // keep 90% of the funds to bond token holders; and send the remaining to the boardroom
         uint256 allocatedForBondHolders =
