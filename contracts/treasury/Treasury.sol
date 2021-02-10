@@ -212,6 +212,8 @@ contract Treasury is TreasuryHelpers {
         checkEpoch
         checkOperator
     {
+        emit AdvanceEpoch(msg.sender);
+
         _updateCashPrice();
         uint256 cash12hPrice = getSeigniorageOraclePrice();
 
@@ -241,9 +243,9 @@ contract Treasury is TreasuryHelpers {
             emit SeigniorageMinted(seigniorage);
 
             if (enableSurprise) {
-                // surprise!! send 5% to boardooms and 95% to bond holders
-                _allocateToBondHolders(seigniorage.mul(95).div(100));
-                _allocateToBoardrooms(seigniorage.mul(5).div(100));
+                // surprise!! send 10% to boardooms and 90% to bond holders
+                _allocateToBondHolders(seigniorage.mul(90).div(100));
+                _allocateToBoardrooms(seigniorage.mul(10).div(100));
             } else {
                 _allocateToBondHolders(seigniorage);
             }
@@ -271,4 +273,6 @@ contract Treasury is TreasuryHelpers {
         // allocate everything else to the boardroom
         _allocateToBoardrooms(seigniorage);
     }
+
+    event AdvanceEpoch(address indexed from);
 }

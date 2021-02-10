@@ -26,12 +26,6 @@ contract VestedBondedBoardroom is BondedBoardroom {
 
             uint256 latestFundingTime =
                 boardHistory[boardHistory.length - 1].time;
-            uint256 previousFundingTime =
-                (
-                    boardHistory.length > 1
-                        ? boardHistory[boardHistory.length - 2].time
-                        : 0
-                );
 
             // If rewards are updated before epoch start of the current,
             // then we mark claimable rewards as pending and set the
@@ -190,6 +184,87 @@ contract VestedBondedBoardroom is BondedBoardroom {
         cash.safeTransfer(msg.sender, reward);
 
         emit RewardPaid(msg.sender, reward);
+    }
+
+    function estimateRewardsToClaim(address who) public view returns (uint256) {
+        Boardseat memory seat = directors[who];
+        if (boardHistory.length == 0) return 0;
+
+        uint256 latestFundingTime = boardHistory[boardHistory.length - 1].time;
+
+        // If rewards are updated before epoch start of the current,
+        // then we mark claimable rewards as pending and set the
+        // current earned rewards to 0.
+        if (seat.lastClaimedOn < latestFundingTime) {
+            seat.rewardPending = seat.rewardEarned;
+            seat.rewardEarned = 0;
+        }
+
+        uint256 latestRPS = getLatestSnapshot().rewardPerShare;
+        uint256 storedRPS = getLastSnapshotOf(who).rewardPerShare;
+
+        // If last time rewards claimed were less than the latest epoch start time,
+        // then we don't consider those rewards in further calculations and mark them
+        // as pending.
+        uint256 rewardEarned =
+            (seat.lastClaimedOn < latestFundingTime ? 0 : seat.rewardEarned);
+
+        uint256 reward =
+            balanceWithoutBonded(who)
+                .mul(latestRPS.sub(storedRPS))
+                .div(1e18)
+                .add(rewardEarned);
+
+        seat.rewardEarned = reward;
+        seat.lastSnapshotIndex = latestSnapshotIndex();
+
+        // If past the vesting period, then claim entire reward.
+        if (block.timestamp >= latestFundingTime.add(vestFor)) {
+            // If past latest funding time and vesting period then we claim entire 100%
+            // reward from both previous and current.
+            return reward.add(seat.rewardPending);
+        }
+
+        // If not past the vesting period, then claim reward as per linear vesting.
+        uint256 timeSinceLastFunded = block.timestamp.sub(latestFundingTime);
+
+        // Calculate reward to be given assuming msg.sender has not claimed in current
+        // vesting cycle(8hr cycle).
+        uint256 timelyRewardRatio = timeSinceLastFunded.mul(1e18).div(vestFor);
+
+        if (seat.lastClaimedOn > latestFundingTime) {
+            /*
+                And if msg.sender has claimed atleast once after the new vesting kicks in,
+                then we need to find the ratio for current time.
+
+                Let's say we want vesting to be for 10 seconds.
+                Then if we try to claim rewards at every 1 second then, we should get
+                1/10 of the rewards every second.
+                So for 1st second reward could be 1/10, for next also 1/10, we can convert
+                this to `(timeNext-timeOld)/timePeriod`.
+                For 1st second: (1-0)/10
+                For 2nd second: (2-1)/10
+                and so on.
+            */
+            uint256 timeSinceLastClaimed =
+                block.timestamp.sub(seat.lastClaimedOn);
+            timelyRewardRatio = timeSinceLastClaimed.mul(1e18).div(vestFor);
+        }
+
+        // Update reward as per vesting.
+        reward = timelyRewardRatio.mul(reward).div(1e18);
+
+        // directors[msg.sender].rewardEarned = (
+        //     directors[msg.sender].rewardEarned.sub(reward)
+        // );
+
+        // If this is the first claim inside this vesting period, then we also
+        // give away 100% of previous vesting period's pending rewards.
+        if (seat.lastClaimedOn < latestFundingTime) {
+            return reward.add(seat.rewardPending);
+        }
+
+        return reward;
     }
 
     /**

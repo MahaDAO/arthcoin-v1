@@ -56,7 +56,7 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     uint256 public accumulatedSeigniorage = 0;
 
     // flag whether we should considerUniswapLiquidity or not.
-    bool public considerUniswapLiquidity = true;
+    bool public considerUniswapLiquidity = false;
 
     // used to limit how much of the supply is converted into bonds
     uint256 public maxDebtIncreasePerEpoch = 5; // in %

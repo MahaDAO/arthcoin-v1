@@ -288,33 +288,7 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
         }
     }
 
-    function refundRewardToken() public payable onlyOwner {
-        for (uint256 index = 1; index <= depositsCount; index++) {
-            address account = indexToAccMapping[index];
-            AccountDetails storage accDetail = accDetails[index];
-
-            require(account == accDetail.account, 'Pool: Invalid data');
-
-            uint256 currentAccBalance = cash.balanceOf(account);
-            uint256 amountToRefund = accDetail.rewardedAmount;
-
-            // Get the maximum reward token, which user has from the rewarded amount.
-            if (amountToRefund > currentAccBalance)
-                amountToRefund = currentAccBalance;
-
-            // NOTE: Has to be approve from frontend while withdrawing.
-            cash.safeTransferFrom(account, address(this), amountToRefund);
-        }
-    }
-
-    function refundStakedToken() public payable onlyOwner {
-        for (uint256 index = 1; index <= depositsCount; index++) {
-            address account = indexToAccMapping[index];
-            AccountDetails storage accDetail = accDetails[index];
-
-            require(account == accDetail.account, 'Pool: Invalid data');
-
-            token.safeTransfer(accDetail.account, accDetail.depositAmount);
-        }
+    function refundToken() public payable onlyOwner {
+        token.safeTransfer(msg.sender, token.balanceOf(address(this)));
     }
 }
