@@ -827,7 +827,7 @@ describe('Treasury', () => {
         await uniswap.getPair(cash.address, dai.address);
       const uniswapLiquidity = await cash.balanceOf(uniswapLiquidityPair);
 
-      const percentUniswapLiq = await treasury.considerUniswapLiquidity
+      const percentUniswapLiq = await treasury.considerUniswapLiquidity === true
         ? uniswapLiquidity.mul(100).div(await cash.totalSupply())
         : 100;
 
@@ -845,7 +845,7 @@ describe('Treasury', () => {
         await uniswap.getPair(cash.address, dai.address);
       const uniswapLiquidity = await cash.balanceOf(uniswapLiquidityPair);
 
-      const percentUniswapLiq = await treasury.considerUniswapLiquidity
+      const percentUniswapLiq = await treasury.considerUniswapLiquidity === true
         ? uniswapLiquidity.mul(100).div(await cash.totalSupply())
         : 100;
 
