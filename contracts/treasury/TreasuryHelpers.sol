@@ -37,6 +37,12 @@ contract TreasuryHelpers is TreasurySetters {
         address _arthMahaOracle,
         address _seigniorageOracle,
         address _gmuOracle,
+        // address _arthUniLiquidityBoardroom,
+        // address _arthMlpLiquidityBoardroom,
+        // address _mahaLiquidityBoardroom,
+        // address _arthBoardroom,
+        // address _fund,
+        // address _rainyDayFund,
         address _uniswapRouter,
         uint256 _startTime,
         uint256 _period,
@@ -53,6 +59,13 @@ contract TreasuryHelpers is TreasurySetters {
         arthMahaOracle = _arthMahaOracle;
         seigniorageOracle = _seigniorageOracle;
         gmuOracle = _gmuOracle;
+
+        // funds
+        // arthLiquidityUniBoardroom = _arthUniLiquidityBoardroom;
+        // arthLiquidityMlpBoardroom = _arthMlpLiquidityBoardroom;
+        // arthBoardroom = _arthBoardroom;
+        // ecosystemFund = _fund;
+        // rainyDayFund = _rainyDayFund;
 
         // others
         uniswapRouter = _uniswapRouter;
@@ -113,6 +126,28 @@ contract TreasuryHelpers is TreasurySetters {
         emit Migration(target);
     }
 
+    function initializeFunds(
+        // boardrooms
+        address _arthUniLiquidityBoardroom,
+        address _arthMlpLiquidityBoardroom,
+        address _mahaLiquidityBoardroom,
+        address _arthBoardroom,
+        // ecosystem fund
+        address _fund,
+        address _rainyDayFund
+    ) public onlyOwner {
+        setAllFunds(
+            // boardrooms
+            _arthUniLiquidityBoardroom,
+            _arthMlpLiquidityBoardroom,
+            _mahaLiquidityBoardroom,
+            _arthBoardroom,
+            // ecosystem fund
+            _fund,
+            _rainyDayFund
+        );
+    }
+
     function _allocateToEcosystemFund(uint256 seigniorage)
         internal
         returns (uint256)
@@ -128,6 +163,26 @@ contract TreasuryHelpers is TreasurySetters {
             );
             emit PoolFunded(ecosystemFund, ecosystemReserve);
             return ecosystemReserve;
+        }
+
+        return 0;
+    }
+
+    function _allocateToRainyDayFund(uint256 seigniorage)
+        internal
+        returns (uint256)
+    {
+        uint256 rainyDayReserve =
+            seigniorage.mul(rainyDayFundAllocationRate).div(100);
+        if (rainyDayReserve > 0) {
+            ICustomERC20(cash).safeApprove(rainyDayFund, rainyDayReserve);
+            ISimpleERCFund(rainyDayFund).deposit(
+                cash,
+                rainyDayReserve,
+                'Treasury: Rainyday Seigniorage Allocation'
+            );
+            emit PoolFunded(rainyDayFund, rainyDayReserve);
+            return rainyDayReserve;
         }
 
         return 0;
@@ -269,7 +324,7 @@ contract TreasuryHelpers is TreasurySetters {
     // GOV
     event Initialized(address indexed executor, uint256 at);
     event Migration(address indexed target);
-    event RedeemedBonds(address indexed from, uint256 amount, bool sellForDai);
+    event RedeemedBonds(address indexed from, uint256 amount);
     event BoughtBonds(
         address indexed from,
         uint256 amountDaiIn,

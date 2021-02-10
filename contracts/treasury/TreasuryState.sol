@@ -38,6 +38,7 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     address public arthBoardroom;
 
     address public ecosystemFund;
+    address public rainyDayFund;
 
     // oracles
     address public bondOracle;
@@ -73,6 +74,7 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     // the ecosystem fund recieves seigniorage before anybody else; this
     // value decides how much of the new seigniorage is sent to this fund.
     uint256 public ecosystemFundAllocationRate = 2; // in %
+    uint256 public rainyDayFundAllocationRate = 2; // in %
 
     // this controls how much of the new seigniorage is given to bond token holders
     // when we are in expansion mode. ideally 90% of new seigniorate is
@@ -109,9 +111,9 @@ abstract contract TreasuryState is ContractGuard, Epoch {
         require(
             Operator(cash).operator() == address(this) &&
                 Operator(bond).operator() == address(this) &&
-                Operator(arthLiquidityUniBoardroom).operator() ==
-                address(this) &&
                 Operator(arthLiquidityMlpBoardroom).operator() ==
+                address(this) &&
+                Operator(arthLiquidityUniBoardroom).operator() ==
                 address(this) &&
                 Operator(arthBoardroom).operator() == address(this) &&
                 Operator(mahaLiquidityBoardroom).operator() == address(this),

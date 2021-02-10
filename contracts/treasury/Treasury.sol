@@ -38,6 +38,14 @@ contract Treasury is TreasuryHelpers {
         address _arthMahaOracle,
         address _seigniorageOracle,
         address _gmuOracle,
+        // // boardrooms
+        // address _arthUniLiquidityBoardroom,
+        // address _arthMlpLiquidityBoardroom,
+        // address _mahaLiquidityBoardroom,
+        // address _arthBoardroom,
+        // // ecosystem fund
+        // address _fund,
+        // address _rainyDayFund,
         // uniswap router
         address _uniswapRouter,
         uint256 _startTime,
@@ -54,6 +62,12 @@ contract Treasury is TreasuryHelpers {
             _arthMahaOracle,
             _seigniorageOracle,
             _gmuOracle,
+            // _arthUniLiquidityBoardroom,
+            // _arthMlpLiquidityBoardroom,
+            // _mahaLiquidityBoardroom,
+            // _arthBoardroom,
+            // _fund,
+            // _rainyDayFund,
             _uniswapRouter,
             _startTime,
             _period,
@@ -201,7 +215,7 @@ contract Treasury is TreasuryHelpers {
         IBasisAsset(bond).burnFrom(msg.sender, amount);
         ICustomERC20(cash).safeTransfer(msg.sender, amount);
 
-        emit RedeemedBonds(msg.sender, amount, false);
+        emit RedeemedBonds(msg.sender, amount);
     }
 
     function allocateSeigniorage()

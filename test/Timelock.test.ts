@@ -48,7 +48,9 @@ describe('Timelock', () => {
   let Curve: ContractFactory;
   let DAI: ContractFactory;
   let Timelock: ContractFactory;
+  let ArthMahaswapLiquidityBoardroom: ContractFactory;
   let MahaLiquidityBoardroom: ContractFactory;
+  let RainyDayFund: ContractFactory;
 
   let Factory = new ContractFactory(
     UniswapV2Factory.abi,
@@ -66,12 +68,14 @@ describe('Timelock', () => {
     Treasury = await ethers.getContractFactory('Treasury');
     DevelopmentFund = await ethers.getContractFactory('DevelopmentFund');
     ArthBoardroom = await ethers.getContractFactory('MockBoardroom');
+    ArthMahaswapLiquidityBoardroom = await ethers.getContractFactory('MockBoardroom');
     ArthLiquidityBoardroom = await ethers.getContractFactory('MockBoardroom');
     MahaLiquidityBoardroom = await ethers.getContractFactory('MockBoardroom');
     Oracle = await ethers.getContractFactory('MockUniswapOracle');
     Curve = await ethers.getContractFactory('MockCurve');
     DAI = await ethers.getContractFactory('MockDai');
     Timelock = await ethers.getContractFactory('Timelock');
+    RainyDayFund = await ethers.getContractFactory('RainyDayFund');
   });
 
   let startTime: BigNumber
@@ -83,12 +87,14 @@ describe('Timelock', () => {
   let arthBoardroom: Contract;
   let arthLiquidityBoardroom: Contract;
   let developmentFund: Contract;
+  let arthMahaswapLiquidityBoardroom: Contract;
 
   let treasury: Contract;
   let uniswap: Contract;
   let uniswapRouter: Contract;
   let timelock: Contract;
   let mahaLiquidityBoardroom: Contract;
+  let rainyDayFund: Contract;
 
   beforeEach('Deploy contracts', async () => {
     cash = await ARTH.connect(operator).deploy();
@@ -120,6 +126,7 @@ describe('Timelock', () => {
     )
 
     developmentFund = await DevelopmentFund.connect(operator).deploy();
+    rainyDayFund = await RainyDayFund.connect(operator).deploy();
 
     oracle = await Oracle.connect(operator).deploy();
 
@@ -128,6 +135,9 @@ describe('Timelock', () => {
       cash.address
     );
     mahaLiquidityBoardroom = await MahaLiquidityBoardroom.connect(operator).deploy(
+      cash.address
+    );
+    arthMahaswapLiquidityBoardroom = await ArthMahaswapLiquidityBoardroom.connect(operator).deploy(
       cash.address
     );
 
@@ -142,11 +152,13 @@ describe('Timelock', () => {
       oracle.address,
       oracle.address,
 
-      arthLiquidityBoardroom.address,
-      mahaLiquidityBoardroom.address,
-      arthBoardroom.address,
+      // arthLiquidityBoardroom.address,
+      // arthMahaswapLiquidityBoardroom.address,
+      // mahaLiquidityBoardroom.address,
+      // arthBoardroom.address,
 
-      developmentFund.address,
+      // developmentFund.address,
+      // rainyDayFund.address,
       uniswapRouter.address,
       startTime,
       5 * 60,
@@ -171,6 +183,16 @@ describe('Timelock', () => {
       await token.connect(operator).transferOwnership(treasury.address);
     }
 
+    await treasury.connect(operator).initializeFunds(
+      arthLiquidityBoardroom.address,
+      arthMahaswapLiquidityBoardroom.address,
+      mahaLiquidityBoardroom.address,
+      arthBoardroom.address,
+
+      developmentFund.address,
+      rainyDayFund.address
+    )
+
     await treasury.connect(operator).transferOperator(timelock.address);
     await treasury.connect(operator).transferOwnership(timelock.address);
 
@@ -182,6 +204,9 @@ describe('Timelock', () => {
 
     await mahaLiquidityBoardroom.connect(operator).transferOperator(treasury.address);
     await mahaLiquidityBoardroom.connect(operator).transferOwnership(timelock.address);
+
+    await arthMahaswapLiquidityBoardroom.connect(operator).transferOperator(treasury.address);
+    await arthMahaswapLiquidityBoardroom.connect(operator).transferOwnership(timelock.address);
   });
 
   describe('#Migrate', async () => {
@@ -199,16 +224,28 @@ describe('Timelock', () => {
         oracle.address,
         oracle.address,
 
-        arthLiquidityBoardroom.address,
-        mahaLiquidityBoardroom.address,
-        arthBoardroom.address,
+        // arthLiquidityBoardroom.address,
+        // arthMahaswapLiquidityBoardroom.address,
+        // mahaLiquidityBoardroom.address,
+        // arthBoardroom.address,
 
-        developmentFund.address,
+        // developmentFund.address,
+        // rainyDayFund.address,
         uniswapRouter.address,
         startTime,
         5 * 60,
         0
       );
+
+      await newTreasury.connect(operator).initializeFunds(
+        arthLiquidityBoardroom.address,
+        arthMahaswapLiquidityBoardroom.address,
+        mahaLiquidityBoardroom.address,
+        arthBoardroom.address,
+
+        developmentFund.address,
+        rainyDayFund.address
+      )
     });
 
     it('Should work correctly', async () => {
@@ -317,6 +354,70 @@ describe('Timelock', () => {
         .withArgs(ZERO_ADDR, operator.address);
 
       expect(await arthLiquidityBoardroom.operator()).to.eq(operator.address);
+    });
+
+    it('Should work correctly for arth mahaswap liquidity boardroom', async () => {
+      const eta = (await latestBlocktime(provider)) + 2 * DAY + 30;
+      const signature = 'transferOperator(address)';
+      const data = encodeParameters(ethers, ['address'], [operator.address]);
+
+      const calldata = [arthMahaswapLiquidityBoardroom.address, 0, signature, data, eta];
+      const txHash = ethers.utils.keccak256(
+        encodeParameters(
+          ethers,
+          ['address', 'uint256', 'string', 'bytes', 'uint256'],
+          calldata
+        )
+      );
+
+      await expect(timelock.connect(operator).queueTransaction(...calldata))
+        .to.emit(timelock, 'QueueTransaction')
+        .withArgs(txHash, ...calldata);
+
+      await advanceTimeAndBlock(
+        provider,
+        eta - (await latestBlocktime(provider))
+      );
+
+      await expect(timelock.connect(operator).executeTransaction(...calldata))
+        .to.emit(timelock, 'ExecuteTransaction')
+        .withArgs(txHash, ...calldata)
+        .to.emit(arthMahaswapLiquidityBoardroom, 'OperatorTransferred')
+        .withArgs(ZERO_ADDR, operator.address);
+
+      expect(await arthMahaswapLiquidityBoardroom.operator()).to.eq(operator.address);
+    });
+
+    it('Should work correctly for maha liquidity boardroom', async () => {
+      const eta = (await latestBlocktime(provider)) + 2 * DAY + 30;
+      const signature = 'transferOperator(address)';
+      const data = encodeParameters(ethers, ['address'], [operator.address]);
+
+      const calldata = [mahaLiquidityBoardroom.address, 0, signature, data, eta];
+      const txHash = ethers.utils.keccak256(
+        encodeParameters(
+          ethers,
+          ['address', 'uint256', 'string', 'bytes', 'uint256'],
+          calldata
+        )
+      );
+
+      await expect(timelock.connect(operator).queueTransaction(...calldata))
+        .to.emit(timelock, 'QueueTransaction')
+        .withArgs(txHash, ...calldata);
+
+      await advanceTimeAndBlock(
+        provider,
+        eta - (await latestBlocktime(provider))
+      );
+
+      await expect(timelock.connect(operator).executeTransaction(...calldata))
+        .to.emit(timelock, 'ExecuteTransaction')
+        .withArgs(txHash, ...calldata)
+        .to.emit(mahaLiquidityBoardroom, 'OperatorTransferred')
+        .withArgs(ZERO_ADDR, operator.address);
+
+      expect(await mahaLiquidityBoardroom.operator()).to.eq(operator.address);
     });
   });
 });
