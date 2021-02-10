@@ -578,7 +578,7 @@ describe('Treasury', () => {
           // await bond.mint(operator.address, INITIAL_BAB_AMOUNT);
           expect((await bond.totalSupply()).eq(INITIAL_BAB_AMOUNT))
 
-          await treasury.connect(operator).setEnableSurprise(true);
+          await treasury.connect(operator).setSurprise(true);
 
           const oldCashSupply = await cash.totalSupply();
           const oldCashBalanceOfTreasury = await cash.balanceOf(treasury.address);

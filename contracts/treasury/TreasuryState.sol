@@ -2,15 +2,16 @@
 
 pragma solidity ^0.6.12;
 
-import '@openzeppelin/contracts/math/Math.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
+import {SafeMath} from '@openzeppelin/contracts/math/SafeMath.sol';
+import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
+import {Address} from '@openzeppelin/contracts/utils/Address.sol';
 
-import '../lib/FixedPoint.sol';
-import '../lib/Safe112.sol';
-import '../owner/Operator.sol';
-import '../utils/Epoch.sol';
-import '../utils/ContractGuard.sol';
+import {FixedPoint} from '../lib/FixedPoint.sol';
+import {Safe112} from '../lib/Safe112.sol';
+import {Operator} from '../owner/Operator.sol';
+import {Epoch} from '../utils/Epoch.sol';
+import {ContractGuard} from '../utils/ContractGuard.sol';
 
 abstract contract TreasuryState is ContractGuard, Epoch {
     using FixedPoint for *;

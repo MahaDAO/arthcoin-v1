@@ -2,23 +2,16 @@
 
 pragma solidity ^0.6.10;
 
-import '@openzeppelin/contracts/math/Math.sol';
-import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
-import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
-
-import '../interfaces/ICustomERC20.sol';
-import '../interfaces/IUniswapV2Factory.sol';
-
+import {Math} from '@openzeppelin/contracts/math/Math.sol';
+import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
+import {ICustomERC20} from '../interfaces/ICustomERC20.sol';
 import {IUniswapOracle} from '../interfaces/IUniswapOracle.sol';
 import {IUniswapV2Router02} from '../interfaces/IUniswapV2Router02.sol';
 import {IBoardroom} from '../interfaces/IBoardroom.sol';
-import {IBasisAsset} from '../interfaces/IBasisAsset.sol';
 import {ISimpleERCFund} from '../interfaces/ISimpleERCFund.sol';
 import {Operator} from '../owner/Operator.sol';
 import {Epoch} from '../utils/Epoch.sol';
-import {ContractGuard} from '../utils/ContractGuard.sol';
-
-import './TreasurySetters.sol';
+import {TreasurySetters} from './TreasurySetters.sol';
 
 /**
  * @title ARTH Treasury contract
