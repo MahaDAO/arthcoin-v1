@@ -1,6 +1,6 @@
 {
   "name": "basiscash-protocol",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A lightweight implementation of the Basis Protocol on Ethereum",
   "repository": "https://github.com/Basis-ARTH/basiscash-protocol",
   "license": "MIT",
