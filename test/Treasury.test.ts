@@ -926,7 +926,70 @@ describe('Treasury', () => {
     });
   })
 
-  describe('estimateBondsToIssue', () => {
+  describe('estimateBondsToIssue without uniswap liq', () => {
+    beforeEach('disable uniswap liq into consideration', async () => {
+      // Wait til first epoch.
+      await treasury.connect(operator).setConsiderUniswapLiquidity(false);
+    });
+
+    it('at 1$ a we issue 0 ARTHB', async () => {
+      const price = utils.parseEther('10').div(10)
+      await expect(await treasury.estimateBondsToIssue(price)).to.be.eq(0);
+    });
+
+    it('at 0.99$ a we issue 0 ARTHB', async () => {
+      const price = utils.parseEther('99').div(100)
+      await expect(await treasury.estimateBondsToIssue(price)).to.be.eq(0);
+    });
+
+    it('at 1.99$ a we issue 0 ARTHB', async () => {
+      const price = utils.parseEther('199').div(100)
+      await expect(await treasury.estimateBondsToIssue(price)).to.be.eq(0);
+    });
+
+    it('at 0.96$ a we issue 0% ARTHB', async () => {
+      const arthSupply = await cash.totalSupply()
+
+      const price = utils.parseEther('96').div(100)
+      await expect(await treasury.estimateBondsToIssue(price)).to.be.eq(0);
+    });
+
+    it('at 0.95$ a we issue 5% ARTHB', async () => {
+      const arthSupply = await cash.totalSupply()
+
+      const price = utils.parseEther('95').div(100)
+
+      const bondsIssued = await treasury.estimateBondsToIssue(price);
+      await expect(bondsIssued)
+        .to
+        .be
+        .eq(arthSupply.mul(5).div(100));
+
+      await expect(bondsIssued)
+        .to
+        .be
+        .not.eq(0);
+    });
+
+    it('at 0.90$ a we issue 5% ARTHB', async () => {
+      const arthSupply = await cash.totalSupply()
+
+      const price = utils.parseEther('90').div(100)
+      const bondsIssued = await treasury.estimateBondsToIssue(price);
+
+      await expect(bondsIssued)
+        .to
+        .be
+        .eq(arthSupply.mul(5).div(100));
+
+      await expect(bondsIssued)
+        .to
+        .be
+        .not.eq(0);
+    });
+  })
+
+  describe('estimateBondsToIssue with uniswap liq.', () => {
     it('at 1$ a we issue 0 ARTHB', async () => {
       const price = utils.parseEther('10').div(10)
       await expect(await treasury.estimateBondsToIssue(price)).to.be.eq(0);
