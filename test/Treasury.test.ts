@@ -515,49 +515,7 @@ describe('Treasury', () => {
           expect(await cash.balanceOf(ant.address)).to.eq(oldCashBalanceOfAnt.add(ETH.mul(300)));
         });
 
-        it.skip('should not fund treasury if price > targetPrice and price < expansionLimitPrice with 0% bonds', async () => {
-          const cashPrice = ETH.mul(103).div(100);
-          await oracle.setPrice(cashPrice);
-          expect((await bond.totalSupply()).eq(0))
-
-          const oldCashSupply = await cash.totalSupply();
-          const oldCashBalanceOfTreasury = await cash.balanceOf(treasury.address);
-
-          // calculate with circulating supply without considering uniswap liq.
-          const treasuryHoldings = await treasury.getReserve();
-          const cashSupply = (await cash.totalSupply()).sub(treasuryHoldings);
-
-          const percentage = bigmin(
-            cashPrice.sub(ETH).mul(100).div(ETH),
-            await treasury.maxSupplyIncreasePerEpoch()
-          );
-
-          let seigniorageToMint = cashSupply
-            .mul(percentage)
-            .div(100);
-
-          const seigniorage = await treasury.estimateSeignorageToMint(cashPrice); // all are same oracle.
-          const finalSeigniorageToMint = bigmin(
-            seigniorageToMint,
-            (await bond.totalSupply())
-          );
-
-          expect(seigniorage.eq(finalSeigniorageToMint))
-
-          // TODO: check emit for all respective events.
-          await expect(treasury.connect(ant).allocateSeigniorage())
-            .to.emit(treasury, 'SeigniorageMinted')
-            .to.emit(treasury, 'TreasuryFunded')
-            .to.not.emit(treasury, 'PoolFunded');
-
-          expect(finalSeigniorageToMint.eq(0))
-
-          expect(await cash.totalSupply()).to.eq(oldCashSupply.add(ETH.mul(200)));
-          expect(await cash.balanceOf(ant.address)).to.eq(ETH.mul(200)); // 200 ARTH bonus
-          expect(await cash.balanceOf(treasury.address)).to.eq(oldCashBalanceOfTreasury);
-        });
-
-        it('should fund only treasury if price > targetPrice and price < expansionLimitPrice with 10% bonds', async () => {
+        it('should fund only treasury if price > targetPrice and price < expansionLimitPrice with 10% bonds & surprise=false', async () => {
           const cashPrice = ETH.mul(103).div(100);
           await oracle.setPrice(cashPrice);
 
@@ -598,6 +556,89 @@ describe('Treasury', () => {
           expect(await cash.totalSupply()).to.eq(oldCashSupply.add(ETH.mul(300).add(finalSeigniorageToMint)));
           expect(await cash.balanceOf(ant.address)).to.eq(ETH.mul(300)); // 200 ARTH bonus
           expect(await cash.balanceOf(treasury.address)).to.eq(oldCashBalanceOfTreasury.add(finalSeigniorageToMint));
+          expect(await cash.balanceOf(developmentFund.address)).to.eq(0);
+          expect(await cash.balanceOf(arthBoardroom.address)).to.eq(
+            0
+          );
+          expect(await cash.balanceOf(arthLiquidityBoardroom.address)).to.eq(
+            0
+          );
+          expect(await cash.balanceOf(arthMahaswapLiquidityBoardroom.address)).to.eq(
+            0
+          );
+          expect(await cash.balanceOf(mahaLiquidityBoardroom.address)).to.eq(
+            0
+          );
+        });
+
+        it('should fund only treasury if price > targetPrice and price < expansionLimitPrice with 10% bonds & surprise = true', async () => {
+          const cashPrice = ETH.mul(103).div(100);
+          await oracle.setPrice(cashPrice);
+
+          // await bond.mint(operator.address, INITIAL_BAB_AMOUNT);
+          expect((await bond.totalSupply()).eq(INITIAL_BAB_AMOUNT))
+
+          await treasury.connect(operator).setEnableSurprise(true);
+
+          const oldCashSupply = await cash.totalSupply();
+          const oldCashBalanceOfTreasury = await cash.balanceOf(treasury.address);
+
+          // calculate with circulating supply without considering uniswap liq.
+          const treasuryHoldings = await treasury.getReserve();
+          const cashSupply = (await cash.totalSupply()).sub(treasuryHoldings).add(ETH.mul(300));
+
+          const percentage = bigmin(
+            cashPrice.sub(ETH).mul(100).div(ETH),
+            await treasury.maxSupplyIncreasePerEpoch()
+          );
+
+          let seigniorageToMint = cashSupply
+            .mul(percentage)
+            .div(100);
+
+          const seigniorage = await treasury.estimateSeignorageToMint(cashPrice); // all are same oracle.
+
+          const finalSeigniorageToMint = bigmin(
+            seigniorageToMint,
+            (await bond.totalSupply()).sub(treasuryHoldings)
+          );
+
+          expect(seigniorage.eq(finalSeigniorageToMint))
+
+          const expectedTreasuryReserve = bigmin(finalSeigniorageToMint.mul(95).div(100), (await bond.totalSupply()).sub(treasuryHoldings));
+          const expectedSeignorageForAllBoardrooms = finalSeigniorageToMint.mul(5).div(100);
+
+          const expectedArthBoardroomReserve = expectedSeignorageForAllBoardrooms.mul(await treasury.arthBoardroomAllocationRate()).div(100);
+          const expectedArthLiqBoardroomRes = expectedSeignorageForAllBoardrooms.mul(await treasury.arthLiquidityUniAllocationRate()).div(100);
+          const expectedMahaLiqBoardroomRes = expectedSeignorageForAllBoardrooms.mul(await treasury.mahaLiquidityBoardroomAllocationRate()).div(100);
+          const expectedArthMahaswapLiqBoardRes = expectedSeignorageForAllBoardrooms.mul(await treasury.arthLiquidityMlpAllocationRate()).div(100);
+
+          // TODO: check emit for all respective events.
+          await expect(treasury.connect(ant).allocateSeigniorage())
+            .to.emit(treasury, 'SeigniorageMinted')
+            .to.emit(treasury, 'TreasuryFunded')
+            .withArgs(
+              await latestBlocktime(provider),
+              expectedTreasuryReserve
+            )
+            .to.emit(treasury, 'PoolFunded');
+
+          expect(await cash.balanceOf(developmentFund.address)).to.eq(0);
+          expect(await cash.totalSupply()).to.eq(oldCashSupply.add(ETH.mul(300).add(finalSeigniorageToMint)));
+          expect(await cash.balanceOf(ant.address)).to.eq(ETH.mul(300)); // 200 ARTH bonus
+          expect(await cash.balanceOf(treasury.address)).to.eq(oldCashBalanceOfTreasury.add(expectedTreasuryReserve));
+          expect(await cash.balanceOf(arthBoardroom.address)).to.eq(
+            expectedArthBoardroomReserve
+          );
+          expect(await cash.balanceOf(arthLiquidityBoardroom.address)).to.eq(
+            expectedArthLiqBoardroomRes
+          );
+          expect(await cash.balanceOf(arthMahaswapLiquidityBoardroom.address)).to.eq(
+            expectedArthMahaswapLiqBoardRes
+          );
+          expect(await cash.balanceOf(mahaLiquidityBoardroom.address)).to.eq(
+            expectedMahaLiqBoardroomRes
+          );
         });
 
         it('should move to next epoch after allocation', async () => {
@@ -654,6 +695,94 @@ describe('Treasury', () => {
               'Epoch: not allowed'
             );
           });
+        });
+      });
+    });
+
+    describe('#allocateSeigniorage without bonds', () => {
+      beforeEach('transfer permissions', async () => {
+        await cash.mint(operator.address, INITIAL_BAC_AMOUNT);
+        await cash.mint(treasury.address, INITIAL_BAC_AMOUNT);
+        await share.mint(operator.address, INITIAL_BAS_AMOUNT);
+        for await (const contract of [cash, bond, arthMahaswapLiquidityBoardroom, arthLiquidityBoardroom, arthBoardroom, mahaLiquidityBoardroom]) {
+          await contract.connect(operator).transferOperator(treasury.address);
+        }
+      });
+
+      describe('after migration', () => {
+        it('should fail if contract migrated', async () => {
+          for await (const contract of [cash, bond]) {
+            await contract
+              .connect(operator)
+              .transferOwnership(treasury.address);
+          }
+
+          await treasury.connect(operator).migrate(operator.address);
+          expect(await treasury.migrated()).to.be.true;
+
+          await expect(treasury.allocateSeigniorage()).to.revertedWith(
+            'Treasury: migrated'
+          );
+        });
+      });
+
+      describe('before startTime', () => {
+        it('should fail if not started yet', async () => {
+          await expect(treasury.allocateSeigniorage()).to.revertedWith(
+            'Epoch: not started yet'
+          );
+        });
+      });
+
+      describe('after startTime', () => {
+        beforeEach('advance blocktime', async () => {
+          // Wait til first epoch.
+          await advanceTimeAndBlock(
+            provider,
+            startTime.sub(await latestBlocktime(provider)).toNumber()
+          );
+        });
+
+        it('should not fund treasury if price > targetPrice and price < expansionLimitPrice with 0% bonds', async () => {
+          const cashPrice = ETH.mul(103).div(100);
+          await oracle.setPrice(cashPrice);
+          expect((await bond.totalSupply()).eq(0))
+
+          const oldCashSupply = await cash.totalSupply();
+          const oldCashBalanceOfTreasury = await cash.balanceOf(treasury.address);
+
+          // calculate with circulating supply without considering uniswap liq.
+          const treasuryHoldings = await treasury.getReserve();
+          const cashSupply = (await cash.totalSupply()).sub(treasuryHoldings);
+
+          const percentage = bigmin(
+            cashPrice.sub(ETH).mul(100).div(ETH),
+            await treasury.maxSupplyIncreasePerEpoch()
+          );
+
+          let seigniorageToMint = cashSupply
+            .mul(percentage)
+            .div(100);
+
+          const seigniorage = await treasury.estimateSeignorageToMint(cashPrice); // all are same oracle.
+          const finalSeigniorageToMint = bigmin(
+            seigniorageToMint,
+            (await bond.totalSupply())
+          );
+
+          expect(seigniorage.eq(finalSeigniorageToMint))
+
+          // TODO: check emit for all respective events.
+          await expect(treasury.connect(ant).allocateSeigniorage())
+            .to.not.emit(treasury, 'SeigniorageMinted')
+            .to.not.emit(treasury, 'TreasuryFunded')
+            .to.not.emit(treasury, 'PoolFunded');
+
+          expect(finalSeigniorageToMint.eq(0))
+
+          expect(await cash.totalSupply()).to.eq(oldCashSupply.add(ETH.mul(300)));
+          expect(await cash.balanceOf(ant.address)).to.eq(ETH.mul(300)); // 200 ARTH bonus
+          expect(await cash.balanceOf(treasury.address)).to.eq(oldCashBalanceOfTreasury);
         });
       });
     });
@@ -832,10 +961,17 @@ describe('Treasury', () => {
         : 100;
 
       const price = utils.parseEther('95').div(100)
-      await expect(await treasury.estimateBondsToIssue(price))
+
+      const bondsIssued = await treasury.estimateBondsToIssue(price);
+      await expect(bondsIssued)
         .to
         .be
         .eq(arthSupply.mul(5).div(100).mul(percentUniswapLiq).div(100));
+
+      await expect(bondsIssued)
+        .to
+        .be
+        .not.eq(0);
     });
 
     it('at 0.90$ a we issue 5% ARTHB', async () => {
@@ -850,10 +986,17 @@ describe('Treasury', () => {
         : 100;
 
       const price = utils.parseEther('90').div(100)
-      await expect(await treasury.estimateBondsToIssue(price))
+      const bondsIssued = await treasury.estimateBondsToIssue(price);
+
+      await expect(bondsIssued)
         .to
         .be
         .eq(arthSupply.mul(5).div(100).mul(percentUniswapLiq).div(100));
+
+      await expect(bondsIssued)
+        .to
+        .be
+        .not.eq(0);
     });
   })
 
@@ -935,11 +1078,16 @@ describe('Treasury', () => {
 
           await oracle.setPrice(cashPrice);
 
+          // console.log((await treasury.arthCirculatingSupply()).toString())
+          // console.log((await cash.totalSupply()).toString());
+          // console.log((await treasury.getCashSupplyInLiquidity()).toString())
+          // console.log((await treasury.estimateBondsToIssue(utils.parseEther('90').div(100))).toString());
+
           await dai.connect(operator).transfer(ant.address, ETH);
           await dai.connect(ant).approve(treasury.address, ETH);
           await cash.connect(ant).approve(treasury.address, ETH);
 
-          expect(treasury.connect(ant).buyBonds(ETH, cashPrice))
+          expect(await treasury.connect(ant).buyBonds(ETH, cashPrice))
 
           expect(await dai.balanceOf(ant.address)).to.eq(ZERO);
           expect(await bond.balanceOf(ant.address)).to.gt(ZERO);
