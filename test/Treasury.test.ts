@@ -1019,9 +1019,7 @@ describe('Treasury', () => {
         await uniswap.getPair(cash.address, dai.address);
       const uniswapLiquidity = await cash.balanceOf(uniswapLiquidityPair);
 
-      const percentUniswapLiq = await treasury.considerUniswapLiquidity() === true
-        ? uniswapLiquidity.mul(100).div(await cash.totalSupply())
-        : 100;
+      const percentUniswapLiq = uniswapLiquidity.mul(100).div(await cash.totalSupply())
 
       const price = utils.parseEther('95').div(100)
 
@@ -1044,9 +1042,7 @@ describe('Treasury', () => {
         await uniswap.getPair(cash.address, dai.address);
       const uniswapLiquidity = await cash.balanceOf(uniswapLiquidityPair);
 
-      const percentUniswapLiq = await treasury.considerUniswapLiquidity() === true
-        ? uniswapLiquidity.mul(100).div(await cash.totalSupply())
-        : 100;
+      const percentUniswapLiq = uniswapLiquidity.mul(100).div(await cash.totalSupply())
 
       const price = utils.parseEther('90').div(100)
       const bondsIssued = await treasury.estimateBondsToIssue(price);
@@ -1065,7 +1061,7 @@ describe('Treasury', () => {
 
   describe('bonds', async () => {
     beforeEach('transfer permissions', async () => {
-      await cash.mint(operator.address, INITIAL_BAC_AMOUNT);
+      // await cash.mint(operator.address, INITIAL_BAC_AMOUNT.mul(2));
       await bond.mint(operator.address, INITIAL_BAB_AMOUNT);
       for await (const contract of [cash, bond, arthMahaswapLiquidityBoardroom, arthBoardroom, arthLiquidityBoardroom, mahaLiquidityBoardroom]) {
         await contract.connect(operator).transferOperator(treasury.address);
