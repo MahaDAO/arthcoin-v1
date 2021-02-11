@@ -2,17 +2,17 @@
 
 pragma solidity ^0.6.12;
 
-import './core/UniswapOracle.sol';
+import {MahaswapOracle} from './core/MahaswapOracle.sol';
 
 // Fixed window oracle that recomputes the average price for the entire period once every period
 // note that the price average is only guaranteed to be over at least 1 period, but may be over a
-// longer period.
-contract BondRedemtionOracle is UniswapOracle {
+// longer period
+contract ArthDaiTwelveHourTWAPOracle is MahaswapOracle {
     constructor(
         address _factory,
         address _cash,
         address _dai,
         uint256 _period,
         uint256 _startTime
-    ) public UniswapOracle(_factory, _cash, _dai, _period, _startTime) {}
+    ) public MahaswapOracle(_factory, _cash, _dai, _period, _startTime) {}
 }
