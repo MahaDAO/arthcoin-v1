@@ -87,27 +87,31 @@ contract TreasuryHelpers is TreasurySetters {
         ecosystemFund = _fund;
     }
 
-    function migrate(address target) public onlyOperator checkOperator {
+    function migrate(address target) public onlyOperator {
         require(target != address(0), 'migrate to zero');
         require(!migrated, '!migrated');
 
         // TODO: check if the destination is a treasury or not
 
         // cash
-        Operator(cash).transferOperator(target);
-        Operator(cash).transferOwnership(target);
-        ICustomERC20(cash).transfer(
-            target,
-            ICustomERC20(cash).balanceOf(address(this))
-        );
+        if (Operator(cash).owner() == address(this)) {
+            Operator(cash).transferOperator(target);
+            Operator(cash).transferOwnership(target);
+            ICustomERC20(cash).transfer(
+                target,
+                ICustomERC20(cash).balanceOf(address(this))
+            );
+        }
 
         // bond
-        Operator(bond).transferOperator(target);
-        Operator(bond).transferOwnership(target);
-        ICustomERC20(bond).transfer(
-            target,
-            ICustomERC20(bond).balanceOf(address(this))
-        );
+        if (Operator(bond).owner() == address(this)) {
+            Operator(bond).transferOperator(target);
+            Operator(bond).transferOwnership(target);
+            ICustomERC20(bond).transfer(
+                target,
+                ICustomERC20(bond).balanceOf(address(this))
+            );
+        }
 
         // share - disabled ownership and operator functions as MAHA tokens don't have these
         ICustomERC20(share).transfer(

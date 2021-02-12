@@ -40,6 +40,7 @@ contract Treasury is TreasuryHelpers {
         address _arthMahaOracle,
         address _seigniorageOracle,
         address _gmuOracle,
+        // others
         address _uniswapRouter,
         uint256 _startTime,
         uint256 _period,

@@ -10,11 +10,6 @@ import '../interfaces/ISimpleERCFund.sol';
 import './TreasuryGetters.sol';
 
 abstract contract TreasurySetters is TreasuryGetters {
-    function setStabilityFee(uint256 _stabilityFee) public onlyOwner {
-        require(_stabilityFee <= 100, 'rate >= 0');
-        stabilityFee = _stabilityFee;
-    }
-
     function setAllFunds(
         // boardrooms
         address _arthUniLiquidityBoardroom,
@@ -28,21 +23,10 @@ abstract contract TreasurySetters is TreasuryGetters {
         arthLiquidityUniBoardroom = _arthUniLiquidityBoardroom;
         arthLiquidityMlpBoardroom = _arthMlpLiquidityBoardroom;
         mahaLiquidityBoardroom = _mahaLiquidityBoardroom;
-
         arthBoardroom = _arthBoardroom;
+
         ecosystemFund = _fund;
         rainyDayFund = _rainyDayFund;
-
-        emit InitializedFunds(
-            // boardrooms
-            _arthUniLiquidityBoardroom,
-            _arthMlpLiquidityBoardroom,
-            _mahaLiquidityBoardroom,
-            _arthBoardroom,
-            // ecosystem fund
-            _fund,
-            _rainyDayFund
-        );
     }
 
     function setFund(address newFund, uint256 rate) public onlyOwner {
@@ -138,14 +122,8 @@ abstract contract TreasurySetters is TreasuryGetters {
         arthMahaOracle = newOracle;
     }
 
-    event InitializedFunds(
-        // boardrooms
-        address _arthUniLiquidityBoardroom,
-        address _arthMlpLiquidityBoardroom,
-        address _mahaLiquidityBoardroom,
-        address _arthBoardroom,
-        // ecosystem fund
-        address _fund,
-        address _rainyDayFund
-    );
+    function setStabilityFee(uint256 _stabilityFee) public onlyOwner {
+        require(_stabilityFee <= 100, 'rate >= 0');
+        stabilityFee = _stabilityFee;
+    }
 }

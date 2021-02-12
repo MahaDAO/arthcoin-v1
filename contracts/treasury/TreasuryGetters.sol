@@ -141,6 +141,7 @@ abstract contract TreasuryGetters is TreasuryState {
             );
     }
 
+    // todo: probably get rid of this?
     function get1hourEpoch() public view returns (uint256) {
         return Epoch(bondOracle).getLastEpoch();
     }
