@@ -38,7 +38,7 @@ function bigmin(a: BigNumber, b: BigNumber): BigNumber {
 }
 
 
-describe('Treasury', () => {
+describe.only('Treasury', () => {
   const { provider } = ethers;
 
   let operator: SignerWithAddress;
@@ -419,62 +419,84 @@ describe('Treasury', () => {
 
           // get all expected reserve
           const expectedFundReserve = expectedSeigniorage
-            .mul(await treasury.ecosystemFundAllocationRate())
+            .mul(2)
             .div(100);
-          expectedSeigniorage = expectedSeigniorage.sub(expectedFundReserve)
+
+          const expectedRainyDayReserve = expectedSeigniorage
+            .mul(2)
+            .div(100);
+
+          expectedSeigniorage = expectedSeigniorage
+            .sub(expectedRainyDayReserve)
+            .sub(expectedFundReserve)
 
           const expectedTreasuryReserve = bigmin(
             expectedSeigniorage.mul(await treasury.bondSeigniorageRate()).div(100),
             (await bond.totalSupply()).sub(treasuryHoldings)
           );
+
           expectedSeigniorage = expectedSeigniorage.sub(expectedTreasuryReserve);
 
           const expectedArthBoardroomReserve = expectedSeigniorage.mul(await treasury.arthBoardroomAllocationRate()).div(100);
-          const expectedArthLiqBoardroomRes = expectedSeigniorage.mul(await treasury.arthLiquidityUniAllocationRate()).div(100);
+          const expectedArthLiqUniBoardroomRes = expectedSeigniorage.mul(await treasury.arthLiquidityUniAllocationRate()).div(100);
           const expectedMahaLiqBoardroomRes = expectedSeigniorage.mul(await treasury.mahaLiquidityBoardroomAllocationRate()).div(100);
-          const expectedArthMahaswapLiqBoardRes = expectedSeigniorage.mul(await treasury.arthLiquidityMlpAllocationRate()).div(100);
+          const expectedArthLiqMahaBoardRes = expectedSeigniorage.mul(await treasury.arthLiquidityMlpAllocationRate()).div(100);
 
           const allocationResult = await treasury.connect(ant).allocateSeigniorage();
 
-          if (expectedSeigniorage.gt(ZERO)) {
-            await expect(new Promise((resolve) => resolve(allocationResult)))
-              .to.emit(treasury, 'SeigniorageMinted')
-              .withArgs(mintedSeigniorage);
-          }
 
-          if (expectedFundReserve.gt(ZERO)) {
-            await expect(new Promise((resolve) => resolve(allocationResult)))
-              .to.emit(treasury, 'PoolFunded')
-          }
+          await expect(new Promise((resolve) => resolve(allocationResult)))
+            .to.emit(treasury, 'SeigniorageMinted')
+            .withArgs(mintedSeigniorage);
 
-          if (expectedTreasuryReserve.gt(ZERO)) {
-            await expect(new Promise((resolve) => resolve(allocationResult)))
-              .to.emit(treasury, 'TreasuryFunded')
-              .withArgs(
-                await latestBlocktime(provider),
-                expectedTreasuryReserve
-              );
-          }
+          await expect(new Promise((resolve) => resolve(allocationResult)))
+            .to.emit(treasury, 'PoolFunded')
+            .withArgs(
+              await treasury.ecosystemFund(),
+              expectedFundReserve
+            );
 
-          if (expectedArthBoardroomReserve.gt(ZERO)) {
-            await expect(new Promise((resolve) => resolve(allocationResult)))
-              .to.emit(treasury, 'PoolFunded')
-          }
+          await expect(new Promise((resolve) => resolve(allocationResult)))
+            .to.emit(treasury, 'PoolFunded')
+            .withArgs(
+              await treasury.rainyDayFund(),
+              expectedRainyDayReserve
+            );
 
-          if (expectedArthMahaswapLiqBoardRes.gt(ZERO)) {
-            await expect(new Promise((resolve) => resolve(allocationResult)))
-              .to.emit(treasury, 'PoolFunded')
-          }
+          await expect(new Promise((resolve) => resolve(allocationResult)))
+            .to.emit(treasury, 'TreasuryFunded')
+            .withArgs(
+              await latestBlocktime(provider),
+              expectedTreasuryReserve
+            );
 
-          if (expectedArthLiqBoardroomRes.gt(ZERO)) {
-            await expect(new Promise((resolve) => resolve(allocationResult)))
-              .to.emit(treasury, 'PoolFunded')
-          }
+          await expect(new Promise((resolve) => resolve(allocationResult)))
+            .to.emit(treasury, 'PoolFunded')
+            .withArgs(
+              await treasury.arthBoardroom(),
+              expectedArthBoardroomReserve
+            );
 
-          if (expectedMahaLiqBoardroomRes.gt(ZERO)) {
-            await expect(new Promise((resolve) => resolve(allocationResult)))
-              .to.emit(treasury, 'PoolFunded')
-          }
+          await expect(new Promise((resolve) => resolve(allocationResult)))
+            .to.emit(treasury, 'PoolFunded')
+            .withArgs(
+              await treasury.mahaLiquidityBoardroom(),
+              expectedMahaLiqBoardroomRes
+            );
+
+          await expect(new Promise((resolve) => resolve(allocationResult)))
+            .to.emit(treasury, 'PoolFunded')
+            .withArgs(
+              await treasury.arthLiquidityUniBoardroom(),
+              expectedArthLiqUniBoardroomRes
+            );
+
+          await expect(new Promise((resolve) => resolve(allocationResult)))
+            .to.emit(treasury, 'PoolFunded')
+            .withArgs(
+              await treasury.arthLiquidityMlpBoardroom(),
+              expectedArthLiqMahaBoardRes
+            );
 
           expect(await cash.balanceOf(developmentFund.address)).to.eq(expectedFundReserve);
           expect(await treasury.getReserve()).to.eq(expectedTreasuryReserve);
@@ -482,10 +504,10 @@ describe('Treasury', () => {
             expectedArthBoardroomReserve
           );
           expect(await cash.balanceOf(arthLiquidityBoardroom.address)).to.eq(
-            expectedArthLiqBoardroomRes
+            expectedArthLiqUniBoardroomRes
           );
           expect(await cash.balanceOf(arthMahaswapLiquidityBoardroom.address)).to.eq(
-            expectedArthMahaswapLiqBoardRes
+            expectedArthLiqMahaBoardRes
           );
           expect(await cash.balanceOf(mahaLiquidityBoardroom.address)).to.eq(
             expectedMahaLiqBoardroomRes
