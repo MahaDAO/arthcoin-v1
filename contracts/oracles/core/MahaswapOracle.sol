@@ -34,16 +34,10 @@ contract MahaswapOracle is Epoch {
     /* ========== CONSTRUCTOR ========== */
 
     constructor(
-        address _factory,
-        address _tokenA,
-        address _tokenB,
+        IUniswapV2Pair _pair,
         uint256 _period,
         uint256 _startTime
     ) public Epoch(_period, _startTime, 0) {
-        IUniswapV2Pair _pair =
-            IUniswapV2Pair(
-                MahaswapV1Library.pairFor(_factory, _tokenA, _tokenB)
-            );
         pair = _pair;
         token0 = _pair.token0();
         token1 = _pair.token1();
