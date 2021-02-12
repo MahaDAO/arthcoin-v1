@@ -301,28 +301,6 @@ describe('Treasury', () => {
         expect(await share.balanceOf(newTreasury.address)).to.eq(ETH);
       });
 
-      it('Should fail if treasury is not the operator of core contracts', async () => {
-        await arthBoardroom.connect(operator).transferOperator(ant.address);
-        await expect(
-          treasury.connect(operator).migrate(newTreasury.address)
-        ).to.revertedWith('Treasury: need more permission');
-
-        await arthLiquidityBoardroom.connect(operator).transferOperator(ant.address);
-        await expect(
-          treasury.connect(operator).migrate(newTreasury.address)
-        ).to.revertedWith('Treasury: need more permission');
-
-        await mahaLiquidityBoardroom.connect(operator).transferOperator(ant.address);
-        await expect(
-          treasury.connect(operator).migrate(newTreasury.address)
-        ).to.revertedWith('Treasury: need more permission');
-
-        await arthMahaswapLiquidityBoardroom.connect(operator).transferOperator(ant.address);
-        await expect(
-          treasury.connect(operator).migrate(newTreasury.address)
-        ).to.revertedWith('Treasury: need more permission');
-      });
-
       it('should fail if already migrated', async () => {
         await treasury.connect(operator).migrate(newTreasury.address);
         await arthMahaswapLiquidityBoardroom.connect(operator).transferOperator(newTreasury.address);
