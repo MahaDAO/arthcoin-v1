@@ -38,7 +38,7 @@ function bigmin(a: BigNumber, b: BigNumber): BigNumber {
 }
 
 
-describe.only('Treasury', () => {
+describe('Treasury', () => {
   const { provider } = ethers;
 
   let operator: SignerWithAddress;
@@ -358,7 +358,7 @@ describe.only('Treasury', () => {
         });
       });
 
-      describe('after startTime', () => {
+      describe.only('after startTime', () => {
         beforeEach('advance blocktime', async () => {
           // Wait til first epoch.
           await advanceTimeAndBlock(
@@ -605,8 +605,8 @@ describe.only('Treasury', () => {
 
           expect(seigniorage.eq(finalSeigniorageToMint))
 
-          const expectedTreasuryReserve = bigmin(finalSeigniorageToMint.mul(95).div(100), (await bond.totalSupply()).sub(treasuryHoldings));
-          const expectedSeignorageForAllBoardrooms = finalSeigniorageToMint.mul(5).div(100);
+          const expectedTreasuryReserve = bigmin(finalSeigniorageToMint.mul(90).div(100), (await bond.totalSupply()).sub(treasuryHoldings));
+          const expectedSeignorageForAllBoardrooms = finalSeigniorageToMint.mul(10).div(100);
 
           const expectedArthBoardroomReserve = expectedSeignorageForAllBoardrooms.mul(await treasury.arthBoardroomAllocationRate()).div(100);
           const expectedArthLiqBoardroomRes = expectedSeignorageForAllBoardrooms.mul(await treasury.arthLiquidityUniAllocationRate()).div(100);
