@@ -58,13 +58,13 @@ contract VaultBoardroom is ContractGuard {
     /**
      * Modifier.
      */
-    // modifier directorExists {
-    //     require(
-    //         vault.balanceOf(msg.sender) > 0,
-    //         'Boardroom: The director does not exist'
-    //     );
-    //     _;
-    // }
+    modifier directorExists {
+        require(
+            vault.balanceOf(msg.sender) > 0,
+            'Boardroom: The director does not exist'
+        );
+        _;
+    }
 
     /**
      * Events.

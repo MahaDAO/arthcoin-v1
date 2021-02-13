@@ -36,7 +36,7 @@ contract Vault is StakingTimelock, Router, Operator {
 
     modifier stakerExists {
         require(
-            vault.balanceOf(msg.sender) > 0,
+            balanceOf(msg.sender) > 0,
             'Boardroom: The director does not exist'
         );
         _;
