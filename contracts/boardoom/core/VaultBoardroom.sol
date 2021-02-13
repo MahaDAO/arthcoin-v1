@@ -17,7 +17,9 @@ contract VaultBoardroom is ContractGuard {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
-    /* ========== DATA STRUCTURES ========== */
+    /**
+     * Data structures.
+     */
 
     struct Boardseat {
         // Pending reward from the previous epochs.
@@ -41,8 +43,11 @@ contract VaultBoardroom is ContractGuard {
         uint256 rewardPerShare;
     }
 
-    /* ========== STATE VARIABLES ========== */
+    /**
+     * State variables.
+     */
 
+    // The vault which has state of the stakes.
     Vault public vault;
     // Reward asset.
     IERC20 public cash;
@@ -50,8 +55,27 @@ contract VaultBoardroom is ContractGuard {
     BoardSnapshot[] internal boardHistory;
     mapping(address => Boardseat) internal directors;
 
-    /* ========== CONSTRUCTOR ========== */
+    /**
+     * Modifier.
+     */
+    modifier directorExists {
+        require(
+            vault.balanceOf(msg.sender) > 0,
+            'Boardroom: The director does not exist'
+        );
+        _;
+    }
 
+    /**
+     * Events.
+     */
+
+    event RewardPaid(address indexed user, uint256 reward);
+    event RewardAdded(address indexed user, uint256 reward);
+
+    /**
+     * Constructor.
+     */
     constructor(IERC20 cash_, Vault vault_) public {
         cash = cash_;
         vault = vault_;
@@ -66,26 +90,9 @@ contract VaultBoardroom is ContractGuard {
         boardHistory.push(genesisSnapshot);
     }
 
-    /* ========== Modifiers =============== */
-
-    modifier directorExists {
-        require(
-            vault.balanceOf(msg.sender) > 0,
-            'Boardroom: The director does not exist'
-        );
-        _;
-    }
-
-    function updateReward(address director) private {
-        if (director != address(0)) {
-            Boardseat memory seat = directors[director];
-            seat.rewardEarned = earned(director);
-            seat.lastSnapshotIndex = latestSnapshotIndex();
-            directors[director] = seat;
-        }
-    }
-
-    /* ========== VIEW FUNCTIONS ========== */
+    /**
+     * Views/Getters.
+     */
 
     function latestSnapshotIndex() public view returns (uint256) {
         return boardHistory.length.sub(1);
@@ -127,7 +134,18 @@ contract VaultBoardroom is ContractGuard {
                 .add(directors[director].rewardEarned);
     }
 
-    /* ========== MUTATIVE FUNCTIONS ========== */
+    /**
+     * Mutations.
+     */
+
+    function updateReward(address director) private {
+        if (director != address(0)) {
+            Boardseat memory seat = directors[director];
+            seat.rewardEarned = earned(director);
+            seat.lastSnapshotIndex = latestSnapshotIndex();
+            directors[director] = seat;
+        }
+    }
 
     function exit() external virtual {
         vault.withdraw();
@@ -175,9 +193,4 @@ contract VaultBoardroom is ContractGuard {
 
         emit RewardAdded(msg.sender, amount);
     }
-
-    /* ========== EVENTS ========== */
-
-    event RewardPaid(address indexed user, uint256 reward);
-    event RewardAdded(address indexed user, uint256 reward);
 }

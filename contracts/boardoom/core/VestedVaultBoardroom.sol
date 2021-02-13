@@ -12,6 +12,14 @@ contract VestedVaultBoardroom is VaultBoardroom {
     // For how much time should vesting take place.
     uint256 public vestFor;
 
+    /**
+     * Event.
+     */
+    event VestingPeriodChanged(uint256 oldPeriod, uint256 period);
+
+    /**
+     * Constructor.
+     */
     constructor(
         IERC20 cash_,
         Vault vault_,
@@ -19,6 +27,44 @@ contract VestedVaultBoardroom is VaultBoardroom {
     ) public VaultBoardroom(cash_, vault_) {
         vestFor = _vestFor;
     }
+
+    /**
+     * Views/Getters.
+     */
+    function earned(address director) public view override returns (uint256) {
+        uint256 latestRPS = getLatestSnapshot().rewardPerShare;
+        uint256 storedRPS = getLastSnapshotOf(director).rewardPerShare;
+
+        // If last time rewards claimed were less than the latest epoch start time,
+        // then we don't consider those rewards in further calculations and mark them
+        // as pending.
+        uint256 latestFundingTime = boardHistory[boardHistory.length - 1].time;
+        uint256 rewardEarned =
+            (
+                directors[director].lastClaimedOn < latestFundingTime
+                    ? 0
+                    : directors[director].rewardEarned
+            );
+
+        return
+            vault
+                .balanceWithoutBonded(director)
+                .mul(latestRPS.sub(storedRPS))
+                .div(1e18)
+                .add(rewardEarned);
+    }
+
+    /**
+     * Setters.
+     */
+    function setVestFor(uint256 period) public onlyOwner {
+        emit VestingPeriodChanged(vestFor, period);
+        vestFor = period;
+    }
+
+    /**
+     * Mutations.
+     */
 
     function updateVestedReward(address director) private {
         if (director != address(0)) {
@@ -46,38 +92,6 @@ contract VestedVaultBoardroom is VaultBoardroom {
             seat.rewardEarned = freshReward;
             seat.lastSnapshotIndex = latestSnapshotIndex();
         }
-    }
-
-    function earned(address director) public view override returns (uint256) {
-        uint256 latestRPS = getLatestSnapshot().rewardPerShare;
-        uint256 storedRPS = getLastSnapshotOf(director).rewardPerShare;
-
-        // If last time rewards claimed were less than the latest epoch start time,
-        // then we don't consider those rewards in further calculations and mark them
-        // as pending.
-        uint256 latestFundingTime = boardHistory[boardHistory.length - 1].time;
-        uint256 rewardEarned =
-            (
-                directors[director].lastClaimedOn < latestFundingTime
-                    ? 0
-                    : directors[director].rewardEarned
-            );
-
-        return
-            vault
-                .balanceWithoutBonded(director)
-                .mul(latestRPS.sub(storedRPS))
-                .div(1e18)
-                .add(rewardEarned);
-    }
-
-    /**
-     * Mutations.
-     */
-
-    function setVestFor(uint256 period) public onlyOwner {
-        emit VestingPeriodChanged(vestFor, period);
-        vestFor = period;
     }
 
     function _claimAndQuit() private {
@@ -172,9 +186,4 @@ contract VestedVaultBoardroom is VaultBoardroom {
 
         emit RewardPaid(msg.sender, reward);
     }
-
-    /**
-     * Events
-     */
-    event VestingPeriodChanged(uint256 oldPeriod, uint256 period);
 }

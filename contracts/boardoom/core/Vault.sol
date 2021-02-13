@@ -14,23 +14,47 @@ contract Vault is StakingTimelock, Router, Operator {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
+    /**
+     * State variables.
+     */
+
+    // The staked token.
     IERC20 public share;
 
     uint256 internal _totalSupply;
     bool public enableDeposits = true;
+
     mapping(address => uint256) internal _balances;
 
+    /**
+     * Modifier.
+     */
     modifier depositsEnabled() {
-        require(enableDeposits, 'boardroom: deposits are disabled');
+        require(enableDeposits, 'Boardroom: deposits are disabled');
         _;
     }
 
+    /**
+     * Events.
+     */
+
+    event Bonded(address indexed user, uint256 amount);
+    event Unbonded(address indexed user, uint256 amount);
+    event Withdrawn(address indexed user, uint256 amount);
+
+    /**
+     * Constructor.
+     */
     constructor(IERC20 share_, uint256 duration_)
         public
         StakingTimelock(duration_)
     {
         share = share_;
     }
+
+    /**
+     * Getters.
+     */
 
     function totalSupply() public view returns (uint256) {
         return _totalSupply;
@@ -40,6 +64,10 @@ contract Vault is StakingTimelock, Router, Operator {
         return _balances[account];
     }
 
+    /**
+     * Setters.
+     */
+
     function toggleDeposits(bool val) external onlyOwner {
         enableDeposits = val;
     }
@@ -48,18 +76,23 @@ contract Vault is StakingTimelock, Router, Operator {
         share.safeTransfer(msg.sender, share.balanceOf(address(this)));
     }
 
+    /**
+     * Mutations.
+     */
+
     function bond(uint256 amount) public virtual depositsEnabled {
-        require(amount > 0, 'Boardroom: Cannot bond 0');
+        require(amount > 0, 'Boardroom: cannot bond 0');
 
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
+        // NOTE: has to be pre-approved.
         share.safeTransferFrom(msg.sender, address(this), amount);
 
         emit Bonded(msg.sender, amount);
     }
 
     function unbond(uint256 amount) internal virtual {
-        require(amount > 0, 'Boardroom: Cannot unbond 0');
+        require(amount > 0, 'Boardroom: cannot unbond 0');
 
         uint256 directorShare = _balances[msg.sender];
 
@@ -99,8 +132,4 @@ contract Vault is StakingTimelock, Router, Operator {
         uint256 amount = getStakedAmount(msg.sender);
         return _balances[account].sub(amount);
     }
-
-    event Bonded(address indexed user, uint256 amount);
-    event Unbonded(address indexed user, uint256 amount);
-    event Withdrawn(address indexed user, uint256 amount);
 }
