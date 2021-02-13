@@ -8,7 +8,7 @@ import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import './Vault.sol';
 import './VaultBoardroom.sol';
 
-contract VestedBondedBoardroom is VaultBoardroom {
+contract VestedVaultBoardroom is VaultBoardroom {
     // For how much time should vesting take place.
     uint256 public vestFor;
 
