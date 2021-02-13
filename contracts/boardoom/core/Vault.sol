@@ -10,7 +10,7 @@ import '../../owner/Operator.sol';
 import '../../owner/Router.sol';
 import '../../timelock/StakingTimelock.sol';
 
-contract BaseBoardroom is StakingTimelock, Router, Operator {
+contract Vault is StakingTimelock, Router, Operator {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
