@@ -11,7 +11,7 @@ import '../../lib/Safe112.sol';
 import '../../utils/ContractGuard.sol';
 import '../../interfaces/IBasisAsset.sol';
 
-contract Boardroom is ContractGuard {
+contract VaultBoardroom is ContractGuard {
     using Safe112 for uint112;
     using Address for address;
     using SafeMath for uint256;
