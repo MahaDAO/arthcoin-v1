@@ -34,6 +34,14 @@ contract Vault is StakingTimelock, Router, Operator {
         _;
     }
 
+    modifier stakerExists {
+        require(
+            vault.balanceOf(msg.sender) > 0,
+            'Boardroom: The director does not exist'
+        );
+        _;
+    }
+
     /**
      * Events.
      */
@@ -64,6 +72,15 @@ contract Vault is StakingTimelock, Router, Operator {
         return _balances[account];
     }
 
+    function balanceWithoutBonded(address account)
+        public
+        view
+        returns (uint256)
+    {
+        uint256 amount = getStakedAmount(msg.sender);
+        return _balances[account].sub(amount);
+    }
+
     /**
      * Setters.
      */
@@ -91,7 +108,7 @@ contract Vault is StakingTimelock, Router, Operator {
         emit Bonded(msg.sender, amount);
     }
 
-    function unbond(uint256 amount) internal virtual {
+    function unbond(uint256 amount) internal virtual stakerExists {
         require(amount > 0, 'Boardroom: cannot unbond 0');
 
         uint256 directorShare = _balances[msg.sender];
@@ -106,7 +123,7 @@ contract Vault is StakingTimelock, Router, Operator {
         emit Unbonded(msg.sender, amount);
     }
 
-    function withdraw() internal checkLockDuration {
+    function withdraw() internal stakerExists checkLockDuration {
         uint256 directorShare = _balances[msg.sender];
         uint256 amount = getStakedAmount(msg.sender);
 
@@ -122,14 +139,5 @@ contract Vault is StakingTimelock, Router, Operator {
         _updateStakerDetails(msg.sender, block.timestamp, 0);
 
         emit Withdrawn(msg.sender, amount);
-    }
-
-    function balanceWithoutBonded(address account)
-        public
-        view
-        returns (uint256)
-    {
-        uint256 amount = getStakedAmount(msg.sender);
-        return _balances[account].sub(amount);
     }
 }
