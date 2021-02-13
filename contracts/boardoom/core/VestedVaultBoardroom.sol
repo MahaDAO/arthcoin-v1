@@ -64,7 +64,8 @@ contract VestedBondedBoardroom is VaultBoardroom {
             );
 
         return
-            balanceWithoutBonded(director)
+            vault
+                .balanceWithoutBonded(director)
                 .mul(latestRPS.sub(storedRPS))
                 .div(1e18)
                 .add(rewardEarned);

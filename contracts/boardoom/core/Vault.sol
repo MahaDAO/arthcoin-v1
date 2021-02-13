@@ -91,6 +91,15 @@ contract Vault is StakingTimelock, Router, Operator {
         emit Withdrawn(msg.sender, amount);
     }
 
+    function balanceWithoutBonded(address account)
+        public
+        view
+        returns (uint256)
+    {
+        uint256 amount = getStakedAmount(msg.sender);
+        return _balances[account].sub(amount);
+    }
+
     event Bonded(address indexed user, uint256 amount);
     event Unbonded(address indexed user, uint256 amount);
     event Withdrawn(address indexed user, uint256 amount);

@@ -120,7 +120,8 @@ contract VaultBoardroom is ContractGuard {
         uint256 storedRPS = getLastSnapshotOf(director).rewardPerShare;
 
         return
-            balanceWithoutBonded(director)
+            vault
+                .balanceWithoutBonded(director)
                 .mul(latestRPS.sub(storedRPS))
                 .div(1e18)
                 .add(directors[director].rewardEarned);
@@ -152,12 +153,14 @@ contract VaultBoardroom is ContractGuard {
     {
         require(amount > 0, 'Boardroom: Cannot allocate 0');
 
+        uint256 totalSupply = vault.totalSupply();
+
         // 'Boardroom: Cannot allocate when totalSupply is 0'
-        if (totalSupply() == 0) return;
+        if (totalSupply == 0) return;
 
         // Create & add new snapshot
         uint256 prevRPS = getLatestSnapshot().rewardPerShare;
-        uint256 nextRPS = prevRPS.add(amount.mul(1e18).div(totalSupply()));
+        uint256 nextRPS = prevRPS.add(amount.mul(1e18).div(totalSupply);
 
         BoardSnapshot memory newSnapshot =
             BoardSnapshot({
