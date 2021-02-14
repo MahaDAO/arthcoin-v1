@@ -72,12 +72,12 @@ contract VestedVaultBoardroom is VaultBoardroom {
 
             uint256 latestFundingTime =
                 boardHistory[boardHistory.length - 1].time;
-            uint256 previousFundingTime =
-                (
-                    boardHistory.length > 1
-                        ? boardHistory[boardHistory.length - 2].time
-                        : 0
-                );
+            // uint256 previousFundingTime =
+            //     (
+            //         boardHistory.length > 1
+            //             ? boardHistory[boardHistory.length - 2].time
+            //             : 0
+            //     );
 
             // If rewards are updated before epoch start of the current,
             // then we mark claimable rewards as pending and set the
