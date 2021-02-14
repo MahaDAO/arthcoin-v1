@@ -143,6 +143,7 @@ contract VestedVaultBoardroom is VaultBoardroom {
 
             // Calculate reward to be given assuming msg.sender has not claimed in current
             // vesting cycle(8hr cycle).
+            // NOTE: here we are multiplying by 1e18 to get precise decimal values.
             uint256 timelyRewardRatio =
                 timeSinceLastFunded.mul(1e18).div(vestFor);
 
@@ -162,10 +163,13 @@ contract VestedVaultBoardroom is VaultBoardroom {
                 */
                 uint256 timeSinceLastClaimed =
                     block.timestamp.sub(directors[msg.sender].lastClaimedOn);
+
+                // NOTE: here we are multiplying by 1e18 to get precise decimal values.
                 timelyRewardRatio = timeSinceLastClaimed.mul(1e18).div(vestFor);
             }
 
             // Update reward as per vesting.
+            // NOTE: here we are nullyfying the multplication by 1e18 effect on the top.
             reward = timelyRewardRatio.mul(reward).div(1e18);
 
             directors[msg.sender].rewardEarned = (

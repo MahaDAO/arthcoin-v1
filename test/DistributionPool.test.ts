@@ -115,7 +115,7 @@ describe('Distribution pools', () => {
         'Ownable: caller is not the owner'
       );
 
-      await expect(pool.connect(ant).refundStakedToken()).to.revertedWith(
+      await expect(pool.connect(ant).refundToken()).to.revertedWith(
         'Ownable: caller is not the owner'
       );
     });
@@ -162,7 +162,7 @@ describe('Distribution pools', () => {
       expect(pool.connect(operator).startPool())
       expect(pool.connect(operator).endPool())
       expect(pool.connect(operator).refundRewardToken())
-      expect(pool.connect(operator).refundStakedToken())
+      expect(pool.connect(operator).refundToken())
     });
   });
 
@@ -418,14 +418,14 @@ describe('Distribution pools', () => {
       });
 
       it('should not work if not a owner', async () => {
-        await expect(pool.connect(ant).refundStakedToken()).to.revertedWith('Ownable: caller is not the owner');
+        await expect(pool.connect(ant).refundToken()).to.revertedWith('Ownable: caller is not the owner');
       });
 
       it('should work if owner', async () => {
         expect(await dai.connect(operator).balanceOf(ant.address)).to.lt(beforeStakingAntDaiBalance);
         expect(await dai.connect(operator).balanceOf(whale.address)).to.lt(beforeStakingWhaleDaiBalance);
 
-        await pool.connect(operator).refundStakedToken();
+        await pool.connect(operator).refundToken();
 
         expect(await dai.connect(operator).balanceOf(ant.address)).to.eq(beforeStakingAntDaiBalance);
         expect(await dai.connect(operator).balanceOf(whale.address)).to.eq(beforeStakingWhaleDaiBalance);

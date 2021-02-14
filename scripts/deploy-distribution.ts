@@ -24,7 +24,11 @@ async function main() {
 
   const decimals = BigNumber.from(10).pow(18);
   const POOL_START_DATE = Math.floor(new Date("Fri Jan 16 2021 15:00:10 GMT+0000").getTime() / 1000)
-  MAHADAIARTHLPTokenPool.connect(operator).deploy('0xb4d930279552397bba2ee473229f89ec245bc365', '0x35b6f9e6300aa6c722ea189e096b0b073025806f', POOL_START_DATE);
+  MAHADAIARTHLPTokenPool.connect(operator).deploy(
+    '0xb4d930279552397bba2ee473229f89ec245bc365',
+    '0x35b6f9e6300aa6c722ea189e096b0b073025806f',
+    POOL_START_DATE
+  );
 }
 
 main()

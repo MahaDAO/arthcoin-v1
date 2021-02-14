@@ -2,23 +2,16 @@
 
 pragma solidity ^0.6.10;
 
-import '@openzeppelin/contracts/math/Math.sol';
-import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
-import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
-
-import '../interfaces/ICustomERC20.sol';
-import '../interfaces/IUniswapV2Factory.sol';
-
+import {Math} from '@openzeppelin/contracts/math/Math.sol';
+import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
+import {ICustomERC20} from '../interfaces/ICustomERC20.sol';
 import {IUniswapOracle} from '../interfaces/IUniswapOracle.sol';
 import {IUniswapV2Router02} from '../interfaces/IUniswapV2Router02.sol';
 import {IBoardroom} from '../interfaces/IBoardroom.sol';
-import {IBasisAsset} from '../interfaces/IBasisAsset.sol';
 import {ISimpleERCFund} from '../interfaces/ISimpleERCFund.sol';
 import {Operator} from '../owner/Operator.sol';
 import {Epoch} from '../utils/Epoch.sol';
-import {ContractGuard} from '../utils/ContractGuard.sol';
-
-import './TreasurySetters.sol';
+import {TreasurySetters} from './TreasurySetters.sol';
 
 /**
  * @title ARTH Treasury contract
@@ -37,11 +30,12 @@ contract TreasuryHelpers is TreasurySetters {
         address _arthMahaOracle,
         address _seigniorageOracle,
         address _gmuOracle,
-        address _arthUniLiquidityBoardroom,
-        address _arthMlpLiquidityBoardroom,
-        address _mahaLiquidityBoardroom,
-        address _arthBoardroom,
-        address _fund,
+        // address _arthUniLiquidityBoardroom,
+        // address _arthMlpLiquidityBoardroom,
+        // address _mahaLiquidityBoardroom,
+        // address _arthBoardroom,
+        // address _fund,
+        // address _rainyDayFund,
         address _uniswapRouter,
         uint256 _startTime,
         uint256 _period,
@@ -60,10 +54,11 @@ contract TreasuryHelpers is TreasurySetters {
         gmuOracle = _gmuOracle;
 
         // funds
-        arthLiquidityUniBoardroom = _arthUniLiquidityBoardroom;
-        arthLiquidityMlpBoardroom = _arthMlpLiquidityBoardroom;
-        arthBoardroom = _arthBoardroom;
-        ecosystemFund = _fund;
+        // arthLiquidityUniBoardroom = _arthUniLiquidityBoardroom;
+        // arthLiquidityMlpBoardroom = _arthMlpLiquidityBoardroom;
+        // arthBoardroom = _arthBoardroom;
+        // ecosystemFund = _fund;
+        // rainyDayFund = _rainyDayFund;
 
         // others
         uniswapRouter = _uniswapRouter;
@@ -75,6 +70,21 @@ contract TreasuryHelpers is TreasurySetters {
         _;
 
         _updateCashPrice();
+    }
+
+    function setBoardrooms(
+        address _arthUniLiquidityBoardroom,
+        address _arthMlpLiquidityBoardroom,
+        address _mahaLiquidityBoardroom,
+        address _arthBoardroom,
+        address _fund
+    ) public onlyOwner {
+        // funds
+        arthLiquidityUniBoardroom = _arthUniLiquidityBoardroom;
+        arthLiquidityMlpBoardroom = _arthMlpLiquidityBoardroom;
+        mahaLiquidityBoardroom = _mahaLiquidityBoardroom;
+        arthBoardroom = _arthBoardroom;
+        ecosystemFund = _fund;
     }
 
     function migrate(address target) public onlyOperator checkOperator {
@@ -109,21 +119,43 @@ contract TreasuryHelpers is TreasurySetters {
         emit Migration(target);
     }
 
-    function _allocateToEcosystemFund(uint256 seigniorage)
-        internal
-        returns (uint256)
-    {
-        uint256 ecosystemReserve =
-            seigniorage.mul(ecosystemFundAllocationRate).div(100);
-        if (ecosystemReserve > 0) {
-            ICustomERC20(cash).safeApprove(ecosystemFund, ecosystemReserve);
-            ISimpleERCFund(ecosystemFund).deposit(
+    function initializeFunds(
+        // boardrooms
+        address _arthUniLiquidityBoardroom,
+        address _arthMlpLiquidityBoardroom,
+        address _mahaLiquidityBoardroom,
+        address _arthBoardroom,
+        // ecosystem fund
+        address _fund,
+        address _rainyDayFund
+    ) public onlyOwner {
+        setAllFunds(
+            // boardrooms
+            _arthUniLiquidityBoardroom,
+            _arthMlpLiquidityBoardroom,
+            _mahaLiquidityBoardroom,
+            _arthBoardroom,
+            // ecosystem fund
+            _fund,
+            _rainyDayFund
+        );
+    }
+
+    function _allocateToFund(
+        address fund,
+        uint256 rate,
+        uint256 seigniorage
+    ) internal returns (uint256) {
+        uint256 allocation = seigniorage.mul(rate).div(100);
+        if (allocation > 0) {
+            ICustomERC20(cash).safeApprove(fund, allocation);
+            ISimpleERCFund(fund).deposit(
                 cash,
-                ecosystemReserve,
-                'Treasury: Ecosystem Seigniorage Allocation'
+                allocation,
+                'Treasury: Fund Seigniorage Allocation'
             );
-            emit PoolFunded(ecosystemFund, ecosystemReserve);
-            return ecosystemReserve;
+            emit PoolFunded(fund, allocation);
+            return allocation;
         }
 
         return 0;
@@ -180,70 +212,50 @@ contract TreasuryHelpers is TreasurySetters {
      * Helper function to allocate seigniorage to boardooms. Seigniorage is allocated
      * after bond token holders have been paid first.
      */
+    function _allocateToBoardroom(
+        address boardroom,
+        uint256 rate,
+        uint256 seigniorage
+    ) internal {
+        if (seigniorage == 0) return;
+
+        // Calculate boardroom reserves.
+        uint256 reserve = seigniorage.mul(rate).div(100);
+
+        // arth-dai uniswap lp
+        if (reserve > 0) {
+            ICustomERC20(cash).safeApprove(boardroom, reserve);
+            IBoardroom(boardroom).allocateSeigniorage(reserve);
+            emit PoolFunded(boardroom, reserve);
+        }
+    }
+
     function _allocateToBoardrooms(uint256 boardroomReserve) internal {
         if (boardroomReserve <= 0) return;
 
-        // Calculate boardroom reserves.
-        uint256 arthLiquidityUniBoardroomReserve =
-            boardroomReserve.mul(arthLiquidityUniAllocationRate).div(100);
-        uint256 arthLiquidityMlpBoardroomReserve =
-            boardroomReserve.mul(arthLiquidityMlpAllocationRate).div(100);
-        uint256 arthBoardroomReserve =
-            boardroomReserve.mul(arthBoardroomAllocationRate).div(100);
-        uint256 mahaLiquidityBoardroomReserve =
-            boardroomReserve.mul(mahaLiquidityBoardroomAllocationRate).div(100);
+        _allocateToBoardroom(
+            arthLiquidityUniBoardroom,
+            arthLiquidityUniAllocationRate,
+            boardroomReserve
+        );
 
-        // arth-dai uniswap lp
-        if (arthLiquidityUniBoardroomReserve > 0) {
-            ICustomERC20(cash).safeApprove(
-                arthLiquidityUniBoardroom,
-                arthLiquidityUniBoardroomReserve
-            );
-            IBoardroom(arthLiquidityUniBoardroom).allocateSeigniorage(
-                arthLiquidityUniBoardroomReserve
-            );
-            emit PoolFunded(
-                arthLiquidityUniBoardroom,
-                arthLiquidityUniBoardroomReserve
-            );
-        }
+        _allocateToBoardroom(
+            arthLiquidityMlpBoardroom,
+            arthLiquidityMlpAllocationRate,
+            boardroomReserve
+        );
 
-        // arth-dai mahaswap lp
-        if (arthLiquidityMlpBoardroomReserve > 0) {
-            ICustomERC20(cash).safeApprove(
-                arthLiquidityMlpBoardroom,
-                arthLiquidityMlpBoardroomReserve
-            );
-            IBoardroom(arthLiquidityMlpBoardroom).allocateSeigniorage(
-                arthLiquidityMlpBoardroomReserve
-            );
-            emit PoolFunded(
-                arthLiquidityMlpBoardroom,
-                arthLiquidityMlpBoardroomReserve
-            );
-        }
+        _allocateToBoardroom(
+            arthBoardroom,
+            arthBoardroomAllocationRate,
+            boardroomReserve
+        );
 
-        // arth only lp
-        if (arthBoardroomReserve > 0) {
-            ICustomERC20(cash).safeApprove(arthBoardroom, arthBoardroomReserve);
-            IBoardroom(arthBoardroom).allocateSeigniorage(arthBoardroomReserve);
-            emit PoolFunded(arthBoardroom, arthBoardroomReserve);
-        }
-
-        // maha only lp
-        if (mahaLiquidityBoardroomReserve > 0) {
-            ICustomERC20(cash).safeApprove(
-                mahaLiquidityBoardroom,
-                mahaLiquidityBoardroomReserve
-            );
-            IBoardroom(mahaLiquidityBoardroom).allocateSeigniorage(
-                mahaLiquidityBoardroomReserve
-            );
-            emit PoolFunded(
-                mahaLiquidityBoardroom,
-                mahaLiquidityBoardroomReserve
-            );
-        }
+        _allocateToBoardroom(
+            mahaLiquidityBoardroom,
+            mahaLiquidityBoardroomAllocationRate,
+            boardroomReserve
+        );
     }
 
     /**
@@ -265,7 +277,7 @@ contract TreasuryHelpers is TreasurySetters {
     // GOV
     event Initialized(address indexed executor, uint256 at);
     event Migration(address indexed target);
-    event RedeemedBonds(address indexed from, uint256 amount, bool sellForDai);
+    event RedeemedBonds(address indexed from, uint256 amount);
     event BoughtBonds(
         address indexed from,
         uint256 amountDaiIn,

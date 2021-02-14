@@ -2,17 +2,15 @@
 
 pragma solidity ^0.6.10;
 
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import {Math} from '@openzeppelin/contracts/math/Math.sol';
 
-import '../interfaces/IUniswapOracle.sol';
-import '../interfaces/ISimpleOracle.sol';
-import '../interfaces/IBoardroom.sol';
-import '../interfaces/IBasisAsset.sol';
-import '../interfaces/ISimpleERCFund.sol';
-import './TreasuryState.sol';
-
-import '../interfaces/ICustomERC20.sol';
-import '../interfaces/IUniswapV2Factory.sol';
+import {IUniswapOracle} from '../interfaces/IUniswapOracle.sol';
+import {ISimpleOracle} from '../interfaces/ISimpleOracle.sol';
+import {TreasuryState} from './TreasuryState.sol';
+import {Epoch} from '../utils/Epoch.sol';
+import {ICustomERC20} from '../interfaces/ICustomERC20.sol';
+import {IUniswapV2Factory} from '../interfaces/IUniswapV2Factory.sol';
 import {IUniswapV2Router02} from '../interfaces/IUniswapV2Router02.sol';
 
 abstract contract TreasuryGetters is TreasuryState {
@@ -68,11 +66,13 @@ abstract contract TreasuryGetters is TreasuryState {
         returns (uint256)
     {
         if (price <= cashTargetPrice) return 0; // < $1.00
-        uint256 percentage = getPercentDeviationFromTarget(price);
 
         // cap the max supply increase per epoch to only 30%
         uint256 finalPercentage =
-            Math.min(percentage, maxSupplyIncreasePerEpoch);
+            Math.min(
+                getPercentDeviationFromTarget(price),
+                maxSupplyIncreasePerEpoch
+            );
 
         // take into consideration uniswap liq. if flag is on, ie how much liquidity is there in the ARTH uniswap pool
         uint256 toMint = arthCirculatingSupply().mul(finalPercentage).div(100);
@@ -87,10 +87,8 @@ abstract contract TreasuryGetters is TreasuryState {
     }
 
     function estimateBondsToIssue(uint256 price) public view returns (uint256) {
-        uint256 bondPurchasePrice = getBondPurchasePrice();
-
-        // check if we are in contract mode.
-        if (price > bondPurchasePrice) return 0; // <= $0.95?
+        // check if we are in contraction mode.
+        if (price > getBondPurchasePrice()) return 0; // <= $0.95
 
         // in contraction mode -> issue bonds.
         // set a limit to how many bonds are there.
