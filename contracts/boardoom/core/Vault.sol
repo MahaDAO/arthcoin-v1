@@ -89,7 +89,7 @@ contract Vault is StakingTimelock, Router, Operator {
         enableDeposits = val;
     }
 
-    function refund(bool val) external onlyOwner {
+    function refund() external onlyOwner {
         share.safeTransfer(msg.sender, share.balanceOf(address(this)));
     }
 
@@ -108,7 +108,7 @@ contract Vault is StakingTimelock, Router, Operator {
         emit Bonded(msg.sender, amount);
     }
 
-    function unbond(uint256 amount) internal virtual stakerExists {
+    function unbond(uint256 amount) public virtual stakerExists {
         require(amount > 0, 'Boardroom: cannot unbond 0');
 
         uint256 directorShare = _balances[msg.sender];
@@ -123,7 +123,7 @@ contract Vault is StakingTimelock, Router, Operator {
         emit Unbonded(msg.sender, amount);
     }
 
-    function withdraw() internal stakerExists checkLockDuration {
+    function withdraw() public stakerExists checkLockDuration {
         uint256 directorShare = _balances[msg.sender];
         uint256 amount = getStakedAmount(msg.sender);
 

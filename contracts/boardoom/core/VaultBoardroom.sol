@@ -9,9 +9,10 @@ import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import './Vault.sol';
 import '../../lib/Safe112.sol';
 import '../../utils/ContractGuard.sol';
+import {Operator} from '../../owner/Operator.sol';
 import '../../interfaces/IBasisAsset.sol';
 
-contract VaultBoardroom is ContractGuard {
+contract VaultBoardroom is ContractGuard, Operator {
     using Safe112 for uint112;
     using Address for address;
     using SafeMath for uint256;
@@ -178,7 +179,7 @@ contract VaultBoardroom is ContractGuard {
 
         // Create & add new snapshot
         uint256 prevRPS = getLatestSnapshot().rewardPerShare;
-        uint256 nextRPS = prevRPS.add(amount.mul(1e18).div(totalSupply);
+        uint256 nextRPS = prevRPS.add(amount.mul(1e18).div(totalSupply));
 
         BoardSnapshot memory newSnapshot =
             BoardSnapshot({

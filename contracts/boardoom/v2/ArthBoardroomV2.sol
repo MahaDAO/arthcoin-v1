@@ -2,12 +2,12 @@
 
 pragma solidity ^0.6.12;
 
-import '../core/VestedBondedBoardroom.sol';
+import '../core/VestedVaultBoardroom.sol';
 
-contract ArthBoardroomV2 is VestedBondedBoardroom {
+contract ArthBoardroomV2 is VestedVaultBoardroom {
     constructor(
-        IERC20 _cash,
-        uint256 _duration,
-        uint256 _vestFor
-    ) public VestedBondedBoardroom(_cash, _cash, _duration, _vestFor) {}
+        IERC20 cash_,
+        Vault vault_,
+        uint256 vestFor_
+    ) public VestedVaultBoardroom(cash_, vault_, vestFor_) {}
 }

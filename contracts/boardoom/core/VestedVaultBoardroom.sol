@@ -25,7 +25,7 @@ contract VestedVaultBoardroom is VaultBoardroom {
         Vault vault_,
         uint256 vestFor_
     ) public VaultBoardroom(cash_, vault_) {
-        vestFor = _vestFor;
+        vestFor = vestFor_;
     }
 
     /**
