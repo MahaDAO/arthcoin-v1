@@ -238,6 +238,11 @@ contract Treasury is TreasuryHelpers {
                 if (getCurrentEpoch().mod(59) == 0)
                     contractionRewardGivenThisMonth = 0;
 
+                if (
+                    contractionRewardGivenThisMonth >=
+                    maxContractionRewardPerMonth
+                ) return; // just advance the epoch.
+
                 uint256 contractionRewardToGive =
                     Math.min(
                         // Contraction Reward left this epoch.
