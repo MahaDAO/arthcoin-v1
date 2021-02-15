@@ -209,6 +209,58 @@ contract TreasuryHelpers is TreasurySetters {
     }
 
     /**
+     * Helper function to allocate contraction seigniorage to a boardoom.
+     */
+    function _allocateContractionRewardToBoardroom(
+        address boardroom,
+        uint256 rate,
+        uint256 seigniorage
+    ) internal {
+        if (seigniorage == 0) return;
+
+        // Calculate boardroom reserves.
+        uint256 reserve = seigniorage.mul(rate).div(100);
+
+        // arth-dai uniswap lp
+        if (reserve > 0) {
+            ICustomERC20(share).safeApprove(boardroom, reserve);
+            IBoardroom(boardroom).allocateSeigniorage(reserve);
+
+            emit PoolFunded(boardroom, reserve);
+        }
+    }
+
+    function _allocateContractionRewardToBoardrooms(uint256 boardroomReserve)
+        internal
+    {
+        if (boardroomReserve <= 0) return;
+
+        _allocateContractionRewardToBoardroom(
+            arthLiquidityUniBoardroom,
+            arthLiquidityUniAllocationRate,
+            boardroomReserve
+        );
+
+        _allocateContractionRewardToBoardroom(
+            arthLiquidityMlpBoardroom,
+            arthLiquidityMlpAllocationRate,
+            boardroomReserve
+        );
+
+        _allocateContractionRewardToBoardroom(
+            arthBoardroom,
+            arthBoardroomAllocationRate,
+            boardroomReserve
+        );
+
+        _allocateContractionRewardToBoardroom(
+            mahaLiquidityBoardroom,
+            mahaLiquidityBoardroomAllocationRate,
+            boardroomReserve
+        );
+    }
+
+    /**
      * Helper function to allocate seigniorage to boardooms. Seigniorage is allocated
      * after bond token holders have been paid first.
      */

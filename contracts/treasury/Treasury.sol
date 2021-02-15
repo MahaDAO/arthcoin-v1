@@ -5,9 +5,11 @@ pragma solidity ^0.6.10;
 import {Math} from '@openzeppelin/contracts/math/Math.sol';
 import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
-import {
-    ReentrancyGuard
-} from '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
+// import {
+//     ReentrancyGuard
+// } from '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
+
+import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
 
 import {ICustomERC20} from '../interfaces/ICustomERC20.sol';
 import {IUniswapV2Factory} from '../interfaces/IUniswapV2Factory.sol';
@@ -223,6 +225,38 @@ contract Treasury is TreasuryHelpers {
 
         // update the bond limits
         _updateConversionLimit(cash12hPrice);
+
+        // Check if we are below the peg and in contraction or not.
+        if (cash12hPrice <= getBondPurchasePrice()) {
+            // Check if the current epoch is beginning of a new month or not.
+            // If it is then we assign reset the reward given during contraction to 0.
+            // NOTE: we divide by 59 since epoch numbering starts with 0.
+            if (getCurrentEpoch().mod(59) == 0)
+                contractionRewardGivenThisMonth = 0;
+
+            uint256 contractionRewardToGive =
+                Math.min(
+                    // Contraction Reward left this epoch.
+                    maxContractionRewardPerMonth.sub(
+                        contractionRewardGivenThisMonth
+                    ),
+                    // NOTE: mul and div by 1e18 for `possible` precision loss.
+                    maxContractionRewardPerMonth
+                        .mul(1e18)
+                        .div(12 hours)
+                        .div(30 days)
+                        .div(1e18) // Reward per epoch.
+                );
+
+            // Allocate the appropriate contraction reward to boardrooms.
+            _allocateContractionRewardToBoardrooms(contractionRewardToGive);
+
+            // Update the reward given this month.
+            contractionRewardGivenThisMonth = contractionRewardGivenThisMonth
+                .add(contractionRewardToGive);
+
+            return;
+        }
 
         if (cash12hPrice <= cashTargetPrice) {
             return; // just advance epoch instead revert

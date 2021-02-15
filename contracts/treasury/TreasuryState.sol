@@ -100,6 +100,11 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     // deducted to pay for stability fees.
     uint256 public stabilityFee = 1; // IN %;
 
+    // max amount of maha's to allocate to the boardrooms per month.
+    uint256 maxContractionRewardPerMonth = 10000;
+    // amount of maha rewarded this month.
+    uint256 contractionRewardGivenThisMonth = 0;
+
     // wut? algo coin surprise sheeet?
     bool public enableSurprise = false;
 
