@@ -226,40 +226,42 @@ contract Treasury is TreasuryHelpers {
         // update the bond limits
         _updateConversionLimit(cash12hPrice);
 
-        // Check if we are below the peg and in contraction or not.
-        if (cash12hPrice <= getBondPurchasePrice()) {
-            // Check if the current epoch is beginning of a new month or not.
-            // If it is then we assign reset the reward given during contraction to 0.
-            // NOTE: we divide by 59 since epoch numbering starts with 0.
-            if (getCurrentEpoch().mod(59) == 0)
-                contractionRewardGivenThisMonth = 0;
-
-            uint256 contractionRewardToGive =
-                Math.min(
-                    // Contraction Reward left this epoch.
-                    maxContractionRewardPerMonth.sub(
-                        contractionRewardGivenThisMonth
-                    ),
-                    // NOTE: mul and div by 1e18 for `possible` precision loss.
-                    maxContractionRewardPerMonth
-                        .mul(1e18)
-                        .div(getPeriod())
-                        .div(30 days)
-                        .div(1e18) // Reward per epoch.
-                );
-
-            // Allocate the appropriate contraction reward to boardrooms.
-            _allocateContractionRewardToBoardrooms(contractionRewardToGive);
-
-            // Update the reward given this month.
-            contractionRewardGivenThisMonth = contractionRewardGivenThisMonth
-                .add(contractionRewardToGive);
-
-            return;
-        }
-
+        // Check if we are bloew the peg.
         if (cash12hPrice <= cashTargetPrice) {
-            return; // just advance epoch instead revert
+            // Check if we are below the peg and in contraction or not.
+            // Should we use bond purchase price or target price?
+            if (cash12hPrice <= getBondPurchasePrice()) {
+                // Check if the current epoch is beginning of a new month or not.
+                // If it is then we assign reset the reward given during contraction to 0.
+                // There's 12hr's epoch and 30 days in a month, hence we have 60 epochs/month.
+                // NOTE: we divide by 59 since epoch numbering starts with 0.
+                if (getCurrentEpoch().mod(59) == 0)
+                    contractionRewardGivenThisMonth = 0;
+
+                uint256 contractionRewardToGive =
+                    Math.min(
+                        // Contraction Reward left this epoch.
+                        maxContractionRewardPerMonth.sub(
+                            contractionRewardGivenThisMonth
+                        ),
+                        // NOTE: mul and div by 1e18 for `possible` precision loss.
+                        maxContractionRewardPerMonth
+                            .mul(1e18)
+                            .div(12 hours)
+                            .div(30 days)
+                            .div(1e18) // Reward per epoch per month.
+                    );
+
+                // Allocate the appropriate contraction reward to boardrooms.
+                _allocateContractionRewardToBoardrooms(contractionRewardToGive);
+
+                // Update the reward given this month.
+                contractionRewardGivenThisMonth = contractionRewardGivenThisMonth
+                    .add(contractionRewardToGive);
+            }
+
+            // If contraction rewards are not applicable, then just advance epoch instead revert.
+            return;
         }
 
         if (cash12hPrice <= getExpansionLimitPrice()) {
