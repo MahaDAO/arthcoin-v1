@@ -74,6 +74,10 @@ abstract contract TreasurySetters is TreasuryGetters {
         enableSurprise = val;
     }
 
+    function setMaxContractionRewardPerMonth(uint256 amount) public onlyOwner {
+        maxContractionRewardPerMonth = amount;
+    }
+
     function setSafetyRegion(uint256 rate) public onlyOwner returns (uint256) {
         require(rate <= 100, 'rate >= 0');
         safetyRegion = rate;
