@@ -445,7 +445,7 @@ describe('Treasury', () => {
             .div(100);
           expectedSeigniorage = expectedSeigniorage.sub(expectedFundReserve)
 
-          const expectedRainyDayReserve = expectedSeigniorage
+          const expectedRainyDayReserve = mintedSeigniorage
             .mul(await treasury.rainyDayFundAllocationRate())
             .div(100);
           expectedSeigniorage = expectedSeigniorage.sub(expectedRainyDayReserve)
@@ -1001,6 +1001,11 @@ describe('Treasury', () => {
   })
 
   describe('estimateBondsToIssue with uniswap liq.', () => {
+    beforeEach('disable uniswap liq into consideration', async () => {
+      // Wait til first epoch.
+      await treasury.connect(operator).setConsiderUniswapLiquidity(true);
+    });
+
     it('at 1$ a we issue 0 ARTHB', async () => {
       const price = utils.parseEther('10').div(10)
       await expect(await treasury.estimateBondsToIssue(price)).to.be.eq(0);
@@ -1340,6 +1345,11 @@ describe('Treasury', () => {
       });
 
       describe('#buyBonds considering uniswpa liq.', () => {
+        beforeEach('disable uniswap liq into consideration', async () => {
+          // Wait til first epoch.
+          await treasury.connect(operator).setConsiderUniswapLiquidity(true);
+        });
+
         it('should not work if cash price < targetPrice and price > bondPurchasePrice', async () => {
           const cashPrice = ETH.mul(99).div(100); // $0.99
           await oracle.setPrice(cashPrice);
