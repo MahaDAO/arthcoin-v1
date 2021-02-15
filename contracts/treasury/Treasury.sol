@@ -243,7 +243,7 @@ contract Treasury is TreasuryHelpers {
                     // NOTE: mul and div by 1e18 for `possible` precision loss.
                     maxContractionRewardPerMonth
                         .mul(1e18)
-                        .div(12 hours)
+                        .div(getPeriod())
                         .div(30 days)
                         .div(1e18) // Reward per epoch.
                 );
