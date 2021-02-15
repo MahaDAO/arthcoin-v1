@@ -445,6 +445,11 @@ describe('Treasury', () => {
             .div(100);
           expectedSeigniorage = expectedSeigniorage.sub(expectedFundReserve)
 
+          const expectedRainyDayReserve = expectedSeigniorage
+            .mul(await treasury.rainyDayFundAllocationRate())
+            .div(100);
+          expectedSeigniorage = expectedSeigniorage.sub(expectedRainyDayReserve)
+
           const expectedTreasuryReserve = bigmin(
             expectedSeigniorage.mul(await treasury.bondSeigniorageRate()).div(100),
             (await bond.totalSupply()).sub(treasuryHoldings)
@@ -465,6 +470,11 @@ describe('Treasury', () => {
           }
 
           if (expectedFundReserve.gt(ZERO)) {
+            await expect(new Promise((resolve) => resolve(allocationResult)))
+              .to.emit(treasury, 'PoolFunded')
+          }
+
+          if (expectedRainyDayReserve.gt(ZERO)) {
             await expect(new Promise((resolve) => resolve(allocationResult)))
               .to.emit(treasury, 'PoolFunded')
           }
@@ -499,6 +509,7 @@ describe('Treasury', () => {
           }
 
           expect(await cash.balanceOf(developmentFund.address)).to.eq(expectedFundReserve);
+          expect(await cash.balanceOf(rainyDayFund.address)).to.eq(expectedFundReserve);
           expect(await treasury.getReserve()).to.eq(expectedTreasuryReserve);
           expect(await cash.balanceOf(arthBoardroom.address)).to.eq(
             expectedArthBoardroomReserve
@@ -605,8 +616,8 @@ describe('Treasury', () => {
 
           expect(seigniorage.eq(finalSeigniorageToMint))
 
-          const expectedTreasuryReserve = bigmin(finalSeigniorageToMint.mul(95).div(100), (await bond.totalSupply()).sub(treasuryHoldings));
-          const expectedSeignorageForAllBoardrooms = finalSeigniorageToMint.mul(5).div(100);
+          const expectedTreasuryReserve = bigmin(finalSeigniorageToMint.mul(90).div(100), (await bond.totalSupply()).sub(treasuryHoldings));
+          const expectedSeignorageForAllBoardrooms = finalSeigniorageToMint.mul(10).div(100);
 
           const expectedArthBoardroomReserve = expectedSeignorageForAllBoardrooms.mul(await treasury.arthBoardroomAllocationRate()).div(100);
           const expectedArthLiqBoardroomRes = expectedSeignorageForAllBoardrooms.mul(await treasury.arthLiquidityUniAllocationRate()).div(100);
