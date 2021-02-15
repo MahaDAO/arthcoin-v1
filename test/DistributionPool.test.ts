@@ -111,10 +111,6 @@ describe('Distribution pools', () => {
         'Ownable: caller is not the owner'
       );
 
-      await expect(pool.connect(ant).refundRewardToken()).to.revertedWith(
-        'Ownable: caller is not the owner'
-      );
-
       await expect(pool.connect(ant).refundToken()).to.revertedWith(
         'Ownable: caller is not the owner'
       );
@@ -161,7 +157,6 @@ describe('Distribution pools', () => {
       expect(pool.connect(operator).modifyDuration(5 * 60))
       expect(pool.connect(operator).startPool())
       expect(pool.connect(operator).endPool())
-      expect(pool.connect(operator).refundRewardToken())
       expect(pool.connect(operator).refundToken())
     });
   });
@@ -348,52 +343,10 @@ describe('Distribution pools', () => {
       })
     });
 
-    describe('#refundreward', () => {
-      let beforeStakingAntCashBalance: any;
-      let beforeStakingWhaleCashBalance: any
-
-      beforeEach('advance blocktime', async () => {
-        await dai.connect(operator).mint(ant.address, ETH);
-        await dai.connect(operator).mint(whale.address, ETH);
-
-        beforeStakingAntCashBalance = await cash.balanceOf(ant.address);
-        beforeStakingWhaleCashBalance = await cash.balanceOf(whale.address);
-
-        await dai.connect(ant).approve(pool.address, ETH);
-        await dai.connect(whale).approve(pool.address, ETH);
-
-        await cash.connect(operator).mint(pool.address, ETH.mul(ETH));
-
-        await pool.connect(operator).modifyRewardRate(10);
-
-        await pool.connect(ant).stake(ETH);
-        await pool.connect(whale).stake(ETH);
-      });
-
-      it('should not work if not a owner', async () => {
-        await expect(pool.connect(ant).refundRewardToken()).to.revertedWith('Ownable: caller is not the owner');
-      });
-
-      it('should work if owner', async () => {
-        await pool.connect(ant).getReward();
-        await pool.connect(whale).getReward();
-
-        expect(await cash.connect(operator).balanceOf(ant.address)).to.gt(beforeStakingAntCashBalance);
-        expect(await cash.connect(operator).balanceOf(whale.address)).to.gt(beforeStakingWhaleCashBalance);
-
-        await cash.connect(ant).approve(pool.address, await cash.balanceOf(ant.address))
-        await cash.connect(whale).approve(pool.address, await cash.balanceOf(whale.address))
-
-        await pool.connect(operator).refundRewardToken();
-
-        expect(await cash.connect(operator).balanceOf(ant.address)).to.eq(beforeStakingAntCashBalance);
-        expect(await cash.connect(operator).balanceOf(whale.address)).to.eq(beforeStakingWhaleCashBalance);
-      })
-    });
-
     describe('#refunddeposit', () => {
       let beforeStakingAntDaiBalance: any;
       let beforeStakingWhaleDaiBalance: any
+      let beforeRefundingOperatorBalance: any;
 
       beforeEach('advance blocktime', async () => {
         await dai.connect(operator).mint(ant.address, ETH);
@@ -401,6 +354,7 @@ describe('Distribution pools', () => {
 
         beforeStakingAntDaiBalance = await dai.balanceOf(ant.address);
         beforeStakingWhaleDaiBalance = await dai.balanceOf(whale.address);
+        beforeRefundingOperatorBalance = await dai.balanceOf(operator.address);
 
         await pool.connect(operator).modifyRewardRate(10);
 
@@ -427,8 +381,9 @@ describe('Distribution pools', () => {
 
         await pool.connect(operator).refundToken();
 
-        expect(await dai.connect(operator).balanceOf(ant.address)).to.eq(beforeStakingAntDaiBalance);
-        expect(await dai.connect(operator).balanceOf(whale.address)).to.eq(beforeStakingWhaleDaiBalance);
+        expect(await dai.connect(operator).balanceOf(ant.address)).to.eq(ETH);
+        expect(await dai.connect(operator).balanceOf(whale.address)).to.eq(ETH);
+        expect(await dai.connect(operator).balanceOf(operator.address)).to.eq(beforeRefundingOperatorBalance.add(ETH.mul(2)));
       })
     });
   });
