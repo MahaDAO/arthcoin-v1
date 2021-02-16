@@ -235,7 +235,7 @@ contract Treasury is TreasurySetters {
         cash.mint(address(this), seigniorage);
         emit SeigniorageMinted(seigniorage);
 
-        // send funds to the ecosystem development and raindy fund
+        // send funds to the ecosystem development and rainy day fund
         uint256 ecosystemReserve =
             _allocateToFund(
                 boardroomState.ecosystemFund,
@@ -298,11 +298,7 @@ contract Treasury is TreasurySetters {
         uint256 allocation = seigniorage.mul(rate).div(100);
         if (allocation > 0) {
             cash.approve(address(fund), allocation);
-            fund.deposit(
-                cash,
-                allocation,
-                'Treasury: Fund Seigniorage Allocation'
-            );
+            fund.deposit(cash, allocation, 'Treasury: Fund Allocation');
             emit PoolFunded(address(fund), allocation);
             return allocation;
         }
@@ -427,7 +423,7 @@ contract Treasury is TreasurySetters {
         state.cashToBondConversionLimit = estimateBondsToIssue(cash1hPrice);
     }
 
-    // GOV
+    // events
     event Initialized(address indexed executor, uint256 at);
     event Migration(address indexed target);
     event RedeemedBonds(address indexed from, uint256 amount);
