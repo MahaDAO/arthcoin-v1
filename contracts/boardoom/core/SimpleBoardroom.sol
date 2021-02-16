@@ -4,10 +4,9 @@ pragma solidity ^0.8.0;
 
 import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
 import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
-
 import {SimpleTokenWrapper} from './SimpleTokenWrapper.sol';
-import '../../lib/Safe112.sol';
-import '../../utils/ContractGuard.sol';
+import {Safe112} from '../../lib/Safe112.sol';
+import {ContractGuard} from '../../utils/ContractGuard.sol';
 import {IBasisAsset} from '../../interfaces/IBasisAsset.sol';
 import {StakingTimelock} from '../../timelock/StakingTimelock.sol';
 

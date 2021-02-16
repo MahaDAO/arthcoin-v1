@@ -2,12 +2,12 @@
 
 pragma solidity ^0.8.0;
 
+import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
 import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
-import '../../owner/Operator.sol';
-import '../../owner/Router.sol';
-import '../../timelock/StakingTimelock.sol';
+import {Operator} from '../../owner/Operator.sol';
+import {StakingTimelock} from '../../timelock/StakingTimelock.sol';
 
-abstract contract BaseBoardroom is StakingTimelock, Router, Operator {
+abstract contract BaseBoardroom is StakingTimelock, Operator {
     using SafeMath for uint256;
 
     IERC20 public share;
