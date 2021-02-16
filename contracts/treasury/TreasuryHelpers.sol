@@ -75,19 +75,17 @@ abstract contract TreasuryHelpers is TreasurySetters {
      * TODO: this function needs to be optimised for gas
      */
     function _updateCashPrice() internal {
-        if (oracleState.bondOracle.callable()) {
-            try IUniswapOracle(oracleState.bondOracle).update() {} catch {}
+        if (oracleState.oracle1hrTWAP.callable()) {
+            try IUniswapOracle(oracleState.oracle1hrTWAP).update() {} catch {}
         }
 
-        if (oracleState.seigniorageOracle.callable()) {
-            try
-                IUniswapOracle(oracleState.seigniorageOracle).update()
-            {} catch {}
+        if (oracleState.oracle12hrTWAP.callable()) {
+            try IUniswapOracle(oracleState.oracle12hrTWAP).update() {} catch {}
         }
 
         // TODO: do the same for the gmu oracle as well
-        // if (Epoch(seigniorageOracle).callable()) {
-        //     try IOracle(seigniorageOracle).update() {} catch {}
+        // if (Epoch(oracle12hrTWAP).callable()) {
+        //     try IOracle(oracle12hrTWAP).update() {} catch {}
         // }
 
         state.cashTargetPrice = getGMUOraclePrice();

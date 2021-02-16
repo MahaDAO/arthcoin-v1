@@ -31,10 +31,6 @@ contract Treasury is TreasuryHelpers {
         IBasisAsset _cash,
         IBasisAsset _bond,
         IERC20 _share,
-        // IUniswapOracle _bondOracle,
-        // ISimpleOracle _arthMahaOracle,
-        // IUniswapOracle _seigniorageOracle,
-        // ISimpleOracle _gmuOracle,
         uint256 _startTime,
         uint256 _period,
         uint256 _startEpoch
@@ -44,12 +40,6 @@ contract Treasury is TreasuryHelpers {
         cash = _cash;
         bond = _bond;
         share = _share;
-
-        // // oracles
-        // state.bondOracle = _bondOracle;
-        // state.arthMahaOracle = _arthMahaOracle;
-        // state.seigniorageOracle = _seigniorageOracle;
-        // state.gmuOracle = _gmuOracle;
     }
 
     function initialize() public checkOperator {

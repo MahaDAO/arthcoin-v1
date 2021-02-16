@@ -66,8 +66,8 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     }
 
     struct OracleState {
-        IUniswapOracle bondOracle;
-        IUniswapOracle seigniorageOracle;
+        IUniswapOracle oracle1hrTWAP;
+        IUniswapOracle oracle12hrTWAP;
         ISimpleOracle gmuOracle;
         ISimpleOracle arthMahaOracle;
     }
@@ -109,6 +109,7 @@ abstract contract TreasuryState is ContractGuard, Epoch {
         uint256 _period,
         uint256 _startEpoch
     ) Epoch(_period, _startTime, _startEpoch) {
+        // init defaults
         boardroomState.arthBoardroomAllocationRate = 20;
         boardroomState.arthLiquidityMlpAllocationRate = 70;
         boardroomState.mahaLiquidityBoardroomAllocationRate = 10;

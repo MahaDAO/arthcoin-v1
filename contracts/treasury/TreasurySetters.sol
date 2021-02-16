@@ -121,19 +121,23 @@ abstract contract TreasurySetters is TreasuryGetters {
     }
 
     function setOracles(
-        IUniswapOracle _bondOracle,
-        IUniswapOracle _seigniorageOracle,
+        IUniswapOracle _oracle1hrTWAP,
+        IUniswapOracle _oracle12hrTWAP,
         ISimpleOracle _gmuOracle,
         ISimpleOracle _arthMahaOracle
     ) public onlyOwner {
-        oracleState.bondOracle = _bondOracle;
-        oracleState.seigniorageOracle = _seigniorageOracle;
+        oracleState.oracle1hrTWAP = _oracle1hrTWAP;
+        oracleState.oracle12hrTWAP = _oracle12hrTWAP;
         oracleState.gmuOracle = _gmuOracle;
         oracleState.arthMahaOracle = _arthMahaOracle;
     }
 
-    function setUniswapRouter(IUniswapV2Router02 val) public onlyOwner {
+    function setUniswapRouter(IUniswapV2Router02 val, address pair)
+        public
+        onlyOwner
+    {
         state.uniswapRouter = val;
+        state.uniswapLiquidityPair = pair;
     }
 
     function setStabilityFee(uint256 _stabilityFee) public onlyOwner {

@@ -40,12 +40,11 @@ abstract contract TreasuryGetters is TreasuryState {
     }
 
     function get12hrTWAPOraclePrice() public view returns (uint256) {
-        return
-            TreasuryLibrary.getCashPrice(oracleState.seigniorageOracle, cash);
+        return TreasuryLibrary.getCashPrice(oracleState.oracle12hrTWAP, cash);
     }
 
     function get1hrTWAPOraclePrice() public view returns (uint256) {
-        return TreasuryLibrary.getCashPrice(oracleState.bondOracle, cash);
+        return TreasuryLibrary.getCashPrice(oracleState.oracle1hrTWAP, cash);
     }
 
     function arthCirculatingSupply() public view returns (uint256) {

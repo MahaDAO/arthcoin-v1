@@ -23,7 +23,7 @@ contract MockUniswapOracle is IUniswapOracle {
     }
 
     // epoch
-    function callable() public view override returns (bool) {
+    function callable() public pure override returns (bool) {
         return true;
     }
 
