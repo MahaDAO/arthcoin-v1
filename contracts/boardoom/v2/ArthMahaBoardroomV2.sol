@@ -4,7 +4,7 @@ pragma solidity ^0.6.12;
 
 import '../core/VestedVaultBoardroom.sol';
 
-contract ArthBoardroomV2 is VestedVaultBoardroom {
+contract ArthMahaBoardroomV2 is VestedVaultBoardroom {
     constructor(
         IERC20 cash_,
         Vault vault_,
