@@ -50,13 +50,6 @@ library TreasuryLibrary {
         // when we are in expansion mode. ideally 90% of new seigniorate is
         // given to bond token holders.
         uint256 bondSeigniorageRate; // in %
-        // stability fee is a special fee charged by the protocol in MAHA tokens
-        // whenever a person is going to redeem his/her bonds. the fee is charged
-        // basis how much ARTHB is being redeemed.
-        //
-        // eg: a 1% fee means that while redeeming 100 ARTHB, 1 ARTH worth of MAHA is
-        // deducted to pay for stability fees.
-        uint256 stabilityFee; // IN %;
         // amount of maha rewarded per epoch.
         uint256 contractionRewardPerEpoch;
         // wut? algo coin surprise sheeet?

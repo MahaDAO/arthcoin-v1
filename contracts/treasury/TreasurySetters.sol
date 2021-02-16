@@ -139,9 +139,4 @@ abstract contract TreasurySetters is TreasuryGetters {
         state.uniswapRouter = val;
         state.uniswapLiquidityPair = pair;
     }
-
-    function setStabilityFee(uint256 _stabilityFee) public onlyOwner {
-        require(_stabilityFee <= 100, 'rate >= 0');
-        state.stabilityFee = _stabilityFee;
-    }
 }

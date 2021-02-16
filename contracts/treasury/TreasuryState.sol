@@ -47,7 +47,6 @@ abstract contract TreasuryState is ContractGuard, Epoch {
         state.maxSupplyIncreasePerEpoch = 10;
         state.migrated = false;
         state.safetyRegion = 5;
-        state.stabilityFee = 1;
     }
 
     modifier checkMigration {

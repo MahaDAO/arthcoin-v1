@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 
 import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
-import '@openzeppelin/contracts/contracts/access/Ownable.sol';
+import {Ownable} from '@openzeppelin/contracts/contracts/access/Ownable.sol';
 
 abstract contract StakingTimelock is Ownable {
     using SafeMath for uint256;
