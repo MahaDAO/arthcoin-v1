@@ -19,7 +19,7 @@ contract Vault is StakingTimelock, Operator {
      */
 
     // The staked token.
-    IERC20 public share;
+    IERC20 public token;
 
     uint256 internal _totalSupply;
     bool public enableDeposits = true;
@@ -49,13 +49,9 @@ contract Vault is StakingTimelock, Operator {
     /**
      * Constructor.
      */
-    constructor(IERC20 share_, uint256 duration_) StakingTimelock(duration_) {
-        share = share_;
+    constructor(IERC20 token_, uint256 duration_) StakingTimelock(duration_) {
+        token = token_;
     }
-
-    /**
-     * Getters.
-     */
 
     function totalSupply() public view returns (uint256) {
         return _totalSupply;
@@ -74,17 +70,10 @@ contract Vault is StakingTimelock, Operator {
         return _balances[account].sub(amount);
     }
 
-    /**
-     * Setters.
-     */
-
     function toggleDeposits(bool val) external onlyOwner {
         enableDeposits = val;
     }
 
-    /**
-     * Mutations.
-     */
     function bond(uint256 amount) public virtual {
         require(amount > 0, 'Boardroom: cannot bond 0');
         require(enableDeposits, 'Boardroom: deposits are disabled');
@@ -93,7 +82,7 @@ contract Vault is StakingTimelock, Operator {
         _balances[msg.sender] = _balances[msg.sender].add(amount);
 
         // NOTE: has to be pre-approved.
-        share.transferFrom(msg.sender, address(this), amount);
+        token.transferFrom(msg.sender, address(this), amount);
 
         emit Bonded(msg.sender, amount);
     }
@@ -124,7 +113,7 @@ contract Vault is StakingTimelock, Operator {
 
         _totalSupply = _totalSupply.sub(amount);
         _balances[msg.sender] = directorShare.sub(amount);
-        share.transfer(msg.sender, amount);
+        token.transfer(msg.sender, amount);
 
         _updateStakerDetails(msg.sender, block.timestamp, 0);
 
