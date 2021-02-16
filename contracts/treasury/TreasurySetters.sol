@@ -10,38 +10,47 @@ import '../interfaces/ISimpleERCFund.sol';
 import './TreasuryGetters.sol';
 
 abstract contract TreasurySetters is TreasuryGetters {
-    // function setAllFunds(
-    //     // boardrooms
-    //     IBoardroom _arthArthLiquidityMlpBoardroom,
-    //     IBoardroom _arthMahaBoardroom,
-    //     IBoardroom _arthArthBoardroom,
-    //     IBoardroom _mahaArthLiquidityMlpBoardroom,
-    //     IBoardroom _mahaMahaBoardroom,
-    //     IBoardroom _mahaArthBoardroom,
-    //     // ecosystem fund
-    //     ISimpleERCFund _fund,
-    //     ISimpleERCFund _rainyDayFund
-    // ) public onlyOwner {
-    //     state.arthArthLiquidityMlpBoardroom = _arthArthLiquidityMlpBoardroom;
-    //     state.arthMahaBoardroom = _arthMahaBoardroom;
-    //     state.arthArthBoardroom = _arthArthBoardroom;
-    //     state.mahaArthLiquidityMlpBoardroom = _mahaArthLiquidityMlpBoardroom;
-    //     state.mahaMahaBoardroom = _mahaMahaBoardroom;
-    //     state.mahaArthBoardroom = _mahaArthBoardroom;
-    //     state.ecosystemFund = _fund;
-    //     state.rainyDayFund = _rainyDayFund;
-    // }
+    function setAllFunds(
+        IBoardroom _arthArthLiquidityMlpBoardroom,
+        IBoardroom _arthMahaBoardroom,
+        IBoardroom _arthArthBoardroom,
+        IBoardroom _mahaArthLiquidityMlpBoardroom,
+        IBoardroom _mahaMahaBoardroom,
+        IBoardroom _mahaArthBoardroom,
+        ISimpleERCFund _fund,
+        ISimpleERCFund _rainyDayFund
+    ) public onlyOwner {
+        boardroomState
+            .arthArthLiquidityMlpBoardroom = _arthArthLiquidityMlpBoardroom;
+        boardroomState.arthMahaBoardroom = _arthMahaBoardroom;
+        boardroomState.arthArthBoardroom = _arthArthBoardroom;
+        boardroomState
+            .mahaArthLiquidityMlpBoardroom = _mahaArthLiquidityMlpBoardroom;
+        boardroomState.mahaMahaBoardroom = _mahaMahaBoardroom;
+        boardroomState.mahaArthBoardroom = _mahaArthBoardroom;
+        boardroomState.ecosystemFund = _fund;
+        boardroomState.rainyDayFund = _rainyDayFund;
+    }
 
-    function setFund(ISimpleERCFund expansionFund, uint256 rate)
+    function setEcosystemFund(ISimpleERCFund fund, uint256 rate)
         public
         onlyOwner
     {
         require(rate <= 100, 'rate >= 0');
-        boardroomState.ecosystemFund = expansionFund;
+        boardroomState.ecosystemFund = fund;
         boardroomState.ecosystemFundAllocationRate = rate;
     }
 
-    function setBondDiscount(uint256 rate) public onlyOwner returns (uint256) {
+    function setRainyDayFund(ISimpleERCFund fund, uint256 rate)
+        public
+        onlyOwner
+    {
+        require(rate <= 100, 'rate >= 0');
+        boardroomState.rainyDayFund = fund;
+        boardroomState.rainyDayFundAllocationRate = rate;
+    }
+
+    function setBondDiscount(uint256 rate) public onlyOwner {
         require(rate <= 100, 'rate >= 0');
         state.bondDiscount = rate;
     }
@@ -68,7 +77,7 @@ abstract contract TreasurySetters is TreasuryGetters {
         state.contractionRewardPerEpoch = amount;
     }
 
-    function setSafetyRegion(uint256 rate) public onlyOwner returns (uint256) {
+    function setSafetyRegion(uint256 rate) public onlyOwner {
         require(rate <= 100, 'rate >= 0');
         state.safetyRegion = rate;
     }
