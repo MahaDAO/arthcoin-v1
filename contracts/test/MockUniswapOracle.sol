@@ -23,7 +23,7 @@ contract MockUniswapOracle is IUniswapOracle {
     }
 
     // epoch
-    function callable() public pure returns (bool) {
+    function callable() public view override returns (bool) {
         return true;
     }
 
@@ -35,32 +35,32 @@ contract MockUniswapOracle is IUniswapOracle {
         startTime = _startTime;
     }
 
-    function setPeriod(uint256 _period) public {
+    function setPeriod(uint256 _period) public override {
         period = _period;
     }
 
-    function getLastEpoch() public view returns (uint256) {
+    function getLastEpoch() public view override returns (uint256) {
         return epoch;
     }
 
-    function getCurrentEpoch() public view returns (uint256) {
+    function getCurrentEpoch() public view override returns (uint256) {
         return epoch;
     }
 
-    function getNextEpoch() public view returns (uint256) {
+    function getNextEpoch() public view override returns (uint256) {
         return epoch.add(1);
     }
 
-    function nextEpochPoint() public view returns (uint256) {
+    function nextEpochPoint() public view override returns (uint256) {
         return startTime.add(getNextEpoch().mul(period));
     }
 
     // params
-    function getPeriod() public view returns (uint256) {
+    function getPeriod() public view override returns (uint256) {
         return period;
     }
 
-    function getStartTime() public view returns (uint256) {
+    function getStartTime() public view override returns (uint256) {
         return startTime;
     }
 

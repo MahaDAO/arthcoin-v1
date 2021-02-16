@@ -10,22 +10,17 @@ import '../interfaces/ISimpleERCFund.sol';
 import './TreasuryGetters.sol';
 
 abstract contract TreasurySetters is TreasuryGetters {
-    function setStabilityFee(uint256 _stabilityFee) public onlyOwner {
-        require(_stabilityFee <= 100, 'rate >= 0');
-        stabilityFee = _stabilityFee;
-    }
-
     function setAllFunds(
         // boardrooms
-        address _arthArthLiquidityMlpBoardroom,
-        address _arthMahaBoardroom,
-        address _arthArthBoardroom,
-        address _mahaArthLiquidityMlpBoardroom,
-        address _mahaMahaBoardroom,
-        address _mahaArthBoardroom,
+        IBoardroom _arthArthLiquidityMlpBoardroom,
+        IBoardroom _arthMahaBoardroom,
+        IBoardroom _arthArthBoardroom,
+        IBoardroom _mahaArthLiquidityMlpBoardroom,
+        IBoardroom _mahaMahaBoardroom,
+        IBoardroom _mahaArthBoardroom,
         // ecosystem fund
-        address _fund,
-        address _rainyDayFund
+        ISimpleERCFund _fund,
+        ISimpleERCFund _rainyDayFund
     ) public onlyOwner {
         arthArthLiquidityMlpBoardroom = _arthArthLiquidityMlpBoardroom;
         arthMahaBoardroom = _arthMahaBoardroom;
@@ -38,7 +33,10 @@ abstract contract TreasurySetters is TreasuryGetters {
         rainyDayFund = _rainyDayFund;
     }
 
-    function setFund(address expansionFund, uint256 rate) public onlyOwner {
+    function setFund(ISimpleERCFund expansionFund, uint256 rate)
+        public
+        onlyOwner
+    {
         require(rate <= 100, 'rate >= 0');
         ecosystemFund = expansionFund;
         ecosystemFundAllocationRate = rate;
@@ -82,8 +80,8 @@ abstract contract TreasurySetters is TreasuryGetters {
     }
 
     function setArthBoardroom(
-        address expansionFund,
-        address contractionFund,
+        IBoardroom expansionFund,
+        IBoardroom contractionFund,
         uint256 rate
     ) public onlyOwner {
         require(rate <= 100, 'rate >= 0');
@@ -93,8 +91,8 @@ abstract contract TreasurySetters is TreasuryGetters {
     }
 
     function setArthLiquidityMlpBoardroom(
-        address expansionFund,
-        address contractionFund,
+        IBoardroom expansionFund,
+        IBoardroom contractionFund,
         uint256 rate
     ) public onlyOwner {
         require(rate <= 100, 'rate >= 0');
@@ -104,8 +102,8 @@ abstract contract TreasurySetters is TreasuryGetters {
     }
 
     function setMahaBoardroom(
-        address expansionFund,
-        address contractionFund,
+        IBoardroom expansionFund,
+        IBoardroom contractionFund,
         uint256 rate
     ) public onlyOwner {
         require(rate <= 100, 'rate >= 0');
@@ -114,24 +112,28 @@ abstract contract TreasurySetters is TreasuryGetters {
         mahaLiquidityBoardroomAllocationRate = rate;
     }
 
-    // ORACLE
-    function setBondOracle(address newOracle) public onlyOwner {
+    function setBondOracle(IUniswapOracle newOracle) public onlyOwner {
         bondOracle = newOracle;
     }
 
-    function setSeigniorageOracle(address newOracle) public onlyOwner {
+    function setSeigniorageOracle(IUniswapOracle newOracle) public onlyOwner {
         seigniorageOracle = newOracle;
     }
 
-    function setUniswapRouter(address val) public onlyOwner {
+    function setUniswapRouter(IUniswapV2Router02 val) public onlyOwner {
         uniswapRouter = val;
     }
 
-    function setGMUOracle(address newOracle) public onlyOwner {
+    function setGMUOracle(ISimpleOracle newOracle) public onlyOwner {
         gmuOracle = newOracle;
     }
 
-    function setArthMahaOracle(address newOracle) public onlyOwner {
+    function setArthMahaOracle(ISimpleOracle newOracle) public onlyOwner {
         arthMahaOracle = newOracle;
+    }
+
+    function setStabilityFee(uint256 _stabilityFee) public onlyOwner {
+        require(_stabilityFee <= 100, 'rate >= 0');
+        stabilityFee = _stabilityFee;
     }
 }

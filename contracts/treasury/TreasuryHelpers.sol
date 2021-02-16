@@ -2,6 +2,7 @@
 
 pragma solidity ^0.6.10;
 
+import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import {Math} from '@openzeppelin/contracts/math/Math.sol';
 import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import {ICustomERC20} from '../interfaces/ICustomERC20.sol';
@@ -33,45 +34,36 @@ abstract contract TreasuryHelpers is TreasurySetters {
         // TODO: check if the destination is a treasury or not
 
         // cash
-        Operator(cash).transferOperator(target);
-        Operator(cash).transferOwnership(target);
-        ICustomERC20(cash).transfer(
-            target,
-            ICustomERC20(cash).balanceOf(address(this))
-        );
+        cash.transferOperator(target);
+        cash.transferOwnership(target);
+        cash.transfer(target, cash.balanceOf(address(this)));
 
         // bond
-        Operator(bond).transferOperator(target);
-        Operator(bond).transferOwnership(target);
-        ICustomERC20(bond).transfer(
-            target,
-            ICustomERC20(bond).balanceOf(address(this))
-        );
+        bond.transferOperator(target);
+        bond.transferOwnership(target);
+        bond.transfer(target, bond.balanceOf(address(this)));
 
         // share - disabled ownership and operator functions as MAHA tokens don't have these
-        ICustomERC20(share).transfer(
-            target,
-            ICustomERC20(share).balanceOf(address(this))
-        );
+        share.transfer(target, share.balanceOf(address(this)));
 
         migrated = true;
         emit Migration(target);
     }
 
     function _allocateToFund(
-        address fund,
+        ISimpleERCFund fund,
         uint256 rate,
         uint256 seigniorage
     ) internal returns (uint256) {
         uint256 allocation = seigniorage.mul(rate).div(100);
         if (allocation > 0) {
-            ICustomERC20(cash).safeApprove(fund, allocation);
-            ISimpleERCFund(fund).deposit(
+            cash.approve(address(fund), allocation);
+            fund.deposit(
                 cash,
                 allocation,
                 'Treasury: Fund Seigniorage Allocation'
             );
-            emit PoolFunded(fund, allocation);
+            emit PoolFunded(address(fund), allocation);
             return allocation;
         }
 
@@ -83,11 +75,11 @@ abstract contract TreasuryHelpers is TreasurySetters {
      * TODO: this function needs to be optimised for gas
      */
     function _updateCashPrice() internal {
-        if (Epoch(bondOracle).callable()) {
+        if (bondOracle.callable()) {
             try IUniswapOracle(bondOracle).update() {} catch {}
         }
 
-        if (Epoch(seigniorageOracle).callable()) {
+        if (seigniorageOracle.callable()) {
             try IUniswapOracle(seigniorageOracle).update() {} catch {}
         }
 
@@ -110,7 +102,7 @@ abstract contract TreasuryHelpers is TreasurySetters {
         uint256 treasuryReserve =
             Math.min(
                 seigniorage,
-                ICustomERC20(bond).totalSupply().sub(accumulatedSeigniorage)
+                bond.totalSupply().sub(accumulatedSeigniorage)
             );
 
         if (treasuryReserve > 0) {
@@ -130,72 +122,46 @@ abstract contract TreasuryHelpers is TreasurySetters {
      * after bond token holders have been paid first.
      */
     function _allocateToBoardroom(
-        address token,
-        address boardroom,
+        IERC20 token,
+        IBoardroom boardroom,
         uint256 rate,
         uint256 seigniorage
     ) private {
-        if (seigniorage == 0) return;
-
         // Calculate boardroom reserves.
         uint256 reserve = seigniorage.mul(rate).div(100);
 
-        // arth-dai uniswap lp
         if (reserve > 0) {
-            ICustomERC20(token).approve(boardroom, reserve);
-            IBoardroom(boardroom).allocateSeigniorage(reserve);
-            emit PoolFunded(boardroom, reserve);
+            token.approve(address(boardroom), reserve);
+            boardroom.allocateSeigniorage(reserve);
+            emit PoolFunded(address(boardroom), reserve);
         }
     }
 
-    function _allocateSeignorageToBoardrooms(uint256 boardroomReserve)
+    function _allocateToBoardrooms(IERC20 token, uint256 boardroomReserve)
         internal
     {
         if (boardroomReserve <= 0) return;
+        bool mahaBoardroom = token == share;
+
         _allocateToBoardroom(
-            cash,
-            arthArthLiquidityMlpBoardroom,
+            token,
+            mahaBoardroom
+                ? mahaArthLiquidityMlpBoardroom
+                : arthArthLiquidityMlpBoardroom,
             arthLiquidityMlpAllocationRate,
             boardroomReserve
         );
 
         _allocateToBoardroom(
-            cash,
-            arthArthBoardroom,
+            token,
+            mahaBoardroom ? mahaArthBoardroom : arthArthBoardroom,
             arthBoardroomAllocationRate,
             boardroomReserve
         );
 
         _allocateToBoardroom(
-            cash,
-            arthMahaBoardroom,
-            mahaLiquidityBoardroomAllocationRate,
-            boardroomReserve
-        );
-    }
-
-    function _allocateContractionRewardToBoardrooms(uint256 boardroomReserve)
-        internal
-    {
-        if (boardroomReserve <= 0) return;
-
-        _allocateToBoardroom(
-            share,
-            mahaArthLiquidityMlpBoardroom,
-            arthLiquidityMlpAllocationRate,
-            boardroomReserve
-        );
-
-        _allocateToBoardroom(
-            share,
-            mahaArthBoardroom,
-            arthBoardroomAllocationRate,
-            boardroomReserve
-        );
-
-        _allocateToBoardroom(
-            share,
-            mahaMahaBoardroom,
+            token,
+            mahaBoardroom ? mahaMahaBoardroom : arthMahaBoardroom,
             mahaLiquidityBoardroomAllocationRate,
             boardroomReserve
         );

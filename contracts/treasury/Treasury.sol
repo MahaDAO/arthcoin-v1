@@ -13,6 +13,8 @@ import {IBasisAsset} from '../interfaces/IBasisAsset.sol';
 import {ISimpleERCFund} from '../interfaces/ISimpleERCFund.sol';
 import {Operator} from '../owner/Operator.sol';
 import {Epoch} from '../utils/Epoch.sol';
+import {ISimpleOracle} from '../interfaces/ISimpleOracle.sol';
+import {IUniswapOracle} from '../interfaces/IUniswapOracle.sol';
 import {ContractGuard} from '../utils/ContractGuard.sol';
 import {TreasuryHelpers} from './TreasuryHelpers.sol';
 
@@ -23,15 +25,15 @@ import {TreasuryHelpers} from './TreasuryHelpers.sol';
  */
 contract Treasury is TreasuryHelpers {
     constructor(
-        address _dai,
-        address _cash,
-        address _bond,
-        address _share,
-        address _bondOracle,
-        address _arthMahaOracle,
-        address _seigniorageOracle,
-        address _gmuOracle,
-        address _uniswapRouter,
+        IERC20 _dai,
+        IBasisAsset _cash,
+        IBasisAsset _bond,
+        IERC20 _share,
+        IUniswapOracle _bondOracle,
+        ISimpleOracle _arthMahaOracle,
+        IUniswapOracle _seigniorageOracle,
+        ISimpleOracle _gmuOracle,
+        IUniswapV2Router02 _uniswapRouter,
         uint256 _startTime,
         uint256 _period,
         uint256 _startEpoch
@@ -94,14 +96,10 @@ contract Treasury is TreasuryHelpers {
         uint256 expectedCashAmount = amountsOut[1];
 
         // 1. Take Dai from the user
-        ICustomERC20(dai).safeTransferFrom(
-            msg.sender,
-            address(this),
-            amountInDai
-        );
+        dai.safeTransferFrom(msg.sender, address(this), amountInDai);
 
         // 2. Approve dai for trade on uniswap
-        ICustomERC20(dai).safeApprove(uniswapRouter, amountInDai);
+        dai.safeApprove(address(uniswapRouter), amountInDai);
 
         // 3. Swap dai for ARTH from uniswap and send the ARTH to the sender
         // we send the ARTH back to the sender just in case there is some slippage
@@ -116,7 +114,7 @@ contract Treasury is TreasuryHelpers {
             );
 
         // set approve to 0 after transfer
-        ICustomERC20(dai).safeApprove(uniswapRouter, 0);
+        dai.approve(address(uniswapRouter), 0);
 
         // we do this to understand how much ARTH was bought back as without this, we
         // could witness a flash loan attack. (given that the minted amount of ARTHB
@@ -169,28 +167,16 @@ contract Treasury is TreasuryHelpers {
         );
 
         require(
-            ICustomERC20(cash).balanceOf(address(this)) >= amount,
+            cash.balanceOf(address(this)) >= amount,
             'treasury has not enough budget'
         );
 
         amount = Math.min(accumulatedSeigniorage, amount);
 
-        // charge stabilty fees in MAHA
-        if (stabilityFee > 0) {
-            uint256 stabilityFeeInARTH = amount.mul(stabilityFee).div(100);
-            uint256 stabilityFeeInMAHA =
-                getArthMahaOraclePrice().mul(stabilityFeeInARTH).div(1e18);
-
-            // charge the stability fee
-            ICustomERC20(share).burnFrom(msg.sender, stabilityFeeInMAHA);
-
-            emit StabilityFeesCharged(msg.sender, stabilityFeeInMAHA);
-        }
-
         // hand over the ARTH directly
         accumulatedSeigniorage = accumulatedSeigniorage.sub(amount);
         IBasisAsset(bond).burnFrom(msg.sender, amount);
-        ICustomERC20(cash).safeTransfer(msg.sender, amount);
+        cash.transfer(msg.sender, amount);
 
         emit RedeemedBonds(msg.sender, amount);
     }
@@ -222,11 +208,11 @@ contract Treasury is TreasuryHelpers {
                 uint256 contractionRewardToGive =
                     Math.min(
                         contractionRewardPerEpoch,
-                        ICustomERC20(share).balanceOf(address(this))
+                        share.balanceOf(address(this))
                     );
 
                 // Allocate the appropriate contraction reward to boardrooms.
-                _allocateContractionRewardToBoardrooms(contractionRewardToGive);
+                _allocateToBoardrooms(share, contractionRewardToGive);
             }
 
             // If contraction rewards are not applicable, then just advance epoch instead revert.
@@ -251,7 +237,7 @@ contract Treasury is TreasuryHelpers {
             if (enableSurprise) {
                 // surprise!! send 10% to boardooms and 90% to bond holders
                 _allocateToBondHolders(seigniorage.mul(90).div(100));
-                _allocateSeignorageToBoardrooms(seigniorage.mul(10).div(100));
+                _allocateToBoardrooms(cash, seigniorage.mul(10).div(100));
             } else {
                 _allocateToBondHolders(seigniorage);
             }
@@ -290,14 +276,11 @@ contract Treasury is TreasuryHelpers {
         seigniorage = seigniorage.sub(treasuryReserve);
 
         // allocate everything else to the boardroom
-        _allocateSeignorageToBoardrooms(seigniorage);
+        _allocateToBoardrooms(cash, seigniorage);
     }
 
     function refundShares() external onlyOwner {
-        ICustomERC20(share).safeTransfer(
-            msg.sender,
-            ICustomERC20(share).balanceOf(address(this))
-        );
+        share.safeTransfer(msg.sender, share.balanceOf(address(this)));
     }
 
     event AdvanceEpoch(address indexed from);

@@ -2,6 +2,8 @@
 
 pragma solidity ^0.6.12;
 
-interface IBoardroom {
+import {IOperator} from './IOperator.sol';
+
+interface IBoardroom is IOperator {
     function allocateSeigniorage(uint256 amount) external;
 }

@@ -27,11 +27,11 @@ abstract contract TreasuryGetters is TreasuryState {
     }
 
     function getGMUOraclePrice() public view returns (uint256) {
-        return ISimpleOracle(gmuOracle).getPrice();
+        return gmuOracle.getPrice();
     }
 
     function getArthMahaOraclePrice() public view returns (uint256) {
-        return ISimpleOracle(arthMahaOracle).getPrice();
+        return arthMahaOracle.getPrice();
     }
 
     function getPercentDeviationFromTarget(uint256 price)
@@ -50,11 +50,11 @@ abstract contract TreasuryGetters is TreasuryState {
     }
 
     function arthCirculatingSupply() public view returns (uint256) {
-        return IERC20(cash).totalSupply().sub(accumulatedSeigniorage);
+        return cash.totalSupply().sub(accumulatedSeigniorage);
     }
 
     function bondCirculatingSupply() public view returns (uint256) {
-        return ICustomERC20(bond).totalSupply().sub(accumulatedSeigniorage);
+        return bond.totalSupply().sub(accumulatedSeigniorage);
     }
 
     /**
@@ -126,27 +126,20 @@ abstract contract TreasuryGetters is TreasuryState {
         // check if enabled or not
         if (!considerUniswapLiquidity) return uint256(100);
 
-        address uniswapFactory = IUniswapV2Router02(uniswapRouter).factory();
-        address uniswapLiquidityPair =
-            IUniswapV2Factory(uniswapFactory).getPair(cash, dai);
-
         // Get the liquidity of cash locked in uniswap pair.
         uint256 uniswapLiquidityPairCashBalance =
-            ICustomERC20(cash).balanceOf(uniswapLiquidityPair);
+            cash.balanceOf(uniswapLiquidityPair);
 
         // Get the liquidity percent.
-        return
-            uniswapLiquidityPairCashBalance.mul(100).div(
-                ICustomERC20(cash).totalSupply()
-            );
+        return uniswapLiquidityPairCashBalance.mul(100).div(cash.totalSupply());
     }
 
-    function get1hourEpoch() public view returns (uint256) {
-        return Epoch(bondOracle).getLastEpoch();
-    }
-
-    function _getCashPrice(address oracle) internal view returns (uint256) {
-        try IUniswapOracle(oracle).consult(cash, 1e18) returns (uint256 price) {
+    function _getCashPrice(IUniswapOracle oracle)
+        internal
+        view
+        returns (uint256)
+    {
+        try oracle.consult(address(cash), 1e18) returns (uint256 price) {
             return price;
         } catch {
             revert('Treasury: failed to consult cash price from the oracle');

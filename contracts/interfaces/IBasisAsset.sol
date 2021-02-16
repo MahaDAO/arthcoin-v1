@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.6.12;
+import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
-interface IBasisAsset {
+interface IBasisAsset is IERC20 {
     function mint(address recipient, uint256 amount) external returns (bool);
 
     function burn(uint256 amount) external;
@@ -12,4 +13,8 @@ interface IBasisAsset {
     function isOperator() external returns (bool);
 
     function operator() external view returns (address);
+
+    function transferOperator(address newOperator_) external;
+
+    function transferOwnership(address newOwner) external;
 }

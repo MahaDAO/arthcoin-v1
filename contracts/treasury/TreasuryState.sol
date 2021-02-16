@@ -6,12 +6,17 @@ import {SafeMath} from '@openzeppelin/contracts/math/SafeMath.sol';
 import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
 import {Address} from '@openzeppelin/contracts/utils/Address.sol';
-
+import {IBasisAsset} from '../interfaces/IBasisAsset.sol';
 import {FixedPoint} from '../lib/FixedPoint.sol';
 import {Safe112} from '../lib/Safe112.sol';
 import {Operator} from '../owner/Operator.sol';
 import {Epoch} from '../utils/Epoch.sol';
 import {ContractGuard} from '../utils/ContractGuard.sol';
+import {ISimpleOracle} from '../interfaces/ISimpleOracle.sol';
+import {IUniswapOracle} from '../interfaces/IUniswapOracle.sol';
+import {IUniswapV2Router02} from '../interfaces/IUniswapV2Router02.sol';
+import {IBoardroom} from '../interfaces/IBoardroom.sol';
+import {ISimpleERCFund} from '../interfaces/ISimpleERCFund.sol';
 
 abstract contract TreasuryState is ContractGuard, Epoch {
     using FixedPoint for *;
@@ -27,27 +32,28 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     bool public initialized = false;
 
     // ========== CORE
-    address public dai;
-    address public cash;
-    address public bond;
-    address public share;
-    address public uniswapRouter;
+    IERC20 public dai;
+    IBasisAsset public cash;
+    IBasisAsset public bond;
+    IERC20 public share;
+    IUniswapV2Router02 public uniswapRouter;
+    address uniswapLiquidityPair;
 
-    address public arthArthLiquidityMlpBoardroom;
-    address public arthMahaBoardroom;
-    address public arthArthBoardroom;
-    address public mahaArthLiquidityMlpBoardroom;
-    address public mahaMahaBoardroom;
-    address public mahaArthBoardroom;
+    IBoardroom public arthArthLiquidityMlpBoardroom;
+    IBoardroom public arthMahaBoardroom;
+    IBoardroom public arthArthBoardroom;
+    IBoardroom public mahaArthLiquidityMlpBoardroom;
+    IBoardroom public mahaMahaBoardroom;
+    IBoardroom public mahaArthBoardroom;
 
-    address public ecosystemFund;
-    address public rainyDayFund;
+    ISimpleERCFund public ecosystemFund;
+    ISimpleERCFund public rainyDayFund;
 
     // oracles
-    address public bondOracle;
-    address public seigniorageOracle;
-    address public gmuOracle;
-    address public arthMahaOracle;
+    IUniswapOracle public bondOracle;
+    IUniswapOracle public seigniorageOracle;
+    ISimpleOracle public gmuOracle;
+    ISimpleOracle public arthMahaOracle;
 
     // cash price tracking vars
     uint256 public cashTargetPrice = 1e18;
@@ -114,16 +120,14 @@ abstract contract TreasuryState is ContractGuard, Epoch {
 
     modifier checkOperator {
         require(
-            Operator(cash).operator() == address(this) &&
-                Operator(bond).operator() == address(this) &&
-                Operator(arthArthLiquidityMlpBoardroom).operator() ==
-                address(this) &&
-                Operator(arthMahaBoardroom).operator() == address(this) &&
-                Operator(arthArthBoardroom).operator() == address(this) &&
-                Operator(mahaArthLiquidityMlpBoardroom).operator() ==
-                address(this) &&
-                Operator(mahaMahaBoardroom).operator() == address(this) &&
-                Operator(mahaArthBoardroom).operator() == address(this),
+            cash.operator() == address(this) &&
+                bond.operator() == address(this) &&
+                arthArthLiquidityMlpBoardroom.operator() == address(this) &&
+                arthMahaBoardroom.operator() == address(this) &&
+                arthArthBoardroom.operator() == address(this) &&
+                mahaArthLiquidityMlpBoardroom.operator() == address(this) &&
+                mahaMahaBoardroom.operator() == address(this) &&
+                mahaArthBoardroom.operator() == address(this),
             'Treasury: need more permission'
         );
         _;

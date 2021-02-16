@@ -4,8 +4,9 @@ pragma solidity ^0.6.12;
 
 import '@openzeppelin/contracts/GSN/Context.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
+import {IOperator} from '../interfaces/IOperator.sol';
 
-contract Operator is Context, Ownable {
+contract Operator is Context, Ownable, IOperator {
     address private _operator;
 
     event OperatorTransferred(
@@ -19,7 +20,7 @@ contract Operator is Context, Ownable {
         emit OperatorTransferred(address(0), _operator);
     }
 
-    function operator() public view returns (address) {
+    function operator() public view override returns (address) {
         return _operator;
     }
 
@@ -31,11 +32,11 @@ contract Operator is Context, Ownable {
         _;
     }
 
-    function isOperator() public view returns (bool) {
+    function isOperator() public view override returns (bool) {
         return _msgSender() == _operator;
     }
 
-    function transferOperator(address newOperator_) public onlyOwner {
+    function transferOperator(address newOperator_) public override onlyOwner {
         _transferOperator(newOperator_);
     }
 

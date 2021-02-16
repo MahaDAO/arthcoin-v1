@@ -29,10 +29,6 @@ contract Vault is StakingTimelock, Router, Operator {
     /**
      * Modifier.
      */
-    modifier depositsEnabled() {
-        require(enableDeposits, 'Boardroom: deposits are disabled');
-        _;
-    }
 
     modifier stakerExists {
         require(
@@ -89,19 +85,16 @@ contract Vault is StakingTimelock, Router, Operator {
         enableDeposits = val;
     }
 
-    function refund() external onlyOwner {
-        share.safeTransfer(msg.sender, share.balanceOf(address(this)));
-    }
-
     /**
      * Mutations.
      */
-
-    function bond(uint256 amount) public virtual depositsEnabled {
+    function bond(uint256 amount) public virtual {
         require(amount > 0, 'Boardroom: cannot bond 0');
+        require(enableDeposits, 'Boardroom: deposits are disabled');
 
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
+
         // NOTE: has to be pre-approved.
         share.safeTransferFrom(msg.sender, address(this), amount);
 
