@@ -3,12 +3,15 @@
 pragma solidity ^0.8.0;
 
 import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
+import {Operator} from '../../owner/Operator.sol';
+import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
+import {StakingTimelock} from '../../timelock/StakingTimelock.sol';
 
-import '../../owner/Operator.sol';
-import '../../owner/Router.sol';
-import '../../timelock/StakingTimelock.sol';
-
-contract Vault is StakingTimelock, Router, Operator {
+/**
+ * A vault is a contract that handles only the bonding & unbonding of tokens;
+ * Rewards are handled by the boardroom contracts.
+ */
+contract Vault is StakingTimelock, Operator {
     using SafeMath for uint256;
 
     /**
