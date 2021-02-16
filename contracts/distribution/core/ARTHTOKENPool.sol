@@ -2,16 +2,17 @@
 
 pragma solidity ^0.8.0;
 
-import '@openzeppelin/contracts/math/Math.sol';
-import '@openzeppelin/contracts/math/SafeMath.sol';
-import '@openzeppelin/contracts/utils/Address.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
+import '@openzeppelin/contracts/contracts/math/Math.sol';
+import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
+// import '@openzeppelin/contracts/contracts/utils/Address.sol';
+import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
 
 import './TOKENWrapper.sol';
 import '../../interfaces/IRewardDistributionRecipient.sol';
 
-contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
+abstract contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
+    using SafeMath for uint256;
+
     IERC20 public cash;
 
     string public poolName;
@@ -54,7 +55,7 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
         uint256 maxPoolSize_,
         bool limitPoolSize_,
         string memory poolName_
-    ) public {
+    ) {
         token = IERC20(token_);
         maxPoolSize = maxPoolSize_;
         limitPoolSize_ = limitPoolSize_;
@@ -254,7 +255,7 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
             accDetail.rewardAmount = 0;
             accDetail.rewardedAmount = reward;
 
-            cash.safeTransfer(msg.sender, reward);
+            cash.transfer(msg.sender, reward);
 
             emit RewardPaid(msg.sender, reward);
         }
@@ -289,6 +290,6 @@ contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
     }
 
     function refundToken() public payable onlyOwner {
-        token.safeTransfer(msg.sender, token.balanceOf(address(this)));
+        token.transfer(msg.sender, token.balanceOf(address(this)));
     }
 }

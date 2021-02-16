@@ -3,14 +3,16 @@
 pragma solidity ^0.8.0;
 // pragma experimental ABIEncoderV2;
 
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
+import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
 
 import './Vault.sol';
 import './VaultBoardroom.sol';
 
-contract VestedVaultBoardroom is VaultBoardroom {
+abstract contract VestedVaultBoardroom is VaultBoardroom {
     // For how much time should vesting take place.
     uint256 public vestFor;
+    using SafeMath for uint256;
 
     /**
      * Event.
@@ -24,7 +26,7 @@ contract VestedVaultBoardroom is VaultBoardroom {
         IERC20 cash_,
         Vault vault_,
         uint256 vestFor_
-    ) public VaultBoardroom(cash_, vault_) {
+    ) VaultBoardroom(cash_, vault_) {
         vestFor = vestFor_;
     }
 
@@ -109,7 +111,7 @@ contract VestedVaultBoardroom is VaultBoardroom {
         directors[msg.sender].rewardPending = 0;
         directors[msg.sender].lastClaimedOn = block.timestamp;
 
-        cash.safeTransfer(msg.sender, reward);
+        cash.transfer(msg.sender, reward);
 
         emit RewardPaid(msg.sender, reward);
     }
@@ -186,7 +188,7 @@ contract VestedVaultBoardroom is VaultBoardroom {
 
         directors[msg.sender].lastClaimedOn = block.timestamp;
 
-        cash.safeTransfer(msg.sender, reward);
+        cash.transfer(msg.sender, reward);
 
         emit RewardPaid(msg.sender, reward);
     }

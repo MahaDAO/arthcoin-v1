@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.0;
 
-import '@openzeppelin/contracts/GSN/Context.sol';
-import '@openzeppelin/contracts/access/Ownable.sol';
+import '@openzeppelin/contracts/contracts/GSN/Context.sol';
+import '@openzeppelin/contracts/contracts/access/Ownable.sol';
 
 contract Router is Context, Ownable {
     address private _router;
@@ -13,7 +13,7 @@ contract Router is Context, Ownable {
         address indexed newRouter
     );
 
-    constructor() internal {
+    constructor() {
         _router = _msgSender();
         emit RouterTransferred(address(0), _router);
     }

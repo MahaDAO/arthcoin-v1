@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import '@openzeppelin/contracts/math/SafeMath.sol';
+import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
 
 import '../../lib/Babylonian.sol';
 import '../../lib/FixedPoint.sol';
@@ -40,7 +40,7 @@ contract MultiUniswapOracle is IMultiUniswapOracle, Epoch {
         uint256 _tokensCount,
         uint256 _period,
         uint256 _startTime
-    ) public Epoch(_period, _startTime, 0) {
+    ) Epoch(_period, _startTime, 0) {
         require(_tokensCount >= 2, 'At least two tokens');
         require(_tokensCount <= 4, 'At most four tokens');
 

@@ -3,16 +3,13 @@
 pragma solidity ^0.8.0;
 // pragma experimental ABIEncoderV2;
 
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
-
+import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
 import '../../owner/Operator.sol';
 import '../../owner/Router.sol';
 import '../../timelock/StakingTimelock.sol';
 
 abstract contract BaseBoardroom is StakingTimelock, Router, Operator {
     using SafeMath for uint256;
-    using SafeERC20 for IERC20;
 
     IERC20 public share;
 
@@ -38,6 +35,6 @@ abstract contract BaseBoardroom is StakingTimelock, Router, Operator {
     }
 
     function refund() external onlyOwner {
-        share.safeTransfer(msg.sender, share.balanceOf(address(this)));
+        share.transfer(msg.sender, share.balanceOf(address(this)));
     }
 }

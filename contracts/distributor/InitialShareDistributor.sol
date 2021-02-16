@@ -2,9 +2,8 @@
 
 pragma solidity ^0.8.0;
 
-import '@openzeppelin/contracts/math/SafeMath.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-
+import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
+import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
 import '../interfaces/IDistributor.sol';
 import '../interfaces/IRewardDistributionRecipient.sol';
 
@@ -27,7 +26,7 @@ contract InitialShareDistributor is IDistributor {
         uint256 _daiarthInitialBalance,
         IRewardDistributionRecipient _daimahaLPPool,
         uint256 _daimahaInitialBalance
-    ) public {
+    ) {
         share = _share;
         daiarthLPPool = _daiarthLPPool;
         daiarthInitialBalance = _daiarthInitialBalance;

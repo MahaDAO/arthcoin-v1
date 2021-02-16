@@ -2,8 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-
+import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
 import './owner/Operator.sol';
 
 contract VoteProxy is Operator {
@@ -17,7 +16,7 @@ contract VoteProxy is Operator {
     // Boardroom
     address public boardroom;
 
-    constructor(address _boardroom) public {
+    constructor(address _boardroom) {
         boardroom = _boardroom;
     }
 

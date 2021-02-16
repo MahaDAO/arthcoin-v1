@@ -12,5 +12,5 @@ contract ArthMahaTestnetOracle is SimpleOracle {
         address _maha,
         uint256 _period,
         uint256 _startTime
-    ) public SimpleOracle('ARTHMahaOracle', 1e18) {}
+    ) SimpleOracle('ARTHMahaOracle', 1e18) {}
 }

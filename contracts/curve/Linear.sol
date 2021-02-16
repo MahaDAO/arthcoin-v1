@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import '@openzeppelin/contracts/math/SafeMath.sol';
+import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
 import '../owner/Operator.sol';
 import './Curve.sol';
 
@@ -16,7 +16,7 @@ contract LinearThreshold is Operator, Curve {
         uint256 _maxSupply,
         uint256 _minCeiling,
         uint256 _maxCeiling
-    ) public {
+    ) {
         minSupply = _minSupply;
         maxSupply = _maxSupply;
         minCeiling = _minCeiling;

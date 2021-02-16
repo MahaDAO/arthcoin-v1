@@ -9,5 +9,5 @@ contract MAHAARTHPool is ARTHTOKENPool {
         address cash_,
         address dai_,
         uint256 starttime_
-    ) public ARTHTOKENPool(cash_, dai_, starttime_, 0, false, 'MAHAARTHPool') {}
+    ) ARTHTOKENPool(cash_, dai_, starttime_, 0, false, 'MAHAARTHPool') {}
 }

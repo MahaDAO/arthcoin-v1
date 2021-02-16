@@ -51,7 +51,7 @@
     "typescript": "^4.0.5"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "3.2.0",
+    "@openzeppelin/contracts": "https://github.com/OpenZeppelin/openzeppelin-contracts",
     "@uniswap/v2-core": "^1.0.1",
     "bluebird": "^3.7.2",
     "dotenv": "^8.2.0",

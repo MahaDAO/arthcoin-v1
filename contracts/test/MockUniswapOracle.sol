@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import {SafeMath} from '@openzeppelin/contracts/math/SafeMath.sol';
+import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
 
 import {IUniswapOracle} from '../interfaces/IUniswapOracle.sol';
 import {UniswapV2Library} from '../lib/UniswapV2Library.sol';
@@ -18,7 +18,7 @@ contract MockUniswapOracle is IUniswapOracle {
 
     uint256 startTime;
 
-    constructor() public {
+    constructor() {
         startTime = block.timestamp;
     }
 

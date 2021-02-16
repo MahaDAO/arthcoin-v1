@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.6.10;
+pragma solidity ^0.8.0;
 
-import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import {Math} from '@openzeppelin/contracts/math/Math.sol';
+import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
+import {Math} from '@openzeppelin/contracts/contracts/math/Math.sol';
+import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
 
 import {IUniswapOracle} from '../interfaces/IUniswapOracle.sol';
 import {ISimpleOracle} from '../interfaces/ISimpleOracle.sol';
@@ -16,6 +17,8 @@ import {IUniswapV2Router02} from '../interfaces/IUniswapV2Router02.sol';
 import {TreasuryLibrary} from './TreasuryLibrary.sol';
 
 abstract contract TreasuryGetters is TreasuryState {
+    using SafeMath for uint256;
+
     function getGMUOraclePrice() public view returns (uint256) {
         return oracleState.gmuOracle.getPrice();
     }

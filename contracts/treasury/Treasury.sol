@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.6.10;
+pragma solidity ^0.8.0;
 
-import {Math} from '@openzeppelin/contracts/math/Math.sol';
-import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import {Math} from '@openzeppelin/contracts/contracts/math/Math.sol';
+import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
 import {ICustomERC20} from '../interfaces/ICustomERC20.sol';
 import {IUniswapV2Factory} from '../interfaces/IUniswapV2Factory.sol';
 import {IUniswapOracle} from '../interfaces/IUniswapOracle.sol';
@@ -16,6 +16,7 @@ import {IUniswapOracle} from '../interfaces/IUniswapOracle.sol';
 import {ContractGuard} from '../utils/ContractGuard.sol';
 import {TreasuryHelpers} from './TreasuryHelpers.sol';
 import {TreasuryState} from './TreasuryState.sol';
+import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
 
 /**
  * @title ARTH Treasury contract
@@ -23,6 +24,8 @@ import {TreasuryState} from './TreasuryState.sol';
  * @author Steven Enamakel & Yash Agrawal. Original code written by Summer Smith & Rick Sanchez
  */
 contract Treasury is TreasuryHelpers {
+    using SafeMath for uint256;
+
     constructor(
         IERC20 _dai,
         IBasisAsset _cash,
@@ -35,7 +38,7 @@ contract Treasury is TreasuryHelpers {
         uint256 _startTime,
         uint256 _period,
         uint256 _startEpoch
-    ) public TreasuryState(_period, _startTime, _startEpoch) {
+    ) TreasuryState(_period, _startTime, _startEpoch) {
         // tokens
         dai = _dai;
         cash = _cash;
@@ -91,7 +94,7 @@ contract Treasury is TreasuryHelpers {
         uint256 expectedCashAmount = amountsOut[1];
 
         // 1. Take Dai from the user
-        dai.safeTransferFrom(msg.sender, address(this), amountInDai);
+        dai.transferFrom(msg.sender, address(this), amountInDai);
 
         // 2. Approve dai for trade on uniswap
         dai.approve(address(state.uniswapRouter), amountInDai);
@@ -272,7 +275,7 @@ contract Treasury is TreasuryHelpers {
     }
 
     function refundShares() external onlyOwner {
-        share.safeTransfer(msg.sender, share.balanceOf(address(this)));
+        share.transfer(msg.sender, share.balanceOf(address(this)));
     }
 
     event AdvanceEpoch(address indexed from);

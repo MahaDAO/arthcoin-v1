@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import '@openzeppelin/contracts/token/ERC20/ERC20Burnable.sol';
+import '@openzeppelin/contracts/contracts/token/ERC20/ERC20Burnable.sol';
 
 import '../owner/Operator.sol';
 
@@ -10,7 +10,7 @@ contract ARTH is ERC20Burnable, Operator {
     /**
      * @notice Constructs the Basis ARTH ERC-20 contract.
      */
-    constructor() public ERC20('ARTH', 'ARTH') {
+    constructor() ERC20('ARTH', 'ARTH') {
         // Mints 1 Basis ARTH to contract creator for initial Uniswap oracle deployment.
         // Will be burned after oracle deployment.
         _mint(msg.sender, 1 * 10**18);

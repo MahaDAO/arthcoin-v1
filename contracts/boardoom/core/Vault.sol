@@ -3,8 +3,7 @@
 pragma solidity ^0.8.0;
 // pragma experimental ABIEncoderV2;
 
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
+import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
 
 import '../../owner/Operator.sol';
 import '../../owner/Router.sol';
@@ -12,7 +11,6 @@ import '../../timelock/StakingTimelock.sol';
 
 contract Vault is StakingTimelock, Router, Operator {
     using SafeMath for uint256;
-    using SafeERC20 for IERC20;
 
     /**
      * State variables.
@@ -49,10 +47,7 @@ contract Vault is StakingTimelock, Router, Operator {
     /**
      * Constructor.
      */
-    constructor(IERC20 share_, uint256 duration_)
-        public
-        StakingTimelock(duration_)
-    {
+    constructor(IERC20 share_, uint256 duration_) StakingTimelock(duration_) {
         share = share_;
     }
 
@@ -96,7 +91,7 @@ contract Vault is StakingTimelock, Router, Operator {
         _balances[msg.sender] = _balances[msg.sender].add(amount);
 
         // NOTE: has to be pre-approved.
-        share.safeTransferFrom(msg.sender, address(this), amount);
+        share.transferFrom(msg.sender, address(this), amount);
 
         emit Bonded(msg.sender, amount);
     }
@@ -127,7 +122,7 @@ contract Vault is StakingTimelock, Router, Operator {
 
         _totalSupply = _totalSupply.sub(amount);
         _balances[msg.sender] = directorShare.sub(amount);
-        share.safeTransfer(msg.sender, amount);
+        share.transfer(msg.sender, amount);
 
         _updateStakerDetails(msg.sender, block.timestamp, 0);
 

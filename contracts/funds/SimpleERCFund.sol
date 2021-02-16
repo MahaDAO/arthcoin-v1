@@ -2,22 +2,18 @@
 
 pragma solidity ^0.8.0;
 
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
-import '@openzeppelin/contracts/access/Ownable.sol';
-
-import '../interfaces/ISimpleERCFund.sol';
+import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
+import {ISimpleERCFund} from '../interfaces/ISimpleERCFund.sol';
+import {Ownable} from '@openzeppelin/contracts/contracts/access/Ownable.sol';
 
 contract SimpleERCFund is ISimpleERCFund, Ownable {
-    using SafeERC20 for IERC20;
-
     function deposit(
         IERC20 token,
         uint256 amount,
         string memory reason
     ) public override {
-        token.safeTransferFrom(msg.sender, address(this), amount);
-        emit Deposit(token, msg.sender, now, reason);
+        token.transferFrom(msg.sender, address(this), amount);
+        emit Deposit(token, msg.sender, block.timestamp, reason);
     }
 
     function withdraw(
@@ -26,8 +22,8 @@ contract SimpleERCFund is ISimpleERCFund, Ownable {
         address to,
         string memory reason
     ) public override onlyOwner {
-        token.safeTransfer(to, amount);
-        emit Withdrawal(token, msg.sender, to, now, reason);
+        token.transfer(to, amount);
+        emit Withdrawal(token, msg.sender, to, block.timestamp, reason);
     }
 
     event Deposit(

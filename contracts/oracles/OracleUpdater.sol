@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import '@openzeppelin/contracts/access/Ownable.sol';
+import '@openzeppelin/contracts/contracts/access/Ownable.sol';
 
 import {Epoch} from '../utils/Epoch.sol';
 import {IMultiUniswapOracle} from '../interfaces/IMultiUniswapOracle.sol';
@@ -13,7 +13,7 @@ contract OracleUpdater is Ownable {
 
     event UpdateOracle(address oracle, address updater, uint256 timestamp);
 
-    constructor(address[] memory uniSwapOracles_) public {
+    constructor(address[] memory uniSwapOracles_) {
         uniswapOracles = uniSwapOracles_;
     }
 

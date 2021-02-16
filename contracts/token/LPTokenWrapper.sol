@@ -2,13 +2,11 @@
 
 pragma solidity ^0.8.0;
 
-import '@openzeppelin/contracts/math/SafeMath.sol';
-import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
+import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
 
 abstract contract LPTokenWrapper {
     using SafeMath for uint256;
-    using SafeERC20 for IERC20;
 
     IERC20 public lpt;
 
@@ -26,12 +24,12 @@ abstract contract LPTokenWrapper {
     function stake(uint256 amount) public virtual {
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
-        lpt.safeTransferFrom(msg.sender, address(this), amount);
+        lpt.transferFrom(msg.sender, address(this), amount);
     }
 
     function withdraw(uint256 amount) public virtual {
         _totalSupply = _totalSupply.sub(amount);
         _balances[msg.sender] = _balances[msg.sender].sub(amount);
-        lpt.safeTransfer(msg.sender, amount);
+        lpt.transfer(msg.sender, amount);
     }
 }

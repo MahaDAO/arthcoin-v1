@@ -2,11 +2,11 @@
 
 pragma solidity ^0.8.0;
 
-import '@openzeppelin/contracts/GSN/Context.sol';
-import '@openzeppelin/contracts/access/Ownable.sol';
+import '@openzeppelin/contracts/contracts/GSN/Context.sol';
+import '@openzeppelin/contracts/contracts/access/Ownable.sol';
 import {IOperator} from '../interfaces/IOperator.sol';
 
-contract Operator is Context, Ownable, IOperator {
+abstract contract Operator is Context, Ownable, IOperator {
     address private _operator;
 
     event OperatorTransferred(
@@ -14,7 +14,7 @@ contract Operator is Context, Ownable, IOperator {
         address indexed newOperator
     );
 
-    constructor() internal {
+    constructor() {
         _operator = _msgSender();
 
         emit OperatorTransferred(address(0), _operator);

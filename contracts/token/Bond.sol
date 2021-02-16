@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import '@openzeppelin/contracts/token/ERC20/ERC20Burnable.sol';
+import '@openzeppelin/contracts/contracts/token/ERC20/ERC20Burnable.sol';
 
 import '../owner/Operator.sol';
 
@@ -10,7 +10,7 @@ contract ARTHB is ERC20Burnable, Ownable, Operator {
     /**
      * @notice Constructs the Basis ARTHB ERC-20 contract.
      */
-    constructor() public ERC20('ARTH Bond', 'ARTHB') {}
+    constructor() ERC20('ARTH Bond', 'ARTHB') {}
 
     /**
      * @notice Operator mints basis bonds to a recipient

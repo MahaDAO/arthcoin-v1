@@ -15,7 +15,7 @@ contract MockCurve is Curve {
         uint256 _maxSupply,
         uint256 _minCeiling,
         uint256 _maxCeiling
-    ) public {
+    ) {
         ceiling = _ceiling;
         minSupply = _minSupply;
         maxSupply = _maxSupply;

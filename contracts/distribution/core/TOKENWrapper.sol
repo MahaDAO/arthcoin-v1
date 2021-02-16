@@ -2,16 +2,13 @@
 
 pragma solidity ^0.8.0;
 
-import '@openzeppelin/contracts/math/Math.sol';
-import '@openzeppelin/contracts/math/SafeMath.sol';
-import '@openzeppelin/contracts/utils/Address.sol';
-import '@openzeppelin/contracts/access/Ownable.sol';
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
+import '@openzeppelin/contracts/contracts/math/Math.sol';
+import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
+import '@openzeppelin/contracts/contracts/access/Ownable.sol';
+import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
 
 contract TOKENWrapper is Ownable {
     using SafeMath for uint256;
-    using SafeERC20 for IERC20;
 
     IERC20 public token;
     bool public limitPoolSize;
@@ -63,7 +60,7 @@ contract TOKENWrapper is Ownable {
 
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
-        token.safeTransferFrom(msg.sender, address(this), amount);
+        token.transferFrom(msg.sender, address(this), amount);
     }
 
     function withdraw(uint256 amount) public virtual {
@@ -71,6 +68,6 @@ contract TOKENWrapper is Ownable {
 
         _totalSupply = _totalSupply.sub(amount);
         _balances[msg.sender] = _balances[msg.sender].sub(amount);
-        token.safeTransfer(msg.sender, amount);
+        token.transfer(msg.sender, amount);
     }
 }

@@ -9,5 +9,5 @@ contract MahaLiquidityBoardroomV1 is SimpleBoardroom {
         IERC20 _cash,
         IERC20 _share,
         uint256 _duration
-    ) public SimpleBoardroom(_cash, _share, _duration) {}
+    ) SimpleBoardroom(_cash, _share, _duration) {}
 }

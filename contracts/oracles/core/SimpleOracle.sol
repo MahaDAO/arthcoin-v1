@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.0;
 
-import '@openzeppelin/contracts/math/SafeMath.sol';
-import '@openzeppelin/contracts/access/Ownable.sol';
+import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
+import '@openzeppelin/contracts/contracts/access/Ownable.sol';
 
 import '../../interfaces/ISimpleOracle.sol';
 
@@ -13,7 +13,7 @@ contract SimpleOracle is Ownable, ISimpleOracle {
     uint256 public price = 1e18;
     string public name;
 
-    constructor(string memory _name, uint256 _price) public {
+    constructor(string memory _name, uint256 _price) {
         name = _name;
 
         // Set the initial price to 1.

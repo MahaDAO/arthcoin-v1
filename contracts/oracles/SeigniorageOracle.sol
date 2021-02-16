@@ -14,5 +14,5 @@ contract SeigniorageOracle is UniswapOracle {
         address _dai,
         uint256 _period,
         uint256 _startTime
-    ) public UniswapOracle(_factory, _cash, _dai, _period, _startTime) {}
+    ) UniswapOracle(_factory, _cash, _dai, _period, _startTime) {}
 }

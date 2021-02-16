@@ -2,10 +2,10 @@
 
 pragma solidity ^0.8.0;
 
-import '@openzeppelin/contracts/math/SafeMath.sol';
-import '@openzeppelin/contracts/access/Ownable.sol';
+import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
+import '@openzeppelin/contracts/contracts/access/Ownable.sol';
 
-contract StakingTimelock is Ownable {
+abstract contract StakingTimelock is Ownable {
     using SafeMath for uint256;
 
     uint256 public duration = 1 days;
@@ -18,7 +18,7 @@ contract StakingTimelock is Ownable {
 
     mapping(address => StakingDetails) public _stakingDetails;
 
-    constructor(uint256 _duration) public {
+    constructor(uint256 _duration) {
         duration = _duration;
     }
 

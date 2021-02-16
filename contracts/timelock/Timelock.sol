@@ -31,7 +31,7 @@ pragma solidity ^0.8.0;
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-import '@openzeppelin/contracts/math/SafeMath.sol';
+import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
 
 contract Timelock {
     using SafeMath for uint256;
@@ -74,7 +74,7 @@ contract Timelock {
 
     mapping(bytes32 => bool) public queuedTransactions;
 
-    constructor(address admin_, uint256 delay_) public {
+    constructor(address admin_, uint256 delay_) {
         require(
             delay_ >= MINIMUM_DELAY,
             'Timelock::constructor: Delay must exceed minimum delay.'

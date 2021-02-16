@@ -33,7 +33,7 @@ contract InitialCashDistributor is IDistributor {
         IERC20 _cash,
         IRewardDistributionRecipient[] memory _pools,
         uint256 _totalInitialBalance
-    ) public {
+    ) {
         require(_pools.length != 0, 'a list of BAC pools are required');
 
         cash = _cash;

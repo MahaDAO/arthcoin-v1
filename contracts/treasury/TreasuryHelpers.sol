@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.6.10;
+pragma solidity ^0.8.0;
 
-import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import {Math} from '@openzeppelin/contracts/math/Math.sol';
-import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
+import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
+import {Math} from '@openzeppelin/contracts/contracts/math/Math.sol';
 import {ICustomERC20} from '../interfaces/ICustomERC20.sol';
 import {IUniswapOracle} from '../interfaces/IUniswapOracle.sol';
 import {IUniswapV2Router02} from '../interfaces/IUniswapV2Router02.sol';
@@ -13,14 +12,15 @@ import {ISimpleERCFund} from '../interfaces/ISimpleERCFund.sol';
 import {Operator} from '../owner/Operator.sol';
 import {Epoch} from '../utils/Epoch.sol';
 import {TreasurySetters} from './TreasurySetters.sol';
+import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
 
 /**
  * @title ARTH Treasury contract
- * @notice Monetary policy logic to adjust supplies of basis cash assets
+ * @notice Monetary policy logic to adjust supplies of ARTH & ARTHB
  * @author Steven Enamakel & Yash Agrawal. Original code written by Summer Smith & Rick Sanchez
  */
 abstract contract TreasuryHelpers is TreasurySetters {
-    using SafeERC20 for ICustomERC20;
+    using SafeMath for uint256;
 
     modifier updatePrice {
         _;
@@ -112,7 +112,7 @@ abstract contract TreasuryHelpers is TreasurySetters {
             state.accumulatedSeigniorage = state.accumulatedSeigniorage.add(
                 treasuryReserve
             );
-            emit TreasuryFunded(now, treasuryReserve);
+            emit TreasuryFunded(block.timestamp, treasuryReserve);
             return treasuryReserve;
         }
 

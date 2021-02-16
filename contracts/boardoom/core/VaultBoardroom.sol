@@ -3,20 +3,16 @@
 pragma solidity ^0.8.0;
 // pragma experimental ABIEncoderV2;
 
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
-
+import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
 import './Vault.sol';
 import '../../lib/Safe112.sol';
 import '../../utils/ContractGuard.sol';
 import {Operator} from '../../owner/Operator.sol';
-import '../../interfaces/IBasisAsset.sol';
+import {IBasisAsset} from '../../interfaces/IBasisAsset.sol';
 
-contract VaultBoardroom is ContractGuard, Operator {
+abstract contract VaultBoardroom is ContractGuard, Operator {
     using Safe112 for uint112;
-    using Address for address;
     using SafeMath for uint256;
-    using SafeERC20 for IERC20;
 
     /**
      * Data structures.
@@ -77,7 +73,7 @@ contract VaultBoardroom is ContractGuard, Operator {
     /**
      * Constructor.
      */
-    constructor(IERC20 cash_, Vault vault_) public {
+    constructor(IERC20 cash_, Vault vault_) {
         cash = cash_;
         vault = vault_;
 
@@ -159,7 +155,7 @@ contract VaultBoardroom is ContractGuard, Operator {
 
         if (reward > 0) {
             directors[msg.sender].rewardEarned = 0;
-            cash.safeTransfer(msg.sender, reward);
+            cash.transfer(msg.sender, reward);
 
             emit RewardPaid(msg.sender, reward);
         }
@@ -190,7 +186,7 @@ contract VaultBoardroom is ContractGuard, Operator {
             });
         boardHistory.push(newSnapshot);
 
-        cash.safeTransferFrom(msg.sender, address(this), amount);
+        cash.transferFrom(msg.sender, address(this), amount);
 
         emit RewardAdded(msg.sender, amount);
     }

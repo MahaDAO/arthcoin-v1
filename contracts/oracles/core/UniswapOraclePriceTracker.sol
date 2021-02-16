@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.0;
 
-import '@openzeppelin/contracts/math/SafeMath.sol';
-import '@openzeppelin/contracts/access/Ownable.sol';
+import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
+import '@openzeppelin/contracts/contracts/access/Ownable.sol';
 
 import './UniswapOracle.sol';
 import '../../lib/Babylonian.sol';
@@ -21,7 +21,7 @@ contract UniswapOraclePriceTracker is Ownable {
     address public uniswapOracleToken1;
     UniswapOracle public uniswapOracle;
 
-    constructor(address oracle) public {
+    constructor(address oracle) {
         uniswapOracle = UniswapOracle(oracle);
 
         // These are like supposed to be constant, so set them only once.

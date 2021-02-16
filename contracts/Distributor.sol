@@ -7,7 +7,7 @@ import './interfaces/IDistributor.sol';
 contract Distributor {
     IDistributor[] public distributors;
 
-    constructor(IDistributor[] memory _distributors) public {
+    constructor(IDistributor[] memory _distributors) {
         distributors = _distributors;
     }
 

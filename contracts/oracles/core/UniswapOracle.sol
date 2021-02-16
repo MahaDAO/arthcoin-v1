@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import '@openzeppelin/contracts/math/SafeMath.sol';
+import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
 
 import '../../lib/Babylonian.sol';
 import '../../lib/FixedPoint.sol';
@@ -39,7 +39,7 @@ contract UniswapOracle is Epoch {
         address _tokenB,
         uint256 _period,
         uint256 _startTime
-    ) public Epoch(_period, _startTime, 0) {
+    ) Epoch(_period, _startTime, 0) {
         IUniswapV2Pair _pair =
             IUniswapV2Pair(
                 UniswapV2Library.pairFor(_factory, _tokenA, _tokenB)

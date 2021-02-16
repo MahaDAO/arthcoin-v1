@@ -9,5 +9,5 @@ contract ArthMahaBoardroomV2 is VestedVaultBoardroom {
         IERC20 cash_,
         Vault vault_,
         uint256 vestFor_
-    ) public VestedVaultBoardroom(cash_, vault_, vestFor_) {}
+    ) VestedVaultBoardroom(cash_, vault_, vestFor_) {}
 }

@@ -3,10 +3,8 @@
 pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
-import {SafeMath} from '@openzeppelin/contracts/math/SafeMath.sol';
-import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
-import {Address} from '@openzeppelin/contracts/utils/Address.sol';
+import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
+import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
 import {IBasisAsset} from '../interfaces/IBasisAsset.sol';
 import {FixedPoint} from '../lib/FixedPoint.sol';
 import {Safe112} from '../lib/Safe112.sol';
@@ -22,8 +20,6 @@ import {TreasuryLibrary} from './TreasuryLibrary.sol';
 
 abstract contract TreasuryState is ContractGuard, Epoch {
     using FixedPoint for *;
-    using SafeERC20 for IERC20;
-    using Address for address;
     using SafeMath for uint256;
     using Safe112 for uint112;
 
@@ -96,7 +92,7 @@ abstract contract TreasuryState is ContractGuard, Epoch {
         uint256 _startTime,
         uint256 _period,
         uint256 _startEpoch
-    ) public Epoch(_period, _startTime, _startEpoch) {
+    ) Epoch(_period, _startTime, _startEpoch) {
         boardroomState.arthBoardroomAllocationRate = 20;
         boardroomState.arthLiquidityMlpAllocationRate = 70;
         boardroomState.mahaLiquidityBoardroomAllocationRate = 10;

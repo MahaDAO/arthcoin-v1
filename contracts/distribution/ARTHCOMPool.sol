@@ -11,7 +11,6 @@ contract ARTHCOMPPool is ARTHTOKENPool {
         uint256 starttime_,
         uint256 maxPoolSize_
     )
-        public
         ARTHTOKENPool(
             cash_,
             dai_,

@@ -3,17 +3,17 @@
 pragma solidity ^0.8.0;
 // pragma experimental ABIEncoderV2;
 
-import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
+import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
+import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
 
-import './SimpleTokenWrapper.sol';
+import {SimpleTokenWrapper} from './SimpleTokenWrapper.sol';
 import '../../lib/Safe112.sol';
 import '../../utils/ContractGuard.sol';
-import '../../interfaces/IBasisAsset.sol';
+import {IBasisAsset} from '../../interfaces/IBasisAsset.sol';
+import {StakingTimelock} from '../../timelock/StakingTimelock.sol';
 
 contract SimpleBoardroom is SimpleTokenWrapper, ContractGuard {
-    using SafeERC20 for IERC20;
-    using Address for address;
+    // using Address for address;
     using SafeMath for uint256;
     using Safe112 for uint112;
 
@@ -43,7 +43,7 @@ contract SimpleBoardroom is SimpleTokenWrapper, ContractGuard {
         IERC20 _cash,
         IERC20 _share,
         uint256 _duration
-    ) public StakingTimelock(_duration) {
+    ) StakingTimelock(_duration) {
         cash = _cash;
         share = _share;
 
@@ -156,7 +156,7 @@ contract SimpleBoardroom is SimpleTokenWrapper, ContractGuard {
 
         if (reward > 0) {
             directors[msg.sender].rewardEarned = 0;
-            cash.safeTransfer(msg.sender, reward);
+            cash.transfer(msg.sender, reward);
 
             emit RewardPaid(msg.sender, reward);
         }
@@ -184,7 +184,7 @@ contract SimpleBoardroom is SimpleTokenWrapper, ContractGuard {
             });
         boardHistory.push(newSnapshot);
 
-        cash.safeTransferFrom(msg.sender, address(this), amount);
+        cash.transferFrom(msg.sender, address(this), amount);
 
         emit RewardAdded(msg.sender, amount);
     }

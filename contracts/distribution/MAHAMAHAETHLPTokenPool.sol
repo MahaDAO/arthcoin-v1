@@ -10,7 +10,6 @@ contract MAHAMAHAETHLPTokenPool is ARTHTOKENPool {
         address dai_,
         uint256 starttime_
     )
-        public
         ARTHTOKENPool(
             cash_,
             dai_,

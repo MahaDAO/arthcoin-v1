@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import '@openzeppelin/contracts/presets/ERC20PresetMinterPauser.sol';
+import '@openzeppelin/contracts/contracts/presets/ERC20PresetMinterPauser.sol';
 
 contract MahaToken is ERC20PresetMinterPauser {
     address public upgradedAddress;
@@ -13,5 +13,5 @@ contract MahaToken is ERC20PresetMinterPauser {
     string public url = 'https://mahadao.com';
     string public website = 'https://mahadao.io';
 
-    constructor() public ERC20PresetMinterPauser('MahaDAO', 'MAHA') {}
+    constructor() ERC20PresetMinterPauser('MahaDAO', 'MAHA') {}
 }

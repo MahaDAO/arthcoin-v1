@@ -1,14 +1,11 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.6.10;
+pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
-import {Math} from '@openzeppelin/contracts/math/Math.sol';
-import {SafeMath} from '@openzeppelin/contracts/math/SafeMath.sol';
-
-import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
-import {Address} from '@openzeppelin/contracts/utils/Address.sol';
+import {Math} from '@openzeppelin/contracts/contracts/math/Math.sol';
+import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
+import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
 import {IBasisAsset} from '../interfaces/IBasisAsset.sol';
 import {FixedPoint} from '../lib/FixedPoint.sol';
 import {Safe112} from '../lib/Safe112.sol';
