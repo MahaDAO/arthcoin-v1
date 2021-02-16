@@ -4,8 +4,6 @@ pragma solidity ^0.6.10;
 
 import {Math} from '@openzeppelin/contracts/math/Math.sol';
 import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
-
 import {ICustomERC20} from '../interfaces/ICustomERC20.sol';
 import {IUniswapV2Factory} from '../interfaces/IUniswapV2Factory.sol';
 import {IUniswapOracle} from '../interfaces/IUniswapOracle.sol';
@@ -24,8 +22,6 @@ import {TreasuryHelpers} from './TreasuryHelpers.sol';
  * @author Steven Enamakel & Yash Agrawal. Original code written by Summer Smith & Rick Sanchez
  */
 contract Treasury is TreasuryHelpers {
-    using SafeERC20 for ICustomERC20;
-
     constructor(
         address _dai,
         address _cash,
@@ -295,6 +291,13 @@ contract Treasury is TreasuryHelpers {
 
         // allocate everything else to the boardroom
         _allocateSeignorageToBoardrooms(seigniorage);
+    }
+
+    function refundShares() external onlyOwner {
+        ICustomERC20(share).safeTransfer(
+            msg.sender,
+            ICustomERC20(share).balanceOf(address(this))
+        );
     }
 
     event AdvanceEpoch(address indexed from);
