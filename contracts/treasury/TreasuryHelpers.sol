@@ -340,5 +340,4 @@ contract TreasuryHelpers is TreasurySetters {
     event SeigniorageMinted(uint256 seigniorage);
     event BondsAllocated(uint256 limit);
     event PoolFunded(address indexed pool, uint256 seigniorage);
-    event StabilityFeesCharged(address indexed from, uint256 stabilityFeeValue);
 }
