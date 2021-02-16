@@ -336,7 +336,6 @@ contract TreasuryHelpers is TreasurySetters {
         uint256 amountBurnt,
         uint256 bondsIssued
     );
-    event Log(uint256 data);
     event TreasuryFunded(uint256 timestamp, uint256 seigniorage);
     event SeigniorageMinted(uint256 seigniorage);
     event BondsAllocated(uint256 limit);

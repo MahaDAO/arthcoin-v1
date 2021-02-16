@@ -5,11 +5,6 @@ pragma solidity ^0.6.10;
 import {Math} from '@openzeppelin/contracts/math/Math.sol';
 import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/SafeERC20.sol';
-// import {
-//     ReentrancyGuard
-// } from '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
-
-import '@openzeppelin/contracts/utils/ReentrancyGuard.sol';
 
 import {ICustomERC20} from '../interfaces/ICustomERC20.sol';
 import {IUniswapV2Factory} from '../interfaces/IUniswapV2Factory.sol';
