@@ -21,10 +21,10 @@ contract VestedVaultBoardroom is VaultBoardroom {
      * Constructor.
      */
     constructor(
-        IERC20 cash_,
+        IERC20 token_,
         Vault vault_,
         uint256 vestFor_
-    ) VaultBoardroom(cash_, vault_) {
+    ) VaultBoardroom(token_, vault_) {
         vestFor = vestFor_;
     }
 
@@ -62,7 +62,7 @@ contract VestedVaultBoardroom is VaultBoardroom {
         vestFor = period;
     }
 
-    function claimReward() external override {
+    function claimReward() external override directorExists {
         _updateReward(msg.sender);
 
         uint256 reward = directors[msg.sender].rewardEarned;
@@ -134,30 +134,25 @@ contract VestedVaultBoardroom is VaultBoardroom {
     }
 
     function _updateReward(address director) private {
-        if (director != address(0)) {
-            Boardseat storage seat = directors[director];
+        Boardseat storage seat = directors[director];
 
-            uint256 latestFundingTime =
-                boardHistory[boardHistory.length - 1].time;
-            // uint256 previousFundingTime =
-            //     (
-            //         boardHistory.length > 1
-            //             ? boardHistory[boardHistory.length - 2].time
-            //             : 0
-            //     );
+        uint256 latestFundingTime = boardHistory[boardHistory.length - 1].time;
+        // uint256 previousFundingTime =
+        //     (
+        //         boardHistory.length > 1
+        //             ? boardHistory[boardHistory.length - 2].time
+        //             : 0
+        //     );
 
-            // If rewards are updated before epoch start of the current,
-            // then we mark claimable rewards as pending and set the
-            // current earned rewards to 0.
-            if (seat.lastClaimedOn < latestFundingTime) {
-                seat.rewardPending = seat.rewardEarned;
-                seat.rewardEarned = 0;
-            }
-
-            uint256 freshReward = earned(director);
-
-            seat.rewardEarned = freshReward;
-            seat.lastSnapshotIndex = latestSnapshotIndex();
+        // If rewards are updated before epoch start of the current,
+        // then we mark claimable rewards as pending and set the
+        // current earned rewards to 0.
+        if (seat.lastClaimedOn < latestFundingTime) {
+            seat.rewardPending = seat.rewardEarned;
+            seat.rewardEarned = 0;
         }
+
+        seat.rewardEarned = earned(director);
+        seat.lastSnapshotIndex = latestSnapshotIndex();
     }
 }

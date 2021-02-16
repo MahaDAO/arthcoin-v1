@@ -185,25 +185,23 @@ contract Treasury is TreasurySetters {
         // update the bond limits
         _updateConversionLimit(cash12hPrice);
 
-        // Check if we are bloew the peg.
+        // Check if we are below the peg. < $1.00
         if (cash12hPrice <= state.cashTargetPrice) {
             // Check if we are below the peg and in contraction or not.
             // Should we use bond purchase price or target price?
-            if (cash12hPrice <= getBondPurchasePrice()) {
-                uint256 contractionRewardToGive =
-                    Math.min(
-                        state.contractionRewardPerEpoch,
-                        share.balanceOf(address(this))
-                    );
+            uint256 contractionRewardToGive =
+                Math.min(
+                    state.contractionRewardPerEpoch,
+                    share.balanceOf(address(this))
+                );
 
-                // Allocate the appropriate contraction reward to boardrooms.
-                _allocateToBoardrooms(share, contractionRewardToGive);
-            }
+            // Allocate the appropriate contraction reward to boardrooms.
+            _allocateToBoardrooms(share, contractionRewardToGive);
 
-            // If contraction rewards are not applicable, then just advance epoch instead revert.
             return;
         }
 
+        // < $1.05
         if (cash12hPrice <= getExpansionLimitPrice()) {
             // if we are below the ceiling price (or expansion limit price) but
             // above the target price, then we try to pay off all the bond holders
@@ -230,6 +228,7 @@ contract Treasury is TreasurySetters {
             return;
         }
 
+        // > $1.05
         uint256 seigniorage = estimateSeignorageToMint(cash12hPrice);
         if (seigniorage == 0) return;
 
@@ -268,7 +267,7 @@ contract Treasury is TreasurySetters {
         share.transfer(msg.sender, share.balanceOf(address(this)));
     }
 
-    function migrate(address target) external onlyOperator checkOperator {
+    function migrate(address target) external onlyOperator {
         require(target != address(0), 'migrate to zero');
         require(!state.migrated, '!migrated');
 
