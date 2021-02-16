@@ -27,12 +27,10 @@ contract Treasury is TreasuryHelpers {
     using SafeERC20 for ICustomERC20;
 
     constructor(
-        // tokens
         address _dai,
         address _cash,
         address _bond,
         address _share,
-        // oracles
         address _bondOracle,
         address _arthMahaOracle,
         address _seigniorageOracle,
@@ -41,23 +39,22 @@ contract Treasury is TreasuryHelpers {
         uint256 _startTime,
         uint256 _period,
         uint256 _startEpoch
-    )
-        public
-        TreasuryHelpers(
-            _dai,
-            _cash,
-            _bond,
-            _share,
-            _bondOracle,
-            _arthMahaOracle,
-            _seigniorageOracle,
-            _gmuOracle,
-            _uniswapRouter,
-            _startTime,
-            _period,
-            _startEpoch
-        )
-    {}
+    ) public Epoch(_period, _startTime, _startEpoch) {
+        // tokens
+        dai = _dai;
+        cash = _cash;
+        bond = _bond;
+        share = _share;
+
+        // oracles
+        bondOracle = _bondOracle;
+        arthMahaOracle = _arthMahaOracle;
+        seigniorageOracle = _seigniorageOracle;
+        gmuOracle = _gmuOracle;
+
+        // others
+        uniswapRouter = _uniswapRouter;
+    }
 
     function initialize() public checkOperator {
         require(!initialized, '!initialized');
@@ -226,38 +223,14 @@ contract Treasury is TreasuryHelpers {
             // Check if we are below the peg and in contraction or not.
             // Should we use bond purchase price or target price?
             if (cash12hPrice <= getBondPurchasePrice()) {
-                // Check if the current epoch is beginning of a new month or not.
-                // If it is then we assign reset the reward given during contraction to 0.
-                // There's 12hr's epoch and 30 days in a month, hence we have 60 epochs/month.
-                // NOTE: we divide by 59 since epoch numbering starts with 0.
-                if (getCurrentEpoch().mod(59) == 0)
-                    contractionRewardGivenThisMonth = 0;
-
-                if (
-                    contractionRewardGivenThisMonth >=
-                    maxContractionRewardPerMonth
-                ) return; // just advance the epoch.
-
                 uint256 contractionRewardToGive =
                     Math.min(
-                        // Contraction Reward left this epoch.
-                        maxContractionRewardPerMonth.sub(
-                            contractionRewardGivenThisMonth
-                        ),
-                        // NOTE: mul and div by 1e18 for `possible` precision loss.
-                        maxContractionRewardPerMonth
-                            .mul(1e18)
-                            .div(12 hours)
-                            .div(30 days)
-                            .div(1e18) // Reward per epoch per month.
+                        contractionRewardPerEpoch,
+                        ICustomERC20(share).balanceOf(address(this))
                     );
 
                 // Allocate the appropriate contraction reward to boardrooms.
                 _allocateContractionRewardToBoardrooms(contractionRewardToGive);
-
-                // Update the reward given this month.
-                contractionRewardGivenThisMonth = contractionRewardGivenThisMonth
-                    .add(contractionRewardToGive);
             }
 
             // If contraction rewards are not applicable, then just advance epoch instead revert.
@@ -282,7 +255,7 @@ contract Treasury is TreasuryHelpers {
             if (enableSurprise) {
                 // surprise!! send 10% to boardooms and 90% to bond holders
                 _allocateToBondHolders(seigniorage.mul(90).div(100));
-                _allocateToBoardrooms(seigniorage.mul(10).div(100));
+                _allocateSeignorageToBoardrooms(seigniorage.mul(10).div(100));
             } else {
                 _allocateToBondHolders(seigniorage);
             }
@@ -321,7 +294,7 @@ contract Treasury is TreasuryHelpers {
         seigniorage = seigniorage.sub(treasuryReserve);
 
         // allocate everything else to the boardroom
-        _allocateToBoardrooms(seigniorage);
+        _allocateSeignorageToBoardrooms(seigniorage);
     }
 
     event AdvanceEpoch(address indexed from);

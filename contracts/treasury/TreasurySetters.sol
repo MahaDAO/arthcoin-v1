@@ -17,26 +17,30 @@ abstract contract TreasurySetters is TreasuryGetters {
 
     function setAllFunds(
         // boardrooms
-        address _arthUniLiquidityBoardroom,
-        address _arthMlpLiquidityBoardroom,
-        address _mahaLiquidityBoardroom,
-        address _arthBoardroom,
+        address _arthArthLiquidityMlpBoardroom,
+        address _arthMahaBoardroom,
+        address _arthArthBoardroom,
+        address _mahaArthLiquidityMlpBoardroom,
+        address _mahaMahaBoardroom,
+        address _mahaArthBoardroom,
         // ecosystem fund
         address _fund,
         address _rainyDayFund
     ) public onlyOwner {
-        arthLiquidityUniBoardroom = _arthUniLiquidityBoardroom;
-        arthLiquidityMlpBoardroom = _arthMlpLiquidityBoardroom;
-        mahaLiquidityBoardroom = _mahaLiquidityBoardroom;
+        arthArthLiquidityMlpBoardroom = _arthArthLiquidityMlpBoardroom;
+        arthMahaBoardroom = _arthMahaBoardroom;
+        arthArthBoardroom = _arthArthBoardroom;
+        mahaArthLiquidityMlpBoardroom = _mahaArthLiquidityMlpBoardroom;
+        mahaMahaBoardroom = _mahaMahaBoardroom;
+        mahaArthBoardroom = _mahaArthBoardroom;
 
-        arthBoardroom = _arthBoardroom;
         ecosystemFund = _fund;
         rainyDayFund = _rainyDayFund;
     }
 
-    function setFund(address newFund, uint256 rate) public onlyOwner {
+    function setFund(address expansionFund, uint256 rate) public onlyOwner {
         require(rate <= 100, 'rate >= 0');
-        ecosystemFund = newFund;
+        ecosystemFund = expansionFund;
         ecosystemFundAllocationRate = rate;
     }
 
@@ -63,8 +67,8 @@ abstract contract TreasurySetters is TreasuryGetters {
         enableSurprise = val;
     }
 
-    function setMaxContractionRewardPerMonth(uint256 amount) public onlyOwner {
-        maxContractionRewardPerMonth = amount;
+    function setContractionRewardPerMonth(uint256 amount) public onlyOwner {
+        contractionRewardPerEpoch = amount;
     }
 
     function setSafetyRegion(uint256 rate) public onlyOwner returns (uint256) {
@@ -77,36 +81,36 @@ abstract contract TreasurySetters is TreasuryGetters {
         bondSeigniorageRate = rate;
     }
 
-    function setArthBoardroom(address newFund, uint256 rate) public onlyOwner {
+    function setArthBoardroom(
+        address expansionFund,
+        address contractionFund,
+        uint256 rate
+    ) public onlyOwner {
         require(rate <= 100, 'rate >= 0');
-        arthBoardroom = newFund;
+        arthArthBoardroom = expansionFund;
+        mahaArthBoardroom = contractionFund;
         arthBoardroomAllocationRate = rate;
     }
 
-    function setArthLiquidityUniBoardroom(address newFund, uint256 rate)
-        public
-        onlyOwner
-    {
+    function setArthLiquidityMlpBoardroom(
+        address expansionFund,
+        address contractionFund,
+        uint256 rate
+    ) public onlyOwner {
         require(rate <= 100, 'rate >= 0');
-        arthLiquidityUniBoardroom = newFund;
-        arthLiquidityUniAllocationRate = rate;
-    }
-
-    function setArthLiquidityMlpBoardroom(address newFund, uint256 rate)
-        public
-        onlyOwner
-    {
-        require(rate <= 100, 'rate >= 0');
-        arthLiquidityMlpBoardroom = newFund;
+        arthArthLiquidityMlpBoardroom = expansionFund;
+        mahaArthLiquidityMlpBoardroom = contractionFund;
         arthLiquidityMlpAllocationRate = rate;
     }
 
-    function setMahaLiquidityBoardroom(address newFund, uint256 rate)
-        public
-        onlyOwner
-    {
+    function setMahaBoardroom(
+        address expansionFund,
+        address contractionFund,
+        uint256 rate
+    ) public onlyOwner {
         require(rate <= 100, 'rate >= 0');
-        mahaLiquidityBoardroom = newFund;
+        arthMahaBoardroom = expansionFund;
+        mahaMahaBoardroom = contractionFund;
         mahaLiquidityBoardroomAllocationRate = rate;
     }
 

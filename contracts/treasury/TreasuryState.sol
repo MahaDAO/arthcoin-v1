@@ -33,10 +33,12 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     address public share;
     address public uniswapRouter;
 
-    address public arthLiquidityUniBoardroom;
-    address public arthLiquidityMlpBoardroom;
-    address public mahaLiquidityBoardroom;
-    address public arthBoardroom;
+    address public arthArthLiquidityMlpBoardroom;
+    address public arthMahaBoardroom;
+    address public arthArthBoardroom;
+    address public mahaArthLiquidityMlpBoardroom;
+    address public mahaMahaBoardroom;
+    address public mahaArthBoardroom;
 
     address public ecosystemFund;
     address public rainyDayFund;
@@ -87,8 +89,7 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     // ARTH liqudity providers
     //
     // TODO: make one for maha holders and one for the various community pools
-    uint256 public arthLiquidityUniAllocationRate = 5; // In %.
-    uint256 public arthLiquidityMlpAllocationRate = 65; // In %.
+    uint256 public arthLiquidityMlpAllocationRate = 70; // In %.
     uint256 public arthBoardroomAllocationRate = 20; // IN %.
     uint256 public mahaLiquidityBoardroomAllocationRate = 10; // IN %.
 
@@ -100,10 +101,8 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     // deducted to pay for stability fees.
     uint256 public stabilityFee = 1; // IN %;
 
-    // max amount of maha's to allocate to the boardrooms per month.
-    uint256 maxContractionRewardPerMonth = 10000;
-    // amount of maha rewarded this month.
-    uint256 contractionRewardGivenThisMonth = 0;
+    // amount of maha rewarded per epoch.
+    uint256 contractionRewardPerEpoch = 0;
 
     // wut? algo coin surprise sheeet?
     bool public enableSurprise = false;
@@ -117,12 +116,14 @@ abstract contract TreasuryState is ContractGuard, Epoch {
         require(
             Operator(cash).operator() == address(this) &&
                 Operator(bond).operator() == address(this) &&
-                Operator(arthLiquidityMlpBoardroom).operator() ==
+                Operator(arthArthLiquidityMlpBoardroom).operator() ==
                 address(this) &&
-                Operator(arthLiquidityUniBoardroom).operator() ==
+                Operator(arthMahaBoardroom).operator() == address(this) &&
+                Operator(arthArthBoardroom).operator() == address(this) &&
+                Operator(mahaArthLiquidityMlpBoardroom).operator() ==
                 address(this) &&
-                Operator(arthBoardroom).operator() == address(this) &&
-                Operator(mahaLiquidityBoardroom).operator() == address(this),
+                Operator(mahaMahaBoardroom).operator() == address(this) &&
+                Operator(mahaArthBoardroom).operator() == address(this),
             'Treasury: need more permission'
         );
         _;

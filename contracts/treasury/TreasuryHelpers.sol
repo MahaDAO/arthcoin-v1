@@ -18,73 +18,12 @@ import {TreasurySetters} from './TreasurySetters.sol';
  * @notice Monetary policy logic to adjust supplies of basis cash assets
  * @author Steven Enamakel & Yash Agrawal. Original code written by Summer Smith & Rick Sanchez
  */
-contract TreasuryHelpers is TreasurySetters {
+abstract contract TreasuryHelpers is TreasurySetters {
     using SafeERC20 for ICustomERC20;
-
-    constructor(
-        address _dai,
-        address _cash,
-        address _bond,
-        address _share,
-        address _bondOracle,
-        address _arthMahaOracle,
-        address _seigniorageOracle,
-        address _gmuOracle,
-        // address _arthUniLiquidityBoardroom,
-        // address _arthMlpLiquidityBoardroom,
-        // address _mahaLiquidityBoardroom,
-        // address _arthBoardroom,
-        // address _fund,
-        // address _rainyDayFund,
-        address _uniswapRouter,
-        uint256 _startTime,
-        uint256 _period,
-        uint256 _startEpoch
-    ) public Epoch(_period, _startTime, _startEpoch) {
-        // tokens
-        dai = _dai;
-        cash = _cash;
-        bond = _bond;
-        share = _share;
-
-        // oracles
-        bondOracle = _bondOracle;
-        arthMahaOracle = _arthMahaOracle;
-        seigniorageOracle = _seigniorageOracle;
-        gmuOracle = _gmuOracle;
-
-        // funds
-        // arthLiquidityUniBoardroom = _arthUniLiquidityBoardroom;
-        // arthLiquidityMlpBoardroom = _arthMlpLiquidityBoardroom;
-        // arthBoardroom = _arthBoardroom;
-        // ecosystemFund = _fund;
-        // rainyDayFund = _rainyDayFund;
-
-        // others
-        uniswapRouter = _uniswapRouter;
-
-        // _updateCashPrice();
-    }
 
     modifier updatePrice {
         _;
-
         _updateCashPrice();
-    }
-
-    function setBoardrooms(
-        address _arthUniLiquidityBoardroom,
-        address _arthMlpLiquidityBoardroom,
-        address _mahaLiquidityBoardroom,
-        address _arthBoardroom,
-        address _fund
-    ) public onlyOwner {
-        // funds
-        arthLiquidityUniBoardroom = _arthUniLiquidityBoardroom;
-        arthLiquidityMlpBoardroom = _arthMlpLiquidityBoardroom;
-        mahaLiquidityBoardroom = _mahaLiquidityBoardroom;
-        arthBoardroom = _arthBoardroom;
-        ecosystemFund = _fund;
     }
 
     function migrate(address target) public onlyOperator checkOperator {
@@ -117,28 +56,6 @@ contract TreasuryHelpers is TreasurySetters {
 
         migrated = true;
         emit Migration(target);
-    }
-
-    function initializeFunds(
-        // boardrooms
-        address _arthUniLiquidityBoardroom,
-        address _arthMlpLiquidityBoardroom,
-        address _mahaLiquidityBoardroom,
-        address _arthBoardroom,
-        // ecosystem fund
-        address _fund,
-        address _rainyDayFund
-    ) public onlyOwner {
-        setAllFunds(
-            // boardrooms
-            _arthUniLiquidityBoardroom,
-            _arthMlpLiquidityBoardroom,
-            _mahaLiquidityBoardroom,
-            _arthBoardroom,
-            // ecosystem fund
-            _fund,
-            _rainyDayFund
-        );
     }
 
     function _allocateToFund(
@@ -209,13 +126,15 @@ contract TreasuryHelpers is TreasurySetters {
     }
 
     /**
-     * Helper function to allocate contraction seigniorage to a boardoom.
+     * Helper function to allocate seigniorage to boardooms. Seigniorage is allocated
+     * after bond token holders have been paid first.
      */
-    function _allocateContractionRewardToBoardroom(
+    function _allocateToBoardroom(
+        address token,
         address boardroom,
         uint256 rate,
         uint256 seigniorage
-    ) internal {
+    ) private {
         if (seigniorage == 0) return;
 
         // Calculate boardroom reserves.
@@ -223,11 +142,36 @@ contract TreasuryHelpers is TreasurySetters {
 
         // arth-dai uniswap lp
         if (reserve > 0) {
-            ICustomERC20(share).safeApprove(boardroom, reserve);
+            ICustomERC20(token).approve(boardroom, reserve);
             IBoardroom(boardroom).allocateSeigniorage(reserve);
-
             emit PoolFunded(boardroom, reserve);
         }
+    }
+
+    function _allocateSeignorageToBoardrooms(uint256 boardroomReserve)
+        internal
+    {
+        if (boardroomReserve <= 0) return;
+        _allocateToBoardroom(
+            cash,
+            arthArthLiquidityMlpBoardroom,
+            arthLiquidityMlpAllocationRate,
+            boardroomReserve
+        );
+
+        _allocateToBoardroom(
+            cash,
+            arthArthBoardroom,
+            arthBoardroomAllocationRate,
+            boardroomReserve
+        );
+
+        _allocateToBoardroom(
+            cash,
+            arthMahaBoardroom,
+            mahaLiquidityBoardroomAllocationRate,
+            boardroomReserve
+        );
     }
 
     function _allocateContractionRewardToBoardrooms(uint256 boardroomReserve)
@@ -235,76 +179,23 @@ contract TreasuryHelpers is TreasurySetters {
     {
         if (boardroomReserve <= 0) return;
 
-        _allocateContractionRewardToBoardroom(
-            arthLiquidityUniBoardroom,
-            arthLiquidityUniAllocationRate,
-            boardroomReserve
-        );
-
-        _allocateContractionRewardToBoardroom(
-            arthLiquidityMlpBoardroom,
-            arthLiquidityMlpAllocationRate,
-            boardroomReserve
-        );
-
-        _allocateContractionRewardToBoardroom(
-            arthBoardroom,
-            arthBoardroomAllocationRate,
-            boardroomReserve
-        );
-
-        _allocateContractionRewardToBoardroom(
-            mahaLiquidityBoardroom,
-            mahaLiquidityBoardroomAllocationRate,
-            boardroomReserve
-        );
-    }
-
-    /**
-     * Helper function to allocate seigniorage to boardooms. Seigniorage is allocated
-     * after bond token holders have been paid first.
-     */
-    function _allocateToBoardroom(
-        address boardroom,
-        uint256 rate,
-        uint256 seigniorage
-    ) internal {
-        if (seigniorage == 0) return;
-
-        // Calculate boardroom reserves.
-        uint256 reserve = seigniorage.mul(rate).div(100);
-
-        // arth-dai uniswap lp
-        if (reserve > 0) {
-            ICustomERC20(cash).safeApprove(boardroom, reserve);
-            IBoardroom(boardroom).allocateSeigniorage(reserve);
-            emit PoolFunded(boardroom, reserve);
-        }
-    }
-
-    function _allocateToBoardrooms(uint256 boardroomReserve) internal {
-        if (boardroomReserve <= 0) return;
-
         _allocateToBoardroom(
-            arthLiquidityUniBoardroom,
-            arthLiquidityUniAllocationRate,
-            boardroomReserve
-        );
-
-        _allocateToBoardroom(
-            arthLiquidityMlpBoardroom,
+            share,
+            mahaArthLiquidityMlpBoardroom,
             arthLiquidityMlpAllocationRate,
             boardroomReserve
         );
 
         _allocateToBoardroom(
-            arthBoardroom,
+            share,
+            mahaArthBoardroom,
             arthBoardroomAllocationRate,
             boardroomReserve
         );
 
         _allocateToBoardroom(
-            mahaLiquidityBoardroom,
+            share,
+            mahaMahaBoardroom,
             mahaLiquidityBoardroomAllocationRate,
             boardroomReserve
         );
@@ -340,4 +231,5 @@ contract TreasuryHelpers is TreasurySetters {
     event SeigniorageMinted(uint256 seigniorage);
     event BondsAllocated(uint256 limit);
     event PoolFunded(address indexed pool, uint256 seigniorage);
+    event StabilityFeesCharged(address indexed from, uint256 amount);
 }
