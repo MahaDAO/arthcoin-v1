@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.6.12;
+pragma solidity ^0.8.0;
 
 interface ICurve {
     function minSupply() external view returns (uint256);
