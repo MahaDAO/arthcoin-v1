@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.6.12;
+pragma experimental ABIEncoderV2;
 
 import {SafeMath} from '@openzeppelin/contracts/math/SafeMath.sol';
 import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
@@ -17,6 +18,7 @@ import {IUniswapOracle} from '../interfaces/IUniswapOracle.sol';
 import {IUniswapV2Router02} from '../interfaces/IUniswapV2Router02.sol';
 import {IBoardroom} from '../interfaces/IBoardroom.sol';
 import {ISimpleERCFund} from '../interfaces/ISimpleERCFund.sol';
+import {TreasuryLibrary} from './TreasuryLibrary.sol';
 
 abstract contract TreasuryState is ContractGuard, Epoch {
     using FixedPoint for *;
@@ -25,96 +27,100 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     using SafeMath for uint256;
     using Safe112 for uint112;
 
-    /* ========== STATE VARIABLES ========== */
+    struct State {
+        /* ========== STATE VARIABLES ========== */
 
-    // ========== FLAGS
-    bool public migrated = false;
-    bool public initialized = false;
+        // ========== FLAGS
+        bool migrated;
+        bool initialized;
+        // ========== CORE
+        IUniswapV2Router02 uniswapRouter;
+        address uniswapLiquidityPair;
+        // cash price tracking vars
+        uint256 cashTargetPrice;
+        // these govern how much bond tokens are issued
+        uint256 cashToBondConversionLimit;
+        uint256 accumulatedBonds;
+        // this governs how much cash tokens are issued
+        uint256 accumulatedSeigniorage;
+        // flag whether we should considerUniswapLiquidity or not.
+        bool considerUniswapLiquidity;
+        // used to limit how much of the supply is converted into bonds
+        uint256 maxDebtIncreasePerEpoch; // in %
+        // the discount given to bond purchasers
+        uint256 bondDiscount; // in %
+        // the band beyond which bond purchase or protocol expansion happens.
+        uint256 safetyRegion; // in %
+        // at the most how much % of the supply should be increased
+        uint256 maxSupplyIncreasePerEpoch; // in %
+        // this controls how much of the new seigniorage is given to bond token holders
+        // when we are in expansion mode. ideally 90% of new seigniorate is
+        // given to bond token holders.
+        uint256 bondSeigniorageRate; // in %
+        // stability fee is a special fee charged by the protocol in MAHA tokens
+        // whenever a person is going to redeem his/her bonds. the fee is charged
+        // basis how much ARTHB is being redeemed.
+        //
+        // eg: a 1% fee means that while redeeming 100 ARTHB, 1 ARTH worth of MAHA is
+        // deducted to pay for stability fees.
+        uint256 stabilityFee; // IN %;
+        // amount of maha rewarded per epoch.
+        uint256 contractionRewardPerEpoch;
+        // wut? algo coin surprise sheeet?
+        bool enableSurprise;
+    }
 
-    // ========== CORE
-    IERC20 public dai;
-    IBasisAsset public cash;
-    IBasisAsset public bond;
-    IERC20 public share;
-    IUniswapV2Router02 public uniswapRouter;
-    address uniswapLiquidityPair;
+    struct OracleState {
+        IUniswapOracle bondOracle;
+        IUniswapOracle seigniorageOracle;
+        ISimpleOracle gmuOracle;
+        ISimpleOracle arthMahaOracle;
+    }
 
-    IBoardroom public arthArthLiquidityMlpBoardroom;
-    IBoardroom public arthMahaBoardroom;
-    IBoardroom public arthArthBoardroom;
-    IBoardroom public mahaArthLiquidityMlpBoardroom;
-    IBoardroom public mahaMahaBoardroom;
-    IBoardroom public mahaArthBoardroom;
+    IERC20 dai;
+    IBasisAsset cash;
+    IBasisAsset bond;
+    IERC20 share;
 
-    ISimpleERCFund public ecosystemFund;
-    ISimpleERCFund public rainyDayFund;
+    struct CoreState {
+        State state;
+    }
 
-    // oracles
-    IUniswapOracle public bondOracle;
-    IUniswapOracle public seigniorageOracle;
-    ISimpleOracle public gmuOracle;
-    ISimpleOracle public arthMahaOracle;
+    TreasuryLibrary.BoardroomState internal boardroomState;
+    OracleState public oracleState;
+    State internal state;
 
-    // cash price tracking vars
-    uint256 public cashTargetPrice = 1e18;
+    CoreState s;
 
-    // these govern how much bond tokens are issued
-    uint256 public cashToBondConversionLimit = 0;
-    uint256 public accumulatedBonds = 0;
-
-    // this governs how much cash tokens are issued
-    uint256 public accumulatedSeigniorage = 0;
-
-    // flag whether we should considerUniswapLiquidity or not.
-    bool public considerUniswapLiquidity = false;
-
-    // used to limit how much of the supply is converted into bonds
-    uint256 public maxDebtIncreasePerEpoch = 5; // in %
-
-    // the discount given to bond purchasers
-    uint256 public bondDiscount = 20; // in %
-
-    // the band beyond which bond purchase or protocol expansion happens.
-    uint256 public safetyRegion = 5; // in %
-
-    // at the most how much % of the supply should be increased
-    uint256 public maxSupplyIncreasePerEpoch = 10; // in %
-
-    // the ecosystem fund recieves seigniorage before anybody else; this
-    // value decides how much of the new seigniorage is sent to this fund.
-    uint256 public ecosystemFundAllocationRate = 2; // in %
-    uint256 public rainyDayFundAllocationRate = 2; // in %
-
-    // this controls how much of the new seigniorage is given to bond token holders
-    // when we are in expansion mode. ideally 90% of new seigniorate is
-    // given to bond token holders.
-    uint256 public bondSeigniorageRate = 90; // in %
-
-    // we decide how much allocation to give to the boardrooms. there
-    // are currently two boardrooms; one for ARTH holders and the other for
-    // ARTH liqudity providers
-    //
-    // TODO: make one for maha holders and one for the various community pools
-    uint256 public arthLiquidityMlpAllocationRate = 70; // In %.
-    uint256 public arthBoardroomAllocationRate = 20; // IN %.
-    uint256 public mahaLiquidityBoardroomAllocationRate = 10; // IN %.
-
-    // stability fee is a special fee charged by the protocol in MAHA tokens
-    // whenever a person is going to redeem his/her bonds. the fee is charged
-    // basis how much ARTHB is being redeemed.
-    //
-    // eg: a 1% fee means that while redeeming 100 ARTHB, 1 ARTH worth of MAHA is
-    // deducted to pay for stability fees.
-    uint256 public stabilityFee = 1; // IN %;
-
-    // amount of maha rewarded per epoch.
-    uint256 contractionRewardPerEpoch = 0;
-
-    // wut? algo coin surprise sheeet?
-    bool public enableSurprise = false;
+    constructor(
+        uint256 _startTime,
+        uint256 _period,
+        uint256 _startEpoch
+    ) public Epoch(_period, _startTime, _startEpoch) {
+        boardroomState.arthBoardroomAllocationRate = 20;
+        boardroomState.arthLiquidityMlpAllocationRate = 70;
+        boardroomState.mahaLiquidityBoardroomAllocationRate = 10;
+        boardroomState.ecosystemFundAllocationRate = 2;
+        boardroomState.rainyDayFundAllocationRate = 2;
+        state.accumulatedBonds = 0;
+        state.accumulatedSeigniorage = 0;
+        state.bondDiscount = 20;
+        state.bondSeigniorageRate = 90;
+        state.cashTargetPrice = 1e18;
+        state.cashToBondConversionLimit = 0;
+        state.considerUniswapLiquidity = false;
+        state.contractionRewardPerEpoch = 0;
+        state.enableSurprise = false;
+        state.initialized = false;
+        state.maxDebtIncreasePerEpoch = 5;
+        state.maxSupplyIncreasePerEpoch = 10;
+        state.migrated = false;
+        state.safetyRegion = 5;
+        state.stabilityFee = 1;
+    }
 
     modifier checkMigration {
-        require(!migrated, 'Treasury: migrated');
+        require(!state.migrated, 'Treasury: migrated');
         _;
     }
 
@@ -122,14 +128,20 @@ abstract contract TreasuryState is ContractGuard, Epoch {
         require(
             cash.operator() == address(this) &&
                 bond.operator() == address(this) &&
-                arthArthLiquidityMlpBoardroom.operator() == address(this) &&
-                arthMahaBoardroom.operator() == address(this) &&
-                arthArthBoardroom.operator() == address(this) &&
-                mahaArthLiquidityMlpBoardroom.operator() == address(this) &&
-                mahaMahaBoardroom.operator() == address(this) &&
-                mahaArthBoardroom.operator() == address(this),
+                boardroomState.arthArthLiquidityMlpBoardroom.operator() ==
+                address(this) &&
+                boardroomState.arthMahaBoardroom.operator() == address(this) &&
+                boardroomState.arthArthBoardroom.operator() == address(this) &&
+                boardroomState.mahaArthLiquidityMlpBoardroom.operator() ==
+                address(this) &&
+                boardroomState.mahaMahaBoardroom.operator() == address(this) &&
+                boardroomState.mahaArthBoardroom.operator() == address(this),
             'Treasury: need more permission'
         );
         _;
+    }
+
+    function getState() public view returns (State memory _state) {
+        return s.state;
     }
 }

@@ -16,36 +16,29 @@ import {IUniswapV2Router02} from '../interfaces/IUniswapV2Router02.sol';
 import {TreasuryLibrary} from './TreasuryLibrary.sol';
 
 abstract contract TreasuryGetters is TreasuryState {
-    function getReserve() public view returns (uint256) {
-        return accumulatedSeigniorage;
-    }
-
-    function getStabilityFee() public view returns (uint256) {
-        return stabilityFee;
-    }
-
     function getGMUOraclePrice() public view returns (uint256) {
-        return gmuOracle.getPrice();
+        return oracleState.gmuOracle.getPrice();
     }
 
     function getArthMahaOraclePrice() public view returns (uint256) {
-        return arthMahaOracle.getPrice();
+        return oracleState.arthMahaOracle.getPrice();
     }
 
     function get12hrTWAPOraclePrice() public view returns (uint256) {
-        return TreasuryLibrary.getCashPrice(seigniorageOracle, cash);
+        return
+            TreasuryLibrary.getCashPrice(oracleState.seigniorageOracle, cash);
     }
 
     function get1hrTWAPOraclePrice() public view returns (uint256) {
-        return TreasuryLibrary.getCashPrice(bondOracle, cash);
+        return TreasuryLibrary.getCashPrice(oracleState.bondOracle, cash);
     }
 
     function arthCirculatingSupply() public view returns (uint256) {
-        return cash.totalSupply().sub(accumulatedSeigniorage);
+        return cash.totalSupply().sub(state.accumulatedSeigniorage);
     }
 
     function bondCirculatingSupply() public view returns (uint256) {
-        return bond.totalSupply().sub(accumulatedSeigniorage);
+        return bond.totalSupply().sub(state.accumulatedSeigniorage);
     }
 
     /**
@@ -56,13 +49,16 @@ abstract contract TreasuryGetters is TreasuryState {
         view
         returns (uint256)
     {
-        if (price <= cashTargetPrice) return 0; // < $1.00
+        if (price <= state.cashTargetPrice) return 0; // < $1.00
 
         // cap the max supply increase per epoch to only 30%
         uint256 finalPercentage =
             Math.min(
-                TreasuryLibrary.getPercentDeviationFromTarget(price, gmuOracle),
-                maxSupplyIncreasePerEpoch
+                TreasuryLibrary.getPercentDeviationFromTarget(
+                    price,
+                    oracleState.gmuOracle
+                ),
+                state.maxSupplyIncreasePerEpoch
             );
 
         // take into consideration uniswap liq. if flag is on, ie how much liquidity is there in the ARTH uniswap pool
@@ -85,12 +81,16 @@ abstract contract TreasuryGetters is TreasuryState {
         // set a limit to how many bonds are there.
 
         uint256 percentage =
-            TreasuryLibrary.getPercentDeviationFromTarget(price, gmuOracle);
+            TreasuryLibrary.getPercentDeviationFromTarget(
+                price,
+                oracleState.gmuOracle
+            );
 
         // understand how much % deviation do we have from target price
         // if target price is 2.5$ and we are at 2$; then percentage should be 20%
         // cap the bonds to be issed; we don't want too many
-        uint256 finalPercentage = Math.min(percentage, maxDebtIncreasePerEpoch);
+        uint256 finalPercentage =
+            Math.min(percentage, state.maxDebtIncreasePerEpoch);
 
         // accordingly set the new conversion limit to be that % from the
         // current circulating supply of ARTH and if uniswap enabled then uniswap liquidity.
@@ -103,24 +103,27 @@ abstract contract TreasuryGetters is TreasuryState {
     }
 
     function getBondRedemtionPrice() public view returns (uint256) {
-        return cashTargetPrice; // 1$
+        return state.cashTargetPrice; // 1$
     }
 
     function getExpansionLimitPrice() public view returns (uint256) {
-        return cashTargetPrice.mul(safetyRegion.add(100)).div(100); // 1.05$
+        return state.cashTargetPrice.mul(state.safetyRegion.add(100)).div(100); // 1.05$
     }
 
     function getBondPurchasePrice() public view returns (uint256) {
-        return cashTargetPrice.mul(uint256(100).sub(safetyRegion)).div(100); // 0.95$
+        return
+            state.cashTargetPrice.mul(uint256(100).sub(state.safetyRegion)).div(
+                100
+            ); // 0.95$
     }
 
     function getCashSupplyInLiquidity() public view returns (uint256) {
         // check if enabled or not
-        if (!considerUniswapLiquidity) return uint256(100);
+        if (!state.considerUniswapLiquidity) return uint256(100);
 
         // Get the liquidity of cash locked in uniswap pair.
         uint256 uniswapLiquidityPairCashBalance =
-            cash.balanceOf(uniswapLiquidityPair);
+            cash.balanceOf(state.uniswapLiquidityPair);
 
         // Get the liquidity percent.
         return uniswapLiquidityPairCashBalance.mul(100).div(cash.totalSupply());

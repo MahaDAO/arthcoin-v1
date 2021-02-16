@@ -29,7 +29,7 @@ abstract contract TreasuryHelpers is TreasurySetters {
 
     function migrate(address target) public onlyOperator checkOperator {
         require(target != address(0), 'migrate to zero');
-        require(!migrated, '!migrated');
+        require(!state.migrated, '!migrated');
 
         // TODO: check if the destination is a treasury or not
 
@@ -46,7 +46,7 @@ abstract contract TreasuryHelpers is TreasurySetters {
         // share - disabled ownership and operator functions as MAHA tokens don't have these
         share.transfer(target, share.balanceOf(address(this)));
 
-        migrated = true;
+        state.migrated = true;
         emit Migration(target);
     }
 
@@ -75,12 +75,14 @@ abstract contract TreasuryHelpers is TreasurySetters {
      * TODO: this function needs to be optimised for gas
      */
     function _updateCashPrice() internal {
-        if (bondOracle.callable()) {
-            try IUniswapOracle(bondOracle).update() {} catch {}
+        if (oracleState.bondOracle.callable()) {
+            try IUniswapOracle(oracleState.bondOracle).update() {} catch {}
         }
 
-        if (seigniorageOracle.callable()) {
-            try IUniswapOracle(seigniorageOracle).update() {} catch {}
+        if (oracleState.seigniorageOracle.callable()) {
+            try
+                IUniswapOracle(oracleState.seigniorageOracle).update()
+            {} catch {}
         }
 
         // TODO: do the same for the gmu oracle as well
@@ -88,7 +90,7 @@ abstract contract TreasuryHelpers is TreasurySetters {
         //     try IOracle(seigniorageOracle).update() {} catch {}
         // }
 
-        cashTargetPrice = getGMUOraclePrice();
+        state.cashTargetPrice = getGMUOraclePrice();
     }
 
     /**
@@ -102,12 +104,12 @@ abstract contract TreasuryHelpers is TreasurySetters {
         uint256 treasuryReserve =
             Math.min(
                 seigniorage,
-                bond.totalSupply().sub(accumulatedSeigniorage)
+                bond.totalSupply().sub(state.accumulatedSeigniorage)
             );
 
         if (treasuryReserve > 0) {
             // update accumulated seigniorage
-            accumulatedSeigniorage = accumulatedSeigniorage.add(
+            state.accumulatedSeigniorage = state.accumulatedSeigniorage.add(
                 treasuryReserve
             );
             emit TreasuryFunded(now, treasuryReserve);
@@ -146,23 +148,27 @@ abstract contract TreasuryHelpers is TreasurySetters {
         _allocateToBoardroom(
             token,
             mahaBoardroom
-                ? mahaArthLiquidityMlpBoardroom
-                : arthArthLiquidityMlpBoardroom,
-            arthLiquidityMlpAllocationRate,
+                ? boardroomState.mahaArthLiquidityMlpBoardroom
+                : boardroomState.arthArthLiquidityMlpBoardroom,
+            boardroomState.arthLiquidityMlpAllocationRate,
             boardroomReserve
         );
 
         _allocateToBoardroom(
             token,
-            mahaBoardroom ? mahaArthBoardroom : arthArthBoardroom,
-            arthBoardroomAllocationRate,
+            mahaBoardroom
+                ? boardroomState.mahaArthBoardroom
+                : boardroomState.arthArthBoardroom,
+            boardroomState.arthBoardroomAllocationRate,
             boardroomReserve
         );
 
         _allocateToBoardroom(
             token,
-            mahaBoardroom ? mahaMahaBoardroom : arthMahaBoardroom,
-            mahaLiquidityBoardroomAllocationRate,
+            mahaBoardroom
+                ? boardroomState.mahaMahaBoardroom
+                : boardroomState.arthMahaBoardroom,
+            boardroomState.mahaLiquidityBoardroomAllocationRate,
             boardroomReserve
         );
     }
@@ -179,8 +185,8 @@ abstract contract TreasuryHelpers is TreasurySetters {
      */
     function _updateConversionLimit(uint256 cash1hPrice) internal {
         // reset this counter so that new bonds can now be minted.
-        accumulatedBonds = 0;
-        cashToBondConversionLimit = estimateBondsToIssue(cash1hPrice);
+        state.accumulatedBonds = 0;
+        state.cashToBondConversionLimit = estimateBondsToIssue(cash1hPrice);
     }
 
     // GOV

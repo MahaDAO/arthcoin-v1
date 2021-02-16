@@ -11,12 +11,11 @@ import {IUniswapV2Router02} from '../interfaces/IUniswapV2Router02.sol';
 import {IBoardroom} from '../interfaces/IBoardroom.sol';
 import {IBasisAsset} from '../interfaces/IBasisAsset.sol';
 import {ISimpleERCFund} from '../interfaces/ISimpleERCFund.sol';
-import {Operator} from '../owner/Operator.sol';
-import {Epoch} from '../utils/Epoch.sol';
 import {ISimpleOracle} from '../interfaces/ISimpleOracle.sol';
 import {IUniswapOracle} from '../interfaces/IUniswapOracle.sol';
 import {ContractGuard} from '../utils/ContractGuard.sol';
 import {TreasuryHelpers} from './TreasuryHelpers.sol';
+import {TreasuryState} from './TreasuryState.sol';
 
 /**
  * @title ARTH Treasury contract
@@ -29,38 +28,34 @@ contract Treasury is TreasuryHelpers {
         IBasisAsset _cash,
         IBasisAsset _bond,
         IERC20 _share,
-        IUniswapOracle _bondOracle,
-        ISimpleOracle _arthMahaOracle,
-        IUniswapOracle _seigniorageOracle,
-        ISimpleOracle _gmuOracle,
-        IUniswapV2Router02 _uniswapRouter,
+        // IUniswapOracle _bondOracle,
+        // ISimpleOracle _arthMahaOracle,
+        // IUniswapOracle _seigniorageOracle,
+        // ISimpleOracle _gmuOracle,
         uint256 _startTime,
         uint256 _period,
         uint256 _startEpoch
-    ) public Epoch(_period, _startTime, _startEpoch) {
+    ) public TreasuryState(_period, _startTime, _startEpoch) {
         // tokens
         dai = _dai;
         cash = _cash;
         bond = _bond;
         share = _share;
 
-        // oracles
-        bondOracle = _bondOracle;
-        arthMahaOracle = _arthMahaOracle;
-        seigniorageOracle = _seigniorageOracle;
-        gmuOracle = _gmuOracle;
-
-        // others
-        uniswapRouter = _uniswapRouter;
+        // // oracles
+        // state.bondOracle = _bondOracle;
+        // state.arthMahaOracle = _arthMahaOracle;
+        // state.seigniorageOracle = _seigniorageOracle;
+        // state.gmuOracle = _gmuOracle;
     }
 
     function initialize() public checkOperator {
-        require(!initialized, '!initialized');
+        require(!state.initialized, '!initialized');
 
         // set accumulatedSeigniorage to the treasury's balance
-        accumulatedSeigniorage = IERC20(cash).balanceOf(address(this));
+        state.accumulatedSeigniorage = IERC20(cash).balanceOf(address(this));
 
-        initialized = true;
+        state.initialized = true;
         emit Initialized(msg.sender, block.number);
     }
 
@@ -83,7 +78,7 @@ contract Treasury is TreasuryHelpers {
             cash1hPrice <= getBondPurchasePrice(), // price < $0.95
             'cash price not eligible'
         );
-        require(cashToBondConversionLimit > 0, 'no more bonds');
+        require(state.cashToBondConversionLimit > 0, 'no more bonds');
 
         // Find the expected amount recieved when swapping the following
         // tokens on uniswap.
@@ -92,20 +87,20 @@ contract Treasury is TreasuryHelpers {
         path[1] = address(cash);
 
         uint256[] memory amountsOut =
-            uniswapRouter.getAmountsOut(amountInDai, path);
+            state.uniswapRouter.getAmountsOut(amountInDai, path);
         uint256 expectedCashAmount = amountsOut[1];
 
         // 1. Take Dai from the user
         dai.safeTransferFrom(msg.sender, address(this), amountInDai);
 
         // 2. Approve dai for trade on uniswap
-        dai.approve(address(uniswapRouter), amountInDai);
+        dai.approve(address(state.uniswapRouter), amountInDai);
 
         // 3. Swap dai for ARTH from uniswap and send the ARTH to the sender
         // we send the ARTH back to the sender just in case there is some slippage
         // in our calculations and we end up with more ARTH than what is needed.
         uint256[] memory output =
-            uniswapRouter.swapExactTokensForTokens(
+            state.uniswapRouter.swapExactTokensForTokens(
                 amountInDai,
                 expectedCashAmount,
                 path,
@@ -114,7 +109,7 @@ contract Treasury is TreasuryHelpers {
             );
 
         // set approve to 0 after transfer
-        dai.approve(address(uniswapRouter), 0);
+        dai.approve(address(state.uniswapRouter), 0);
 
         // we do this to understand how much ARTH was bought back as without this, we
         // could witness a flash loan attack. (given that the minted amount of ARTHB
@@ -126,15 +121,15 @@ contract Treasury is TreasuryHelpers {
         uint256 cashToConvert =
             Math.min(
                 boughtBackCash,
-                cashToBondConversionLimit.sub(accumulatedBonds)
+                state.cashToBondConversionLimit.sub(state.accumulatedBonds)
             );
 
         // if all good then mint ARTHB, burn ARTH and update the counters
         require(cashToConvert > 0, 'no more bond limit');
 
         uint256 bondsToIssue =
-            cashToConvert.mul(uint256(100).add(bondDiscount)).div(100);
-        accumulatedBonds = accumulatedBonds.add(bondsToIssue);
+            cashToConvert.mul(uint256(100).add(state.bondDiscount)).div(100);
+        state.accumulatedBonds = state.accumulatedBonds.add(bondsToIssue);
 
         // 3. Burn bought ARTH cash and mint bonds at the discounted price.
         // TODO: Set the minting amount according to bond price.
@@ -168,10 +163,10 @@ contract Treasury is TreasuryHelpers {
             'treasury has not enough budget'
         );
 
-        amount = Math.min(accumulatedSeigniorage, amount);
+        amount = Math.min(state.accumulatedSeigniorage, amount);
 
         // hand over the ARTH directly
-        accumulatedSeigniorage = accumulatedSeigniorage.sub(amount);
+        state.accumulatedSeigniorage = state.accumulatedSeigniorage.sub(amount);
         bond.burnFrom(msg.sender, amount);
         cash.transfer(msg.sender, amount);
 
@@ -198,13 +193,13 @@ contract Treasury is TreasuryHelpers {
         _updateConversionLimit(cash12hPrice);
 
         // Check if we are bloew the peg.
-        if (cash12hPrice <= cashTargetPrice) {
+        if (cash12hPrice <= state.cashTargetPrice) {
             // Check if we are below the peg and in contraction or not.
             // Should we use bond purchase price or target price?
             if (cash12hPrice <= getBondPurchasePrice()) {
                 uint256 contractionRewardToGive =
                     Math.min(
-                        contractionRewardPerEpoch,
+                        state.contractionRewardPerEpoch,
                         share.balanceOf(address(this))
                     );
 
@@ -231,7 +226,7 @@ contract Treasury is TreasuryHelpers {
             cash.mint(address(this), seigniorage);
             emit SeigniorageMinted(seigniorage);
 
-            if (enableSurprise) {
+            if (state.enableSurprise) {
                 // surprise!! send 10% to boardooms and 90% to bond holders
                 _allocateToBondHolders(seigniorage.mul(90).div(100));
                 _allocateToBoardrooms(cash, seigniorage.mul(10).div(100));
@@ -251,15 +246,15 @@ contract Treasury is TreasuryHelpers {
         // send funds to the ecosystem development and raindy fund
         uint256 ecosystemReserve =
             _allocateToFund(
-                ecosystemFund,
-                ecosystemFundAllocationRate,
+                boardroomState.ecosystemFund,
+                boardroomState.ecosystemFundAllocationRate,
                 seigniorage
             );
 
         uint256 raindayReserve =
             _allocateToFund(
-                rainyDayFund,
-                rainyDayFundAllocationRate,
+                boardroomState.rainyDayFund,
+                boardroomState.rainyDayFundAllocationRate,
                 seigniorage
             );
 
@@ -267,7 +262,7 @@ contract Treasury is TreasuryHelpers {
 
         // keep 90% of the funds to bond token holders; and send the remaining to the boardroom
         uint256 allocatedForBondHolders =
-            seigniorage.mul(bondSeigniorageRate).div(100);
+            seigniorage.mul(state.bondSeigniorageRate).div(100);
         uint256 treasuryReserve =
             _allocateToBondHolders(allocatedForBondHolders);
         seigniorage = seigniorage.sub(treasuryReserve);
