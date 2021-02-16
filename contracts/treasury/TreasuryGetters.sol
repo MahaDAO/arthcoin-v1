@@ -13,6 +13,8 @@ import {ICustomERC20} from '../interfaces/ICustomERC20.sol';
 import {IUniswapV2Factory} from '../interfaces/IUniswapV2Factory.sol';
 import {IUniswapV2Router02} from '../interfaces/IUniswapV2Router02.sol';
 
+import {TreasuryLibrary} from './TreasuryLibrary.sol';
+
 abstract contract TreasuryGetters is TreasuryState {
     function getReserve() public view returns (uint256) {
         return accumulatedSeigniorage;
@@ -20,10 +22,6 @@ abstract contract TreasuryGetters is TreasuryState {
 
     function getStabilityFee() public view returns (uint256) {
         return stabilityFee;
-    }
-
-    function getBondOraclePrice() public view returns (uint256) {
-        return _getCashPrice(bondOracle);
     }
 
     function getGMUOraclePrice() public view returns (uint256) {
@@ -34,19 +32,12 @@ abstract contract TreasuryGetters is TreasuryState {
         return arthMahaOracle.getPrice();
     }
 
-    function getPercentDeviationFromTarget(uint256 price)
-        public
-        view
-        returns (uint256)
-    {
-        uint256 target = getGMUOraclePrice();
-
-        if (price > target) return price.sub(target).mul(100).div(target);
-        return target.sub(price).mul(100).div(target);
+    function get12hrTWAPOraclePrice() public view returns (uint256) {
+        return TreasuryLibrary.getCashPrice(seigniorageOracle, cash);
     }
 
-    function getSeigniorageOraclePrice() public view returns (uint256) {
-        return _getCashPrice(seigniorageOracle);
+    function get1hrTWAPOraclePrice() public view returns (uint256) {
+        return TreasuryLibrary.getCashPrice(bondOracle, cash);
     }
 
     function arthCirculatingSupply() public view returns (uint256) {
@@ -70,7 +61,7 @@ abstract contract TreasuryGetters is TreasuryState {
         // cap the max supply increase per epoch to only 30%
         uint256 finalPercentage =
             Math.min(
-                getPercentDeviationFromTarget(price),
+                TreasuryLibrary.getPercentDeviationFromTarget(price, gmuOracle),
                 maxSupplyIncreasePerEpoch
             );
 
@@ -93,7 +84,8 @@ abstract contract TreasuryGetters is TreasuryState {
         // in contraction mode -> issue bonds.
         // set a limit to how many bonds are there.
 
-        uint256 percentage = getPercentDeviationFromTarget(price);
+        uint256 percentage =
+            TreasuryLibrary.getPercentDeviationFromTarget(price, gmuOracle);
 
         // understand how much % deviation do we have from target price
         // if target price is 2.5$ and we are at 2$; then percentage should be 20%
@@ -132,17 +124,5 @@ abstract contract TreasuryGetters is TreasuryState {
 
         // Get the liquidity percent.
         return uniswapLiquidityPairCashBalance.mul(100).div(cash.totalSupply());
-    }
-
-    function _getCashPrice(IUniswapOracle oracle)
-        internal
-        view
-        returns (uint256)
-    {
-        try oracle.consult(address(cash), 1e18) returns (uint256 price) {
-            return price;
-        } catch {
-            revert('Treasury: failed to consult cash price from the oracle');
-        }
     }
 }

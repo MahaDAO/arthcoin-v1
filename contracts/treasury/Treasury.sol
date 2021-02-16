@@ -76,7 +76,7 @@ contract Treasury is TreasuryHelpers {
         require(amountInDai > 0, 'zero amount');
 
         // Update the price to latest before using.
-        uint256 cash1hPrice = getBondOraclePrice();
+        uint256 cash1hPrice = get1hrTWAPOraclePrice();
 
         require(cash1hPrice <= targetPrice, 'cash price moved');
         require(
@@ -92,20 +92,20 @@ contract Treasury is TreasuryHelpers {
         path[1] = address(cash);
 
         uint256[] memory amountsOut =
-            IUniswapV2Router02(uniswapRouter).getAmountsOut(amountInDai, path);
+            uniswapRouter.getAmountsOut(amountInDai, path);
         uint256 expectedCashAmount = amountsOut[1];
 
         // 1. Take Dai from the user
         dai.safeTransferFrom(msg.sender, address(this), amountInDai);
 
         // 2. Approve dai for trade on uniswap
-        dai.safeApprove(address(uniswapRouter), amountInDai);
+        dai.approve(address(uniswapRouter), amountInDai);
 
         // 3. Swap dai for ARTH from uniswap and send the ARTH to the sender
         // we send the ARTH back to the sender just in case there is some slippage
         // in our calculations and we end up with more ARTH than what is needed.
         uint256[] memory output =
-            IUniswapV2Router02(uniswapRouter).swapExactTokensForTokens(
+            uniswapRouter.swapExactTokensForTokens(
                 amountInDai,
                 expectedCashAmount,
                 path,
@@ -139,8 +139,8 @@ contract Treasury is TreasuryHelpers {
         // 3. Burn bought ARTH cash and mint bonds at the discounted price.
         // TODO: Set the minting amount according to bond price.
         // TODO: calculate premium basis size of the trade
-        IBasisAsset(cash).burnFrom(msg.sender, cashToConvert);
-        IBasisAsset(bond).mint(msg.sender, bondsToIssue);
+        cash.burnFrom(msg.sender, cashToConvert);
+        bond.mint(msg.sender, bondsToIssue);
 
         emit BoughtBonds(msg.sender, amountInDai, cashToConvert, bondsToIssue);
 
@@ -159,13 +159,10 @@ contract Treasury is TreasuryHelpers {
         updatePrice
     {
         require(amount > 0, 'zero amount');
-
-        uint256 cashPrice = _getCashPrice(bondOracle);
         require(
-            cashPrice > getBondRedemtionPrice(), // price > $1.00
+            get1hrTWAPOraclePrice() > getBondRedemtionPrice(), // price > $1.00
             'cashPrice less than ceiling'
         );
-
         require(
             cash.balanceOf(address(this)) >= amount,
             'treasury has not enough budget'
@@ -175,7 +172,7 @@ contract Treasury is TreasuryHelpers {
 
         // hand over the ARTH directly
         accumulatedSeigniorage = accumulatedSeigniorage.sub(amount);
-        IBasisAsset(bond).burnFrom(msg.sender, amount);
+        bond.burnFrom(msg.sender, amount);
         cash.transfer(msg.sender, amount);
 
         emit RedeemedBonds(msg.sender, amount);
@@ -192,10 +189,10 @@ contract Treasury is TreasuryHelpers {
         emit AdvanceEpoch(msg.sender);
 
         _updateCashPrice();
-        uint256 cash12hPrice = getSeigniorageOraclePrice();
+        uint256 cash12hPrice = get12hrTWAPOraclePrice();
 
         // send 300 ARTH reward to the person advancing the epoch to compensate for gas
-        IBasisAsset(cash).mint(msg.sender, uint256(300).mul(1e18));
+        cash.mint(msg.sender, uint256(300).mul(1e18));
 
         // update the bond limits
         _updateConversionLimit(cash12hPrice);
@@ -231,7 +228,7 @@ contract Treasury is TreasuryHelpers {
             if (seigniorage == 0) return;
 
             // we have to pay them some amount; so mint, distribute and return
-            IBasisAsset(cash).mint(address(this), seigniorage);
+            cash.mint(address(this), seigniorage);
             emit SeigniorageMinted(seigniorage);
 
             if (enableSurprise) {
@@ -248,7 +245,7 @@ contract Treasury is TreasuryHelpers {
         uint256 seigniorage = estimateSeignorageToMint(cash12hPrice);
         if (seigniorage == 0) return;
 
-        IBasisAsset(cash).mint(address(this), seigniorage);
+        cash.mint(address(this), seigniorage);
         emit SeigniorageMinted(seigniorage);
 
         // send funds to the ecosystem development and raindy fund
