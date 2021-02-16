@@ -220,21 +220,21 @@ contract Treasury is TreasuryHelpers {
             // as much as possible.
 
             // calculate how much seigniorage should be minted basis deviation from target price
-            uint256 seigniorage = estimateSeignorageToMint(cash12hPrice);
+            uint256 seigniorage1 = estimateSeignorageToMint(cash12hPrice);
 
             // if we don't have to pay bond holders anything then simply return.
-            if (seigniorage == 0) return;
+            if (seigniorage1 == 0) return;
 
             // we have to pay them some amount; so mint, distribute and return
-            cash.mint(address(this), seigniorage);
-            emit SeigniorageMinted(seigniorage);
+            cash.mint(address(this), seigniorage1);
+            emit SeigniorageMinted(seigniorage1);
 
             if (state.enableSurprise) {
                 // surprise!! send 10% to boardooms and 90% to bond holders
-                _allocateToBondHolders(seigniorage.mul(90).div(100));
-                _allocateToBoardrooms(cash, seigniorage.mul(10).div(100));
+                _allocateToBondHolders(seigniorage1.mul(90).div(100));
+                _allocateToBoardrooms(cash, seigniorage1.mul(10).div(100));
             } else {
-                _allocateToBondHolders(seigniorage);
+                _allocateToBondHolders(seigniorage1);
             }
 
             return;
