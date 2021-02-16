@@ -4,16 +4,11 @@ pragma solidity ^0.8.0;
 
 import {Math} from '@openzeppelin/contracts/contracts/math/Math.sol';
 import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
-import {ICustomERC20} from '../interfaces/ICustomERC20.sol';
-import {IUniswapV2Factory} from '../interfaces/IUniswapV2Factory.sol';
-import {IUniswapOracle} from '../interfaces/IUniswapOracle.sol';
-import {IUniswapV2Router02} from '../interfaces/IUniswapV2Router02.sol';
 import {IBoardroom} from '../interfaces/IBoardroom.sol';
 import {IBasisAsset} from '../interfaces/IBasisAsset.sol';
 import {ISimpleERCFund} from '../interfaces/ISimpleERCFund.sol';
 import {ISimpleOracle} from '../interfaces/ISimpleOracle.sol';
 import {IUniswapOracle} from '../interfaces/IUniswapOracle.sol';
-import {ContractGuard} from '../utils/ContractGuard.sol';
 import {TreasurySetters} from './TreasurySetters.sol';
 import {TreasuryState} from './TreasuryState.sol';
 import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
