@@ -4,9 +4,8 @@ pragma solidity ^0.8.0;
 
 import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
 import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
-
-import './Vault.sol';
-import './VaultBoardroom.sol';
+import {Vault} from './Vault.sol';
+import {VaultBoardroom} from './VaultBoardroom.sol';
 
 contract VestedVaultBoardroom is VaultBoardroom {
     // For how much time should vesting take place.
@@ -63,65 +62,8 @@ contract VestedVaultBoardroom is VaultBoardroom {
         vestFor = period;
     }
 
-    /**
-     * Mutations.
-     */
-
-    function updateVestedReward(address director) private {
-        if (director != address(0)) {
-            Boardseat storage seat = directors[director];
-
-            uint256 latestFundingTime =
-                boardHistory[boardHistory.length - 1].time;
-            // uint256 previousFundingTime =
-            //     (
-            //         boardHistory.length > 1
-            //             ? boardHistory[boardHistory.length - 2].time
-            //             : 0
-            //     );
-
-            // If rewards are updated before epoch start of the current,
-            // then we mark claimable rewards as pending and set the
-            // current earned rewards to 0.
-            if (seat.lastClaimedOn < latestFundingTime) {
-                seat.rewardPending = seat.rewardEarned;
-                seat.rewardEarned = 0;
-            }
-
-            uint256 freshReward = earned(director);
-
-            seat.rewardEarned = freshReward;
-            seat.lastSnapshotIndex = latestSnapshotIndex();
-        }
-    }
-
-    function _claimAndQuit() private {
-        updateVestedReward(msg.sender);
-
-        uint256 rewardLeftToClaim = directors[msg.sender].rewardEarned;
-        uint256 rewardPending = directors[msg.sender].rewardPending;
-
-        uint256 reward = rewardLeftToClaim.add(rewardPending);
-        if (reward <= 0) return;
-
-        // All rewards are claimed, whether pending or claimable under
-        // current epoch.
-        directors[msg.sender].rewardEarned = 0;
-        directors[msg.sender].rewardPending = 0;
-        directors[msg.sender].lastClaimedOn = block.timestamp;
-
-        cash.transfer(msg.sender, reward);
-
-        emit RewardPaid(msg.sender, reward);
-    }
-
-    function exit() external override {
-        vault.withdraw();
-        _claimAndQuit();
-    }
-
-    function claimReward() public override {
-        updateVestedReward(msg.sender);
+    function claimReward() external override {
+        _updateReward(msg.sender);
 
         uint256 reward = directors[msg.sender].rewardEarned;
         if (reward <= 0) return;
@@ -187,8 +129,35 @@ contract VestedVaultBoardroom is VaultBoardroom {
 
         directors[msg.sender].lastClaimedOn = block.timestamp;
 
-        cash.transfer(msg.sender, reward);
-
+        token.transfer(msg.sender, reward);
         emit RewardPaid(msg.sender, reward);
+    }
+
+    function _updateReward(address director) private {
+        if (director != address(0)) {
+            Boardseat storage seat = directors[director];
+
+            uint256 latestFundingTime =
+                boardHistory[boardHistory.length - 1].time;
+            // uint256 previousFundingTime =
+            //     (
+            //         boardHistory.length > 1
+            //             ? boardHistory[boardHistory.length - 2].time
+            //             : 0
+            //     );
+
+            // If rewards are updated before epoch start of the current,
+            // then we mark claimable rewards as pending and set the
+            // current earned rewards to 0.
+            if (seat.lastClaimedOn < latestFundingTime) {
+                seat.rewardPending = seat.rewardEarned;
+                seat.rewardEarned = 0;
+            }
+
+            uint256 freshReward = earned(director);
+
+            seat.rewardEarned = freshReward;
+            seat.lastSnapshotIndex = latestSnapshotIndex();
+        }
     }
 }

@@ -3,13 +3,15 @@
 pragma solidity ^0.8.0;
 
 import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
-import './Vault.sol';
-import '../../lib/Safe112.sol';
-import '../../utils/ContractGuard.sol';
+import {Vault} from './Vault.sol';
+import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
+import {Safe112} from '../../lib/Safe112.sol';
+import {ContractGuard} from '../../utils/ContractGuard.sol';
 import {Operator} from '../../owner/Operator.sol';
+import {IBoardroom} from '../../interfaces/IBoardroom.sol';
 import {IBasisAsset} from '../../interfaces/IBasisAsset.sol';
 
-contract VaultBoardroom is ContractGuard, Operator {
+contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
     using Safe112 for uint112;
     using SafeMath for uint256;
 
@@ -45,8 +47,7 @@ contract VaultBoardroom is ContractGuard, Operator {
 
     // The vault which has state of the stakes.
     Vault public vault;
-    // Reward asset.
-    IERC20 public cash;
+    IERC20 public token;
 
     BoardSnapshot[] internal boardHistory;
     mapping(address => Boardseat) internal directors;
@@ -72,8 +73,8 @@ contract VaultBoardroom is ContractGuard, Operator {
     /**
      * Constructor.
      */
-    constructor(IERC20 cash_, Vault vault_) {
-        cash = cash_;
+    constructor(IERC20 token_, Vault vault_) {
+        token = token_;
         vault = vault_;
 
         BoardSnapshot memory genesisSnapshot =
@@ -130,38 +131,26 @@ contract VaultBoardroom is ContractGuard, Operator {
                 .add(directors[director].rewardEarned);
     }
 
-    /**
-     * Mutations.
-     */
-
-    function updateReward(address director) private {
-        if (director != address(0)) {
-            Boardseat memory seat = directors[director];
-            seat.rewardEarned = earned(director);
+    function claimReward() external virtual {
+        if (msg.sender != address(0)) {
+            Boardseat memory seat = directors[msg.sender];
+            seat.rewardEarned = earned(msg.sender);
             seat.lastSnapshotIndex = latestSnapshotIndex();
-            directors[director] = seat;
+            directors[msg.sender] = seat;
         }
-    }
 
-    function exit() external virtual {
-        vault.withdraw();
-        claimReward();
-    }
-
-    function claimReward() public virtual {
-        updateReward(msg.sender);
         uint256 reward = directors[msg.sender].rewardEarned;
 
         if (reward > 0) {
             directors[msg.sender].rewardEarned = 0;
-            cash.transfer(msg.sender, reward);
-
+            token.transfer(msg.sender, reward);
             emit RewardPaid(msg.sender, reward);
         }
     }
 
     function allocateSeigniorage(uint256 amount)
         external
+        override
         onlyOneBlock
         onlyOperator
     {
@@ -185,8 +174,11 @@ contract VaultBoardroom is ContractGuard, Operator {
             });
         boardHistory.push(newSnapshot);
 
-        cash.transferFrom(msg.sender, address(this), amount);
-
+        token.transferFrom(msg.sender, address(this), amount);
         emit RewardAdded(msg.sender, amount);
+    }
+
+    function refundReward() external onlyOwner {
+        token.transfer(msg.sender, token.balanceOf(address(this)));
     }
 }
