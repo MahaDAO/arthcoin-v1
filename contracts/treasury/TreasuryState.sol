@@ -28,16 +28,18 @@ abstract contract TreasuryState is ContractGuard, Epoch {
         uint256 _startEpoch
     ) Epoch(_period, _startTime, _startEpoch) {
         // init defaults
-        boardroomState.arthBoardroomAllocationRate = 20;
+        boardroomState.arthAllocationRate = 20;
         boardroomState.arthLiquidityMlpAllocationRate = 70;
-        boardroomState.mahaLiquidityBoardroomAllocationRate = 10;
+        boardroomState.mahaAllocationRate = 10;
+
         boardroomState.ecosystemFundAllocationRate = 2;
         boardroomState.rainyDayFundAllocationRate = 2;
+
         state.accumulatedBonds = 0;
         state.accumulatedSeigniorage = 0;
         state.bondDiscount = 20;
         state.bondSeigniorageRate = 90;
-        state.cashTargetPrice = 1e18;
+        state.cashTargetPrice = 1e18; // 1$
         state.cashToBondConversionLimit = 0;
         state.considerUniswapLiquidity = false;
         state.contractionRewardPerEpoch = 0;
@@ -54,20 +56,21 @@ abstract contract TreasuryState is ContractGuard, Epoch {
         _;
     }
 
-    modifier checkOperator {
-        require(
-            cash.operator() == address(this) &&
-                bond.operator() == address(this) &&
-                boardroomState.arthArthLiquidityMlpBoardroom.operator() ==
-                address(this) &&
-                boardroomState.arthMahaBoardroom.operator() == address(this) &&
-                boardroomState.arthArthBoardroom.operator() == address(this) &&
-                boardroomState.mahaArthLiquidityMlpBoardroom.operator() ==
-                address(this) &&
-                boardroomState.mahaMahaBoardroom.operator() == address(this) &&
-                boardroomState.mahaArthBoardroom.operator() == address(this),
-            'Treasury: need more permission'
-        );
+    modifier validateOperator {
+        require(checkOperator(), 'Treasury: need more permission');
         _;
+    }
+
+    function checkOperator() public view returns (bool) {
+        return (cash.operator() == address(this) &&
+            bond.operator() == address(this) &&
+            boardroomState.arthArthLiquidityMlpBoardroom.operator() ==
+            address(this) &&
+            boardroomState.arthMahaBoardroom.operator() == address(this) &&
+            boardroomState.arthArthBoardroom.operator() == address(this) &&
+            boardroomState.mahaArthLiquidityMlpBoardroom.operator() ==
+            address(this) &&
+            boardroomState.mahaMahaBoardroom.operator() == address(this) &&
+            boardroomState.mahaArthBoardroom.operator() == address(this));
     }
 }

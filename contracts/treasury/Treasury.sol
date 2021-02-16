@@ -42,7 +42,7 @@ contract Treasury is TreasurySetters {
         _updateCashPrice();
     }
 
-    function initialize() external checkOperator {
+    function initialize() external validateOperator {
         require(!state.initialized, '!initialized');
 
         // set accumulatedSeigniorage to the treasury's balance
@@ -57,7 +57,7 @@ contract Treasury is TreasurySetters {
         onlyOneBlock
         checkMigration
         checkStartTime
-        checkOperator
+        validateOperator
         updatePrice
         returns (uint256)
     {
@@ -143,7 +143,7 @@ contract Treasury is TreasurySetters {
         onlyOneBlock
         checkMigration
         checkStartTime
-        checkOperator
+        validateOperator
         updatePrice
     {
         require(amount > 0, 'zero amount');
@@ -172,7 +172,7 @@ contract Treasury is TreasurySetters {
         checkMigration
         checkStartTime
         checkEpoch
-        checkOperator
+        validateOperator
     {
         emit AdvanceEpoch(msg.sender);
 
@@ -384,7 +384,7 @@ contract Treasury is TreasurySetters {
             mahaBoardroom
                 ? boardroomState.mahaArthLiquidityMlpBoardroom
                 : boardroomState.arthArthLiquidityMlpBoardroom,
-            boardroomState.arthLiquidityMlpAllocationRate,
+            boardroomState.arthAllocationRate,
             boardroomReserve
         );
 
@@ -393,7 +393,7 @@ contract Treasury is TreasurySetters {
             mahaBoardroom
                 ? boardroomState.mahaArthBoardroom
                 : boardroomState.arthArthBoardroom,
-            boardroomState.arthBoardroomAllocationRate,
+            boardroomState.arthAllocationRate,
             boardroomReserve
         );
 
@@ -402,7 +402,7 @@ contract Treasury is TreasurySetters {
             mahaBoardroom
                 ? boardroomState.mahaMahaBoardroom
                 : boardroomState.arthMahaBoardroom,
-            boardroomState.mahaLiquidityBoardroomAllocationRate,
+            boardroomState.mahaAllocationRate,
             boardroomReserve
         );
     }

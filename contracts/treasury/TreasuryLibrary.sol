@@ -78,8 +78,8 @@ library TreasuryLibrary {
         //
         // TODO: make one for maha holders and one for the various community pools
         uint256 arthLiquidityMlpAllocationRate; // In %.
-        uint256 arthBoardroomAllocationRate; // IN %.
-        uint256 mahaLiquidityBoardroomAllocationRate; // IN %.
+        uint256 arthAllocationRate; // IN %.
+        uint256 mahaAllocationRate; // IN %.
         // the ecosystem fund recieves seigniorage before anybody else; this
         // value decides how much of the new seigniorage is sent to this fund.
         uint256 ecosystemFundAllocationRate; // in %

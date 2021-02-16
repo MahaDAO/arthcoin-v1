@@ -10,6 +10,8 @@ import {TreasuryGetters} from './TreasuryGetters.sol';
 import {ISimpleOracle} from '../interfaces/ISimpleOracle.sol';
 
 abstract contract TreasurySetters is TreasuryGetters {
+    // todo; add a set state
+
     function setAllFunds(
         IBoardroom _arthArthLiquidityMlpBoardroom,
         IBoardroom _arthMahaBoardroom,
@@ -95,7 +97,7 @@ abstract contract TreasurySetters is TreasuryGetters {
         require(rate <= 100, 'rate >= 0');
         boardroomState.arthArthBoardroom = expansionFund;
         boardroomState.mahaArthBoardroom = contractionFund;
-        boardroomState.arthBoardroomAllocationRate = rate;
+        boardroomState.arthAllocationRate = rate;
     }
 
     function setArthLiquidityMlpBoardroom(
@@ -117,7 +119,7 @@ abstract contract TreasurySetters is TreasuryGetters {
         require(rate <= 100, 'rate >= 0');
         boardroomState.arthMahaBoardroom = expansionFund;
         boardroomState.mahaMahaBoardroom = contractionFund;
-        boardroomState.mahaLiquidityBoardroomAllocationRate = rate;
+        boardroomState.mahaAllocationRate = rate;
     }
 
     function setOracles(
