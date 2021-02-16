@@ -22,87 +22,14 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     using SafeMath for uint256;
     using Safe112 for uint112;
 
-    struct State {
-        /* ========== STATE VARIABLES ========== */
-
-        // ========== FLAGS
-        bool migrated;
-        bool initialized;
-        // ========== CORE
-        IUniswapV2Router02 uniswapRouter;
-        address uniswapLiquidityPair;
-        // cash price tracking vars
-        uint256 cashTargetPrice;
-        // these govern how much bond tokens are issued
-        uint256 cashToBondConversionLimit;
-        uint256 accumulatedBonds;
-        // this governs how much cash tokens are issued
-        uint256 accumulatedSeigniorage;
-        // flag whether we should considerUniswapLiquidity or not.
-        bool considerUniswapLiquidity;
-        // used to limit how much of the supply is converted into bonds
-        uint256 maxDebtIncreasePerEpoch; // in %
-        // the discount given to bond purchasers
-        uint256 bondDiscount; // in %
-        // the band beyond which bond purchase or protocol expansion happens.
-        uint256 safetyRegion; // in %
-        // at the most how much % of the supply should be increased
-        uint256 maxSupplyIncreasePerEpoch; // in %
-        // this controls how much of the new seigniorage is given to bond token holders
-        // when we are in expansion mode. ideally 90% of new seigniorate is
-        // given to bond token holders.
-        uint256 bondSeigniorageRate; // in %
-        // stability fee is a special fee charged by the protocol in MAHA tokens
-        // whenever a person is going to redeem his/her bonds. the fee is charged
-        // basis how much ARTHB is being redeemed.
-        //
-        // eg: a 1% fee means that while redeeming 100 ARTHB, 1 ARTH worth of MAHA is
-        // deducted to pay for stability fees.
-        uint256 stabilityFee; // IN %;
-        // amount of maha rewarded per epoch.
-        uint256 contractionRewardPerEpoch;
-        // wut? algo coin surprise sheeet?
-        bool enableSurprise;
-    }
-
-    struct OracleState {
-        IUniswapOracle oracle1hrTWAP;
-        IUniswapOracle oracle12hrTWAP;
-        ISimpleOracle gmuOracle;
-        ISimpleOracle arthMahaOracle;
-    }
-
-    struct BoardroomState {
-        IBoardroom arthArthLiquidityMlpBoardroom;
-        IBoardroom arthMahaBoardroom;
-        IBoardroom arthArthBoardroom;
-        IBoardroom mahaArthLiquidityMlpBoardroom;
-        IBoardroom mahaMahaBoardroom;
-        IBoardroom mahaArthBoardroom;
-        ISimpleERCFund ecosystemFund;
-        ISimpleERCFund rainyDayFund;
-        // we decide how much allocation to give to the boardrooms. there
-        // are currently two boardrooms; one for ARTH holders and the other for
-        // ARTH liqudity providers
-        //
-        // TODO: make one for maha holders and one for the various community pools
-        uint256 arthLiquidityMlpAllocationRate; // In %.
-        uint256 arthBoardroomAllocationRate; // IN %.
-        uint256 mahaLiquidityBoardroomAllocationRate; // IN %.
-        // the ecosystem fund recieves seigniorage before anybody else; this
-        // value decides how much of the new seigniorage is sent to this fund.
-        uint256 ecosystemFundAllocationRate; // in %
-        uint256 rainyDayFundAllocationRate; // in %
-    }
-
     IERC20 dai;
     IBasisAsset cash;
     IBasisAsset bond;
     IERC20 share;
 
-    BoardroomState internal boardroomState;
-    OracleState internal oracleState;
-    State internal state;
+    TreasuryLibrary.BoardroomState internal boardroomState;
+    TreasuryLibrary.OracleState internal oracleState;
+    TreasuryLibrary.State internal state;
 
     constructor(
         uint256 _startTime,

@@ -19,13 +19,14 @@ import {TreasuryLibrary} from './TreasuryLibrary.sol';
 abstract contract TreasuryGetters is TreasuryState {
     using SafeMath for uint256;
 
-    function getStates()
-        public
+    // this function is to be used with multicall.js
+    function getState()
+        external
         view
         returns (
-            State memory s,
-            OracleState memory o,
-            BoardroomState memory b
+            TreasuryLibrary.State memory s,
+            TreasuryLibrary.OracleState memory o,
+            TreasuryLibrary.BoardroomState memory b
         )
     {
         return (state, oracleState, boardroomState);

@@ -9,7 +9,7 @@ import '../../utils/ContractGuard.sol';
 import {Operator} from '../../owner/Operator.sol';
 import {IBasisAsset} from '../../interfaces/IBasisAsset.sol';
 
-abstract contract VaultBoardroom is ContractGuard, Operator {
+contract VaultBoardroom is ContractGuard, Operator {
     using Safe112 for uint112;
     using SafeMath for uint256;
 

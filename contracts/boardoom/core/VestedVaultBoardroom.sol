@@ -8,7 +8,7 @@ import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
 import './Vault.sol';
 import './VaultBoardroom.sol';
 
-abstract contract VestedVaultBoardroom is VaultBoardroom {
+contract VestedVaultBoardroom is VaultBoardroom {
     // For how much time should vesting take place.
     uint256 public vestFor;
     using SafeMath for uint256;

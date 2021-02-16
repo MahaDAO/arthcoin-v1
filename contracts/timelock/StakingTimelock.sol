@@ -66,7 +66,7 @@ abstract contract StakingTimelock is Ownable {
         address who,
         uint256 _date,
         uint256 _amount
-    ) internal returns (uint256, uint256) {
+    ) internal {
         StakingDetails storage _stakerDetails = _stakingDetails[who];
         _stakerDetails.deadline = _date;
         _stakerDetails.updatedOn = block.timestamp;
