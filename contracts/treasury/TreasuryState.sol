@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.0;
-pragma experimental ABIEncoderV2;
 
 import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
 import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
@@ -73,20 +72,37 @@ abstract contract TreasuryState is ContractGuard, Epoch {
         ISimpleOracle arthMahaOracle;
     }
 
+    struct BoardroomState {
+        IBoardroom arthArthLiquidityMlpBoardroom;
+        IBoardroom arthMahaBoardroom;
+        IBoardroom arthArthBoardroom;
+        IBoardroom mahaArthLiquidityMlpBoardroom;
+        IBoardroom mahaMahaBoardroom;
+        IBoardroom mahaArthBoardroom;
+        ISimpleERCFund ecosystemFund;
+        ISimpleERCFund rainyDayFund;
+        // we decide how much allocation to give to the boardrooms. there
+        // are currently two boardrooms; one for ARTH holders and the other for
+        // ARTH liqudity providers
+        //
+        // TODO: make one for maha holders and one for the various community pools
+        uint256 arthLiquidityMlpAllocationRate; // In %.
+        uint256 arthBoardroomAllocationRate; // IN %.
+        uint256 mahaLiquidityBoardroomAllocationRate; // IN %.
+        // the ecosystem fund recieves seigniorage before anybody else; this
+        // value decides how much of the new seigniorage is sent to this fund.
+        uint256 ecosystemFundAllocationRate; // in %
+        uint256 rainyDayFundAllocationRate; // in %
+    }
+
     IERC20 dai;
     IBasisAsset cash;
     IBasisAsset bond;
     IERC20 share;
 
-    struct CoreState {
-        State state;
-    }
-
-    TreasuryLibrary.BoardroomState internal boardroomState;
-    OracleState public oracleState;
+    BoardroomState internal boardroomState;
+    OracleState internal oracleState;
     State internal state;
-
-    CoreState s;
 
     constructor(
         uint256 _startTime,
@@ -135,9 +151,5 @@ abstract contract TreasuryState is ContractGuard, Epoch {
             'Treasury: need more permission'
         );
         _;
-    }
-
-    function getState() public view returns (State memory _state) {
-        return s.state;
     }
 }

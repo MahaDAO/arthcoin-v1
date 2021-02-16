@@ -19,6 +19,18 @@ import {TreasuryLibrary} from './TreasuryLibrary.sol';
 abstract contract TreasuryGetters is TreasuryState {
     using SafeMath for uint256;
 
+    function getStates()
+        public
+        view
+        returns (
+            State memory s,
+            OracleState memory o,
+            BoardroomState memory b
+        )
+    {
+        return (state, oracleState, boardroomState);
+    }
+
     function getGMUOraclePrice() public view returns (uint256) {
         return oracleState.gmuOracle.getPrice();
     }
