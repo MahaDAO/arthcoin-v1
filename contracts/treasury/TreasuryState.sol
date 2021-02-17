@@ -4,23 +4,20 @@ pragma solidity ^0.8.0;
 
 import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
 import {IBasisAsset} from '../interfaces/IBasisAsset.sol';
-// import {FixedPoint} from '../lib/FixedPoint.sol';
 import {Operator} from '../owner/Operator.sol';
 import {Epoch} from '../utils/Epoch.sol';
 import {ContractGuard} from '../utils/ContractGuard.sol';
 import {TreasuryLibrary} from './TreasuryLibrary.sol';
 
 abstract contract TreasuryState is ContractGuard, Epoch {
-    // using FixedPoint for *;
+    IERC20 public dai;
+    IBasisAsset public cash;
+    IBasisAsset public bond;
+    IERC20 public share;
 
-    IERC20 dai;
-    IBasisAsset cash;
-    IBasisAsset bond;
-    IERC20 share;
-
-    TreasuryLibrary.BoardroomState internal boardroomState;
-    TreasuryLibrary.OracleState internal oracleState;
-    TreasuryLibrary.State internal state;
+    TreasuryLibrary.BoardroomState public boardroomState;
+    TreasuryLibrary.OracleState public oracleState;
+    TreasuryLibrary.State public state;
 
     constructor(
         uint256 _startTime,
