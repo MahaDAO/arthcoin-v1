@@ -4,8 +4,8 @@ pragma solidity ^0.8.0;
 
 import {Math} from '@openzeppelin/contracts/contracts/math/Math.sol';
 import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
-import {TreasuryState} from './TreasuryState.sol';
 import {TreasuryLibrary} from './TreasuryLibrary.sol';
+import {TreasuryState} from './TreasuryState.sol';
 
 abstract contract TreasuryGetters is TreasuryState {
     using SafeMath for uint256;

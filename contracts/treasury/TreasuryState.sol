@@ -2,11 +2,11 @@
 
 pragma solidity ^0.8.0;
 
-import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
-import {IBasisAsset} from '../interfaces/IBasisAsset.sol';
-import {Operator} from '../owner/Operator.sol';
-import {Epoch} from '../utils/Epoch.sol';
 import {ContractGuard} from '../utils/ContractGuard.sol';
+import {Epoch} from '../utils/Epoch.sol';
+import {IBasisAsset} from '../interfaces/IBasisAsset.sol';
+import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
+import {Operator} from '../owner/Operator.sol';
 import {TreasuryLibrary} from './TreasuryLibrary.sol';
 
 abstract contract TreasuryState is ContractGuard, Epoch {

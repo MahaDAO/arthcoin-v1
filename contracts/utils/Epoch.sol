@@ -2,10 +2,9 @@
 
 pragma solidity ^0.8.0;
 
-import '@openzeppelin/contracts/contracts/math/Math.sol';
+import {Math} from '@openzeppelin/contracts/contracts/math/Math.sol';
 import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
-
-import '../owner/Operator.sol';
+import {Operator} from '../owner/Operator.sol';
 
 contract Epoch is Operator {
     using SafeMath for uint256;
@@ -50,7 +49,6 @@ contract Epoch is Operator {
         return getCurrentEpoch() >= getNextEpoch();
     }
 
-    // epoch
     function getLastEpoch() public view returns (uint256) {
         return lastExecutedAt.sub(startTime).div(period);
     }
@@ -70,7 +68,6 @@ contract Epoch is Operator {
         return startTime.add(getNextEpoch().mul(period));
     }
 
-    // params
     function getPeriod() public view returns (uint256) {
         return period;
     }
@@ -78,8 +75,6 @@ contract Epoch is Operator {
     function getStartTime() public view returns (uint256) {
         return startTime;
     }
-
-    /* ========== GOVERNANCE ========== */
 
     function setPeriod(uint256 _period) external onlyOperator {
         period = _period;

@@ -2,12 +2,12 @@
 
 pragma solidity ^0.8.0;
 
-import {IUniswapV2Router02} from '../interfaces/IUniswapV2Router02.sol';
-import {IUniswapOracle} from '../interfaces/IUniswapOracle.sol';
 import {IBoardroom} from '../interfaces/IBoardroom.sol';
 import {ISimpleERCFund} from '../interfaces/ISimpleERCFund.sol';
-import {TreasuryGetters} from './TreasuryGetters.sol';
 import {ISimpleOracle} from '../interfaces/ISimpleOracle.sol';
+import {IUniswapOracle} from '../interfaces/IUniswapOracle.sol';
+import {IUniswapV2Router02} from '../interfaces/IUniswapV2Router02.sol';
+import {TreasuryGetters} from './TreasuryGetters.sol';
 
 abstract contract TreasurySetters is TreasuryGetters {
     // todo; add a set state

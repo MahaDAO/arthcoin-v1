@@ -2,9 +2,12 @@
 
 pragma solidity ^0.8.0;
 
-import '@openzeppelin/contracts/contracts/token/ERC20/ERC20Burnable.sol';
-
-import '../owner/Operator.sol';
+import {
+    ERC20Burnable
+} from '@openzeppelin/contracts/contracts/token/ERC20/ERC20Burnable.sol';
+import {ERC20} from '@openzeppelin/contracts/contracts/token/ERC20/ERC20.sol';
+import {Ownable} from '@openzeppelin/contracts/contracts/access/Ownable.sol';
+import {Operator} from '../owner/Operator.sol';
 
 contract ARTHB is ERC20Burnable, Ownable, Operator {
     /**
@@ -41,4 +44,6 @@ contract ARTHB is ERC20Burnable, Ownable, Operator {
     {
         super.burnFrom(account, amount);
     }
+
+    // TODO: add allow with permit
 }
