@@ -10,7 +10,7 @@ import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
 import './TOKENWrapper.sol';
 import '../../interfaces/IRewardDistributionRecipient.sol';
 
-abstract contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
+contract ARTHTOKENPool is TOKENWrapper, IRewardDistributionRecipient {
     using SafeMath for uint256;
 
     IERC20 public cash;
