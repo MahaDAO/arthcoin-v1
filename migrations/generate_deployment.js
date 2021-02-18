@@ -5,6 +5,7 @@ const util = require('util');
 const knownContracts = require('./known-contracts');
 
 const writeFile = util.promisify(fs.writeFile);
+const mkdir = util.promisify(fs.mkdir);
 
 
 // Deployment and ABI will be generated for contracts listed on here.
@@ -24,11 +25,6 @@ const exportedContracts = [
   'ArthMlpLiquidityBoardroomV2',
   'MahaLiquidityBoardroomV2',
   'ArthBoardroomV2',
-
-  'Treasury',
-
-  'DevelopmentFund',
-
 
   "ARTHBASPool",
   // "ARTHMKRPool",
@@ -51,6 +47,7 @@ const exportedContracts = [
   // ...distributionPoolContracts(),
 ];
 
+
 const Arth = artifacts.require('ARTH');
 const MahaToken = artifacts.require('MahaToken');
 const SeigniorageOracle = artifacts.require('SeigniorageOracle');
@@ -65,7 +62,7 @@ const Multicall  = artifacts.require('Multicall');
  * Main migrations
  */
 module.exports = async (callback) => {
-  const network = 'development'
+  const network = 'mainnet'
   const isMainnet = process.argv.includes('mainnet')
   const isDevelopment = process.argv.includes('development')
 
@@ -73,102 +70,139 @@ module.exports = async (callback) => {
   // important activities to your desired address in the .env file.
   // accounts[0] = process.env.WALLET_KEY;
 
+  const contracts = [
+    { abi: 'Treasury', contract: 'Treasury' },
+    { abi: 'SimpleERCFund', contract: 'DevelopmentFund' },
+
+    { abi: 'SimpleOracle', contract: 'GMUOracle' },
+    { abi: 'UniswapOracle', contract: 'SeigniorageOracle' },
+    { abi: 'UniswapOracle', contract: 'BondRedemtionOracle' },
+    { abi: 'SimpleOracle', contract: 'ArthMahaOracle' },
+
+    // boardroom stuff
+    // { abi: 'VestedVaultBoardroom', contract: 'ArthArthBoardroomV2' },
+    // { abi: 'VestedVaultBoardroom', contract: 'ArthArthMlpLiquidityBoardroomV2' },
+    // { abi: 'VestedVaultBoardroom', contract: 'ArthMahaBoardroomV2' },
+    // { abi: 'VestedVaultBoardroom', contract: 'MahaArthBoardroomV2' },
+    // { abi: 'VestedVaultBoardroom', contract: 'MahaArthMlpLiquidityBoardroomV2' },
+    // { abi: 'VestedVaultBoardroom', contract: 'MahaMahaBoardroomV2' },
+    // { abi: 'Vault', contract: 'VaultArth' },
+    // { abi: 'Vault', contract: 'VaultArthMlp' },
+    // { abi: 'Vault', contract: 'VaultMaha' },
+  ];
+
+
+
+  // if (isMainnet) {
+  //   contracts.push([
+  //     { abi: 'SimpleBoardroom', contract: 'ArthUniLiquidityBoardroomV1' },
+  //     { abi: 'SimpleBoardroom', contract: 'MahaLiquidityBoardroomV1' },
+  //     { abi: 'SimpleBoardroom', contract: 'ArthBoardroomV1' }
+  //   ]);
+  // }
+
   const deployments = {};
 
-
   try {
-    const dai = !isDevelopment
-      ? await IERC20.at(knownContracts.DAI[network])
-      : await MockDai.deployed();
+    const mahaToken = isMainnet ?
+      knownContracts.MahaToken[network] :
+      (await MahaToken.deployed()).address;
 
-    const factory = !isDevelopment
-      ? await UniswapV2Factory.at(knownContracts.UniswapV2Factory[network])
-      : await UniswapV2Factory.deployed()
+    const dai = !isDevelopment ?
+      knownContracts.DAI[network] :
+      (await MockDai.deployed()).address;
 
-    const router = !isDevelopment
-      ? await UniswapV2Router02.at(knownContracts.UniswapV2Router02[network])
-      : await UniswapV2Router02.deployed()
+    const factory = !isDevelopment ?
+      knownContracts.UniswapV2Factory[network] :
+      (await UniswapV2Factory.deployed()).address;
 
-    // deployments.DAI = {
-    //   address: dai.address,
-    //   abi: dai.abi,
-    // };
+    const router = !isDevelopment ?
+      knownContracts.UniswapV2Router02[network] :
+      (await UniswapV2Router02.deployed()).address;
 
-    const oracle = await SeigniorageOracle.deployed();
+    const multicall = isMainnet ?
+      knownContracts.Multicall[network] :
+      (await Multicall.deployed()).address;
 
-    const arth = await Arth.deployed();
-    const mahaToken = isMainnet
-      ? await MahaToken.at(knownContracts.MahaToken[network])
-      : await MahaToken.deployed();
+    contracts.push({ contract: 'UniswapV2Factory', address: factory, abi: 'UniswapV2Factory' });
+    contracts.push({ contract: 'UniswapV2Router02', address: router, abi: 'UniswapV2Router02' });
+    contracts.push({ contract: 'DAI', address: dai, abi: 'IERC20' });
+    contracts.push({ contract: 'MahaToken', address: mahaToken, abi: 'MahaToken' });
+    contracts.push({ contract: 'Multicall', address: multicall, abi: 'Multicall' });
 
-    const multicall = isMainnet
-      ? await MahaToken.at(knownContracts.Multicall[network])
-      : await MahaToken.deployed();
 
-    const dai_arth_lpt = await oracle.pairFor(factory.address, dai.address, arth.address)
-    const maha_dai_lpt = await oracle.pairFor(factory.address, dai.address, mahaToken.address)
+    const abiDir = path.resolve(__dirname, `../output/abi`);
+    const deploymentPath = path.resolve(__dirname, `../output/${network}.json`);
 
-    console.log('dai at', dai.address);
-    console.log('arth at', arth.address);
-    console.log('maha at', mahaToken.address);
-    console.log('uniswap factory at', factory.address);
-    console.log('uniswap router at', router.address);
-    console.log('dai_arth_lpt at', dai_arth_lpt);
-    console.log('maha_dai_lpt at', maha_dai_lpt);
-    console.log('multicall at', multicall.address);
+    await mkdir(abiDir, { recursive: true })
 
-    deployments.Multicall = {
-      address: multicall.address,
-      abi: multicall.abi,
-    };
+    for (const name of contracts) {
+      const contractAddress = name.address ? name.address : artifacts.require(name.contract).address;
+      const abiContract = artifacts.require(name.abi);
 
-    deployments.UniswapV2Router02 = {
-      address: router.address,
-      abi: router.abi,
-    };
-
-    deployments.UniswapV2Factory = {
-      address: factory.address,
-      abi: factory.abi,
-    };
-
-    deployments.DAI = {
-      address: dai.address,
-      abi: dai.abi,
-    };
-
-    deployments.MahaToken = {
-      address: mahaToken.address,
-      abi: mahaToken.abi,
-    };
-
-    deployments.ArthDaiLP = {
-      address: dai_arth_lpt
-    };
-
-    deployments.MahaEthLP = {
-      address: maha_dai_lpt
-    };
-
-    if (network === 'development') {
-      exportedContracts.push('ArthBoardroomV1', 'ArthLiquidityBoardroomV1', 'MahaLiquidityBoardroomV1')
-    }
-
-    for (const name of exportedContracts) {
-      const contract = artifacts.require(name);
-      deployments[name] = {
-        address: contract.address,
-        abi: contract.abi,
+      deployments[name.contract] = {
+        address: contractAddress,
+        abi: name.abi,
       };
+
+      const abiPath = path.resolve(abiDir, `${name.abi}.json`);
+      await writeFile(abiPath, JSON.stringify(abiContract.abi, null, 2));
     }
-    const deploymentPath = path.resolve(__dirname, `../build/deployments.${network}.json`);
+
     await writeFile(deploymentPath, JSON.stringify(deployments, null, 2));
 
-    console.log(`Exported deployments into ${deploymentPath}`);
+    // const oracle = await SeigniorageOracle.deployed();
+
+    // const arth = await Arth.deployed();
+    // const mahaToken = isMainnet
+    //   ? await MahaToken.at(knownContracts.MahaToken[network])
+    //   : await MahaToken.deployed();
+
+    // const dai_arth_lpt = await oracle.pairFor(factory.address, dai.address, arth.address)
+    // const maha_dai_lpt = await oracle.pairFor(factory.address, dai.address, mahaToken.address)
+
+    // console.log('dai at', dai.address);
+    // console.log('arth at', arth.address);
+    // console.log('maha at', mahaToken.address);
+    // console.log('uniswap factory at', factory.address);
+    // console.log('uniswap router at', router.address);
+    // console.log('dai_arth_lpt at', dai_arth_lpt);
+    // console.log('maha_dai_lpt at', maha_dai_lpt);
+    // console.log('multicall at', multicall.address);
+
+    // deployments.MahaToken = {
+    //   address: mahaToken.address,
+    //   abi: mahaToken.abi,
+    // };
+
+    // deployments.ArthDaiLP = {
+    //   address: dai_arth_lpt
+    // };
+
+    // deployments.MahaEthLP = {
+    //   address: maha_dai_lpt
+    // };
+
+    // if (network === 'development') {
+    //   exportedContracts.push('ArthBoardroomV1', 'ArthLiquidityBoardroomV1', 'MahaLiquidityBoardroomV1')
+    // }
+
+    // for (const name of exportedContracts) {
+    //   const contract = artifacts.require(name);
+    //   deployments[name] = {
+    //     address: contract.address,
+    //     abi: contract.abi,
+    //   };
+    // }
+    // const deploymentPath = path.resolve(__dirname, `../build/deployments.${network}.json`);
+    // await writeFile(deploymentPath, JSON.stringify(deployments, null, 2));
+
+    // console.log(`Exported deployments into ${deploymentPath}`);
 
 
   } catch (error) {
-    console.log(error)
+    console.log(error);
   }
+
   callback();
 };
