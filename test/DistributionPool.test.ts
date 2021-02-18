@@ -302,7 +302,7 @@ describe('Distribution pools', () => {
         expect(await dai.connect(operator).balanceOf(ant.address)).to.equal(beforeStakeAntDaiBalance);
         expect(await dai.connect(operator).balanceOf(whale.address)).to.equal(beforeStakeWhaleDaiBalance);
 
-        await expect(pool.connect(ant).withdraw(ETH)).to.revertedWith('SafeMath: subtraction overflow');
+        await expect(pool.connect(ant).withdraw(ETH)).to.revertedWith('');
       })
     });
 
