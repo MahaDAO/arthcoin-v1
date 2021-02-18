@@ -1,5 +1,6 @@
 import chai, { expect } from 'chai';
 import { ethers } from 'hardhat';
+import "@nomiclabs/hardhat-ethers";
 import { solidity } from 'ethereum-waffle';
 import {
   Contract,
@@ -58,7 +59,10 @@ describe('Treasury', () => {
   let MockBoardroom: ContractFactory;
   let MockUniswapOracle: ContractFactory;
   let DAI: ContractFactory;
-  let period: number = 5 * 60
+  let period: number = 5 * 60;
+  let TreasuryLibrary: ContractFactory;
+  let treasuryLibrary: Contract;
+
 
 
   let Factory = new ContractFactory(
@@ -70,11 +74,22 @@ describe('Treasury', () => {
     UniswapV2Router.bytecode
   );
 
+
   before('fetch contract factories', async () => {
+    TreasuryLibrary = await ethers.getContractFactory('TreasuryLibrary');
+
+    treasuryLibrary = await TreasuryLibrary.deploy();
+
     ARTHB = await ethers.getContractFactory('ARTHB');
     ARTH = await ethers.getContractFactory('ARTH');
     MAHA = await ethers.getContractFactory('MahaToken');
-    Treasury = await ethers.getContractFactory('Treasury');
+
+    Treasury = await ethers.getContractFactory('Treasury', {
+      libraries: {
+        TreasuryLibrary: treasuryLibrary.address
+      }
+    });
+
     DevelopmentFund = await ethers.getContractFactory('DevelopmentFund');
     RainyDayFund = await ethers.getContractFactory('RainyDayFund')
     MockBoardroom = await ethers.getContractFactory('MockBoardroom');
@@ -100,6 +115,9 @@ describe('Treasury', () => {
   let mahaLiquidityBoardroom: Contract;
   let rainyDayFund: Contract;
   let arthMahaswapLiquidityBoardroom: Contract;
+  let contractionBoardroom1: Contract;
+  let contractionBoardroom2: Contract;
+  let contractionBoardroom3: Contract;
 
   beforeEach('Deploy contracts', async () => {
     cash = await ARTH.connect(operator).deploy();
@@ -142,41 +160,43 @@ describe('Treasury', () => {
 
     arthMahaswapLiquidityBoardroom = await MockBoardroom.connect(operator).deploy(cash.address);
     arthBoardroom = await MockBoardroom.connect(operator).deploy(cash.address);
-    arthLiquidityBoardroom = await MockBoardroom.connect(operator).deploy(cash.address);
     mahaLiquidityBoardroom = await MockBoardroom.connect(operator).deploy(cash.address);
+    contractionBoardroom1 = await MockBoardroom.connect(operator).deploy(cash.address);
+    contractionBoardroom2 = await MockBoardroom.connect(operator).deploy(cash.address);
+    contractionBoardroom3 = await MockBoardroom.connect(operator).deploy(cash.address);
 
     treasury = await Treasury.connect(operator).deploy(
       dai.address,
       cash.address,
       bond.address,
       share.address,
-
-      oracle.address,
-      arthMahaOracle.address,
-      oracle.address,
-      gmuOracle.address,
-
-      // arthLiquidityBoardroom.address,
-      // arthMahaswapLiquidityBoardroom.address,
-      // mahaLiquidityBoardroom.address,
-      // arthBoardroom.address,
-
-      // developmentFund.address,
-      // rainyDayFund.address,
-      uniswapRouter.address,
       startTime,
       period,
       0
     );
 
-    await treasury.initializeFunds(
-      arthLiquidityBoardroom.address,
+    await treasury.connect(operator).setAllFunds(
       arthMahaswapLiquidityBoardroom.address,
-      mahaLiquidityBoardroom.address,
       arthBoardroom.address,
+      mahaLiquidityBoardroom.address,
+      contractionBoardroom1.address,
+      contractionBoardroom2.address,
+      contractionBoardroom3.address,
       developmentFund.address,
       rainyDayFund.address,
     );
+
+    await treasury.connect(operator).setOracles(
+      oracle.address,
+      arthMahaOracle.address,
+      oracle.address,
+      gmuOracle.address
+    );
+
+    await treasury.setUniswapRouter(
+      uniswapRouter.address,
+      uniswap.getPair(cash.address, dai.address)
+    )
   });
 
   let newTreasury: Contract;
@@ -187,33 +207,33 @@ describe('Treasury', () => {
       cash.address,
       bond.address,
       share.address,
-
-      oracle.address,
-      arthMahaOracle.address,
-      oracle.address,
-      gmuOracle.address,
-
-      // arthLiquidityBoardroom.address,
-      // arthMahaswapLiquidityBoardroom.address,
-      // mahaLiquidityBoardroom.address,
-      // arthBoardroom.address,
-
-      // developmentFund.address,
-      // rainyDayFund.address,
-      uniswapRouter.address,
       startTime,
       period,
       0
     );
 
-    await newTreasury.initializeFunds(
-      arthLiquidityBoardroom.address,
+    await newTreasury.connect(operator).setAllFunds(
       arthMahaswapLiquidityBoardroom.address,
-      mahaLiquidityBoardroom.address,
       arthBoardroom.address,
+      mahaLiquidityBoardroom.address,
+      contractionBoardroom1.address,
+      contractionBoardroom2.address,
+      contractionBoardroom3.address,
       developmentFund.address,
       rainyDayFund.address,
     );
+
+    await newTreasury.connect(operator).setOracles(
+      oracle.address,
+      arthMahaOracle.address,
+      oracle.address,
+      gmuOracle.address
+    );
+
+    await newTreasury.setUniswapRouter(
+      uniswapRouter.address,
+      uniswap.getPair(cash.address, dai.address)
+    )
   });
 
   describe('Governance', () => {

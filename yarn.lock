@@ -518,7 +518,7 @@
     safe-buffer "^5.1.1"
     util.promisify "^1.0.0"
 
-"@nomiclabs/hardhat-ethers@^2.0.0":
+"@nomiclabs/hardhat-ethers@^2.0.1":
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/@nomiclabs/hardhat-ethers/-/hardhat-ethers-2.0.1.tgz#f86a6fa210dbe6270adffccc75e93ed60a856904"
   integrity sha512-uTFHDhhvJ+UjfvvMeQxD3ZALuzuI3FXzTYT1Z5N3ebyZL5z4Ogwt55GB0R9tdKY0p5HhDhBjU/gsCjUEwIVoaw==
@@ -536,9 +536,9 @@
     node-fetch "^2.6.0"
     semver "^6.3.0"
 
-"@openzeppelin/contracts@https://github.com/OpenZeppelin/openzeppelin-contracts":
+"@openzeppelin/contracts@git://github.com/OpenZeppelin/openzeppelin-contracts.git#ee6348a7a0b08f82344f2b61e903788aa9dcf36c":
   version "3.4.0"
-  resolved "https://github.com/OpenZeppelin/openzeppelin-contracts#ee6348a7a0b08f82344f2b61e903788aa9dcf36c"
+  resolved "git://github.com/OpenZeppelin/openzeppelin-contracts.git#ee6348a7a0b08f82344f2b61e903788aa9dcf36c"
 
 "@resolver-engine/core@^0.2.1":
   version "0.2.1"
@@ -3944,7 +3944,7 @@ ethers@^4.0.32, ethers@^4.0.40:
     uuid "2.0.1"
     xmlhttprequest "1.8.0"
 
-ethers@^5.0.0, ethers@^5.0.1, ethers@^5.0.19:
+ethers@^5.0.0, ethers@^5.0.1:
   version "5.0.31"
   resolved "https://registry.yarnpkg.com/ethers/-/ethers-5.0.31.tgz#60e3b1425864fe5d2babc147ede01be8382a7d2a"
   integrity sha512-zpq0YbNFLFn+t+ibS8UkVWFeK5w6rVMSvbSHrHAQslfazovLnQ/mc2gdN5+6P45/k8fPgHrfHrYvJ4XvyK/S1A==
