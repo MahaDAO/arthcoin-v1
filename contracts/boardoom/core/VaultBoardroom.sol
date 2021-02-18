@@ -131,7 +131,7 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
                 .add(directors[director].rewardEarned);
     }
 
-    function claimReward() external virtual directorExists {
+    function claimReward() external virtual directorExists returns (uint256) {
         Boardseat memory seat = directors[msg.sender];
         seat.rewardEarned = earned(msg.sender);
         seat.lastSnapshotIndex = latestSnapshotIndex();
@@ -144,6 +144,8 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
             token.transfer(msg.sender, reward);
             emit RewardPaid(msg.sender, reward);
         }
+
+        return reward;
     }
 
     function allocateSeigniorage(uint256 amount)

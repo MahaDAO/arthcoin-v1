@@ -31,6 +31,15 @@ abstract contract StakingTimelock is Ownable {
         _;
     }
 
+    modifier checkLockDurationFor(address who) {
+        StakingDetails storage _stakerDetails = _stakingDetails[who];
+
+        require(_stakerDetails.deadline != 0);
+        require(_stakerDetails.amount != 0);
+        require(_stakerDetails.deadline + duration <= block.timestamp);
+        _;
+    }
+
     modifier checkLockDurationWithAmount(uint256 amount) {
         StakingDetails storage _stakerDetails = _stakingDetails[msg.sender];
 
