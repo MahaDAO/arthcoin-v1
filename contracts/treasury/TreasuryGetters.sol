@@ -125,7 +125,7 @@ abstract contract TreasuryGetters is TreasuryState {
 
     function getCashSupplyInLiquidity() public view returns (uint256) {
         // check if enabled or not
-        if (!state.considerUniswapLiquidity) return uint256(100);
+        if (!flags.considerUniswapLiquidity) return uint256(100);
 
         // Get the liquidity of cash locked in uniswap pair.
         uint256 uniswapLiquidityPairCashBalance =

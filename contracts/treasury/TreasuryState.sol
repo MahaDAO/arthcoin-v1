@@ -18,6 +18,7 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     TreasuryLibrary.BoardroomState public boardroomState;
     TreasuryLibrary.OracleState public oracleState;
     TreasuryLibrary.State public state;
+    TreasuryLibrary.Flags public flags;
 
     constructor(
         uint256 _startTime,
@@ -38,18 +39,19 @@ abstract contract TreasuryState is ContractGuard, Epoch {
         state.bondSeigniorageRate = 90;
         state.cashTargetPrice = 1e18; // 1$
         state.cashToBondConversionLimit = 0;
-        state.considerUniswapLiquidity = false;
         state.contractionRewardPerEpoch = 0;
-        state.enableSurprise = false;
-        state.initialized = false;
         state.maxDebtIncreasePerEpoch = 5;
         state.maxSupplyIncreasePerEpoch = 10;
-        state.migrated = false;
         state.safetyRegion = 5;
+
+        flags.migrated = false;
+        flags.enableSurprise = false;
+        flags.initialized = false;
+        flags.considerUniswapLiquidity = false;
     }
 
     modifier checkMigration {
-        require(!state.migrated, 'Treasury: migrated');
+        require(!flags.migrated, 'Treasury: migrated');
         _;
     }
 

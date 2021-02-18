@@ -20,12 +20,19 @@ import {TreasuryLibrary} from './TreasuryLibrary.sol';
 library TreasuryLibrary {
     using SafeMath for uint256;
 
-    struct State {
-        /* ========== STATE VARIABLES ========== */
-
+    struct Flags {
         // ========== FLAGS
         bool migrated;
         bool initialized;
+        // wut? algo coin surprise sheeet?
+        bool enableSurprise;
+        // flag whether we should considerUniswapLiquidity or not.
+        bool considerUniswapLiquidity;
+    }
+
+    struct State {
+        /* ========== STATE VARIABLES ========== */
+
         // ========== CORE
         IUniswapV2Router02 uniswapRouter;
         address uniswapLiquidityPair;
@@ -36,8 +43,6 @@ library TreasuryLibrary {
         uint256 accumulatedBonds;
         // this governs how much cash tokens are issued
         uint256 accumulatedSeigniorage;
-        // flag whether we should considerUniswapLiquidity or not.
-        bool considerUniswapLiquidity;
         // used to limit how much of the supply is converted into bonds
         uint256 maxDebtIncreasePerEpoch; // in %
         // the discount given to bond purchasers
@@ -52,8 +57,6 @@ library TreasuryLibrary {
         uint256 bondSeigniorageRate; // in %
         // amount of maha rewarded per epoch.
         uint256 contractionRewardPerEpoch;
-        // wut? algo coin surprise sheeet?
-        bool enableSurprise;
     }
 
     struct OracleState {

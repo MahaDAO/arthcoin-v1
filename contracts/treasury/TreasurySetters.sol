@@ -58,7 +58,7 @@ abstract contract TreasurySetters is TreasuryGetters {
     }
 
     function setConsiderUniswapLiquidity(bool val) public onlyOwner {
-        state.considerUniswapLiquidity = val;
+        flags.considerUniswapLiquidity = val;
     }
 
     function setMaxDebtIncreasePerEpoch(uint256 rate) public onlyOwner {
@@ -72,7 +72,7 @@ abstract contract TreasurySetters is TreasuryGetters {
     }
 
     function setSurprise(bool val) public onlyOwner {
-        state.enableSurprise = val;
+        flags.enableSurprise = val;
     }
 
     function setContractionRewardPerMonth(uint256 amount) public onlyOwner {

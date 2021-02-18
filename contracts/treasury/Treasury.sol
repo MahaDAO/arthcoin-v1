@@ -43,12 +43,12 @@ contract Treasury is TreasurySetters {
     }
 
     function initialize() external validateOperator {
-        require(!state.initialized, '!initialized');
+        require(!flags.initialized, '!initialized');
 
         // set accumulatedSeigniorage to the treasury's balance
         state.accumulatedSeigniorage = IERC20(cash).balanceOf(address(this));
 
-        state.initialized = true;
+        flags.initialized = true;
         emit Initialized(msg.sender, block.number);
     }
 
@@ -217,7 +217,7 @@ contract Treasury is TreasurySetters {
             cash.mint(address(this), seigniorage1);
             emit SeigniorageMinted(seigniorage1);
 
-            if (state.enableSurprise) {
+            if (flags.enableSurprise) {
                 // surprise!! send 10% to boardooms and 90% to bond holders
                 _allocateToBondHolders(seigniorage1.mul(90).div(100));
                 _allocateToBoardrooms(cash, seigniorage1.mul(10).div(100));
@@ -269,7 +269,7 @@ contract Treasury is TreasurySetters {
 
     function migrate(address target) external onlyOperator {
         require(target != address(0), 'migrate to zero');
-        require(!state.migrated, '!migrated');
+        require(!flags.migrated, '!migrated');
 
         // TODO: check if the destination is a treasury or not
 
@@ -286,7 +286,7 @@ contract Treasury is TreasurySetters {
         // share - disabled ownership and operator functions as MAHA tokens don't have these
         share.transfer(target, share.balanceOf(address(this)));
 
-        state.migrated = true;
+        flags.migrated = true;
         emit Migration(target);
     }
 
