@@ -267,7 +267,7 @@ contract Treasury is TreasurySetters {
         share.transfer(msg.sender, share.balanceOf(address(this)));
     }
 
-    function migrate(address target) external onlyOperator {
+    function migrate(address target) external validateOperator {
         require(target != address(0), 'migrate to zero');
         require(!flags.migrated, '!migrated');
 
