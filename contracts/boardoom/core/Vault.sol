@@ -62,17 +62,13 @@ contract Vault is AccessControl, StakingTimelock, Operator {
         return _totalSupply;
     }
 
-    function balanceOf(address account) public view returns (uint256) {
-        return _balances[account];
+    function balanceOf(address who) public view returns (uint256) {
+        return _balances[who];
     }
 
-    function balanceWithoutBonded(address account)
-        public
-        view
-        returns (uint256)
-    {
+    function balanceWithoutBonded(address who) public view returns (uint256) {
         uint256 amount = getStakedAmount(msg.sender);
-        return _balances[account].sub(amount);
+        return _balances[who].sub(amount);
     }
 
     function toggleDeposits(bool val) external onlyOwner {
