@@ -62,11 +62,11 @@ contract VestedVaultBoardroom is VaultBoardroom {
         vestFor = period;
     }
 
-    function claimReward() external override directorExists {
+    function claimReward() public override directorExists returns (uint256) {
         _updateReward(msg.sender);
 
         uint256 reward = directors[msg.sender].rewardEarned;
-        if (reward <= 0) return;
+        if (reward <= 0) return 0;
 
         uint256 latestFundingTime = boardHistory[boardHistory.length - 1].time;
 
@@ -131,6 +131,13 @@ contract VestedVaultBoardroom is VaultBoardroom {
 
         token.transfer(msg.sender, reward);
         emit RewardPaid(msg.sender, reward);
+
+        return reward;
+    }
+
+    function claimAndReinvestReward() external virtual {
+        uint256 reward = claimReward();
+        vault.bondFor(msg.sender, reward);
     }
 
     function _updateReward(address director) private {
