@@ -411,6 +411,8 @@ describe('Treasury', () => {
         await share.mint(operator.address, INITIAL_BAS_AMOUNT);
         await share.mint(treasury.address, INITIAL_BAS_AMOUNT);
 
+        await treasury.connect(operator.address).setContractionRewardPerMonth(INITIAL_BAB_AMOUNT.div(1000));
+
         for await (const contract of [
           cash, bond, arthMahaswapLiquidityBoardroom,
           contractionBoardroom1, arthBoardroom, mahaLiquidityBoardroom,
@@ -472,6 +474,8 @@ describe('Treasury', () => {
             contractionRewardPerEpoch
           )
 
+          console.log(rewardToGive.toString())
+
           const expectedArthBoardroomReserve = rewardToGive.mul(BigNumber.from((await treasury.boardroomState()).arthAllocationRate.toString())).div(100);
           const expectedMahaLiqBoardroomRes = rewardToGive.mul(BigNumber.from((await treasury.boardroomState()).mahaAllocationRate.toString())).div(100);
           const expectedArthMahaswapLiqBoardRes = rewardToGive.mul(BigNumber.from((await treasury.boardroomState()).arthLiquidityMlpAllocationRate.toString())).div(100);
@@ -510,13 +514,13 @@ describe('Treasury', () => {
             0
           );
 
-          expect(await cash.balanceOf(contractionBoardroom1.address)).to.eq(
+          expect(await share.balanceOf(contractionBoardroom1.address)).to.eq(
             expectedArthMahaswapLiqBoardRes
           );
-          expect(await cash.balanceOf(contractionBoardroom2.address)).to.eq(
+          expect(await share.balanceOf(contractionBoardroom2.address)).to.eq(
             expectedMahaLiqBoardroomRes
           );
-          expect(await cash.balanceOf(contractionBoardroom3.address)).to.eq(
+          expect(await share.balanceOf(contractionBoardroom3.address)).to.eq(
             expectedArthBoardroomReserve
           );
         });
