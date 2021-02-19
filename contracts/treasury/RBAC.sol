@@ -2,20 +2,19 @@
 
 pragma solidity ^0.8.0;
 
-import {Treasury} from './Treasury.sol';
-import {Operator} from '../owner/Operator.sol';
+import '@openzeppelin/contracts/contracts/access/Ownable.sol';
+
 import {IBasisAsset} from '../interfaces/IBasisAsset.sol';
 
-contract RBAC is Operator {
+contract RBAC is Ownable {
     /**
      * State variables.
      */
 
-    // This RBAC contract has to be the operator/owner of this contract.
+    // RBAC contract has to be the operator/owner of these assets.
     IBasisAsset cash;
     IBasisAsset bond;
 
-    // Treasury has to be the operator of this RBAC contract.
     address treasury;
 
     /**
@@ -32,6 +31,15 @@ contract RBAC is Operator {
     }
 
     /**
+     * Modifiers.
+     */
+    modifier onlyTreasury() {
+        require(msg.sender == treasury, 'RBAC: forbidden');
+
+        _;
+    }
+
+    /**
      * Settters.
      */
     function setTreasury(address newTreasury) public onlyOwner {
@@ -42,31 +50,39 @@ contract RBAC is Operator {
      * Mutations.
      */
 
-    function migrate(address newTreasury) public onlyOperator {
+    function refundBond() public onlyOwner {
+        bond.transfer(owner(), bond.balanceOf(address(this)));
+    }
+
+    function refundCash() public onlyOwner {
+        cash.transfer(owner(), cash.balanceOf(address(this)));
+    }
+
+    function migrate(address newTreasury) public onlyTreasury {
         treausry = newTreasury;
     }
 
-    function mintCash(address account, uint256 amount) onlyOperator {
+    function mintCash(address account, uint256 amount) public onlyTreasury {
         cash.mint(account, amount);
     }
 
-    function mintBond(address account, uint256 amount) onlyOperator {
+    function mintBond(address account, uint256 amount) public onlyTreasury {
         bond.mint(account, amount);
     }
 
-    function burnCash(address account, uint256 amount) onlyOperator {
+    function burnCash(address account, uint256 amount) public onlyTreasury {
         cash.burnFrom(account, amount);
     }
 
-    function burnBond(address account, uint256 amount) onlyOperator {
+    function burnBond(address account, uint256 amount) public onlyTreasury {
         bond.burnFrom(account, amount);
     }
 
-    function transferCash(address account, uint256 amount) onlyOperator {
+    function transferCash(address account, uint256 amount) public onlyTreasury {
         cash.trasnfer(account, amount);
     }
 
-    function transferBond(address account, uint256 amount) onlyOperator {
+    function transferBond(address account, uint256 amount) public onlyTreasury {
         bond.trasnfer(account, amount);
     }
 }

@@ -166,7 +166,7 @@ contract Treasury is TreasurySetters {
         // hand over the ARTH directly
         state.accumulatedSeigniorage = state.accumulatedSeigniorage.sub(amount);
         rbac.burnBond(msg.sender, amount);
-        rbac.transferCash(msg.sender, amount);
+        cash.transfer(msg.sender, amount);
 
         emit RedeemedBonds(msg.sender, amount);
     }
