@@ -29,7 +29,7 @@ contract Treasury is TreasurySetters {
         uint256 _startTime,
         uint256 _period,
         uint256 _startEpoch
-    ) TreasuryState(_period, _startTime, _startEpoch) {
+    ) TreasuryState(_startTime, _period, _startEpoch) {
         // tokens
         dai = _dai;
         cash = _cash;
