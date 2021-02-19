@@ -164,9 +164,9 @@ describe('Treasury', () => {
     arthBoardroom = await MockBoardroom.connect(operator).deploy(cash.address);
     mahaLiquidityBoardroom = await MockBoardroom.connect(operator).deploy(cash.address);
 
-    contractionBoardroom1 = await MockBoardroom.connect(operator).deploy(cash.address);
-    contractionBoardroom2 = await MockBoardroom.connect(operator).deploy(cash.address);
-    contractionBoardroom3 = await MockBoardroom.connect(operator).deploy(cash.address);
+    contractionBoardroom1 = await MockBoardroom.connect(operator).deploy(share.address);
+    contractionBoardroom2 = await MockBoardroom.connect(operator).deploy(share.address);
+    contractionBoardroom3 = await MockBoardroom.connect(operator).deploy(share.address);
 
     treasury = await Treasury.connect(operator).deploy(
       dai.address,
@@ -411,7 +411,7 @@ describe('Treasury', () => {
         await share.mint(operator.address, INITIAL_BAS_AMOUNT);
         await share.mint(treasury.address, INITIAL_BAS_AMOUNT);
 
-        await treasury.connect(operator.address).setContractionRewardPerMonth(INITIAL_BAB_AMOUNT.div(1000));
+        await treasury.connect(operator).setContractionRewardPerMonth(ETH.mul(10));
 
         for await (const contract of [
           cash, bond, arthMahaswapLiquidityBoardroom,
@@ -473,9 +473,6 @@ describe('Treasury', () => {
             await share.balanceOf(treasury.address),
             contractionRewardPerEpoch
           )
-
-          console.log(rewardToGive.toString())
-
           const expectedArthBoardroomReserve = rewardToGive.mul(BigNumber.from((await treasury.boardroomState()).arthAllocationRate.toString())).div(100);
           const expectedMahaLiqBoardroomRes = rewardToGive.mul(BigNumber.from((await treasury.boardroomState()).mahaAllocationRate.toString())).div(100);
           const expectedArthMahaswapLiqBoardRes = rewardToGive.mul(BigNumber.from((await treasury.boardroomState()).arthLiquidityMlpAllocationRate.toString())).div(100);
