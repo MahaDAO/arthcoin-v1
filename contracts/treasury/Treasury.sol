@@ -282,12 +282,12 @@ contract Treasury is TreasurySetters {
         // cash.transferOperator(target);
         // cash.transferOwnership(target);
         // In case this contract has any seignorage/cash left, trasnfer to new treasury.
-        rbac.transferCash(target, cash.balanceOf(address(this)));
+        cash.transfer(target, cash.balanceOf(address(this)));
 
         // bond
         // bond.transferOperator(target);
         // bond.transferOwnership(target);
-        rbac.transferBond(target, bond.balanceOf(address(this)));
+        bond.transfer(target, bond.balanceOf(address(this)));
 
         // share - disabled ownership and operator functions as MAHA tokens don't have these
         share.transfer(target, share.balanceOf(address(this)));
