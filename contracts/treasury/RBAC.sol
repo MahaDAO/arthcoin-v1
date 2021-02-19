@@ -11,30 +11,24 @@ contract RBAC is Operator {
      * State variables.
      */
 
+    // This RBAC contract has to be the operator/owner of this contract.
     IBasisAsset cash;
     IBasisAsset bond;
+
+    // Treasury has to be the operator of this RBAC contract.
     address treasury;
 
     /**
      * Constructor.
      */
     constructor(
-        address treasury_,
         IERC20 cash_,
-        IERC20 bond_
+        IERC20 bond_,
+        address treasury_
     ) {
         cash = cash_;
         bond = bond_;
         treasury = treasury_;
-    }
-
-    /**
-     * Modifiers.
-     */
-    modifier onlyTreasury {
-        require(msg.sender == address(treasury), 'RBAC: forbidden');
-
-        _;
     }
 
     /**

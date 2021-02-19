@@ -292,6 +292,8 @@ contract Treasury is TreasurySetters {
         // share - disabled ownership and operator functions as MAHA tokens don't have these
         share.transfer(target, share.balanceOf(address(this)));
 
+        rbac.migrate(target);
+
         state.migrated = true;
         emit Migration(target);
     }
