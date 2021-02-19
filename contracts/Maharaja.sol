@@ -8,6 +8,9 @@ import {
 import {Ownable} from '@openzeppelin/contracts/contracts/access/Ownable.sol';
 import {IBasisAsset} from './interfaces/IBasisAsset.sol';
 
+/**
+ * This contract is the owner/operator of ARTH & ARTH Bonds.
+ */
 contract Maharaja is AccessControl, Ownable {
     bytes32 public constant CASH_OPERATOR = keccak256('CASH_OPERATOR');
     bytes32 public constant BOND_OPERATOR = keccak256('BOND_OPERATOR');

@@ -2,7 +2,6 @@
 
 pragma solidity ^0.8.0;
 
-import {RBAC} from './RBAC.sol';
 import {IBoardroom} from '../interfaces/IBoardroom.sol';
 import {ISimpleERCFund} from '../interfaces/ISimpleERCFund.sol';
 import {ISimpleOracle} from '../interfaces/ISimpleOracle.sol';
@@ -88,10 +87,6 @@ abstract contract TreasurySetters is TreasuryGetters {
     function setBondSeigniorageRate(uint256 rate) public onlyOwner {
         require(rate <= 100, 'rate >= 0');
         state.bondSeigniorageRate = rate;
-    }
-
-    function setRBACController(RBAC newRBAC) public onlyOwner {
-        rbac = newRBAC;
     }
 
     function setArthBoardroom(
