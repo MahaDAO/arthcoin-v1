@@ -17,9 +17,8 @@ contract ExpansionJar is Epoch {
     IERC20 token;
     VestedVaultBoardroom boardroom;
 
-    uint256 startTime;
-    uint256 harvestingDuration = 30 days;
-    uint256 compoundingDuration = 5 days;
+    uint256 compoundFor = 30 days;
+    uint256 harvestAfter = 5 days;
 
     bool enableWithdrawal = false;
 
@@ -39,12 +38,10 @@ contract ExpansionJar is Epoch {
         uint256 _startTime,
         uint256 _period,
         uint256 _startEpoch
-    ) public Epoch(_period, _startTime, _startEpoch) {
+    ) Epoch(_period, _startTime, _startEpoch) {
         vault = vault_;
         token = token_;
         boardroom = boardroom_;
-
-        startTime = block.timestamp;
     }
 
     function totalSupply() public view returns (uint256) {
@@ -55,8 +52,20 @@ contract ExpansionJar is Epoch {
         return _balances[who];
     }
 
+    function setWithdrawal(bool val) public onlyOwner {
+        enableWithdrawal = val;
+    }
+
+    function setCompoundFor(uint256 duration) public onlyOwner {
+        compoundFor = duration;
+    }
+
+    function setHarvestAfter(uint256 duration) public onlyOwner {
+        harvestAfter = duration;
+    }
+
     function bond(uint256 amount) public checkStartTime {
-        require(amount > 0, 'Jar: amount = 0');
+        require(amount > 0, 'Jar: amount is 0');
 
         vault.bond(amount);
 
@@ -64,31 +73,22 @@ contract ExpansionJar is Epoch {
         _balances[msg.sender] = _balances[msg.sender].add(amount);
     }
 
-    function claimAndReinvest() public onlyOwner checkEpoch {
+    function claimAndReinvest() public onlyOwner checkEpoch checkStartTime {
         if (getCurrentEpoch() >= getNextEpoch() && getNextEpoch() > 0)
             boardroom.claimAndReinvestReward();
 
-        if (
-            block.timestamp >=
-            startTime.add(compoundingDuration).add(harvestingDuration)
-        ) enableWithdrawal = true;
+        if (block.timestamp >= startTime.add(compoundFor).add(harvestAfter))
+            enableWithdrawal = true;
     }
 
     function withdraw() public stakerExists(msg.sender) checkStartTime {
         require(enableWithdrawal, 'Jar: too early');
 
-        uint256 directorShare = _balances[msg.sender];
-        uint256 amount = getStakedAmount(msg.sender);
+        uint256 amount = _balances[msg.sender];
 
-        require(
-            directorShare >= amount,
-            'Jar: withdraw request greater than unbonded amount'
-        );
-
+        _balances[msg.sender] = 0;
         _totalSupply = _totalSupply.sub(amount);
-        _balances[msg.sender] = directorShare.sub(amount);
-        token.transfer(msg.sender, amount);
 
-        _updateStakerDetails(msg.sender, block.timestamp, 0);
+        token.transfer(msg.sender, amount);
     }
 }
