@@ -384,7 +384,7 @@ contract Treasury is TreasurySetters {
             mahaBoardroom
                 ? boardroomState.mahaArthLiquidityMlpBoardroom
                 : boardroomState.arthArthLiquidityMlpBoardroom,
-            boardroomState.arthAllocationRate,
+            boardroomState.arthLiquidityMlpAllocationRate,
             boardroomReserve
         );
 
