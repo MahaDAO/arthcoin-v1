@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.0;
 
+import {RBAC} from './RBAC.sol';
 import {ContractGuard} from '../utils/ContractGuard.sol';
 import {Epoch} from '../utils/Epoch.sol';
 import {IBasisAsset} from '../interfaces/IBasisAsset.sol';
@@ -14,6 +15,9 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     IBasisAsset public cash;
     IBasisAsset public bond;
     IERC20 public share;
+
+    // Cash and Bond operator contract.
+    RBAC public rbac;
 
     TreasuryLibrary.BoardroomState public boardroomState;
     TreasuryLibrary.OracleState public oracleState;
@@ -61,8 +65,7 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     }
 
     function checkOperator() public view returns (bool) {
-        return (cash.operator() == address(this) &&
-            bond.operator() == address(this) &&
+        return (rbac.treasury() == address(this) &&
             boardroomState.arthArthLiquidityMlpBoardroom.operator() ==
             address(this) &&
             boardroomState.arthMahaBoardroom.operator() == address(this) &&

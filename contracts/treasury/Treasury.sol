@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.0;
 
+import {RBAC} from './RBAC.sol';
 import {IBasisAsset} from '../interfaces/IBasisAsset.sol';
 import {IBoardroom} from '../interfaces/IBoardroom.sol';
 import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
@@ -22,6 +23,7 @@ contract Treasury is TreasurySetters {
     using SafeMath for uint256;
 
     constructor(
+        RBAC _rbac,
         IERC20 _dai,
         IBasisAsset _cash,
         IBasisAsset _bond,
@@ -30,7 +32,10 @@ contract Treasury is TreasurySetters {
         uint256 _period,
         uint256 _startEpoch
     ) TreasuryState(_startTime, _period, _startEpoch) {
-        // tokens
+        // Cash and bond token operator.
+        rbac = _rbac;
+
+        // Tokens.
         dai = _dai;
         cash = _cash;
         bond = _bond;
@@ -45,7 +50,7 @@ contract Treasury is TreasurySetters {
     function initialize() external validateOperator {
         require(!flags.initialized, '!initialized');
 
-        // set accumulatedSeigniorage to the treasury's balance
+        // Set accumulatedSeigniorage to the treasury's balance.
         state.accumulatedSeigniorage = IERC20(cash).balanceOf(address(this));
 
         flags.initialized = true;
@@ -127,8 +132,8 @@ contract Treasury is TreasurySetters {
         // 3. Burn bought ARTH cash and mint bonds at the discounted price.
         // TODO: Set the minting amount according to bond price.
         // TODO: calculate premium basis size of the trade
-        cash.burnFrom(msg.sender, cashToConvert);
-        bond.mint(msg.sender, bondsToIssue);
+        rbac.burnCash(msg.sender, cashToConvert);
+        rbac.mintBond(msg.sender, bondsToIssue);
 
         emit BoughtBonds(msg.sender, amountInDai, cashToConvert, bondsToIssue);
 
@@ -160,7 +165,7 @@ contract Treasury is TreasurySetters {
 
         // hand over the ARTH directly
         state.accumulatedSeigniorage = state.accumulatedSeigniorage.sub(amount);
-        bond.burnFrom(msg.sender, amount);
+        rbac.burnBond(msg.sender, amount);
         cash.transfer(msg.sender, amount);
 
         emit RedeemedBonds(msg.sender, amount);
@@ -180,7 +185,7 @@ contract Treasury is TreasurySetters {
         uint256 cash12hPrice = get12hrTWAPOraclePrice();
 
         // send 300 ARTH reward to the person advancing the epoch to compensate for gas
-        cash.mint(msg.sender, uint256(300).mul(1e18));
+        rbac.mintCash(msg.sender, uint256(300).mul(1e18));
 
         // update the bond limits
         _updateConversionLimit(cash12hPrice);
@@ -214,7 +219,7 @@ contract Treasury is TreasurySetters {
             if (seigniorage1 == 0) return;
 
             // we have to pay them some amount; so mint, distribute and return
-            cash.mint(address(this), seigniorage1);
+            rbac.mintCash(address(this), seigniorage1);
             emit SeigniorageMinted(seigniorage1);
 
             if (flags.enableSurprise) {
@@ -232,7 +237,7 @@ contract Treasury is TreasurySetters {
         uint256 seigniorage = estimateSeignorageToMint(cash12hPrice);
         if (seigniorage == 0) return;
 
-        cash.mint(address(this), seigniorage);
+        rbac.mintCash(address(this), seigniorage);
         emit SeigniorageMinted(seigniorage);
 
         // send funds to the ecosystem development and rainy day fund
@@ -274,17 +279,20 @@ contract Treasury is TreasurySetters {
         // TODO: check if the destination is a treasury or not
 
         // cash
-        cash.transferOperator(target);
-        cash.transferOwnership(target);
+        // cash.transferOperator(target);
+        // cash.transferOwnership(target);
         cash.transfer(target, cash.balanceOf(address(this)));
 
         // bond
-        bond.transferOperator(target);
-        bond.transferOwnership(target);
+        // bond.transferOperator(target);
+        // bond.transferOwnership(target);
         bond.transfer(target, bond.balanceOf(address(this)));
 
         // share - disabled ownership and operator functions as MAHA tokens don't have these
         share.transfer(target, share.balanceOf(address(this)));
+
+        // Also update the treasury for RBAC.
+        rbac.migrate(target);
 
         flags.migrated = true;
         emit Migration(target);
