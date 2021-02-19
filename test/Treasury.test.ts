@@ -62,7 +62,7 @@ describe('Treasury', () => {
   let period: number = 5 * 60;
   let TreasuryLibrary: ContractFactory;
   let treasuryLibrary: Contract;
-
+  let SimpleOracle: ContractFactory;
 
 
   let Factory = new ContractFactory(
@@ -95,6 +95,7 @@ describe('Treasury', () => {
     MockBoardroom = await ethers.getContractFactory('MockBoardroom');
     MockUniswapOracle = await ethers.getContractFactory('MockUniswapOracle');
     DAI = await ethers.getContractFactory('MockDai');
+    SimpleOracle = await ethers.getContractFactory('SimpleOracle');
   });
 
   let bond: Contract;
@@ -118,6 +119,7 @@ describe('Treasury', () => {
   let contractionBoardroom1: Contract;
   let contractionBoardroom2: Contract;
   let contractionBoardroom3: Contract;
+  let simpleOracle: Contract;
 
   beforeEach('Deploy contracts', async () => {
     cash = await ARTH.connect(operator).deploy();
@@ -198,6 +200,8 @@ describe('Treasury', () => {
       uniswapRouter.address,
       uniswap.getPair(cash.address, dai.address)
     )
+
+    simpleOracle = await SimpleOracle.deploy('SimpleOracle', ETH);
   });
 
   let newTreasury: Contract;
@@ -405,6 +409,8 @@ describe('Treasury', () => {
         await cash.mint(operator.address, INITIAL_BAC_AMOUNT);
         await cash.mint(treasury.address, INITIAL_BAC_AMOUNT);
         await share.mint(operator.address, INITIAL_BAS_AMOUNT);
+        await share.mint(treasury.address, INITIAL_BAS_AMOUNT);
+
         for await (const contract of [
           cash, bond, arthMahaswapLiquidityBoardroom,
           contractionBoardroom1, arthBoardroom, mahaLiquidityBoardroom,
@@ -451,7 +457,136 @@ describe('Treasury', () => {
           );
         });
 
-        it('should not fund if price < targetPrice and price > bondPurchasePrice', async () => {
+        it('should fund contraction boardrooms if price < targetPrice and price > bondPurchasePrice', async () => {
+          const cashPrice = ETH.mul(98).div(100);
+          await oracle.setPrice(cashPrice);
+
+          const oldCashSupply = await cash.totalSupply();
+          const oldCashBalanceOfAnt = await cash.balanceOf(ant.address);
+          const oldCashBalanceOfTreasury = await cash.balanceOf(treasury.address);
+
+          const contractionRewardPerEpoch = BigNumber.from((await treasury.state()).contractionRewardPerEpoch.toString());
+
+          const rewardToGive = bigmin(
+            await share.balanceOf(treasury.address),
+            contractionRewardPerEpoch
+          )
+
+          const expectedArthBoardroomReserve = rewardToGive.mul(BigNumber.from((await treasury.boardroomState()).arthAllocationRate.toString())).div(100);
+          const expectedMahaLiqBoardroomRes = rewardToGive.mul(BigNumber.from((await treasury.boardroomState()).mahaAllocationRate.toString())).div(100);
+          const expectedArthMahaswapLiqBoardRes = rewardToGive.mul(BigNumber.from((await treasury.boardroomState()).arthLiquidityMlpAllocationRate.toString())).div(100);
+
+          await expect(treasury.connect(ant).allocateSeigniorage()).to.not.emit(treasury, 'TreasuryFunded')
+
+          expect(await cash.totalSupply()).to.eq(oldCashSupply.add(ETH.mul(300)));
+          expect(await cash.balanceOf(ant.address)).to.eq(oldCashBalanceOfAnt.add(ETH.mul(300)));
+          expect(await cash.balanceOf(treasury.address)).to.eq(oldCashBalanceOfTreasury);
+
+          expect(await cash.balanceOf(arthBoardroom.address)).to.eq(
+            0
+          );
+          expect(await cash.balanceOf(arthMahaswapLiquidityBoardroom.address)).to.eq(
+            0
+          );
+          expect(await cash.balanceOf(mahaLiquidityBoardroom.address)).to.eq(
+            0
+          );
+          expect(await share.balanceOf(arthBoardroom.address)).to.eq(
+            0
+          );
+          expect(await share.balanceOf(arthMahaswapLiquidityBoardroom.address)).to.eq(
+            0
+          );
+          expect(await share.balanceOf(mahaLiquidityBoardroom.address)).to.eq(
+            0
+          );
+          expect(await cash.balanceOf(contractionBoardroom1.address)).to.eq(
+            0
+          );
+          expect(await cash.balanceOf(contractionBoardroom2.address)).to.eq(
+            0
+          );
+          expect(await cash.balanceOf(contractionBoardroom3.address)).to.eq(
+            0
+          );
+
+          expect(await cash.balanceOf(contractionBoardroom1.address)).to.eq(
+            expectedArthMahaswapLiqBoardRes
+          );
+          expect(await cash.balanceOf(contractionBoardroom2.address)).to.eq(
+            expectedMahaLiqBoardroomRes
+          );
+          expect(await cash.balanceOf(contractionBoardroom3.address)).to.eq(
+            expectedArthBoardroomReserve
+          );
+        });
+
+        it('should fund contraction boardrooms if price < targetPrice and price > bondPurchasePrice', async () => {
+          const cashPrice = ETH.mul(98).div(100);
+          await oracle.setPrice(cashPrice);
+
+          const oldCashSupply = await cash.totalSupply();
+          const oldCashBalanceOfAnt = await cash.balanceOf(ant.address);
+          const oldCashBalanceOfTreasury = await cash.balanceOf(treasury.address);
+
+          const contractionRewardPerEpoch = BigNumber.from((await treasury.state()).contractionRewardPerEpoch.toString());
+
+          const rewardToGive = bigmin(
+            await share.balanceOf(treasury.address),
+            contractionRewardPerEpoch
+          )
+
+          const expectedArthBoardroomReserve = rewardToGive.mul(BigNumber.from((await treasury.boardroomState()).arthAllocationRate.toString())).div(100);
+          const expectedMahaLiqBoardroomRes = rewardToGive.mul(BigNumber.from((await treasury.boardroomState()).mahaAllocationRate.toString())).div(100);
+          const expectedArthMahaswapLiqBoardRes = rewardToGive.mul(BigNumber.from((await treasury.boardroomState()).arthLiquidityMlpAllocationRate.toString())).div(100);
+
+          await expect(treasury.connect(ant).allocateSeigniorage()).to.not.emit(treasury, 'TreasuryFunded')
+
+          expect(await cash.totalSupply()).to.eq(oldCashSupply.add(ETH.mul(300)));
+          expect(await cash.balanceOf(ant.address)).to.eq(oldCashBalanceOfAnt.add(ETH.mul(300)));
+          expect(await cash.balanceOf(treasury.address)).to.eq(oldCashBalanceOfTreasury);
+
+
+          expect(await cash.balanceOf(arthBoardroom.address)).to.eq(
+            0
+          );
+          expect(await cash.balanceOf(arthMahaswapLiquidityBoardroom.address)).to.eq(
+            0
+          );
+          expect(await cash.balanceOf(mahaLiquidityBoardroom.address)).to.eq(
+            0
+          );
+          expect(await share.balanceOf(arthBoardroom.address)).to.eq(
+            0
+          );
+          expect(await share.balanceOf(arthMahaswapLiquidityBoardroom.address)).to.eq(
+            0
+          );
+          expect(await share.balanceOf(mahaLiquidityBoardroom.address)).to.eq(
+            0
+          );
+          expect(await cash.balanceOf(contractionBoardroom1.address)).to.eq(
+            0
+          );
+          expect(await cash.balanceOf(contractionBoardroom2.address)).to.eq(
+            0
+          );
+          expect(await cash.balanceOf(contractionBoardroom3.address)).to.eq(
+            0
+          );
+
+          expect(await share.balanceOf(contractionBoardroom1.address)).to.eq(
+            expectedArthMahaswapLiqBoardRes
+          );
+          expect(await share.balanceOf(contractionBoardroom2.address)).to.eq(
+            expectedMahaLiqBoardroomRes
+          );
+          expect(await share.balanceOf(contractionBoardroom3.address)).to.eq(
+            expectedArthBoardroomReserve
+          );
+        });
+
+        it('should not fund expansion boardrooms if price < targetPrice and price > bondPurchasePrice', async () => {
           const cashPrice = ETH.mul(98).div(100);
           await oracle.setPrice(cashPrice);
 
@@ -464,9 +599,46 @@ describe('Treasury', () => {
           expect(await cash.totalSupply()).to.eq(oldCashSupply.add(ETH.mul(300)));
           expect(await cash.balanceOf(ant.address)).to.eq(oldCashBalanceOfAnt.add(ETH.mul(300)));
           expect(await cash.balanceOf(treasury.address)).to.eq(oldCashBalanceOfTreasury);
+
+          expect(await cash.balanceOf(arthBoardroom.address)).to.eq(
+            0
+          );
+          expect(await cash.balanceOf(arthMahaswapLiquidityBoardroom.address)).to.eq(
+            0
+          );
+          expect(await cash.balanceOf(mahaLiquidityBoardroom.address)).to.eq(
+            0
+          );
+          expect(await share.balanceOf(arthBoardroom.address)).to.eq(
+            0
+          );
+          expect(await share.balanceOf(arthMahaswapLiquidityBoardroom.address)).to.eq(
+            0
+          );
+          expect(await share.balanceOf(mahaLiquidityBoardroom.address)).to.eq(
+            0
+          );
+          expect(await cash.balanceOf(contractionBoardroom1.address)).to.eq(
+            0
+          );
+          expect(await cash.balanceOf(contractionBoardroom2.address)).to.eq(
+            0
+          );
+          expect(await cash.balanceOf(contractionBoardroom3.address)).to.eq(
+            0
+          );
+          expect(await share.balanceOf(contractionBoardroom1.address)).to.gte(
+            0
+          );
+          expect(await share.balanceOf(contractionBoardroom2.address)).to.gte(
+            0
+          );
+          expect(await share.balanceOf(contractionBoardroom3.address)).to.gte(
+            0
+          );
         });
 
-        it('should not fund if price < targetPrice and price < bondPurchasePrice', async () => {
+        it('should not fund expansion boardrooms if price < targetPrice and price < bondPurchasePrice', async () => {
           const cashPrice = ETH.mul(90).div(100);
           await oracle.setPrice(cashPrice);
 
@@ -479,9 +651,46 @@ describe('Treasury', () => {
           expect(await cash.totalSupply()).to.eq(oldCashSupply.add(ETH.mul(300)));
           expect(await cash.balanceOf(ant.address)).to.eq(oldCashBalanceOfAnt.add(ETH.mul(300)));
           expect(await cash.balanceOf(treasury.address)).to.eq(oldCashBalanceOfTreasury);
+
+          expect(await cash.balanceOf(arthBoardroom.address)).to.eq(
+            0
+          );
+          expect(await cash.balanceOf(arthMahaswapLiquidityBoardroom.address)).to.eq(
+            0
+          );
+          expect(await cash.balanceOf(mahaLiquidityBoardroom.address)).to.eq(
+            0
+          );
+          expect(await share.balanceOf(arthBoardroom.address)).to.eq(
+            0
+          );
+          expect(await share.balanceOf(arthMahaswapLiquidityBoardroom.address)).to.eq(
+            0
+          );
+          expect(await share.balanceOf(mahaLiquidityBoardroom.address)).to.eq(
+            0
+          );
+          expect(await cash.balanceOf(contractionBoardroom1.address)).to.eq(
+            0
+          );
+          expect(await cash.balanceOf(contractionBoardroom2.address)).to.eq(
+            0
+          );
+          expect(await cash.balanceOf(contractionBoardroom3.address)).to.eq(
+            0
+          );
+          expect(await share.balanceOf(contractionBoardroom1.address)).to.gte(
+            0
+          );
+          expect(await share.balanceOf(contractionBoardroom2.address)).to.gte(
+            0
+          );
+          expect(await share.balanceOf(contractionBoardroom3.address)).to.gte(
+            0
+          );
         });
 
-        it('should fund all if price > targetPrice and price > expansionpriceLimit', async () => {
+        it('should fund all expansion boardrooms & funds if price > targetPrice and price > expansionpriceLimit', async () => {
           const cashPrice = ETH.mul(200).div(100);
           await oracle.setPrice(cashPrice);
 
@@ -583,6 +792,34 @@ describe('Treasury', () => {
             expectedMahaLiqBoardroomRes
           );
           expect(await cash.balanceOf(ant.address)).to.eq(oldCashBalanceOfAnt.add(ETH.mul(300)));
+
+          expect(await share.balanceOf(arthBoardroom.address)).to.eq(
+            0
+          );
+          expect(await share.balanceOf(arthMahaswapLiquidityBoardroom.address)).to.eq(
+            0
+          );
+          expect(await share.balanceOf(mahaLiquidityBoardroom.address)).to.eq(
+            0
+          );
+          expect(await cash.balanceOf(contractionBoardroom1.address)).to.eq(
+            0
+          );
+          expect(await cash.balanceOf(contractionBoardroom2.address)).to.eq(
+            0
+          );
+          expect(await cash.balanceOf(contractionBoardroom3.address)).to.eq(
+            0
+          );
+          expect(await share.balanceOf(contractionBoardroom1.address)).to.eq(
+            0
+          );
+          expect(await share.balanceOf(contractionBoardroom2.address)).to.eq(
+            0
+          );
+          expect(await share.balanceOf(contractionBoardroom3.address)).to.eq(
+            0
+          );
         });
 
         it('should fund only treasury if price > targetPrice and price < expansionLimitPrice with 10% bonds & surprise=false', async () => {
@@ -627,6 +864,7 @@ describe('Treasury', () => {
           expect(await cash.balanceOf(ant.address)).to.eq(ETH.mul(300)); // 200 ARTH bonus
           expect(await cash.balanceOf(treasury.address)).to.eq(oldCashBalanceOfTreasury.add(finalSeigniorageToMint));
           expect(await cash.balanceOf(developmentFund.address)).to.eq(0);
+          expect(await cash.balanceOf(rainyDayFund.address)).to.eq(0);
           expect(await cash.balanceOf(arthBoardroom.address)).to.eq(
             0
           );
@@ -636,9 +874,37 @@ describe('Treasury', () => {
           expect(await cash.balanceOf(mahaLiquidityBoardroom.address)).to.eq(
             0
           );
+
+          expect(await share.balanceOf(arthBoardroom.address)).to.eq(
+            0
+          );
+          expect(await share.balanceOf(arthMahaswapLiquidityBoardroom.address)).to.eq(
+            0
+          );
+          expect(await share.balanceOf(mahaLiquidityBoardroom.address)).to.eq(
+            0
+          );
+          expect(await cash.balanceOf(contractionBoardroom1.address)).to.eq(
+            0
+          );
+          expect(await cash.balanceOf(contractionBoardroom2.address)).to.eq(
+            0
+          );
+          expect(await cash.balanceOf(contractionBoardroom3.address)).to.eq(
+            0
+          );
+          expect(await share.balanceOf(contractionBoardroom1.address)).to.eq(
+            0
+          );
+          expect(await share.balanceOf(contractionBoardroom2.address)).to.eq(
+            0
+          );
+          expect(await share.balanceOf(contractionBoardroom3.address)).to.eq(
+            0
+          );
         });
 
-        it('should fund only treasury if price > targetPrice and price < expansionLimitPrice with 10% bonds & surprise = true', async () => {
+        it('should fund only treasury and expansion boardrooms if price > targetPrice and price < expansionLimitPrice with 10% bonds & surprise=true', async () => {
           const cashPrice = ETH.mul(103).div(100);
           await oracle.setPrice(cashPrice);
 
@@ -693,6 +959,7 @@ describe('Treasury', () => {
             .to.emit(treasury, 'PoolFunded');
 
           expect(await cash.balanceOf(developmentFund.address)).to.eq(0);
+          expect(await cash.balanceOf(rainyDayFund.address)).to.eq(0);
           expect(await cash.totalSupply()).to.eq(oldCashSupply.add(ETH.mul(300).add(finalSeigniorageToMint)));
           expect(await cash.balanceOf(ant.address)).to.eq(ETH.mul(300)); // 200 ARTH bonus
           expect(await cash.balanceOf(treasury.address)).to.eq(oldCashBalanceOfTreasury.add(expectedTreasuryReserve));
@@ -704,6 +971,33 @@ describe('Treasury', () => {
           );
           expect(await cash.balanceOf(mahaLiquidityBoardroom.address)).to.eq(
             expectedMahaLiqBoardroomRes
+          );
+          expect(await share.balanceOf(arthBoardroom.address)).to.eq(
+            0
+          );
+          expect(await share.balanceOf(arthMahaswapLiquidityBoardroom.address)).to.eq(
+            0
+          );
+          expect(await share.balanceOf(mahaLiquidityBoardroom.address)).to.eq(
+            0
+          );
+          expect(await cash.balanceOf(contractionBoardroom1.address)).to.eq(
+            0
+          );
+          expect(await cash.balanceOf(contractionBoardroom2.address)).to.eq(
+            0
+          );
+          expect(await cash.balanceOf(contractionBoardroom3.address)).to.eq(
+            0
+          );
+          expect(await share.balanceOf(contractionBoardroom1.address)).to.eq(
+            0
+          );
+          expect(await share.balanceOf(contractionBoardroom2.address)).to.eq(
+            0
+          );
+          expect(await share.balanceOf(contractionBoardroom3.address)).to.eq(
+            0
           );
         });
 
@@ -861,58 +1155,58 @@ describe('Treasury', () => {
     });
   });
 
-  // describe('getPercentDeviationFromTarget', () => {
-  //   it('returns 0 at 1$ price with a target of 1$', async () => {
-  //     const price = utils.parseEther('1')
-  //     await expect(await treasuryLibrary.getPercentDeviationFromTarget(price, gmuOracle)).to.be.eq(0);
-  //   });
+  describe('getPercentDeviationFromTarget', () => {
+    it('returns 0 at 1$ price with a target of 1$', async () => {
+      const price = utils.parseEther('1')
+      await expect(await treasuryLibrary.getPercentDeviationFromTarget(price, simpleOracle.address)).to.be.eq(0);
+    });
 
-  //   it('returns 10 at 1.1$ price with a target of 1$', async () => {
-  //     const price = utils.parseEther('11').div(10)
-  //     await expect(await treasuryLibrary.getPercentDeviationFromTarget(price, gmuOracle)).to.be.eq(10);
-  //   });
+    it('returns 10 at 1.1$ price with a target of 1$', async () => {
+      const price = utils.parseEther('11').div(10)
+      await expect(await treasuryLibrary.getPercentDeviationFromTarget(price, simpleOracle.address)).to.be.eq(10);
+    });
 
-  //   it('returns 20 at 1.2$ price with a target of 1$', async () => {
-  //     const price = utils.parseEther('12').div(10)
-  //     await expect(await treasuryLibrary.getPercentDeviationFromTarget(price, gmuOracle)).to.be.eq(20);
-  //   });
+    it('returns 20 at 1.2$ price with a target of 1$', async () => {
+      const price = utils.parseEther('12').div(10)
+      await expect(await treasuryLibrary.getPercentDeviationFromTarget(price, simpleOracle.address)).to.be.eq(20);
+    });
 
-  //   it('returns 100 at 0$ price with a target of 1$', async () => {
-  //     await expect(await treasuryLibrary.getPercentDeviationFromTarget(0, gmuOracle)).to.be.eq(100);
-  //   });
+    it('returns 100 at 0$ price with a target of 1$', async () => {
+      await expect(await treasuryLibrary.getPercentDeviationFromTarget(0, simpleOracle.addresse)).to.be.eq(100);
+    });
 
-  //   it('returns 100 at 2$ price with a target of 1$', async () => {
-  //     const price = utils.parseEther('2')
-  //     await expect(await treasuryLibrary.getPercentDeviationFromTarget(price, gmuOracle)).to.be.eq(100);
-  //   });
+    it('returns 100 at 2$ price with a target of 1$', async () => {
+      const price = utils.parseEther('2')
+      await expect(await treasuryLibrary.getPercentDeviationFromTarget(price, simpleOracle.address)).to.be.eq(100);
+    });
 
-  //   it('returns 10 at 0.9$ price with a target of 1$', async () => {
-  //     const price = utils.parseEther('9').div(10)
-  //     await expect(await treasuryLibrary.getPercentDeviationFromTarget(price, gmuOracle)).to.be.eq(10);
-  //   });
+    it('returns 10 at 0.9$ price with a target of 1$', async () => {
+      const price = utils.parseEther('9').div(10)
+      await expect(await treasuryLibrary.getPercentDeviationFromTarget(price, simpleOracle.address)).to.be.eq(10);
+    });
 
-  //   it('returns 50 at 0.5$ price with a target of 1$', async () => {
-  //     const price = utils.parseEther('5').div(10)
-  //     await expect(await treasuryLibrary.getPercentDeviationFromTarget(price, gmuOracle)).to.be.eq(50);
-  //   });
+    it('returns 50 at 0.5$ price with a target of 1$', async () => {
+      const price = utils.parseEther('5').div(10)
+      await expect(await treasuryLibrary.getPercentDeviationFromTarget(price, simpleOracle.address)).to.be.eq(50);
+    });
 
-  //   it('returns 200 at 3$ price with a target of 1$', async () => {
-  //     const price = utils.parseEther('30').div(10)
-  //     await expect(await treasuryLibrary.getPercentDeviationFromTarget(price, gmuOracle)).to.be.eq(200);
-  //   });
+    it('returns 200 at 3$ price with a target of 1$', async () => {
+      const price = utils.parseEther('30').div(10)
+      await expect(await treasuryLibrary.getPercentDeviationFromTarget(price, simpleOracle.address)).to.be.eq(200);
+    });
 
-  //   it('returns 50 at 1$ price with a target of 2$', async () => {
-  //     const price = utils.parseEther('1')
-  //     await gmuOracle.setPrice(utils.parseEther('2'));
-  //     await expect(await treasuryLibrary.getPercentDeviationFromTarget(price, gmuOracle)).to.be.eq(50);
-  //   });
+    it('returns 50 at 1$ price with a target of 2$', async () => {
+      const price = utils.parseEther('1')
+      await gmuOracle.setPrice(utils.parseEther('2'));
+      await expect(await treasuryLibrary.getPercentDeviationFromTarget(price, simpleOracle.address)).to.be.eq(50);
+    });
 
-  //   it('returns 75 at 3.5$ price with a target of 2$', async () => {
-  //     const price = utils.parseEther('35').div(10)
-  //     await gmuOracle.setPrice(utils.parseEther('2'));
-  //     await expect(await treasuryLibrary.getPercentDeviationFromTarget(price, gmuOracle)).to.be.eq(75);
-  //   });
-  // })
+    it('returns 75 at 3.5$ price with a target of 2$', async () => {
+      const price = utils.parseEther('35').div(10)
+      await gmuOracle.setPrice(utils.parseEther('2'));
+      await expect(await treasuryLibrary.getPercentDeviationFromTarget(price, simpleOracle.address)).to.be.eq(75);
+    });
+  })
 
   describe('estimateSeignorageToMint', () => {
     it('at 1$ and 0 ARTHB we mint 0 ARTH', async () => {
