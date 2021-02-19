@@ -100,7 +100,7 @@ contract ExpansionJar is Epoch {
         vault.unbond(balance);
 
         // Just a safety check, to validate that we are unbonding the entire amount.
-        requrire(
+        require(
             vault.balanceWithoutBonded(address(this)) == 0,
             'Jar: invalid op'
         );
