@@ -51,7 +51,7 @@ contract Treasury is TreasurySetters {
         require(!state.initialized, '!initialized');
 
         // set accumulatedSeigniorage to the rbac's balance.
-        state.accumulatedSeigniorage = IERC20(cash).balanceOf(address(rbac));
+        state.accumulatedSeigniorage = IERC20(cash).balanceOf(address(this));
 
         state.initialized = true;
         emit Initialized(msg.sender, block.number);
