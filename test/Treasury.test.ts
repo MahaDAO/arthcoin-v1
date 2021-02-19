@@ -595,7 +595,8 @@ describe('Treasury', () => {
           const oldCashBalanceOfTreasury = await cash.balanceOf(treasury.address);
 
           // calculate with circulating supply without considering uniswap liq.
-          const treasuryHoldings = BigNumber.from((await treasury.state()).accumulatedSeingiorage.toString())
+          const treasuryHoldings = BigNumber.from((await treasury.state()).accumulatedSeigniorage.toString());
+
           const cashSupply = (await cash.totalSupply()).sub(treasuryHoldings).add(ETH.mul(300));
 
           const percentage = bigmin(
@@ -650,7 +651,7 @@ describe('Treasury', () => {
           const oldCashBalanceOfTreasury = await cash.balanceOf(treasury.address);
 
           // calculate with circulating supply without considering uniswap liq.
-          const treasuryHoldings = BigNumber.from((await treasury.state()).accumulatedSeingiorage.toString())
+          const treasuryHoldings = BigNumber.from((await treasury.state()).accumulatedSeigniorage.toString());
           const cashSupply = (await cash.totalSupply()).sub(treasuryHoldings).add(ETH.mul(300));
 
           const percentage = bigmin(
@@ -677,9 +678,9 @@ describe('Treasury', () => {
           );
           const expectedSeignorageForAllBoardrooms = finalSeigniorageToMint.mul(10).div(100);
 
-          const expectedArthBoardroomReserve = expectedSeignorageForAllBoardrooms.mul((await treasury.boardroomState()).arthAllocationRate).div(100);
-          const expectedMahaLiqBoardroomRes = expectedSeignorageForAllBoardrooms.mul((await treasury.boardroomState()).mahaAllocationRate).div(100);
-          const expectedArthMahaswapLiqBoardRes = expectedSeignorageForAllBoardrooms.mul((await treasury.boardroomState()).arthLiquidityMlpAllocationRate).div(100);
+          const expectedArthBoardroomReserve = expectedSeignorageForAllBoardrooms.mul(BigNumber.from((await treasury.boardroomState()).arthAllocationRate.toString())).div(100);
+          const expectedMahaLiqBoardroomRes = expectedSeignorageForAllBoardrooms.mul(BigNumber.from((await treasury.boardroomState()).mahaAllocationRate.toString())).div(100);
+          const expectedArthMahaswapLiqBoardRes = expectedSeignorageForAllBoardrooms.mul(BigNumber.from((await treasury.boardroomState()).arthLiquidityMlpAllocationRate.toString())).div(100);
 
           // TODO: check emit for all respective events.
           await expect(treasury.connect(ant).allocateSeigniorage())
@@ -824,7 +825,7 @@ describe('Treasury', () => {
           const oldCashBalanceOfTreasury = await cash.balanceOf(treasury.address);
 
           // calculate with circulating supply without considering uniswap liq.
-          const treasuryHoldings = BigNumber.from((await treasury.state()).accumulatedSeingiorage.toString())
+          const treasuryHoldings = BigNumber.from((await treasury.state()).accumulatedSeigniorage.toString());
           const cashSupply = (await cash.totalSupply()).sub(treasuryHoldings);
 
           const percentage = bigmin(
