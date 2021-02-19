@@ -13,6 +13,7 @@ import {Math} from '@openzeppelin/contracts/contracts/math/Math.sol';
 import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
 import {TreasurySetters} from './TreasurySetters.sol';
 import {TreasuryState} from './TreasuryState.sol';
+import {RBAC} from './RBAC.sol';
 
 /**
  * @title ARTH Treasury contract
@@ -157,7 +158,7 @@ contract Treasury is TreasurySetters {
             'cashPrice less than ceiling'
         );
         require(
-            cash.balanceOf(address(this)) >= amount,
+            cash.balanceOf(address(rbac)) >= amount,
             'treasury has not enough budget'
         );
 
@@ -354,6 +355,12 @@ contract Treasury is TreasurySetters {
             state.accumulatedSeigniorage = state.accumulatedSeigniorage.add(
                 treasuryReserve
             );
+
+            // Since RBAC holds the funds for treasury.
+            // And we are minting to this contract the new seigniorage, hence we move this to RBAC where all cash and bond
+            // funds are managed.
+            cash.transfer(address(rbac), treasuryReserve);
+
             emit TreasuryFunded(block.timestamp, treasuryReserve);
             return treasuryReserve;
         }

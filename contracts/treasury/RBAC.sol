@@ -6,7 +6,7 @@ import '@openzeppelin/contracts/contracts/access/Ownable.sol';
 
 import {IBasisAsset} from '../interfaces/IBasisAsset.sol';
 
-contract RBAC is Ownable {
+contract Maharaja is Ownable {
     /**
      * State variables.
      */
