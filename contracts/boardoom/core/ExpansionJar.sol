@@ -109,6 +109,7 @@ contract ExpansionJar is Epoch {
         if (block.timestamp > startTime.add(compoundFor).add(harvestAfter))
             enableWithdrawal = true;
 
+        // Will revert, if unbonding duration of vault is not satisfied.
         vault.withdraw();
 
         // HERE we don't calcualte the reward once again as the boardroom
