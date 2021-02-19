@@ -89,6 +89,12 @@ contract ExpansionJar is Epoch {
 
         vault.unbond(balance);
 
+        // Just a safety check, to validate that we are unbonding the entire amount.
+        requrire(
+            vault.balanceWithoutBonded(address(this)) == 0,
+            'Jar: invalid op'
+        );
+
         // Since this is the balance, that we have after compouding for compouding duration.
         // Hence this also has the principal amount, which we subtract to get only epochly
         // reward which we would have claimed.
