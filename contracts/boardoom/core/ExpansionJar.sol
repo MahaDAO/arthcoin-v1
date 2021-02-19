@@ -17,13 +17,17 @@ contract ExpansionJar is Epoch {
     IERC20 token;
     VestedVaultBoardroom boardroom;
 
+    // The totalReward we have generated including compounding.
     uint256 public totalReward;
+    // Tracker for total balance of the contract.
     uint256 internal _totalSupply;
     uint256 compoundFor = 30 days;
     uint256 harvestAfter = 5 days;
     bool enableWithdrawal = false;
+    // Tracker for total amount that was staked in the contract.
     uint256 public totalAmountThatWasStaked;
 
+    // Tracker for balance of stakers.
     mapping(address => uint256) internal _balances;
 
     modifier stakerExists(address who) {
@@ -68,41 +72,55 @@ contract ExpansionJar is Epoch {
     function bond(uint256 amount) public checkStartTime {
         require(amount > 0, 'Jar: amount is 0');
 
+        // Stake in the vault.
         vault.bond(amount);
 
+        // Add the stake to the contract trackers.
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
     }
 
     function unbond() public onlyOwner checkStartTime {
-        if (block.timestamp >= startTime.add(compoundFor)) {
-            uint256 balance = vault.balanceOf(address(this));
+        // Check if curr. time is after compounding period.
+        if (block.timestamp < startTime.add(compoundFor)) return;
 
-            vault.unbond(balance);
+        // Total amount that is currently staked in the vault via jar.
+        uint256 balance = vault.balanceOf(address(this));
 
-            // Since this is the balance, that we have after compouding for compouding duration.
-            // Hence this also has the principal amount, which we subtract to get only epochly
-            // reward which we would have claimed.
-            totalReward = totalReward.add(balance).sub(_totalSupply);
-        }
+        vault.unbond(balance);
+
+        // Since this is the balance, that we have after compouding for compouding duration.
+        // Hence this also has the principal amount, which we subtract to get only epochly
+        // reward which we would have claimed.
+        totalReward = totalReward.add(balance).sub(_totalSupply);
     }
 
     function harvest() public onlyOwner checkStartTime {
-        if (block.timestamp >= startTime.add(compoundFor).add(harvestAfter))
-            enableWithdrawal = true;
+        // Check if we curr. time is after the compouding and harvesting periods.
+        if (block.timestamp < startTime.add(compoundFor).add(harvestAfter))
+            return;
+
+        enableWithdrawal = true;
 
         vault.withdraw();
 
         // HERE we don't calcualte the reward once again as the boardroom
         // considers balance that is still bonded. However we unbond only once with full balance
         // after the compound period, hence the balance of still bonded would be 0.
+
+        // TODO: check if we have any maha reward, if we have then sell that MAHA for ARTH.
     }
 
     function claimAndReinvest() public onlyOwner checkEpoch checkStartTime {
-        boardroom.claimAndReinvestReward();
-
-        if (block.timestamp >= startTime.add(compoundFor).add(harvestAfter))
+        // If we are above the harvesting and compouding period, then enable withdrawals.
+        // Check epoch reverts if false == callable();
+        if (block.timestamp >= startTime.add(compoundFor).add(harvestAfter)) {
             enableWithdrawal = true;
+
+            return;
+        }
+
+        boardroom.claimAndReinvestReward();
     }
 
     function withdraw() public stakerExists(msg.sender) checkStartTime {
@@ -115,6 +133,7 @@ contract ExpansionJar is Epoch {
         uint256 amountToReward =
             totalReward.mul(percentOfStake).div(100).div(1e18);
 
+        // Reset the trackers acc. to current withdrawal.
         _balances[msg.sender] = 0;
         _totalSupply = _totalSupply.sub(amount);
 
