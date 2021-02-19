@@ -8,12 +8,14 @@ import {IBasisAsset} from '../interfaces/IBasisAsset.sol';
 import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
 import {Operator} from '../owner/Operator.sol';
 import {TreasuryLibrary} from './TreasuryLibrary.sol';
+import {RBAC} from './RBAC.sol';
 
 abstract contract TreasuryState is ContractGuard, Epoch {
     IERC20 public dai;
     IBasisAsset public cash;
     IBasisAsset public bond;
     IERC20 public share;
+    RBAC public rbac;
 
     TreasuryLibrary.BoardroomState public boardroomState;
     TreasuryLibrary.OracleState public oracleState;
