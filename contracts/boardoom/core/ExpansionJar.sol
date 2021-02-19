@@ -103,10 +103,11 @@ contract ExpansionJar is Epoch {
 
     function harvest() public onlyOwner checkStartTime {
         // Check if we curr. time is after the compouding and harvesting periods.
-        if (block.timestamp < startTime.add(compoundFor).add(harvestAfter))
-            return;
+        if (block.timestamp < startTime.add(compoundFor)) return;
 
-        enableWithdrawal = true;
+        // If we are after the harvest period, then enable withdrawals.
+        if (block.timestamp > startTime.add(compoundFor).add(harvestAfter))
+            enableWithdrawal = true;
 
         vault.withdraw();
 
