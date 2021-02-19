@@ -82,12 +82,16 @@ contract ExpansionJar is Epoch {
     function bond(uint256 amount) public checkStartTime {
         require(amount > 0, 'Jar: amount is 0');
 
+        // Don't bond, if past compound period.
+        if (block.timestamp >= startTime.add(compoundFor)) return;
+
         // Stake in the vault.
         vault.bond(amount);
 
         // Add the stake to the contract trackers.
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
+        totalAmountThatWasStaked = totalSupply();
     }
 
     function unbond() public onlyOwner checkStartTime {
