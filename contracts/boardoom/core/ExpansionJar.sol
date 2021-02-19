@@ -36,6 +36,16 @@ contract ExpansionJar is Epoch {
         _;
     }
 
+    modifier canWithdraw {
+        require(
+            enableWithdrawal ||
+                block.timestamp >= startTime.add(compoundFor).add(harvestAfter),
+            'Jar: too early'
+        );
+
+        _;
+    }
+
     constructor(
         IERC20 token_,
         Vault vault_,
@@ -131,9 +141,12 @@ contract ExpansionJar is Epoch {
         boardroom.claimAndReinvestReward();
     }
 
-    function withdraw() public stakerExists(msg.sender) checkStartTime {
-        require(enableWithdrawal, 'Jar: too early');
-
+    function withdraw()
+        public
+        stakerExists(msg.sender)
+        canWithdraw
+        checkStartTime
+    {
         uint256 amount = _balances[msg.sender];
         uint256 percentOfStake =
             amount.mul(100).mul(1e18).div(totalAmountThatWasStaked);
