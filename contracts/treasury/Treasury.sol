@@ -51,7 +51,9 @@ contract Treasury is TreasurySetters {
         require(!state.initialized, '!initialized');
 
         // set accumulatedSeigniorage to the rbac's balance.
-        state.accumulatedSeigniorage = IERC20(cash).balanceOf(address(this));
+        // as rbac holds bonds and cash for treasury.
+        // state.accumulatedSeigniorage = IERC20(cash).balanceOf(address(this));
+        state.accumulatedSeigniorage = IERC20(cash).balanceOf(address(rbac));
 
         state.initialized = true;
         emit Initialized(msg.sender, block.number);
@@ -166,7 +168,8 @@ contract Treasury is TreasurySetters {
         // hand over the ARTH directly
         state.accumulatedSeigniorage = state.accumulatedSeigniorage.sub(amount);
         rbac.burnBond(msg.sender, amount);
-        cash.transfer(msg.sender, amount);
+        // cash.transfer(msg.sender, amount);
+        rbac.transferCash(msg.sender, amount); // Since RBAC holds cash and bonds only for treasury rn.
 
         emit RedeemedBonds(msg.sender, amount);
     }
@@ -219,6 +222,8 @@ contract Treasury is TreasurySetters {
             if (seigniorage1 == 0) return;
 
             // we have to pay them some amount; so mint, distribute and return
+            // We have to mint first to treasury, since treasury is operator for boardrooms
+            // and only treasury can allocate funds to boardrooms.
             rbac.mintCash(address(this), seigniorage1);
             emit SeigniorageMinted(seigniorage1);
 
@@ -237,6 +242,8 @@ contract Treasury is TreasurySetters {
         uint256 seigniorage = estimateSeignorageToMint(cash12hPrice);
         if (seigniorage == 0) return;
 
+        // We have to mint first to treasury, since treasury is operator for boardrooms
+        // and only treasury can allocate funds to boardrooms.
         rbac.mintCash(address(this), seigniorage);
         emit SeigniorageMinted(seigniorage);
 
@@ -354,6 +361,12 @@ contract Treasury is TreasurySetters {
             state.accumulatedSeigniorage = state.accumulatedSeigniorage.add(
                 treasuryReserve
             );
+
+            // Since RBAC holds the funds for treasury.
+            // And we are minting to this contract the new seigniorage, hence we move this to RBAC where all cash and bond
+            // funds are managed.
+            cash.transfer(address(rbac), treasuryReserve);
+
             emit TreasuryFunded(block.timestamp, treasuryReserve);
             return treasuryReserve;
         }
