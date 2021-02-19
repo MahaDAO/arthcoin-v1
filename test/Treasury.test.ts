@@ -189,9 +189,9 @@ describe('Treasury', () => {
 
     await treasury.connect(operator).setOracles(
       oracle.address,
-      arthMahaOracle.address,
       oracle.address,
-      gmuOracle.address
+      gmuOracle.address,
+      arthMahaOracle.address
     );
 
     await treasury.setUniswapRouter(
@@ -226,9 +226,9 @@ describe('Treasury', () => {
 
     await newTreasury.connect(operator).setOracles(
       oracle.address,
-      arthMahaOracle.address,
       oracle.address,
-      gmuOracle.address
+      gmuOracle.address,
+      arthMahaOracle.address
     );
 
     await newTreasury.setUniswapRouter(
