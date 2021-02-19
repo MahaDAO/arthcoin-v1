@@ -2,9 +2,10 @@
 
 pragma solidity ^0.8.0;
 
-import '@openzeppelin/contracts/contracts/access/AccessControl.sol';
-import '@openzeppelin/contracts/contracts/access/Ownable.sol';
-
+import {
+    AccessControl
+} from '@openzeppelin/contracts/contracts/access/AccessControl.sol';
+import {Ownable} from '@openzeppelin/contracts/contracts/access/Ownable.sol';
 import {IBasisAsset} from './interfaces/IBasisAsset.sol';
 
 contract Maharaja is AccessControl, Ownable {
