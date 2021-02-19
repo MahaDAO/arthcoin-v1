@@ -487,8 +487,7 @@ describe('Treasury', () => {
 
           const oldCashBalanceOfAnt = await cash.balanceOf(ant.address);
 
-          const treasuryHoldings = await treasury.getReserve();
-          // let expectedSeigniorage = await treasury.estimateSeignorageToMint(cashPrice);
+          const treasuryHoldings = (await treasury.state()).accumulatedSeingiorage
 
           // calculate with circulating supply without considering uniswap liq.
           const cashSupply = (await cash.totalSupply()).sub(treasuryHoldings).add(ETH.mul(300));
@@ -572,7 +571,7 @@ describe('Treasury', () => {
 
           expect(await cash.balanceOf(developmentFund.address)).to.eq(expectedFundReserve);
           expect(await cash.balanceOf(rainyDayFund.address)).to.eq(expectedFundReserve);
-          expect(await treasury.getReserve()).to.eq(expectedTreasuryReserve);
+          expect(((await treasury.state()).accumulatedSeingiorage)).to.eq(expectedTreasuryReserve);
           expect(await cash.balanceOf(arthBoardroom.address)).to.eq(
             expectedArthBoardroomReserve
           );
@@ -599,7 +598,7 @@ describe('Treasury', () => {
           const oldCashBalanceOfTreasury = await cash.balanceOf(treasury.address);
 
           // calculate with circulating supply without considering uniswap liq.
-          const treasuryHoldings = await treasury.getReserve();
+          const treasuryHoldings = (await treasury.state()).accumulatedSeingiorage
           const cashSupply = (await cash.totalSupply()).sub(treasuryHoldings).add(ETH.mul(300));
 
           const percentage = bigmin(
@@ -657,7 +656,7 @@ describe('Treasury', () => {
           const oldCashBalanceOfTreasury = await cash.balanceOf(treasury.address);
 
           // calculate with circulating supply without considering uniswap liq.
-          const treasuryHoldings = await treasury.getReserve();
+          const treasuryHoldings = (await treasury.state()).accumulatedSeingiorage
           const cashSupply = (await cash.totalSupply()).sub(treasuryHoldings).add(ETH.mul(300));
 
           const percentage = bigmin(
@@ -777,7 +776,10 @@ describe('Treasury', () => {
         await cash.mint(operator.address, INITIAL_BAC_AMOUNT);
         await cash.mint(treasury.address, INITIAL_BAC_AMOUNT);
         await share.mint(operator.address, INITIAL_BAS_AMOUNT);
-        for await (const contract of [cash, bond, arthMahaswapLiquidityBoardroom, arthLiquidityBoardroom, arthBoardroom, mahaLiquidityBoardroom]) {
+        for await (const contract of [
+          cash, bond, arthMahaswapLiquidityBoardroom,
+          contractionBoardroom1, arthBoardroom, mahaLiquidityBoardroom,
+          contractionBoardroom2, contractionBoardroom3]) {
           await contract.connect(operator).transferOperator(treasury.address);
         }
       });
@@ -791,7 +793,11 @@ describe('Treasury', () => {
           }
 
           await treasury.connect(operator).migrate(operator.address);
-          expect(await treasury.migrated()).to.be.true;
+
+          const flags = await treasury.flags();
+          const migrated = flags.migrated;
+
+          expect(migrated).to.be.true;
 
           await expect(treasury.allocateSeigniorage()).to.revertedWith(
             'Treasury: migrated'
@@ -825,7 +831,7 @@ describe('Treasury', () => {
           const oldCashBalanceOfTreasury = await cash.balanceOf(treasury.address);
 
           // calculate with circulating supply without considering uniswap liq.
-          const treasuryHoldings = await treasury.getReserve();
+          const treasuryHoldings = (await treasury.state()).accumulatedSeingiorage
           const cashSupply = (await cash.totalSupply()).sub(treasuryHoldings);
 
           const percentage = bigmin(
@@ -864,53 +870,53 @@ describe('Treasury', () => {
   describe('getPercentDeviationFromTarget', () => {
     it('returns 0 at 1$ price with a target of 1$', async () => {
       const price = utils.parseEther('1')
-      await expect(await treasuryLibrary.getPercentDeviationFromTarget(price)).to.be.eq(0);
+      await expect(await treasuryLibrary.getPercentDeviationFromTarget(price, gmuOracle)).to.be.eq(0);
     });
 
     it('returns 10 at 1.1$ price with a target of 1$', async () => {
       const price = utils.parseEther('11').div(10)
-      await expect(await treasuryLibrary.getPercentDeviationFromTarget(price)).to.be.eq(10);
+      await expect(await treasuryLibrary.getPercentDeviationFromTarget(price, gmuOracle)).to.be.eq(10);
     });
 
     it('returns 20 at 1.2$ price with a target of 1$', async () => {
       const price = utils.parseEther('12').div(10)
-      await expect(await treasuryLibrary.getPercentDeviationFromTarget(price)).to.be.eq(20);
+      await expect(await treasuryLibrary.getPercentDeviationFromTarget(price, gmuOracle)).to.be.eq(20);
     });
 
     it('returns 100 at 0$ price with a target of 1$', async () => {
-      await expect(await treasuryLibrary.getPercentDeviationFromTarget(0)).to.be.eq(100);
+      await expect(await treasuryLibrary.getPercentDeviationFromTarget(0, gmuOracle)).to.be.eq(100);
     });
 
     it('returns 100 at 2$ price with a target of 1$', async () => {
       const price = utils.parseEther('2')
-      await expect(await treasuryLibrary.getPercentDeviationFromTarget(price)).to.be.eq(100);
+      await expect(await treasuryLibrary.getPercentDeviationFromTarget(price, gmuOracle)).to.be.eq(100);
     });
 
     it('returns 10 at 0.9$ price with a target of 1$', async () => {
       const price = utils.parseEther('9').div(10)
-      await expect(await treasuryLibrary.getPercentDeviationFromTarget(price)).to.be.eq(10);
+      await expect(await treasuryLibrary.getPercentDeviationFromTarget(price, gmuOracle)).to.be.eq(10);
     });
 
     it('returns 50 at 0.5$ price with a target of 1$', async () => {
       const price = utils.parseEther('5').div(10)
-      await expect(await treasuryLibrary.getPercentDeviationFromTarget(price)).to.be.eq(50);
+      await expect(await treasuryLibrary.getPercentDeviationFromTarget(price, gmuOracle)).to.be.eq(50);
     });
 
     it('returns 200 at 3$ price with a target of 1$', async () => {
       const price = utils.parseEther('30').div(10)
-      await expect(await treasuryLibrary.getPercentDeviationFromTarget(price)).to.be.eq(200);
+      await expect(await treasuryLibrary.getPercentDeviationFromTarget(price, gmuOracle)).to.be.eq(200);
     });
 
     it('returns 50 at 1$ price with a target of 2$', async () => {
       const price = utils.parseEther('1')
       await gmuOracle.setPrice(utils.parseEther('2'));
-      await expect(await treasuryLibrary.getPercentDeviationFromTarget(price)).to.be.eq(50);
+      await expect(await treasuryLibrary.getPercentDeviationFromTarget(price, gmuOracle)).to.be.eq(50);
     });
 
     it('returns 75 at 3.5$ price with a target of 2$', async () => {
       const price = utils.parseEther('35').div(10)
       await gmuOracle.setPrice(utils.parseEther('2'));
-      await expect(await treasuryLibrary.getPercentDeviationFromTarget(price)).to.be.eq(75);
+      await expect(await treasuryLibrary.getPercentDeviationFromTarget(price, gmuOracle)).to.be.eq(75);
     });
   })
 
@@ -1149,20 +1155,19 @@ describe('Treasury', () => {
     describe('after migration', () => {
       it('should fail if contract migrated', async () => {
         for await (const contract of [cash, bond]) {
-          await contract.connect(operator).transferOwnership(treasury.address);
+          await contract
+            .connect(operator)
+            .transferOwnership(treasury.address);
         }
 
         await treasury.connect(operator).migrate(operator.address);
 
-        const state = await treasury.state();
-        const migrated = state.migrated;
+        const flags = await treasury.flags();
+        const migrated = flags.migrated;
 
         expect(migrated).to.be.true;
 
-        await expect(treasury.buyBonds(ETH, ETH)).to.revertedWith(
-          'Treasury: migrated'
-        );
-        await expect(treasury.redeemBonds(ETH)).to.revertedWith(
+        await expect(treasury.allocateSeigniorage()).to.revertedWith(
           'Treasury: migrated'
         );
       });
@@ -1226,11 +1231,6 @@ describe('Treasury', () => {
 
           await oracle.setPrice(cashPrice);
 
-          // console.log((await treasury.arthCirculatingSupply()).toString())
-          // console.log((await cash.totalSupply()).toString());
-          // console.log((await treasury.getCashSupplyInLiquidity()).toString())
-          // console.log((await treasury.estimateBondsToIssue(utils.parseEther('90').div(100))).toString());
-
           await dai.connect(operator).transfer(ant.address, ETH);
           await dai.connect(ant).approve(treasury.address, ETH);
           await cash.connect(ant).approve(treasury.address, ETH);
@@ -1288,8 +1288,8 @@ describe('Treasury', () => {
           await cash.connect(ant).approve(treasury.address, ETH);
 
           const getStatus = async () => ({
-            lim: await treasury.cashToBondConversionLimit(),
-            acc: await treasury.accumulatedBonds(),
+            lim: (await treasury.state()).cashToBondConversionLimit,
+            acc: (await treasury.state()).accumulatedBonds,
           });
 
           const status = await getStatus();
@@ -1318,8 +1318,8 @@ describe('Treasury', () => {
           await cash.connect(ant).approve(treasury.address, ETH);
 
           const getStatus = async () => ({
-            lim: await treasury.cashToBondConversionLimit(),
-            acc: await treasury.accumulatedBonds(),
+            lim: (await treasury.state()).cashToBondConversionLimit,
+            acc: (await treasury.state()).accumulatedBonds,
           });
 
           const status = await getStatus();
@@ -1346,8 +1346,8 @@ describe('Treasury', () => {
           await cash.connect(ant).approve(treasury.address, ETH);
 
           const getStatus = async () => ({
-            lim: await treasury.cashToBondConversionLimit(),
-            acc: await treasury.accumulatedBonds(),
+            lim: (await treasury.state()).cashToBondConversionLimit,
+            acc: (await treasury.state()).accumulatedBonds,
           });
 
           const status = await getStatus();
@@ -1374,8 +1374,8 @@ describe('Treasury', () => {
           await cash.connect(ant).approve(treasury.address, ETH);
 
           const getStatus = async () => ({
-            lim: await treasury.cashToBondConversionLimit(),
-            acc: await treasury.accumulatedBonds(),
+            lim: (await treasury.state()).cashToBondConversionLimit,
+            acc: (await treasury.state()).accumulatedBonds,
           });
 
           const status = await getStatus();
@@ -1446,11 +1446,6 @@ describe('Treasury', () => {
 
           await oracle.setPrice(cashPrice);
 
-          // console.log((await treasury.arthCirculatingSupply()).toString())
-          // console.log((await cash.totalSupply()).toString());
-          // console.log((await treasury.getCashSupplyInLiquidity()).toString())
-          // console.log((await treasury.estimateBondsToIssue(utils.parseEther('90').div(100))).toString());
-
           await dai.connect(operator).transfer(ant.address, ETH);
           await dai.connect(ant).approve(treasury.address, ETH);
           await cash.connect(ant).approve(treasury.address, ETH);
@@ -1508,8 +1503,8 @@ describe('Treasury', () => {
           await cash.connect(ant).approve(treasury.address, ETH);
 
           const getStatus = async () => ({
-            lim: await treasury.cashToBondConversionLimit(),
-            acc: await treasury.accumulatedBonds(),
+            lim: (await treasury.state()).cashToBondConversionLimit,
+            acc: (await treasury.state()).accumulatedBonds,
           });
 
           const status = await getStatus();
@@ -1538,8 +1533,8 @@ describe('Treasury', () => {
           await cash.connect(ant).approve(treasury.address, ETH);
 
           const getStatus = async () => ({
-            lim: await treasury.cashToBondConversionLimit(),
-            acc: await treasury.accumulatedBonds(),
+            lim: (await treasury.state()).cashToBondConversionLimit,
+            acc: (await treasury.state()).accumulatedBonds,
           });
 
           const status = await getStatus();
@@ -1566,8 +1561,8 @@ describe('Treasury', () => {
           await cash.connect(ant).approve(treasury.address, ETH);
 
           const getStatus = async () => ({
-            lim: await treasury.cashToBondConversionLimit(),
-            acc: await treasury.accumulatedBonds(),
+            lim: (await treasury.state()).cashToBondConversionLimit,
+            acc: (await treasury.state()).accumulatedBonds,
           });
 
           const status = await getStatus();
@@ -1594,8 +1589,8 @@ describe('Treasury', () => {
           await cash.connect(ant).approve(treasury.address, ETH);
 
           const getStatus = async () => ({
-            lim: await treasury.cashToBondConversionLimit(),
-            acc: await treasury.accumulatedBonds(),
+            lim: (await treasury.state()).cashToBondConversionLimit,
+            acc: (await treasury.state()).accumulatedBonds,
           });
 
           const status = await getStatus();
@@ -1677,18 +1672,11 @@ describe('Treasury', () => {
             treasuryBalance
           )
 
-          const stabilityFee = await treasury.stabilityFee();
-          const stabilityFeeInArth = amount.mul(stabilityFee).div(100);
-          const stabilityFeeInMaha = (await treasury.getArthMahaOraclePrice()).mul(stabilityFeeInArth).div(ETH);
-
-          await share.connect(operator).mint(ant.address, stabilityFeeInMaha);
-          await share.connect(ant).approve(treasury.address, stabilityFeeInMaha);
-
           await treasury.connect(ant).redeemBonds(amount);
 
           expect(await bond.balanceOf(ant.address)).to.eq(treasuryBalance.sub(amount));
           expect(await cash.balanceOf(ant.address)).to.eq(amount); // 1:1
-          expect(await treasury.accumulatedSeigniorage()).to.eq(oldSeigniorage.sub(amount));
+          expect((await treasury.state()).accumulatedSeigniorage).to.eq(oldSeigniorage.sub(amount));
         });
 
         it('should fail if redeem bonds with zero amount', async () => {
