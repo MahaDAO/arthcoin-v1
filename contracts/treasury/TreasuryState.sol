@@ -2,24 +2,22 @@
 
 pragma solidity ^0.8.0;
 
-import {RBAC} from './RBAC.sol';
 import {ContractGuard} from '../utils/ContractGuard.sol';
 import {Epoch} from '../utils/Epoch.sol';
 import {IBasisAsset} from '../interfaces/IBasisAsset.sol';
 import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
 import {Operator} from '../owner/Operator.sol';
 import {TreasuryLibrary} from './TreasuryLibrary.sol';
-import {RBAC} from './RBAC.sol';
+import {Maharaja} from '../Maharaja.sol';
 
 abstract contract TreasuryState is ContractGuard, Epoch {
     IERC20 public dai;
     IBasisAsset public cash;
     IBasisAsset public bond;
     IERC20 public share;
-    RBAC public rbac;
 
     // Cash and Bond operator contract.
-    RBAC public rbac;
+    Maharaja public maharaja;
 
     TreasuryLibrary.BoardroomState public boardroomState;
     TreasuryLibrary.OracleState public oracleState;
@@ -67,8 +65,7 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     }
 
     function checkOperator() public view returns (bool) {
-        return (rbac.treasury() == address(this) &&
-            boardroomState.arthArthLiquidityMlpBoardroom.operator() ==
+        return (boardroomState.arthArthLiquidityMlpBoardroom.operator() ==
             address(this) &&
             boardroomState.arthMahaBoardroom.operator() == address(this) &&
             boardroomState.arthArthBoardroom.operator() == address(this) &&
