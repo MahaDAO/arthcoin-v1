@@ -61,7 +61,8 @@ abstract contract TreasuryState is ContractGuard, Epoch {
     }
 
     function checkOperator() public view returns (bool) {
-        return (boardroomState.arthArthLiquidityMlpBoardroom.operator() ==
+        return (rbac.treasury() == address(this) &&
+            boardroomState.arthArthLiquidityMlpBoardroom.operator() ==
             address(this) &&
             boardroomState.arthMahaBoardroom.operator() == address(this) &&
             boardroomState.arthArthBoardroom.operator() == address(this) &&
