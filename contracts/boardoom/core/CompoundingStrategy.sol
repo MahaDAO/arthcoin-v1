@@ -161,6 +161,9 @@ contract CompoundingStrategy is Epoch, ERC20 {
         // in vault will be 0.
         harvest();
 
+        // Enable withdrawal if harvested.
+        enableWithdrawal = true;
+
         emit Advanced();
     }
 
