@@ -3,15 +3,19 @@
 pragma solidity ^0.8.0;
 
 import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
-import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
+import {ERC20} from '@openzeppelin/contracts/contracts/token/ERC20/ERC20.sol';
+import {
+    SafeERC20
+} from '@openzeppelin/contracts/contracts/token/ERC20/SafeERC20.sol';
 
 import {Vault} from './Vault.sol';
 import {Epoch} from '../../utils/Epoch.sol';
 import {Operator} from '../../owner/Operator.sol';
 import {VestedVaultBoardroom} from './VestedVaultBoardroom.sol';
 
-contract ExpansionJar is Epoch {
+contract ExpansionJar is Epoch, ERC20 {
     using SafeMath for uint256;
+    using SafeERC20 for IERC20;
 
     Vault vault;
     IERC20 token;
@@ -19,19 +23,12 @@ contract ExpansionJar is Epoch {
 
     // The totalReward we have generated including compounding.
     uint256 public totalReward;
-    // Tracker for total balance of the contract.
-    uint256 internal _totalSupply;
     uint256 compoundFor = 30 days;
     uint256 harvestAfter = 5 days;
     bool enableWithdrawal = false;
-    // Tracker for total amount that was staked in the contract.
-    uint256 public totalAmountThatWasStaked;
-
-    // Tracker for balance of stakers.
-    mapping(address => uint256) internal _balances;
 
     modifier stakerExists(address who) {
-        require(balanceOf(who) > 0, 'Boardroom: The director does not exist');
+        require(balanceOf(who) > 0, 'Jar: the staker does not exist');
 
         _;
     }
@@ -53,18 +50,10 @@ contract ExpansionJar is Epoch {
         uint256 _startTime,
         uint256 _period,
         uint256 _startEpoch
-    ) Epoch(_period, _startTime, _startEpoch) {
+    ) ERC20('Jar LP', 'JLP') Epoch(_period, _startTime, _startEpoch) {
         vault = vault_;
         token = token_;
         boardroom = boardroom_;
-    }
-
-    function totalSupply() public view returns (uint256) {
-        return _totalSupply;
-    }
-
-    function balanceOf(address who) public view returns (uint256) {
-        return _balances[who];
     }
 
     function setWithdrawal(bool val) public onlyOwner {
@@ -85,16 +74,13 @@ contract ExpansionJar is Epoch {
         // Don't bond, if past compound period.
         if (block.timestamp >= startTime.add(compoundFor)) return;
 
-        // Stake in the vault.
-        vault.bond(amount);
+        token.safeTransferFrom(msg.sender, address(this), amount);
+        token.safeApprove(address(vault), amount);
 
-        // Add the stake to the contract trackers.
-        _totalSupply = _totalSupply.add(amount);
-        _balances[msg.sender] = _balances[msg.sender].add(amount);
-        totalAmountThatWasStaked = totalSupply();
+        vault.bond(amount);
     }
 
-    function unbond() public onlyOwner checkStartTime {
+    function unbond() public checkStartTime {
         // Check if curr. time is after compounding period.
         if (block.timestamp < startTime.add(compoundFor)) return;
 
@@ -115,7 +101,7 @@ contract ExpansionJar is Epoch {
         totalReward = totalReward.add(balance).sub(_totalSupply);
     }
 
-    function harvest() public onlyOwner checkStartTime {
+    function harvest() public checkStartTime {
         // Check if we curr. time is after the compouding and harvesting periods.
         if (block.timestamp < startTime.add(compoundFor)) return;
 
@@ -151,16 +137,13 @@ contract ExpansionJar is Epoch {
         canWithdraw
         checkStartTime
     {
-        uint256 amount = _balances[msg.sender];
-        uint256 percentOfStake =
-            amount.mul(100).mul(1e18).div(totalAmountThatWasStaked);
+        uint256 balance = balanceOf(msg.sender);
+        uint256 percentStaked = balance.mul(100).mul(1e18).div(totalSuppl());
+
+        _burn(msg.sender, amount);
 
         uint256 amountToReward =
             totalReward.mul(percentOfStake).div(100).div(1e18);
-
-        // Reset the trackers acc. to current withdrawal.
-        _balances[msg.sender] = 0;
-        _totalSupply = _totalSupply.sub(amount);
 
         token.transfer(msg.sender, amountToReward);
     }
