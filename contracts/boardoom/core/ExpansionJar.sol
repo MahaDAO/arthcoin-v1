@@ -83,7 +83,7 @@ contract ExpansionJar is Epoch, ERC20 {
 
         // Claim the rewards and don't reinvest.
         // It's necessary to claim before unbonding, as per the boardroom's design.
-        uint256 rewards = vault.claimReward();
+        uint256 rewards = boardroom.claimReward();
         uint256 balance = vault.balanceOf(address(this));
 
         vault.unbond(balance);
