@@ -30,7 +30,6 @@ async function main() {
     await treasury.share(),
 
     await treasury.bondOracle(),
-    await treasury.arthMahaOracle(),
     await treasury.seigniorageOracle(),
     await treasury.gmuOracle(),
 

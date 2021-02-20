@@ -10,8 +10,8 @@ const UniswapV2Factory = artifacts.require('UniswapV2Factory');
 const UniswapV2Router02 = artifacts.require('UniswapV2Router02');
 
 const ArthMahaOracle = artifacts.require("ArthMahaOracle");
-const SeigniorageOracle = artifacts.require('SeigniorageOracle');
-const BondRedemtionOracle = artifacts.require('BondRedemtionOracle');
+const TWAP12hrOracle = artifacts.require('TWAP12hrOracle');
+const TWAP1hrOracle = artifacts.require('TWAP1hrOracle');
 const DevelopmentFund = artifacts.require('DevelopmentFund');
 
 
@@ -61,7 +61,7 @@ async function migration(deployer, network, accounts) {
   // Deploy oracle for the pair between ARTH and Dai.
   console.log('Deploying bond oracle.');
   await deployer.deploy(
-    BondRedemtionOracle,
+    TWAP1hrOracle,
     uniswap.address,
     cash.address,
     dai.address,
@@ -72,7 +72,7 @@ async function migration(deployer, network, accounts) {
   // Deploy seigniorage oracle.
   console.log('Deploying seigniorage oracle.')
   await deployer.deploy(
-    SeigniorageOracle,
+    TWAP12hrOracle,
     uniswap.address,
     cash.address,
     dai.address,

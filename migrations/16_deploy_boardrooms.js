@@ -5,7 +5,7 @@ const ARTH = artifacts.require('ARTH');
 const IERC20 = artifacts.require('IERC20');
 const MockDai = artifacts.require('MockDai');
 const UniswapV2Factory = artifacts.require('UniswapV2Factory');
-const BondRedemtionOracle = artifacts.require('BondRedemtionOracle');
+const TWAP1hrOracle = artifacts.require('TWAP1hrOracle');
 
 const ArthBoardroomV2 = artifacts.require('ArthBoardroomV2');
 const ArthUniLiquidityBoardroomV2 = artifacts.require('ArthUniLiquidityBoardroomV2');
@@ -39,7 +39,7 @@ async function migration(deployer, network, accounts) {
   const cash = await ARTH.deployed();
 
   // Fetch the bond oracle.
-  const bondRedemtionOralce = await BondRedemtionOracle.deployed();
+  const bondRedemtionOralce = await TWAP1hrOracle.deployed();
 
   // Fetch the deployed uniswap.
   const uniswap = network === 'mainnet' || network === 'ropsten' || network === 'kovan'

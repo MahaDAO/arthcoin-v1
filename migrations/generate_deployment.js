@@ -16,9 +16,9 @@ const exportedContracts = [
 
   // oracles
   'GMUOracle',
-  'SeigniorageOracle',
+  'TWAP12hrOracle',
   'ArthMahaOracle',
-  'BondRedemtionOracle',
+  'TWAP1hrOracle',
 
   // boardroom
   'ArthUniLiquidityBoardroomV2',
@@ -50,7 +50,7 @@ const exportedContracts = [
 
 const Arth = artifacts.require('ARTH');
 const MahaToken = artifacts.require('MahaToken');
-const SeigniorageOracle = artifacts.require('SeigniorageOracle');
+const TWAP12hrOracle = artifacts.require('TWAP12hrOracle');
 const MockDai = artifacts.require('MockDai');
 const IERC20 = artifacts.require('IERC20');
 const UniswapV2Factory = artifacts.require('UniswapV2Factory');
@@ -75,8 +75,8 @@ module.exports = async (callback) => {
     { abi: 'SimpleERCFund', contract: 'DevelopmentFund' },
 
     { abi: 'SimpleOracle', contract: 'GMUOracle' },
-    { abi: 'UniswapOracle', contract: 'SeigniorageOracle' },
-    { abi: 'UniswapOracle', contract: 'BondRedemtionOracle' },
+    { abi: 'UniswapOracle', contract: 'TWAP12hrOracle' },
+    { abi: 'UniswapOracle', contract: 'TWAP1hrOracle' },
     { abi: 'SimpleOracle', contract: 'ArthMahaOracle' },
 
     // boardroom stuff
@@ -151,7 +151,7 @@ module.exports = async (callback) => {
 
     await writeFile(deploymentPath, JSON.stringify(deployments, null, 2));
 
-    // const oracle = await SeigniorageOracle.deployed();
+    // const oracle = await TWAP12hrOracle.deployed();
 
     // const arth = await Arth.deployed();
     // const mahaToken = isMainnet

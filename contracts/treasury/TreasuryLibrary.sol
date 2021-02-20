@@ -63,7 +63,6 @@ library TreasuryLibrary {
         IUniswapOracle oracle1hrTWAP;
         IUniswapOracle oracle12hrTWAP;
         ISimpleOracle gmuOracle;
-        ISimpleOracle arthMahaOracle;
     }
 
     struct BoardroomState {

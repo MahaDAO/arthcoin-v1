@@ -27,10 +27,6 @@ abstract contract TreasuryGetters is TreasuryState {
         return oracleState.gmuOracle.getPrice();
     }
 
-    function getArthMahaOraclePrice() public view returns (uint256) {
-        return oracleState.arthMahaOracle.getPrice();
-    }
-
     function get12hrTWAPOraclePrice() public view returns (uint256) {
         return TreasuryLibrary.getCashPrice(oracleState.oracle12hrTWAP, cash);
     }

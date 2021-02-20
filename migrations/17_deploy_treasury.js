@@ -2,12 +2,12 @@ const knownContracts = require('./known-contracts');
 
 const ARTH = artifacts.require('ARTH');
 const ARTHB = artifacts.require('ARTHB');
-const BondRedemtionOracle = artifacts.require('BondRedemtionOracle');
+const TWAP1hrOracle = artifacts.require('TWAP1hrOracle');
 const GMUOracle = artifacts.require('GMUOracle');
 const MahaToken = artifacts.require('MahaToken');
 const ArthMahaOracle = artifacts.require("ArthMahaTestnetOracle");
 const MockDai = artifacts.require('MockDai');
-const SeigniorageOracle = artifacts.require('SeigniorageOracle');
+const TWAP12hrOracle = artifacts.require('TWAP12hrOracle');
 const Treasury = artifacts.require('Treasury');
 const UniswapV2Router02 = artifacts.require('UniswapV2Router02');
 
@@ -53,9 +53,9 @@ async function migration(deployer, network, accounts) {
     ARTHB.address,
     mahaToken.address,
 
-    BondRedemtionOracle.address,
+    TWAP1hrOracle.address,
     ArthMahaOracle.address,
-    SeigniorageOracle.address,
+    TWAP12hrOracle.address,
     GMUOracle.address,
 
     uniswapRouter.address,
