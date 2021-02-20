@@ -55,6 +55,7 @@
     "@uniswap/v2-core": "^1.0.1",
     "bluebird": "^3.7.2",
     "dotenv": "^8.2.0",
+    "mahaswap-sdk": "^3.0.11",
     "node-cron": "^2.0.3"
   }
 }
