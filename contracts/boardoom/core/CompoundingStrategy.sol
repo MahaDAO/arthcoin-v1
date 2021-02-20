@@ -137,7 +137,7 @@ contract CompoundingStrategy is Epoch, ERC20 {
     }
 
     function advanceMode() public checkStartTime {
-        // Don't do anything, if we are in compouding period.
+        // Just compound, if we are in compouding period.
         if (block.timestamp < startTime.add(compoundFor)) {
             // Should revert if callable() == false.
             claimAndReinvest();
