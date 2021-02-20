@@ -135,7 +135,7 @@ contract ExpansionJar is Epoch, ERC20 {
 
     function advanceMode() public checkStartTime {
         // Don't do anything, if we are in compouding period.
-        if (block.timestamp < start.add(compoundFor)) {
+        if (block.timestamp < startTime.add(compoundFor)) {
             // Should revert if callable() == false.
             claimAndReinvest();
 
@@ -144,7 +144,7 @@ contract ExpansionJar is Epoch, ERC20 {
 
         // Unbond and harvest(if possible depending on vault's lockin) if we are within
         // harvesting period but after compounding period.
-        if (block.timestamp < start.add(compoundFor).add(harvestAfter)) {
+        if (block.timestamp < startTime.add(compoundFor).add(harvestAfter)) {
             // Should revert if already unbonded, since staked balance would be 0.
             unbond();
 
