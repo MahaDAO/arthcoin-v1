@@ -15,14 +15,22 @@ contract ExpansionJar is Epoch, ERC20 {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
-    Vault vault;
-    IERC20 token;
-    VestedVaultBoardroom boardroom;
+    /**
+     * State variables.
+     */
 
-    uint256 compoundFor = 30 days;
-    uint256 harvestAfter = 5 days;
-    bool enableWithdrawal = false;
+    Vault public vault;
+    IERC20 public token;
+    VestedVaultBoardroom public boardroom;
+
     uint256 public totalReward = 0;
+    uint256 public compoundFor = 30 days;
+    uint256 public harvestAfter = 5 days;
+    bool public enableWithdrawal = false;
+
+    /**
+     * Modifiers.
+     */
 
     modifier stakerExists(address who) {
         require(balanceOf(who) > 0, 'Jar: the staker does not exist');
@@ -40,6 +48,19 @@ contract ExpansionJar is Epoch, ERC20 {
         _;
     }
 
+    /**
+     * Events.
+     */
+
+    event Harvested();
+    event Compounded(uint256 amount);
+    event Bonded(address who, uint256 amount);
+    event Unbonded(uint256 amount, uint256 rewards);
+    event Withdrawn(address who, uint256 amount, uint256 reward);
+
+    /**
+     * Constructor.
+     */
     constructor(
         IERC20 token_,
         Vault vault_,
@@ -53,6 +74,10 @@ contract ExpansionJar is Epoch, ERC20 {
         boardroom = boardroom_;
     }
 
+    /**
+     * Setters.
+     */
+
     function setWithdrawal(bool val) public onlyOwner {
         enableWithdrawal = val;
     }
@@ -65,6 +90,10 @@ contract ExpansionJar is Epoch, ERC20 {
         harvestAfter = duration;
     }
 
+    /**
+     * Mutations.
+     */
+
     function bond(uint256 amount) public checkStartTime {
         require(amount > 0, 'Jar: amount is 0');
 
@@ -75,6 +104,8 @@ contract ExpansionJar is Epoch, ERC20 {
         token.safeApprove(address(vault), amount);
 
         vault.bond(amount);
+
+        emit Bonded(msg.sender, amount);
     }
 
     function unbond() public checkStartTime {
@@ -96,6 +127,8 @@ contract ExpansionJar is Epoch, ERC20 {
         // reward which we would have claimed.
         // We also add, the fresh rewards we have generated(which we didn't reinvest).
         totalReward = totalReward.add(balance).add(rewards).sub(totalSupply());
+
+        emit Unbonded(balance, totalReward);
     }
 
     function harvest() public checkStartTime {
@@ -114,6 +147,8 @@ contract ExpansionJar is Epoch, ERC20 {
         // after the compound period, hence the balance of still bonded would be 0.
 
         // TODO: check if we have any maha reward, if we have then sell that MAHA for ARTH.
+
+        emit Harvested();
     }
 
     function claimAndReinvest() public onlyOwner checkEpoch checkStartTime {
@@ -131,6 +166,8 @@ contract ExpansionJar is Epoch, ERC20 {
         token.safeApprove(address(vault), reward);
 
         vault.bond(reward);
+
+        emit Compounded(reward);
     }
 
     function withdraw()
@@ -152,5 +189,7 @@ contract ExpansionJar is Epoch, ERC20 {
         token.transfer(msg.sender, amountToReward);
 
         totalReward = totalReward.sub(amountToReward);
+
+        emit Withdrawn(msg.sender, balance, amountToReward);
     }
 }
