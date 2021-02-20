@@ -132,6 +132,7 @@ contract Vault is AccessControl, StakingTimelock, Operator {
         uint256 directorShare = _balances[who];
         uint256 amount = getStakedAmount(who);
 
+        require(amount > 0, 'Boardroom: cannot withdraw 0');
         require(
             directorShare >= amount,
             'Boardroom: withdraw request greater than unbonded amount'

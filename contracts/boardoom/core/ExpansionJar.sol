@@ -52,6 +52,7 @@ contract ExpansionJar is Epoch, ERC20 {
      * Events.
      */
 
+    event Advanced();
     event Harvested();
     event Compounded(uint256 amount);
     event Bonded(address who, uint256 amount);
@@ -96,6 +97,7 @@ contract ExpansionJar is Epoch, ERC20 {
 
     function bond(uint256 amount) public checkStartTime {
         require(amount > 0, 'Jar: amount is 0');
+        require(!enableWithdrawal, 'Jar: withdrawal mode on');
 
         // Don't bond, if past compound period.
         if (block.timestamp >= startTime.add(compoundFor)) return;
@@ -129,6 +131,34 @@ contract ExpansionJar is Epoch, ERC20 {
         totalReward = totalReward.add(balance).add(rewards).sub(totalSupply());
 
         emit Unbonded(balance, totalReward);
+    }
+
+    function advanceMode() public checkStartTime {
+        // Don't do anything, if we are in compouding period.
+        if (block.timestamp < start.add(compoundFor)) {
+            // Should revert if callable() == false.
+            claimAndReinvest();
+
+            return;
+        }
+
+        // Unbond and harvest(if possible depending on vault's lockin) if we are within
+        // harvesting period but after compounding period.
+        if (block.timestamp < start.add(compoundFor).add(harvestAfter)) {
+            // Should revert if already unbonded, since staked balance would be 0.
+            unbond();
+
+            harvest();
+
+            return;
+        }
+
+        // Harvest, if we are after the harvesting period also.
+        // Will revert if already harvested since, balance staked by strategy
+        // in vault will be 0.
+        harvest();
+
+        emit Advanced();
     }
 
     function harvest() public checkStartTime {
@@ -188,6 +218,7 @@ contract ExpansionJar is Epoch, ERC20 {
 
         token.transfer(msg.sender, amountToReward);
 
+        // Since, reward is claimed and totalSupply also decreases while burning.
         totalReward = totalReward.sub(amountToReward);
 
         emit Withdrawn(msg.sender, balance, amountToReward);
