@@ -11,7 +11,7 @@ import {Epoch} from '../../utils/Epoch.sol';
 import {Operator} from '../../owner/Operator.sol';
 import {VestedVaultBoardroom} from './VestedVaultBoardroom.sol';
 
-contract ExpansionJar is Epoch, ERC20 {
+contract CompoundingStrategy is Epoch, ERC20 {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -33,7 +33,10 @@ contract ExpansionJar is Epoch, ERC20 {
      */
 
     modifier stakerExists(address who) {
-        require(balanceOf(who) > 0, 'Jar: the staker does not exist');
+        require(
+            balanceOf(who) > 0,
+            'Compoud strategy: the staker does not exist'
+        );
 
         _;
     }
@@ -42,7 +45,7 @@ contract ExpansionJar is Epoch, ERC20 {
         require(
             enableWithdrawal ||
                 block.timestamp >= startTime.add(compoundFor).add(harvestAfter),
-            'Jar: too early'
+            'Compoud strategy: too early'
         );
 
         _;
@@ -69,7 +72,7 @@ contract ExpansionJar is Epoch, ERC20 {
         uint256 startTime_,
         uint256 period_,
         uint256 startEpoch_
-    ) ERC20('MahaDAO Jar LP', 'MJLP') Epoch(period_, startTime_, startEpoch_) {
+    ) ERC20('MahaDAO-CSLP', 'MCSLP') Epoch(period_, startTime_, startEpoch_) {
         vault = vault_;
         token = token_;
         boardroom = boardroom_;
@@ -96,8 +99,8 @@ contract ExpansionJar is Epoch, ERC20 {
      */
 
     function bond(uint256 amount) public checkStartTime {
-        require(amount > 0, 'Jar: amount is 0');
-        require(!enableWithdrawal, 'Jar: withdrawal mode on');
+        require(amount > 0, 'Compoud strategy: amount is 0');
+        require(!enableWithdrawal, 'Compoud strategy: withdrawal mode on');
 
         // Don't bond, if past compound period.
         if (block.timestamp >= startTime.add(compoundFor)) return;
@@ -210,7 +213,7 @@ contract ExpansionJar is Epoch, ERC20 {
         uint256 contributionInPool =
             balance.mul(100).mul(1e18).div(totalSupply());
 
-        // Burn, equivalent amount of jar lp tokens.
+        // Burn, equivalent amount of compoud strategy lp tokens.
         _burn(msg.sender, balance);
 
         uint256 amountToReward =
