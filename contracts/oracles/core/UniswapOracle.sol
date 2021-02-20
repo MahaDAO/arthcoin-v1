@@ -4,12 +4,12 @@ pragma solidity ^0.8.0;
 
 import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
 
-import '../../lib/Babylonian.sol';
-import '../../lib/FixedPoint.sol';
-import '../../lib/UniswapV2Library.sol';
-import '../../lib/UniswapV2OracleLibrary.sol';
-import '../../utils/Epoch.sol';
-import '../../interfaces/IUniswapV2Router02.sol';
+import {Babylonian} from '../../lib/Babylonian.sol';
+import {FixedPoint} from '../../lib/FixedPoint.sol';
+import {IUniswapV2Pair} from '../../interfaces/IUniswapV2Pair.sol';
+import {UniswapV2OracleLibrary} from '../../lib/UniswapV2OracleLibrary.sol';
+import {Epoch} from '../../utils/Epoch.sol';
+import {IUniswapV2Router02} from '../../interfaces/IUniswapV2Router02.sol';
 
 // fixed window oracle that recomputes the average price for the entire period once every period
 // note that the price average is only guaranteed to be over at least 1 period, but may be over a longer period
@@ -34,16 +34,10 @@ contract UniswapOracle is Epoch {
     /* ========== CONSTRUCTOR ========== */
 
     constructor(
-        address _factory,
-        address _tokenA,
-        address _tokenB,
+        IUniswapV2Pair _pair,
         uint256 _period,
         uint256 _startTime
     ) Epoch(_period, _startTime, 0) {
-        IUniswapV2Pair _pair =
-            IUniswapV2Pair(
-                UniswapV2Library.pairFor(_factory, _tokenA, _tokenB)
-            );
         pair = _pair;
         token0 = _pair.token0();
         token1 = _pair.token1();
@@ -52,7 +46,7 @@ contract UniswapOracle is Epoch {
         uint112 reserve0;
         uint112 reserve1;
         (reserve0, reserve1, blockTimestampLast) = _pair.getReserves();
-        require(reserve0 != 0 && reserve1 != 0, 'Oracle: NO_RESERVES'); // ensure that there's liquidity in the pair
+        // require(reserve0 != 0 && reserve1 != 0, 'Oracle: NO_RESERVES'); // ensure that there's liquidity in the pair
     }
 
     /* ========== MUTABLE FUNCTIONS ========== */
@@ -145,14 +139,6 @@ contract UniswapOracle is Epoch {
 
             return price1Average.mul(amountIn).decode144();
         }
-    }
-
-    function pairFor(
-        address factory,
-        address tokenA,
-        address tokenB
-    ) external pure returns (address lpt) {
-        return UniswapV2Library.pairFor(factory, tokenA, tokenB);
     }
 
     event Updated(uint256 price0CumulativeLast, uint256 price1CumulativeLast);

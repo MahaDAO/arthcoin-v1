@@ -8,6 +8,7 @@ import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
 import {ISimpleERCFund} from '../interfaces/ISimpleERCFund.sol';
 import {ISimpleOracle} from '../interfaces/ISimpleOracle.sol';
 import {IUniswapOracle} from '../interfaces/IUniswapOracle.sol';
+import {IUniswapV2Router02} from '../interfaces/IUniswapV2Router02.sol';
 import {Math} from '@openzeppelin/contracts/contracts/math/Math.sol';
 import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
 import {TreasurySetters} from './TreasurySetters.sol';
@@ -28,6 +29,8 @@ contract Treasury is TreasurySetters {
         IBasisAsset _cash,
         IBasisAsset _bond,
         IERC20 _share,
+        IUniswapV2Router02 val,
+        address pair,
         uint256 _startTime,
         uint256 _period,
         uint256 _startEpoch
@@ -40,6 +43,9 @@ contract Treasury is TreasurySetters {
         cash = _cash;
         bond = _bond;
         share = _share;
+
+        state.uniswapRouter = val;
+        state.uniswapLiquidityPair = pair;
     }
 
     modifier updatePrice {

@@ -1,10 +1,6 @@
-const knownContracts = require('./known-contracts');
-
-
+const { BigNumber } = require('ethers');
+const { getDAI, getMahaToken, isMainnet } = require('./helpers');
 const ARTH = artifacts.require('ARTH');
-const ARTHB = artifacts.require('ARTHB');
-const MahaToken = artifacts.require('MahaToken');
-const MockDai = artifacts.require('MockDai');
 
 
 async function migration(deployer, network, accounts) {
@@ -14,47 +10,35 @@ async function migration(deployer, network, accounts) {
   accounts[0] = process.env.WALLET_KEY;
 
   // Deploy or fetch deployed dai.
-  console.log(`Fetching dai on ${network} network.`);
-  const dai = network === 'mainnet'
-    ? await IERC20.at(knownContracts.DAI[network])
-    : await MockDai.deployed();
 
   // Fetch deployed tokens.
+  const dai = await getDAI(network, deployer, artifacts);
   const cash = await ARTH.deployed();
-  const bond = await ARTHB.deployed();
+  const mahaToken = await getMahaToken(network, deployer, artifacts);
 
-  const mahaToken = network === 'mainnet'
-    ? await MahaToken.at(knownContracts.MahaToken[network])
-    : await MahaToken.deployed();
+  if (!isMainnet(network)) {
+    const mil = BigNumber.from(10).pow(24);
 
-  if (network !== 'mainnet') {
     // Mint 1mn maha tokens to self if not on mainnet.
-    const mil = web3.utils.toBN(10 ** 6)
-    console.log('Minting MAHA tokens.')
-    await mahaToken.mint(accounts[0], web3.utils.toBN(10 ** 18).mul(mil).toString());
+    console.log('Minting 1mil MAHA tokens.')
+    await mahaToken.mint(accounts[0], mil);
 
     console.log('Minting ARTH tokens.')
-    await cash.mint(accounts[0], web3.utils.toBN(10 ** 18).mul(mil).toString());
-
-    console.log('Minting ARTHB tokens.')
-    await bond.mint(accounts[0], web3.utils.toBN(10 ** 18).mul(mil).toString());
+    await cash.mint(accounts[0], mil);
 
     // Mint some tokens to the metamask wallet holder in dev.
     if (process.env.METAMASK_WALLET) {
       console.log('sending some dummy tokens; 100k')
-      const mil = web3.utils.toBN(10 ** 5)
-      await cash.mint(process.env.METAMASK_WALLET, web3.utils.toBN(10 ** 18).mul(mil).toString());
-      await mahaToken.mint(process.env.METAMASK_WALLET, web3.utils.toBN(10 ** 18).mul(mil).toString());
-      await bond.mint(process.env.METAMASK_WALLET, web3.utils.toBN(10 ** 18).mul(mil).toString());
-      await dai.transfer(process.env.METAMASK_WALLET, web3.utils.toBN(10 ** 18).mul(mil).toString());
+      await cash.mint(process.env.METAMASK_WALLET, mil);
+      await mahaToken.mint(process.env.METAMASK_WALLET, mil);
+      await dai.transfer(process.env.METAMASK_WALLET, mil);
     }
   }
 
   console.log('\nChecking balance of all tokens.');
-  console.log(' - Dai account balance:', (await dai.balanceOf(accounts[0])).toString())
-  console.log(' - ARTH account balance:', (await cash.balanceOf(accounts[0])).toString())
-  console.log(' - MAHA account balance:', (await mahaToken.balanceOf(accounts[0])).toString())
-  console.log(' - ARTHB account balance:', (await bond.balanceOf(accounts[0])).toString())
+  console.log(' - Dai account balance:', (await dai.balanceOf(accounts[0])).toString());
+  console.log(' - ARTH account balance:', (await cash.balanceOf(accounts[0])).toString());
+  console.log(' - MAHA account balance:', (await mahaToken.balanceOf(accounts[0])).toString());
 }
 
 

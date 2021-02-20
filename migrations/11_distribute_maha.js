@@ -1,16 +1,9 @@
-const { FACTORY_ADDRESS, INIT_CODE_HASH } = require('@uniswap/sdk')
-const { pack, keccak256 } = require('@ethersproject/solidity')
-const { getCreate2Address } = require('@ethersproject/address')
-
 const knownContracts = require('./known-contracts');
 const { POOL_START_DATE } = require('./pools');
 const { BigNumber } = require('ethers');
+const { getDAI, getMahaToken, getPairAddress, isMainnet } = require('./helpers');
 
 const Arth = artifacts.require('ARTH');
-const MahaToken = artifacts.require('MahaToken');
-// const Oracle = artifacts.require('MockUniswapOracle');
-const MockDai = artifacts.require('MockDai');
-const IERC20 = artifacts.require('IERC20');
 
 const MAHAARTHPool = artifacts.require('MAHAARTHPool')
 const MAHADAIARTHLPTokenPool = artifacts.require('MAHADAIARTHLPTokenPool')
@@ -18,28 +11,23 @@ const MAHAMAHAETHLPTokenPool = artifacts.require('MAHAMAHAETHLPTokenPool')
 
 
 module.exports = async (deployer, network, accounts) => {
-  const dai = network === 'mainnet'
-    ? await IERC20.at(knownContracts.DAI[network])
-    : await MockDai.deployed();
-
+  const dai = await getDAI(network, deployer, artifacts);
+  const mahaToken = await getMahaToken(network, deployer, artifacts);
   const arth = await Arth.deployed();
-  const mahaToken = network === 'mainnet'
-    ? await MahaToken.at(knownContracts.MahaToken[network])
-    : await MahaToken.deployed();
 
-  const dai_arth_lpt = getCreate2Address(
-    FACTORY_ADDRESS,
-    keccak256(['bytes'], [pack(['address', 'address'], [dai.address, arth.address])]),
-    INIT_CODE_HASH
-  )
-
-  const maha_dai_lpt = getCreate2Address(
-    FACTORY_ADDRESS,
-    keccak256(['bytes'], [pack(['address', 'address'], [dai.address, mahaToken.address])]),
-    INIT_CODE_HASH
+  const dai_arth_lpt = getPairAddress(
+    dai.address,
+    arth.address,
+    network, deployer, artifacts
   );
 
-  const maha_eth_lpt = network === 'mainnet'
+  const maha_dai_lpt = getPairAddress(
+    dai.address,
+    mahaToken.address,
+    network, deployer, artifacts
+  );
+
+  const maha_eth_lpt = isMainnet(network)
     ? knownContracts.MAHA_ETH_LP[network]
     : maha_dai_lpt;
 
@@ -47,10 +35,10 @@ module.exports = async (deployer, network, accounts) => {
   await deployer.deploy(MAHAMAHAETHLPTokenPool, mahaToken.address, maha_eth_lpt, POOL_START_DATE);
   await deployer.deploy(MAHAARTHPool, mahaToken.address, arth.address, POOL_START_DATE);
 
-  if (network !== 'mainnet') {
-    const decimals = BigNumber.from(10).pow(18)
-    mahaToken.mint(MAHADAIARTHLPTokenPool.address, BigNumber.from(4000).mul(decimals))
-    mahaToken.mint(MAHAMAHAETHLPTokenPool.address, BigNumber.from(4000).mul(decimals))
-    mahaToken.mint(MAHAARTHPool.address, BigNumber.from(2000).mul(decimals))
+  if (!isMainnet(network)) {
+    const decimals = BigNumber.from(10).pow(18);
+    mahaToken.mint(MAHADAIARTHLPTokenPool.address, BigNumber.from(4000).mul(decimals));
+    mahaToken.mint(MAHAMAHAETHLPTokenPool.address, BigNumber.from(4000).mul(decimals));
+    mahaToken.mint(MAHAARTHPool.address, BigNumber.from(2000).mul(decimals));
   }
 };
