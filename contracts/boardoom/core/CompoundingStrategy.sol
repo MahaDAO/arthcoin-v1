@@ -151,7 +151,7 @@ contract CompoundingStrategy is Epoch, ERC20 {
             // Should revert if already unbonded, since staked balance would be 0.
             unbond();
 
-            harvest();
+            // harvest();
 
             return;
         }
