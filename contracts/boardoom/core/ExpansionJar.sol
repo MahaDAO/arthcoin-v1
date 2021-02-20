@@ -4,9 +4,7 @@ pragma solidity ^0.8.0;
 
 import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
 import {ERC20} from '@openzeppelin/contracts/contracts/token/ERC20/ERC20.sol';
-import {
-    SafeERC20
-} from '@openzeppelin/contracts/contracts/token/ERC20/SafeERC20.sol';
+import '@openzeppelin/contracts/contracts/token/ERC20/SafeERC20.sol';
 
 import {Vault} from './Vault.sol';
 import {Epoch} from '../../utils/Epoch.sol';
@@ -98,7 +96,7 @@ contract ExpansionJar is Epoch, ERC20 {
         // Since this is the balance, that we have after compouding for compouding duration.
         // Hence this also has the principal amount, which we subtract to get only epochly
         // reward which we would have claimed.
-        totalReward = totalReward.add(balance).sub(_totalSupply);
+        totalReward = totalReward.add(balance).sub(totalSupply());
     }
 
     function harvest() public checkStartTime {
@@ -138,12 +136,13 @@ contract ExpansionJar is Epoch, ERC20 {
         checkStartTime
     {
         uint256 balance = balanceOf(msg.sender);
-        uint256 percentStaked = balance.mul(100).mul(1e18).div(totalSuppl());
+        uint256 contributionInPool =
+            balance.mul(100).mul(1e18).div(totalSupply());
 
-        _burn(msg.sender, amount);
+        _burn(msg.sender, balance);
 
         uint256 amountToReward =
-            totalReward.mul(percentOfStake).div(100).div(1e18);
+            totalReward.mul(contributionInPool).div(100).div(1e18);
 
         token.transfer(msg.sender, amountToReward);
     }
