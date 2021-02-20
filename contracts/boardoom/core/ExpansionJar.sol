@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.0;
 
+import '@openzeppelin/contracts/contracts/token/ERC20/SafeERC20.sol';
 import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
 import {ERC20} from '@openzeppelin/contracts/contracts/token/ERC20/ERC20.sol';
-import '@openzeppelin/contracts/contracts/token/ERC20/SafeERC20.sol';
 
 import {Vault} from './Vault.sol';
 import {Epoch} from '../../utils/Epoch.sol';
@@ -19,11 +19,10 @@ contract ExpansionJar is Epoch, ERC20 {
     IERC20 token;
     VestedVaultBoardroom boardroom;
 
-    // The totalReward we have generated including compounding.
-    uint256 public totalReward;
     uint256 compoundFor = 30 days;
     uint256 harvestAfter = 5 days;
     bool enableWithdrawal = false;
+    uint256 public totalReward = 0;
 
     modifier stakerExists(address who) {
         require(balanceOf(who) > 0, 'Jar: the staker does not exist');
@@ -45,10 +44,10 @@ contract ExpansionJar is Epoch, ERC20 {
         IERC20 token_,
         Vault vault_,
         VestedVaultBoardroom boardroom_,
-        uint256 _startTime,
-        uint256 _period,
-        uint256 _startEpoch
-    ) ERC20('Jar LP', 'JLP') Epoch(_period, _startTime, _startEpoch) {
+        uint256 startTime_,
+        uint256 period_,
+        uint256 startEpoch_
+    ) ERC20('MahaDAO Jar LP', 'MJLP') Epoch(period_, startTime_, startEpoch_) {
         vault = vault_;
         token = token_;
         boardroom = boardroom_;
@@ -79,32 +78,32 @@ contract ExpansionJar is Epoch, ERC20 {
     }
 
     function unbond() public checkStartTime {
-        // Check if curr. time is after compounding period.
+        // Don't unbond, if still in compound period.
         if (block.timestamp < startTime.add(compoundFor)) return;
 
-        // Total amount that is currently staked in the vault via jar.
+        // Claim the rewards and don't reinvest.
+        // It's necessary to claim before unbonding, as per the boardroom's design.
+        uint256 rewards = vault.claimReward();
         uint256 balance = vault.balanceOf(address(this));
 
         vault.unbond(balance);
 
         // Just a safety check, to validate that we are unbonding the entire amount.
-        require(
-            vault.balanceWithoutBonded(address(this)) == 0,
-            'Jar: invalid op'
-        );
+        assert(vault.balanceWithoutBonded(address(this)) == 0);
 
         // Since this is the balance, that we have after compouding for compouding duration.
         // Hence this also has the principal amount, which we subtract to get only epochly
         // reward which we would have claimed.
-        totalReward = totalReward.add(balance).sub(totalSupply());
+        // We also add, the fresh rewards we have generated(which we didn't reinvest).
+        totalReward = totalReward.add(balance).add(rewards).sub(totalSupply());
     }
 
     function harvest() public checkStartTime {
-        // Check if we curr. time is after the compouding and harvesting periods.
+        // Don't harvest, if we are still in compounding period.
         if (block.timestamp < startTime.add(compoundFor)) return;
 
         // If we are after the harvest period, then enable withdrawals.
-        if (block.timestamp > startTime.add(compoundFor).add(harvestAfter))
+        if (block.timestamp >= startTime.add(compoundFor).add(harvestAfter))
             enableWithdrawal = true;
 
         // Will revert, if unbonding duration of vault is not satisfied.
@@ -126,24 +125,32 @@ contract ExpansionJar is Epoch, ERC20 {
             return;
         }
 
-        boardroom.claimAndReinvestReward();
+        // boardroom.claimAndReinvestReward();  // Problem with this is that, vault would have to approve to bond again.
+
+        uint256 reward = boardroom.claimReward();
+        token.safeApprove(address(vault), reward);
+
+        vault.bond(reward);
     }
 
     function withdraw()
         public
         stakerExists(msg.sender)
         canWithdraw
-        checkStartTime
+    // checkStartTime // Redundant as canWithdraw handles time and also whether we are allowed.
     {
         uint256 balance = balanceOf(msg.sender);
         uint256 contributionInPool =
             balance.mul(100).mul(1e18).div(totalSupply());
 
+        // Burn, equivalent amount of jar lp tokens.
         _burn(msg.sender, balance);
 
         uint256 amountToReward =
             totalReward.mul(contributionInPool).div(100).div(1e18);
 
         token.transfer(msg.sender, amountToReward);
+
+        totalReward = totalReward.sub(amountToReward);
     }
 }
