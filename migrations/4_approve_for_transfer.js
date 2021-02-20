@@ -3,8 +3,6 @@ const { getDAI, getUniswapRouter, approveIfNot } = require('./helpers');
 const ARTH = artifacts.require('ARTH');
 
 
-
-
 async function migration(deployer, network, accounts) {
   // Set the main account, you'll be using accross all the files for
   // various important activities to your desired address in the .env

@@ -2,60 +2,15 @@
 
 pragma solidity ^0.8.0;
 
-import {
-    ERC20Burnable
-} from '@openzeppelin/contracts/contracts/token/ERC20/ERC20Burnable.sol';
-import {ERC20} from '@openzeppelin/contracts/contracts/token/ERC20/ERC20.sol';
-import {Ownable} from '@openzeppelin/contracts/contracts/access/Ownable.sol';
-import {Operator} from '../owner/Operator.sol';
+import {BaseToken} from './BaseToken.sol';
 
-contract ARTH is ERC20Burnable, Operator {
+contract ARTH is BaseToken {
     /**
      * @notice Constructs the Basis ARTH ERC-20 contract.
      */
-    constructor() ERC20('ARTH', 'ARTH') {
+    constructor() BaseToken('ARTH', 'ARTH') {
         // Mints 1 Basis ARTH to contract creator for initial Uniswap oracle deployment.
         // Will be burned after oracle deployment.
         _mint(msg.sender, 1 * 10**18);
     }
-
-    // function _beforeTokenTransfer(address from, address to, uint256 amount) internal virtual override {
-    //     super._beforeTokenTransfer(from, to, amount);
-    //     require(
-    //         to != operator(),
-    //         "basis.cash: operator as a recipient is not allowed"
-    //     );
-    // }
-
-    /**
-     * @notice Operator mints basis cash to a recipient
-     * @param recipient_ The address of recipient
-     * @param amount_ The amount of basis cash to mint to
-     * @return whether the process has been done
-     */
-    function mint(address recipient_, uint256 amount_)
-        public
-        onlyOperator
-        returns (bool)
-    {
-        uint256 balanceBefore = balanceOf(recipient_);
-        _mint(recipient_, amount_);
-        uint256 balanceAfter = balanceOf(recipient_);
-
-        return balanceAfter > balanceBefore;
-    }
-
-    function burn(uint256 amount) public override onlyOperator {
-        super.burn(amount);
-    }
-
-    function burnFrom(address account, uint256 amount)
-        public
-        override
-        onlyOperator
-    {
-        super.burnFrom(account, amount);
-    }
-
-    // TODO: add allow with permit
 }

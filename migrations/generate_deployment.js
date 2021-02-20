@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const util = require('util');
+const { getDAI, getMahaToken, getUniswapFactory, getUniswapRouter } = require('./helpers');
 
 const knownContracts = require('./known-contracts');
 
@@ -48,13 +49,6 @@ const exportedContracts = [
 ];
 
 
-const Arth = artifacts.require('ARTH');
-const MahaToken = artifacts.require('MahaToken');
-const TWAP12hrOracle = artifacts.require('TWAP12hrOracle');
-const MockDai = artifacts.require('MockDai');
-const IERC20 = artifacts.require('IERC20');
-const UniswapV2Factory = artifacts.require('UniswapV2Factory');
-const UniswapV2Router02 = artifacts.require('UniswapV2Router02');
 const Multicall  = artifacts.require('Multicall');
 
 
@@ -62,9 +56,8 @@ const Multicall  = artifacts.require('Multicall');
  * Main migrations
  */
 module.exports = async (callback) => {
-  const network = 'mainnet'
-  const isMainnet = process.argv.includes('mainnet')
-  const isDevelopment = process.argv.includes('development')
+  const network = process.argv[5];
+  const isMainnet = process.argv.includes('mainnet');
 
   // Set the main account, you'll be using accross all the files for various
   // important activities to your desired address in the .env file.
@@ -73,52 +66,34 @@ module.exports = async (callback) => {
   const contracts = [
     { abi: 'Treasury', contract: 'Treasury' },
     { abi: 'SimpleERCFund', contract: 'DevelopmentFund' },
+    { abi: 'SimpleERCFund', contract: 'RainyDayFund' },
+
+    { abi: 'BaseToken', contract: 'ARTHB' },
+    { abi: 'BaseToken', contract: 'ARTH' },
 
     { abi: 'SimpleOracle', contract: 'GMUOracle' },
     { abi: 'UniswapOracle', contract: 'TWAP12hrOracle' },
     { abi: 'UniswapOracle', contract: 'TWAP1hrOracle' },
-    { abi: 'SimpleOracle', contract: 'ArthMahaOracle' },
 
     // boardroom stuff
-    // { abi: 'VestedVaultBoardroom', contract: 'ArthArthBoardroomV2' },
-    // { abi: 'VestedVaultBoardroom', contract: 'ArthArthMlpLiquidityBoardroomV2' },
-    // { abi: 'VestedVaultBoardroom', contract: 'ArthMahaBoardroomV2' },
-    // { abi: 'VestedVaultBoardroom', contract: 'MahaArthBoardroomV2' },
-    // { abi: 'VestedVaultBoardroom', contract: 'MahaArthMlpLiquidityBoardroomV2' },
-    // { abi: 'VestedVaultBoardroom', contract: 'MahaMahaBoardroomV2' },
-    // { abi: 'Vault', contract: 'VaultArth' },
-    // { abi: 'Vault', contract: 'VaultArthMlp' },
-    // { abi: 'Vault', contract: 'VaultMaha' },
+    { abi: 'VestedVaultBoardroom', contract: 'ArthArthBoardroomV2' },
+    { abi: 'VestedVaultBoardroom', contract: 'ArthArthMlpLiquidityBoardroomV2' },
+    { abi: 'VestedVaultBoardroom', contract: 'ArthMahaBoardroomV2' },
+    { abi: 'VestedVaultBoardroom', contract: 'MahaArthBoardroomV2' },
+    { abi: 'VestedVaultBoardroom', contract: 'MahaArthMlpLiquidityBoardroomV2' },
+    { abi: 'VestedVaultBoardroom', contract: 'MahaMahaBoardroomV2' },
+    { abi: 'Vault', contract: 'VaultArth' },
+    { abi: 'Vault', contract: 'VaultArthMlp' },
+    { abi: 'Vault', contract: 'VaultMaha' },
   ];
-
-
-
-  // if (isMainnet) {
-  //   contracts.push([
-  //     { abi: 'SimpleBoardroom', contract: 'ArthUniLiquidityBoardroomV1' },
-  //     { abi: 'SimpleBoardroom', contract: 'MahaLiquidityBoardroomV1' },
-  //     { abi: 'SimpleBoardroom', contract: 'ArthBoardroomV1' }
-  //   ]);
-  // }
 
   const deployments = {};
 
   try {
-    const mahaToken = isMainnet ?
-      knownContracts.MahaToken[network] :
-      (await MahaToken.deployed()).address;
-
-    const dai = !isDevelopment ?
-      knownContracts.DAI[network] :
-      (await MockDai.deployed()).address;
-
-    const factory = !isDevelopment ?
-      knownContracts.UniswapV2Factory[network] :
-      (await UniswapV2Factory.deployed()).address;
-
-    const router = !isDevelopment ?
-      knownContracts.UniswapV2Router02[network] :
-      (await UniswapV2Router02.deployed()).address;
+    const mahaToken = (await getMahaToken(network, null, artifacts)).address;
+    const dai = (await getDAI(network, null, artifacts)).address;
+    const factory = (await getUniswapFactory(network, null, artifacts)).address;
+    const router = (await getUniswapRouter(network, null, artifacts)).address;
 
     const multicall = isMainnet ?
       knownContracts.Multicall[network] :
@@ -134,7 +109,7 @@ module.exports = async (callback) => {
     const abiDir = path.resolve(__dirname, `../output/abi`);
     const deploymentPath = path.resolve(__dirname, `../output/${network}.json`);
 
-    await mkdir(abiDir, { recursive: true })
+    await mkdir(abiDir, { recursive: true });
 
     for (const name of contracts) {
       const contractAddress = name.address ? name.address : artifacts.require(name.contract).address;
@@ -150,56 +125,6 @@ module.exports = async (callback) => {
     }
 
     await writeFile(deploymentPath, JSON.stringify(deployments, null, 2));
-
-    // const oracle = await TWAP12hrOracle.deployed();
-
-    // const arth = await Arth.deployed();
-    // const mahaToken = isMainnet
-    //   ? await MahaToken.at(knownContracts.MahaToken[network])
-    //   : await MahaToken.deployed();
-
-    // const dai_arth_lpt = await oracle.pairFor(factory.address, dai.address, arth.address)
-    // const maha_dai_lpt = await oracle.pairFor(factory.address, dai.address, mahaToken.address)
-
-    // console.log('dai at', dai.address);
-    // console.log('arth at', arth.address);
-    // console.log('maha at', mahaToken.address);
-    // console.log('uniswap factory at', factory.address);
-    // console.log('uniswap router at', router.address);
-    // console.log('dai_arth_lpt at', dai_arth_lpt);
-    // console.log('maha_dai_lpt at', maha_dai_lpt);
-    // console.log('multicall at', multicall.address);
-
-    // deployments.MahaToken = {
-    //   address: mahaToken.address,
-    //   abi: mahaToken.abi,
-    // };
-
-    // deployments.ArthDaiLP = {
-    //   address: dai_arth_lpt
-    // };
-
-    // deployments.MahaEthLP = {
-    //   address: maha_dai_lpt
-    // };
-
-    // if (network === 'development') {
-    //   exportedContracts.push('ArthBoardroomV1', 'ArthLiquidityBoardroomV1', 'MahaLiquidityBoardroomV1')
-    // }
-
-    // for (const name of exportedContracts) {
-    //   const contract = artifacts.require(name);
-    //   deployments[name] = {
-    //     address: contract.address,
-    //     abi: contract.abi,
-    //   };
-    // }
-    // const deploymentPath = path.resolve(__dirname, `../build/deployments.${network}.json`);
-    // await writeFile(deploymentPath, JSON.stringify(deployments, null, 2));
-
-    // console.log(`Exported deployments into ${deploymentPath}`);
-
-
   } catch (error) {
     console.log(error);
   }
