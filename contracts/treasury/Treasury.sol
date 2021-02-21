@@ -185,7 +185,7 @@ contract Treasury is TreasurySetters {
         checkEpoch
         validateOperator
     {
-        emit AdvanceEpoch(msg.sender);
+        emit AdvanceEpoch(msg.sender, getNextEpoch());
 
         _updateCashPrice();
         uint256 cash12hPrice = get12hrTWAPOraclePrice();
@@ -445,5 +445,5 @@ contract Treasury is TreasurySetters {
     );
     event StabilityFeesCharged(address indexed from, uint256 amount);
 
-    event AdvanceEpoch(address indexed from);
+    event AdvanceEpoch(address indexed from, uint256 epoch);
 }
