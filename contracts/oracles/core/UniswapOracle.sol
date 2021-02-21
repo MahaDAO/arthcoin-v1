@@ -95,51 +95,5 @@ contract UniswapOracle is Epoch {
         }
     }
 
-    // collaboration of update / consult
-    function expectedPrice(address token, uint256 amountIn)
-        external
-        view
-        returns (uint224 amountOut)
-    {
-        (
-            uint256 price0Cumulative,
-            uint256 price1Cumulative,
-            uint32 blockTimestamp
-        ) = UniswapV2OracleLibrary.currentCumulativePrices(address(pair));
-        uint32 timeElapsed = blockTimestamp - blockTimestampLast; // overflow is desired
-
-        if (timeElapsed > 0) {
-            FixedPoint.uq112x112 memory avg0 =
-                FixedPoint.uq112x112(
-                    uint224(
-                        (price0Cumulative - price0CumulativeLast) / timeElapsed
-                    )
-                );
-            FixedPoint.uq112x112 memory avg1 =
-                FixedPoint.uq112x112(
-                    uint224(
-                        (price1Cumulative - price1CumulativeLast) / timeElapsed
-                    )
-                );
-
-            if (token == token0) {
-                amountOut = avg0.mul(amountIn).decode144();
-            } else {
-                require(token == token1, 'Oracle: INVALID_TOKEN');
-                amountOut = avg1.mul(amountIn).decode144();
-            }
-
-            return amountOut;
-        }
-
-        if (token == token0) {
-            return price0Average.mul(amountIn).decode144();
-        } else {
-            require(token == token1, 'Oracle: INVALID_TOKEN');
-
-            return price1Average.mul(amountIn).decode144();
-        }
-    }
-
     event Updated(uint256 price0CumulativeLast, uint256 price1CumulativeLast);
 }
