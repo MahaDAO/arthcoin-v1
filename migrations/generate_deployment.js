@@ -92,19 +92,31 @@ module.exports = async (callback) => {
   try {
     const mahaToken = (await getMahaToken(network, null, artifacts)).address;
     const dai = (await getDAI(network, null, artifacts)).address;
-    const factory = (await getUniswapFactory(network, null, artifacts)).address;
+    const cash = (await artifacts.require('ARTH')).address;
+    const factory = (await getUniswapFactory(network, null, artifacts));
     const router = (await getUniswapRouter(network, null, artifacts)).address;
 
-    const multicall = isMainnet ?
+    const multicall = knownContracts.Multicall[network] ?
       knownContracts.Multicall[network] :
       (await Multicall.deployed()).address;
 
-    contracts.push({ contract: 'UniswapV2Factory', address: factory, abi: 'UniswapV2Factory' });
+    const arthDaiLP = knownContracts.ARTH_DAI_LP[network] ?
+      knownContracts.ARTH_DAI_LP[network] :
+      (await factory.getPair(cash, dai));
+
+    const mahaEthLP = knownContracts.MAHA_ETH_LP[network] ?
+      knownContracts.MAHA_ETH_LP[network] :
+      (await factory.getPair(mahaToken, dai));
+
+    contracts.push({ contract: 'UniswapV2Factory', address: factory.address, abi: 'UniswapV2Factory' });
     contracts.push({ contract: 'UniswapV2Router02', address: router, abi: 'UniswapV2Router02' });
     contracts.push({ contract: 'DAI', address: dai, abi: 'IERC20' });
     contracts.push({ contract: 'MahaToken', address: mahaToken, abi: 'MahaToken' });
     contracts.push({ contract: 'Multicall', address: multicall, abi: 'Multicall' });
 
+    // add LP tokens
+    contracts.push({ contract: 'ArthDaiLP', address: arthDaiLP, abi: 'IUniswapV2Pair' });
+    contracts.push({ contract: 'MahaEthLP', address: mahaEthLP, abi: 'IUniswapV2Pair' });
 
     const abiDir = path.resolve(__dirname, `../output/abi`);
     const deploymentPath = path.resolve(__dirname, `../output/${network}.json`);
