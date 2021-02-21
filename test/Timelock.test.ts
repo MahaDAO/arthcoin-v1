@@ -27,7 +27,7 @@ async function latestBlocktime(provider: Provider): Promise<number> {
 }
 
 
-describe('Timelock', () => {
+describe.skip('Timelock', () => {
   const { provider } = ethers;
 
   let operator: SignerWithAddress;
