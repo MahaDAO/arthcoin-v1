@@ -65,6 +65,7 @@ module.exports = async (callback) => {
 
   const contracts = [
     { abi: 'Treasury', contract: 'Treasury' },
+    { abi: 'Maharaja', contract: 'Maharaja' },
     { abi: 'SimpleERCFund', contract: 'DevelopmentFund' },
     { abi: 'SimpleERCFund', contract: 'RainyDayFund' },
 

@@ -101,11 +101,11 @@ describe('Uniswap oracle', () => {
 
     await addLiquidity(provider, operator, router, cash, dai, ETH);
 
+    const pair = await factory.getPair(cash.address, dai.address);
+
     oracleStartTime = BigNumber.from(await latestBlocktime(provider)).add(DAY);
     oracle = await Oracle.connect(operator).deploy(
-      factory.address,
-      cash.address,
-      dai.address,
+      pair,
       DAY,
       oracleStartTime
     );
