@@ -12,7 +12,7 @@ import { TREASURY_START_DATE } from '../../deploy.config';
 chai.use(solidity);
 
 
-describe('VestedVaultBoardroom', () => {
+describe.only('VestedVaultBoardroom', () => {
   // const DAY = 86400;
 
   const REWARDS_VESTING = 8 * 3600
@@ -239,91 +239,6 @@ describe('VestedVaultBoardroom', () => {
     });
   });
 
-  // describe('#Exit', async () => {
-  //   beforeEach('Should be able to stake', async () => {
-  //     await Promise.all([
-  //       share.connect(operator).mint(whale.address, STAKE_AMOUNT),
-  //       share.connect(whale).approve(vault.address, STAKE_AMOUNT),
-  //     ]);
-
-  //     await vault.connect(whale).bond(STAKE_AMOUNT);
-  //   });
-
-  //   it('Should not be able to exit without unbonding and time < boardroomLockPeriod', async () => {
-  //     await expect(boardroom.connect(whale).exit()).revertedWith('')
-
-  //     expect(await share.balanceOf(whale.address)).to.eq(ZERO);
-  //     expect(await vault.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
-  //   });
-
-  //   it('Should not be able to exit without unbonding and time > boardroomLockPeriod', async () => {
-  //     await advanceTimeAndBlock(
-  //       provider,
-  //       BOARDROOM_LOCK_PERIOD
-  //     );
-
-  //     await expect(boardroom.connect(whale).exit()).to.revertedWith('')
-
-  //     expect(await share.balanceOf(whale.address)).to.eq(ZERO);
-  //     expect(await vault.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
-  //   });
-
-  //   it('Should not be able to exit with unbonding and time < boardroomLockPeriod', async () => {
-  //     await vault.connect(whale).unbond(STAKE_AMOUNT);
-
-  //     await expect(boardroom.connect(whale).exit()).revertedWith('')
-
-  //     expect(await share.balanceOf(whale.address)).to.eq(ZERO);
-  //     expect(await vault.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
-  //   });
-
-  //   it('Should be able to exit with unbonding and time > boardroomLockPeriod', async () => {
-  //     await vault.connect(whale).unbond(STAKE_AMOUNT);
-
-  //     await advanceTimeAndBlock(
-  //       provider,
-  //       2 * BOARDROOM_LOCK_PERIOD
-  //     );
-
-  //     await expect(boardroom.connect(whale).exit())
-  //       .to.emit(boardroom, 'Withdrawn')
-  //       .withArgs(whale.address, STAKE_AMOUNT);
-
-  //     expect(await share.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
-  //     expect(await vault.balanceOf(whale.address)).to.eq(ZERO);
-  //     expect(await cash.balanceOf(whale.address)).to.gte(ZERO); // Since no seigniorage is allocated.
-  //   });
-
-  //   it('Should fail when non-director tries to exit', async () => {
-  //     await advanceTimeAndBlock(
-  //       provider,
-  //       BOARDROOM_LOCK_PERIOD
-  //     );
-
-  //     await expect(boardroom.connect(abuser).exit()).to.revertedWith(
-  //       'Boardroom: The director does not exist'
-  //     );
-  //   });
-
-  //   it('Should fail when director has already exited once', async () => {
-  //     await vault.connect(whale).unbond(STAKE_AMOUNT);
-
-  //     await advanceTimeAndBlock(
-  //       provider,
-  //       2 * BOARDROOM_LOCK_PERIOD
-  //     );
-
-  //     await expect(boardroom.connect(whale).exit())
-  //       .to.emit(boardroom, 'Withdrawn')
-  //       .withArgs(whale.address, STAKE_AMOUNT);
-
-  //     expect(await share.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
-  //     expect(await vault.balanceOf(whale.address)).to.eq(ZERO);
-  //     expect(await cash.balanceOf(whale.address)).to.gte(ZERO); // Since no seigniorage is allocated.
-
-  //     await expect(boardroom.connect(whale).exit()).to.reverted;
-  //   });
-  // });
 
   describe('#AllocateSeigniorage', () => {
     beforeEach('Should be able to stake', async () => {
@@ -412,13 +327,13 @@ describe('VestedVaultBoardroom', () => {
       // According to reward per share and staked amount, calculate the earned rewards.
       const earnedReward = rewardPerShare.mul(STAKE_AMOUNT).div(ETH);
       // Now for vesting take calcuate the amount as per ratio we deserve.
-      const expectedReward = earnedReward.mul(timelyRewardRatio);
+      const expectedReward = earnedReward.mul(timelyRewardRatio).div(ETH);
 
       // NOTE: all mul and div from 1e18 are done for retaining
       // the precison
       await expect(boardroom.connect(whale).claimReward())
         .to.emit(boardroom, 'RewardPaid')
-        .withArgs(whale.address, expectedReward.div(ETH));
+        .withArgs(whale.address, expectedReward);
 
       expect(await vault.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
       expect(await cash.balanceOf(whale.address)).to.gt(ZERO);
@@ -604,7 +519,8 @@ describe('VestedVaultBoardroom', () => {
       );
 
       await expect(boardroom.connect(whale).claimReward())
-        .to.emit(boardroom, 'RewardPaid');
+        .to.emit(boardroom, 'RewardPaid')
+        .withArgs();
 
       expect(await share.balanceOf(whale.address)).to.eq(ZERO);
       expect(await cash.balanceOf(abuser.address)).to.eq(ZERO);
@@ -612,6 +528,122 @@ describe('VestedVaultBoardroom', () => {
       expect(await cash.balanceOf(whale.address)).to.eq(SEIGNIORAGE_AMOUNT);
       expect(await vault.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
       expect(await vault.balanceOf(abuser.address)).to.eq(STAKE_AMOUNT);
+    });
+  });
+
+  describe.only('#earned', () => {
+    beforeEach('Should be able to stake', async () => {
+      await Promise.all([
+        share.connect(operator).mint(whale.address, STAKE_AMOUNT),
+        share.connect(whale).approve(vault.address, STAKE_AMOUNT),
+
+        share.connect(operator).mint(abuser.address, STAKE_AMOUNT),
+        share.connect(abuser).approve(vault.address, STAKE_AMOUNT),
+      ]);
+
+      // await vault.connect(whale).bond(STAKE_AMOUNT);
+    });
+
+    describe("allocateSeigniorage() is not yet called", async () => {
+      it('should not earn anything if not bonded anything', async () => {
+
+      });
+    })
+
+    describe("allocateSeigniorage() allocates 100% of the supply once", async () => {
+      it('should not earn anything if not bonded anything', async () => {
+
+      });
+
+      it('should not earn anything if bonded after the allocateSeigniorage() call', async () => {
+
+      });
+
+      describe("claimReward called once", async () => {
+        it('Should not earn anything if bonded but then withdrew everything', async () => {
+
+        });
+
+        it('Should earn 100% after 8 hrs if i\'m the only person bonding in the pool', async () => {
+
+        });
+
+        it('Should earn 50% after 4 hrs if I own 100% of the pool', async () => {
+
+        });
+
+        it('Should earn 50% after 8 hrs if I own 50% of the pool', async () => {
+
+        });
+
+        it('Should earn 25% after 4 hrs if I own 50% of the pool', async () => {
+
+        });
+      });
+
+      describe("claimReward called twice in the same epoch and I own 100% of the pool", async () => {
+        it('Should earn 100% after 8 hrs and 0% after 1 hrs', async () => {
+
+        });
+
+        it('Should earn 50% after 4 hrs and then 25% after 2 hrs', async () => {
+
+        });
+
+        it('Should earn 25% after 2 hrs and then 75% after 6 hrs', async () => {
+
+        });
+      })
+    })
+
+    describe("allocateSeigniorage() allocates 100% of the supply twice across 12 + 12 hrs", async () => {
+      describe("claimReward called once", async () => {
+        it('Should earn 200% after 12 + 8 hrs if i\'m the only person bonding in the pool', async () => {
+
+        });
+
+        it('Should earn 150% after 12 + 4 hrs if I own 100% of the pool', async () => {
+
+        });
+
+        it('Should earn 100% after 12 + 8 hrs if I own 50% of the pool', async () => {
+
+        });
+
+        it('Should earn 50% after 12 hrs if I own 50% of the pool', async () => {
+
+        });
+
+        it('Should earn 100% after 12 + 8 hrs if I own 50% of the pool', async () => {
+
+        });
+      })
+
+      describe("claimReward called twice in the two different epochs and I own 100% of the pool", async () => {
+        it('Should earn 100% for the first claim in 8 hrs and then 100% for the second claim in 4 + 8 hrs', async () => {
+
+        });
+
+        it('Should earn 50% for the first claim in 4 hrs and then 150% for the second claim in 8 + 8 hrs', async () => {
+
+        });
+
+        it('Should earn 0% for the first claim in 0 hrs and then 200% for the second claim in 12 + 8 hrs', async () => {
+
+        });
+
+        it('Should earn 0% for the first claim in 0 hrs and then 100% for the second claim in 8 + 1 hrs', async () => {
+
+        });
+
+        it('Should earn 100% for the first claim in 8 hrs and then 0% for the second claim in 8 + 1 hrs', async () => {
+
+        });
+
+        it('Should earn 100% for the first claim in 8 hrs and then 50% for the second claim in 8 + 8 hrs', async () => {
+
+        });
+      });
     });
   });
 });
