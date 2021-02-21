@@ -550,100 +550,116 @@ describe.only('VestedVaultBoardroom', () => {
       });
     })
 
-    describe("allocateSeigniorage() allocates 100% of the supply once", async () => {
-      it('should not earn anything if not bonded anything', async () => {
-
-      });
-
-      it('should not earn anything if bonded after the allocateSeigniorage() call', async () => {
-
-      });
-
-      describe("claimReward called once", async () => {
-        it('Should not earn anything if bonded but then withdrew everything', async () => {
+    describe("I bond at the first epoch", async () => {
+      describe("allocateSeigniorage() allocates 100% of the supply once", async () => {
+        it('should not earn anything if not bonded anything', async () => {
 
         });
 
-        it('Should earn 100% after 8 hrs if i\'m the only person bonding in the pool', async () => {
+        it('should not earn anything if bonded after the allocateSeigniorage() call', async () => {
 
         });
 
-        it('Should earn 50% after 4 hrs if I own 100% of the pool', async () => {
+        describe("claimReward called once", async () => {
+          it('Should not earn anything if bonded but then withdrew everything', async () => {
 
+          });
+
+          it('Should earn 100% after 8 hrs if i\'m the only person bonding in the pool', async () => {
+
+          });
+
+          it('Should earn 50% after 4 hrs if I own 100% of the pool', async () => {
+
+          });
+
+          it('Should earn 50% after 8 hrs if I own 50% of the pool', async () => {
+
+          });
+
+          it('Should earn 25% after 4 hrs if I own 50% of the pool', async () => {
+
+          });
         });
 
-        it('Should earn 50% after 8 hrs if I own 50% of the pool', async () => {
+        describe("claimReward called twice in the same epoch and I own 100% of the pool", async () => {
+          it('Should earn 100% after 8 hrs and 0% after 1 hrs', async () => {
 
-        });
+          });
 
-        it('Should earn 25% after 4 hrs if I own 50% of the pool', async () => {
+          it('Should earn 50% after 4 hrs and then 25% after 2 hrs', async () => {
 
-        });
-      });
+          });
 
-      describe("claimReward called twice in the same epoch and I own 100% of the pool", async () => {
-        it('Should earn 100% after 8 hrs and 0% after 1 hrs', async () => {
+          it('Should earn 25% after 2 hrs and then 75% after 6 hrs', async () => {
 
-        });
-
-        it('Should earn 50% after 4 hrs and then 25% after 2 hrs', async () => {
-
-        });
-
-        it('Should earn 25% after 2 hrs and then 75% after 6 hrs', async () => {
-
-        });
+          });
+        })
       })
+
+      describe("allocateSeigniorage() allocates 100% of the supply twice across 12 + 12 hrs", async () => {
+        describe("claimReward called once", async () => {
+          it('Should earn 200% after 12 + 8 hrs if i\'m the only person bonding in the pool', async () => {
+
+          });
+
+          it('Should earn 150% after 12 + 4 hrs if I own 100% of the pool', async () => {
+
+          });
+
+          it('Should earn 100% after 12 + 8 hrs if I own 50% of the pool', async () => {
+
+          });
+
+          it('Should earn 50% after 12 hrs if I own 50% of the pool', async () => {
+
+          });
+
+          it('Should earn 100% after 12 + 8 hrs if I own 50% of the pool', async () => {
+
+          });
+        })
+
+        describe("claimReward called twice in the two different epochs and I own 100% of the pool", async () => {
+          it('Should earn 100% for the first claim in 8 hrs and then 100% for the second claim in 4 + 8 hrs', async () => {
+
+          });
+
+          it('Should earn 50% for the first claim in 4 hrs and then 150% for the second claim in 8 + 8 hrs', async () => {
+
+          });
+
+          it('Should earn 0% for the first claim in 0 hrs and then 200% for the second claim in 12 + 8 hrs', async () => {
+
+          });
+
+          it('Should earn 0% for the first claim in 0 hrs and then 100% for the second claim in 8 + 1 hrs', async () => {
+
+          });
+
+          it('Should earn 100% for the first claim in 8 hrs and then 0% for the second claim in 8 + 1 hrs', async () => {
+
+          });
+
+          it('Should earn 100% for the first claim in 8 hrs and then 50% for the second claim in 8 + 8 hrs', async () => {
+
+          });
+        });
+      });
     })
 
-    describe("allocateSeigniorage() allocates 100% of the supply twice across 12 + 12 hrs", async () => {
-      describe("claimReward called once", async () => {
-        it('Should earn 200% after 12 + 8 hrs if i\'m the only person bonding in the pool', async () => {
+    describe("I bond at the second epoch", async () => {
+      it('should not earn anything from the previous epoch', async () => {
 
-        });
-
-        it('Should earn 150% after 12 + 4 hrs if I own 100% of the pool', async () => {
-
-        });
-
-        it('Should earn 100% after 12 + 8 hrs if I own 50% of the pool', async () => {
-
-        });
-
-        it('Should earn 50% after 12 hrs if I own 50% of the pool', async () => {
-
-        });
-
-        it('Should earn 100% after 12 + 8 hrs if I own 50% of the pool', async () => {
-
-        });
-      })
-
-      describe("claimReward called twice in the two different epochs and I own 100% of the pool", async () => {
-        it('Should earn 100% for the first claim in 8 hrs and then 100% for the second claim in 4 + 8 hrs', async () => {
-
-        });
-
-        it('Should earn 50% for the first claim in 4 hrs and then 150% for the second claim in 8 + 8 hrs', async () => {
-
-        });
-
-        it('Should earn 0% for the first claim in 0 hrs and then 200% for the second claim in 12 + 8 hrs', async () => {
-
-        });
-
-        it('Should earn 0% for the first claim in 0 hrs and then 100% for the second claim in 8 + 1 hrs', async () => {
-
-        });
-
-        it('Should earn 100% for the first claim in 8 hrs and then 0% for the second claim in 8 + 1 hrs', async () => {
-
-        });
-
-        it('Should earn 100% for the first claim in 8 hrs and then 50% for the second claim in 8 + 8 hrs', async () => {
-
-        });
       });
-    });
+
+      it('should earn 100% of the new rewards from the next epoch owning 100% of the pool', async () => {
+
+      });
+
+      it('should earn 50% of the new rewards from the next epoch owning 50% of the pool', async () => {
+
+      });
+    })
   });
 });
