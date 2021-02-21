@@ -67,8 +67,8 @@ contract Vault is AccessControl, StakingTimelock, Operator {
     }
 
     function balanceWithoutBonded(address who) public view returns (uint256) {
-        uint256 amount = getStakedAmount(msg.sender);
-        return _balances[who].sub(amount);
+        uint256 unbondingAmount = getStakedAmount(msg.sender);
+        return _balances[who].sub(unbondingAmount);
     }
 
     function toggleDeposits(bool val) external onlyOwner {
@@ -119,7 +119,7 @@ contract Vault is AccessControl, StakingTimelock, Operator {
             'Boardroom: unbond request greater than staked amount'
         );
 
-        _updateStakerDetails(who, block.timestamp + duration, amount);
+        _updateStakerDetails(who, amount);
 
         emit Unbonded(who, amount);
     }
@@ -130,18 +130,18 @@ contract Vault is AccessControl, StakingTimelock, Operator {
         checkLockDurationFor(who)
     {
         uint256 directorShare = _balances[who];
-        uint256 amount = getStakedAmount(who);
+        uint256 unbondingAmount = getStakedAmount(who);
 
         require(
-            directorShare >= amount,
+            directorShare >= unbondingAmount,
             'Boardroom: withdraw request greater than unbonded amount'
         );
 
-        _totalSupply = _totalSupply.sub(amount);
-        _balances[who] = directorShare.sub(amount);
-        token.transfer(who, amount);
+        _totalSupply = _totalSupply.sub(unbondingAmount);
+        _balances[who] = directorShare.sub(unbondingAmount);
+        token.transfer(who, unbondingAmount);
 
-        _updateStakerDetails(who, block.timestamp, 0);
-        emit Withdrawn(who, amount);
+        _updateStakerDetails(who, 0);
+        emit Withdrawn(who, unbondingAmount);
     }
 }

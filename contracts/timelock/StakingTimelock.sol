@@ -16,36 +16,36 @@ abstract contract StakingTimelock is Ownable {
         uint256 updatedOn;
     }
 
-    mapping(address => StakingDetails) public _stakingDetails;
+    mapping(address => StakingDetails) public stakingDetails;
 
     constructor(uint256 _duration) {
         duration = _duration;
     }
 
     modifier checkLockDuration {
-        StakingDetails storage _stakerDetails = _stakingDetails[msg.sender];
+        StakingDetails storage _stakerDetails = stakingDetails[msg.sender];
 
         require(_stakerDetails.deadline != 0);
         require(_stakerDetails.amount != 0);
-        require(_stakerDetails.deadline + duration <= block.timestamp);
+        require(_stakerDetails.deadline <= block.timestamp);
         _;
     }
 
     modifier checkLockDurationFor(address who) {
-        StakingDetails storage _stakerDetails = _stakingDetails[who];
+        StakingDetails storage _stakerDetails = stakingDetails[who];
 
         require(_stakerDetails.deadline != 0);
         require(_stakerDetails.amount != 0);
-        require(_stakerDetails.deadline + duration <= block.timestamp);
+        require(_stakerDetails.deadline <= block.timestamp);
         _;
     }
 
     modifier checkLockDurationWithAmount(uint256 amount) {
-        StakingDetails storage _stakerDetails = _stakingDetails[msg.sender];
+        StakingDetails storage _stakerDetails = stakingDetails[msg.sender];
 
         require(_stakerDetails.deadline != 0);
         require(_stakerDetails.amount <= amount);
-        require(_stakerDetails.deadline + duration <= block.timestamp);
+        require(_stakerDetails.deadline <= block.timestamp);
         _;
     }
 
@@ -58,7 +58,7 @@ abstract contract StakingTimelock is Ownable {
             uint256
         )
     {
-        StakingDetails storage _stakerDetails = _stakingDetails[who];
+        StakingDetails storage _stakerDetails = stakingDetails[who];
         return (
             _stakerDetails.amount,
             _stakerDetails.deadline,
@@ -67,17 +67,13 @@ abstract contract StakingTimelock is Ownable {
     }
 
     function getStakedAmount(address who) public view returns (uint256) {
-        StakingDetails storage _stakerDetails = _stakingDetails[who];
+        StakingDetails storage _stakerDetails = stakingDetails[who];
         return _stakerDetails.amount;
     }
 
-    function _updateStakerDetails(
-        address who,
-        uint256 _date,
-        uint256 _amount
-    ) internal {
-        StakingDetails storage _stakerDetails = _stakingDetails[who];
-        _stakerDetails.deadline = _date;
+    function _updateStakerDetails(address who, uint256 _amount) internal {
+        StakingDetails storage _stakerDetails = stakingDetails[who];
+        _stakerDetails.deadline = block.timestamp + duration;
         _stakerDetails.updatedOn = block.timestamp;
         _stakerDetails.amount = _amount;
     }

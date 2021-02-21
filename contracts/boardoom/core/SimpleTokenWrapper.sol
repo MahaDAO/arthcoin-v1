@@ -10,7 +10,7 @@ abstract contract SimpleTokenWrapper is BaseBoardroom {
     using SafeMath for uint256;
 
     function stake(uint256 amount) public virtual depositsEnabled {
-        _updateStakerDetails(msg.sender, block.timestamp, amount);
+        _updateStakerDetails(msg.sender, amount);
 
         _totalSupply += amount;
         _balances[msg.sender] = _balances[msg.sender].add(amount);
