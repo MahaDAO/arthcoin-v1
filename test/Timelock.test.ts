@@ -49,7 +49,7 @@ describe('Timelock', () => {
   let Curve: ContractFactory;
   let DAI: ContractFactory;
   let Timelock: ContractFactory;
-  let ArthMahaswapLiquidityBoardroom: ContractFactory;
+  let ArthMLPBoardroom: ContractFactory;
   let MahaLiquidityBoardroom: ContractFactory;
   let RainyDayFund: ContractFactory;
   let TreasuryLibrary: ContractFactory
@@ -81,7 +81,7 @@ describe('Timelock', () => {
 
     DevelopmentFund = await ethers.getContractFactory('DevelopmentFund');
     ArthBoardroom = await ethers.getContractFactory('MockBoardroom');
-    ArthMahaswapLiquidityBoardroom = await ethers.getContractFactory('MockBoardroom');
+    ArthMLPBoardroom = await ethers.getContractFactory('MockBoardroom');
     ArthLiquidityBoardroom = await ethers.getContractFactory('MockBoardroom');
     MahaLiquidityBoardroom = await ethers.getContractFactory('MockBoardroom');
     Oracle = await ethers.getContractFactory('MockUniswapOracle');
@@ -100,7 +100,7 @@ describe('Timelock', () => {
   let arthBoardroom: Contract;
   let arthLiquidityBoardroom: Contract;
   let developmentFund: Contract;
-  let arthMahaswapLiquidityBoardroom: Contract;
+  let arthMLPBoardroom: Contract;
 
   let treasury: Contract;
   let uniswap: Contract;
@@ -154,13 +154,13 @@ describe('Timelock', () => {
     mahaLiquidityBoardroom = await MahaLiquidityBoardroom.connect(operator).deploy(
       cash.address
     );
-    arthMahaswapLiquidityBoardroom = await ArthMahaswapLiquidityBoardroom.connect(operator).deploy(
+    arthMLPBoardroom = await ArthMLPBoardroom.connect(operator).deploy(
       cash.address
     );
 
-    contractionBoardroom1 = await ArthMahaswapLiquidityBoardroom.connect(operator).deploy(cash.address);
-    contractionBoardroom2 = await ArthMahaswapLiquidityBoardroom.connect(operator).deploy(cash.address);
-    contractionBoardroom3 = await ArthMahaswapLiquidityBoardroom.connect(operator).deploy(cash.address);
+    contractionBoardroom1 = await ArthMLPBoardroom.connect(operator).deploy(cash.address);
+    contractionBoardroom2 = await ArthMLPBoardroom.connect(operator).deploy(cash.address);
+    contractionBoardroom3 = await ArthMLPBoardroom.connect(operator).deploy(cash.address);
 
     treasury = await Treasury.connect(operator).deploy(
       dai.address,
@@ -173,7 +173,7 @@ describe('Timelock', () => {
     );
 
     await treasury.connect(operator).setAllFunds(
-      arthMahaswapLiquidityBoardroom.address,
+      arthMLPBoardroom.address,
       arthBoardroom.address,
       mahaLiquidityBoardroom.address,
       contractionBoardroom1.address,
@@ -222,8 +222,8 @@ describe('Timelock', () => {
     await mahaLiquidityBoardroom.connect(operator).transferOperator(treasury.address);
     await mahaLiquidityBoardroom.connect(operator).transferOwnership(timelock.address);
 
-    await arthMahaswapLiquidityBoardroom.connect(operator).transferOperator(treasury.address);
-    await arthMahaswapLiquidityBoardroom.connect(operator).transferOwnership(timelock.address);
+    await arthMLPBoardroom.connect(operator).transferOperator(treasury.address);
+    await arthMLPBoardroom.connect(operator).transferOwnership(timelock.address);
 
     await contractionBoardroom1.connect(operator).transferOperator(treasury.address);
     await contractionBoardroom1.connect(operator).transferOwnership(timelock.address);
@@ -250,7 +250,7 @@ describe('Timelock', () => {
       );
 
       await newTreasury.connect(operator).setAllFunds(
-        arthMahaswapLiquidityBoardroom.address,
+        arthMLPBoardroom.address,
         arthBoardroom.address,
         mahaLiquidityBoardroom.address,
         contractionBoardroom1.address,
@@ -354,7 +354,7 @@ describe('Timelock', () => {
       const signature = 'transferOperator(address)';
       const data = encodeParameters(ethers, ['address'], [operator.address]);
 
-      const calldata = [arthMahaswapLiquidityBoardroom.address, 0, signature, data, eta];
+      const calldata = [arthMLPBoardroom.address, 0, signature, data, eta];
       const txHash = ethers.utils.keccak256(
         encodeParameters(
           ethers,
@@ -375,10 +375,10 @@ describe('Timelock', () => {
       await expect(timelock.connect(operator).executeTransaction(...calldata))
         .to.emit(timelock, 'ExecuteTransaction')
         .withArgs(txHash, ...calldata)
-        .to.emit(arthMahaswapLiquidityBoardroom, 'OperatorTransferred')
+        .to.emit(arthMLPBoardroom, 'OperatorTransferred')
         .withArgs(ZERO_ADDR, operator.address);
 
-      expect(await arthMahaswapLiquidityBoardroom.operator()).to.eq(operator.address);
+      expect(await arthMLPBoardroom.operator()).to.eq(operator.address);
     });
 
     it('Should work correctly for maha liquidity boardroom', async () => {

@@ -117,10 +117,10 @@ describe.only('Treasury', () => {
   let startTime: BigNumber;
   let uniswap: Contract;
   let uniswapRouter: Contract;
-  let arthMahaLiquidityBoardroom: Contract;
+  let arthMahaBoardroom: Contract;
   let rainyDayFund: Contract;
   let arthArthMLPBoardroom: Contract;
-  let mahaArthMahaswapLiquidityBoardroom: Contract;
+  let mahaArthMLPBoardroom: Contract;
   let mahaArthBoardroom: Contract;
   let mahaMahaBoardroom: Contract;
   let simpleOracle: Contract;
@@ -183,9 +183,9 @@ describe.only('Treasury', () => {
 
     arthArthMLPBoardroom = await VestedVaultBoardroom.connect(operator).deploy(cash.address, arthLpVault.address, HOURS_8);
     arthArthBoardroom = await VestedVaultBoardroom.connect(operator).deploy(cash.address, arthVault.address, HOURS_8);
-    arthMahaLiquidityBoardroom = await VestedVaultBoardroom.connect(operator).deploy(cash.address, mahaVault.address, HOURS_8);
+    arthMahaBoardroom = await VestedVaultBoardroom.connect(operator).deploy(cash.address, mahaVault.address, HOURS_8);
 
-    mahaArthMahaswapLiquidityBoardroom = await VestedVaultBoardroom.connect(operator).deploy(share.address, arthLpVault.address, HOURS_8);
+    mahaArthMLPBoardroom = await VestedVaultBoardroom.connect(operator).deploy(share.address, arthLpVault.address, HOURS_8);
     mahaArthBoardroom = await VestedVaultBoardroom.connect(operator).deploy(share.address, arthVault.address, HOURS_8);
     mahaMahaBoardroom = await VestedVaultBoardroom.connect(operator).deploy(share.address, mahaVault.address, HOURS_8);
 
@@ -207,9 +207,9 @@ describe.only('Treasury', () => {
 
     await treasury.connect(operator).setAllFunds(
       arthArthMLPBoardroom.address,
-      arthMahaLiquidityBoardroom.address,
+      arthMahaBoardroom.address,
       arthArthBoardroom.address,
-      mahaArthMahaswapLiquidityBoardroom.address, // MahaArthMLP
+      mahaArthMLPBoardroom.address, // MahaArthMLP
       mahaMahaBoardroom.address, // MahaArth
       mahaArthBoardroom.address, // MAhaMAHA
       developmentFund.address,
@@ -248,9 +248,9 @@ describe.only('Treasury', () => {
 
     await newTreasury.connect(operator).setAllFunds(
       arthArthMLPBoardroom.address,
-      arthMahaLiquidityBoardroom.address,
+      arthMahaBoardroom.address,
       arthArthBoardroom.address,
-      mahaArthMahaswapLiquidityBoardroom.address, // MahaArthMLP
+      mahaArthMLPBoardroom.address, // MahaArthMLP
       mahaMahaBoardroom.address, // MahaArth
       mahaArthBoardroom.address, // MAhaMAHA
       developmentFund.address,
@@ -278,9 +278,9 @@ describe.only('Treasury', () => {
 
       await arthArthMLPBoardroom.connect(operator).transferOperator(treasury.address);
       await arthArthBoardroom.connect(operator).transferOperator(treasury.address);
-      await arthMahaLiquidityBoardroom.connect(operator).transferOperator(treasury.address);
+      await arthMahaBoardroom.connect(operator).transferOperator(treasury.address);
 
-      await mahaArthMahaswapLiquidityBoardroom.connect(operator).transferOperator(treasury.address);
+      await mahaArthMLPBoardroom.connect(operator).transferOperator(treasury.address);
       await mahaArthBoardroom.connect(operator).transferOperator(treasury.address);
       await mahaMahaBoardroom.connect(operator).transferOperator(treasury.address);
     });
@@ -291,9 +291,9 @@ describe.only('Treasury', () => {
 
         await arthArthMLPBoardroom.connect(operator).transferOperator(newTreasury.address);
         await arthArthBoardroom.connect(operator).transferOperator(newTreasury.address);
-        await arthMahaLiquidityBoardroom.connect(operator).transferOperator(newTreasury.address);
+        await arthMahaBoardroom.connect(operator).transferOperator(newTreasury.address);
 
-        await mahaArthMahaswapLiquidityBoardroom.connect(operator).transferOperator(newTreasury.address);
+        await mahaArthMLPBoardroom.connect(operator).transferOperator(newTreasury.address);
         await mahaArthBoardroom.connect(operator).transferOperator(newTreasury.address);
         await mahaMahaBoardroom.connect(operator).transferOperator(newTreasury.address);
 
@@ -316,7 +316,7 @@ describe.only('Treasury', () => {
           'Treasury: need more permission'
         );
 
-        await mahaArthMahaswapLiquidityBoardroom.connect(operator).transferOperator(ant.address);
+        await mahaArthMLPBoardroom.connect(operator).transferOperator(ant.address);
         await expect(newTreasury.initialize()).to.revertedWith(
           'Treasury: need more permission'
         );
@@ -330,7 +330,7 @@ describe.only('Treasury', () => {
           'Treasury: need more permission'
         );
 
-        await arthMahaLiquidityBoardroom.connect(operator).transferOperator(ant.address);
+        await arthMahaBoardroom.connect(operator).transferOperator(ant.address);
         await expect(newTreasury.initialize()).to.revertedWith(
           'Treasury: need more permission'
         );
@@ -346,10 +346,10 @@ describe.only('Treasury', () => {
 
         await arthArthMLPBoardroom.connect(operator).transferOperator(newTreasury.address);
         await arthArthBoardroom.connect(operator).transferOperator(newTreasury.address);
-        await mahaArthMahaswapLiquidityBoardroom.connect(operator).transferOperator(newTreasury.address);
+        await mahaArthMLPBoardroom.connect(operator).transferOperator(newTreasury.address);
         await mahaArthBoardroom.connect(operator).transferOperator(newTreasury.address);
         await mahaMahaBoardroom.connect(operator).transferOperator(newTreasury.address);
-        await arthMahaLiquidityBoardroom.connect(operator).transferOperator(newTreasury.address);
+        await arthMahaBoardroom.connect(operator).transferOperator(newTreasury.address);
 
         await newTreasury.initialize();
         await expect(newTreasury.initialize()).to.revertedWith(
@@ -379,7 +379,7 @@ describe.only('Treasury', () => {
           treasury.connect(operator).migrate(newTreasury.address)
         ).to.revertedWith('Treasury: need more permission');
 
-        await mahaArthMahaswapLiquidityBoardroom.connect(operator).transferOperator(ant.address);
+        await mahaArthMLPBoardroom.connect(operator).transferOperator(ant.address);
         await expect(
           treasury.connect(operator).migrate(newTreasury.address)
         ).to.revertedWith('Treasury: need more permission');
@@ -394,7 +394,7 @@ describe.only('Treasury', () => {
           treasury.connect(operator).migrate(newTreasury.address)
         ).to.revertedWith('Treasury: need more permission');
 
-        await arthMahaLiquidityBoardroom.connect(operator).transferOperator(ant.address);
+        await arthMahaBoardroom.connect(operator).transferOperator(ant.address);
         await expect(
           treasury.connect(operator).migrate(newTreasury.address)
         ).to.revertedWith('Treasury: need more permission');
@@ -409,18 +409,18 @@ describe.only('Treasury', () => {
         await treasury.connect(operator).migrate(newTreasury.address);
         await arthArthMLPBoardroom.connect(operator).transferOperator(newTreasury.address);
         await arthArthBoardroom.connect(operator).transferOperator(newTreasury.address);
-        await mahaArthMahaswapLiquidityBoardroom.connect(operator).transferOperator(newTreasury.address);
+        await mahaArthMLPBoardroom.connect(operator).transferOperator(newTreasury.address);
         await mahaArthBoardroom.connect(operator).transferOperator(newTreasury.address);
         await mahaMahaBoardroom.connect(operator).transferOperator(newTreasury.address);
-        await arthMahaLiquidityBoardroom.connect(operator).transferOperator(newTreasury.address);
+        await arthMahaBoardroom.connect(operator).transferOperator(newTreasury.address);
 
         await newTreasury.connect(operator).migrate(treasury.address);
         await arthArthMLPBoardroom.connect(operator).transferOperator(treasury.address);
         await arthArthBoardroom.connect(operator).transferOperator(treasury.address);
-        await mahaArthMahaswapLiquidityBoardroom.connect(operator).transferOperator(treasury.address);
+        await mahaArthMLPBoardroom.connect(operator).transferOperator(treasury.address);
         await mahaArthBoardroom.connect(operator).transferOperator(treasury.address);
         await mahaMahaBoardroom.connect(operator).transferOperator(treasury.address);
-        await arthMahaLiquidityBoardroom.connect(operator).transferOperator(treasury.address);
+        await arthMahaBoardroom.connect(operator).transferOperator(treasury.address);
 
         await expect(
           treasury.connect(operator).migrate(newTreasury.address)
@@ -444,7 +444,7 @@ describe.only('Treasury', () => {
 
         for await (const contract of [
           arthArthMLPBoardroom,
-          mahaArthMahaswapLiquidityBoardroom, arthArthBoardroom, arthMahaLiquidityBoardroom,
+          mahaArthMLPBoardroom, arthArthBoardroom, arthMahaBoardroom,
           mahaArthBoardroom, mahaMahaBoardroom]) {
           await contract.connect(operator).transferOperator(treasury.address);
         }
@@ -501,7 +501,7 @@ describe.only('Treasury', () => {
 
           const expectedArthBoardroomReserve = rewardToGive.mul(BigNumber.from(20)).div(100);
           const expectedMahaBoardroomRes = rewardToGive.mul(BigNumber.from(10)).div(100);
-          const expectedArthMahaswapLiqBoardRes = rewardToGive.mul(BigNumber.from(70)).div(100);
+          const expectedArthMLPBoardRes = rewardToGive.mul(BigNumber.from(70)).div(100);
 
           const allocationResult = await treasury.connect(ant).allocateSeigniorage();
 
@@ -513,7 +513,7 @@ describe.only('Treasury', () => {
 
           await expect(new Promise((resolve) => resolve(allocationResult)))
             .to.emit(treasury, 'PoolFunded')
-            .withArgs(mahaArthMahaswapLiquidityBoardroom.address, share.address, expectedArthMahaswapLiqBoardRes)
+            .withArgs(mahaArthMLPBoardroom.address, share.address, expectedArthMLPBoardRes)
 
           await expect(new Promise((resolve) => resolve(allocationResult)))
             .to.emit(treasury, 'PoolFunded')
@@ -525,17 +525,17 @@ describe.only('Treasury', () => {
 
           expect(await cash.balanceOf(arthArthBoardroom.address)).to.eq(0);
           expect(await cash.balanceOf(arthArthMLPBoardroom.address)).to.eq(0);
-          expect(await cash.balanceOf(arthMahaLiquidityBoardroom.address)).to.eq(0);
+          expect(await cash.balanceOf(arthMahaBoardroom.address)).to.eq(0);
           expect(await share.balanceOf(arthArthBoardroom.address)).to.eq(0);
           expect(await share.balanceOf(arthArthMLPBoardroom.address)).to.eq(0);
-          expect(await share.balanceOf(arthMahaLiquidityBoardroom.address)).to.eq(0);
-          expect(await cash.balanceOf(mahaArthMahaswapLiquidityBoardroom.address)).to.eq(0);
+          expect(await share.balanceOf(arthMahaBoardroom.address)).to.eq(0);
+          expect(await cash.balanceOf(mahaArthMLPBoardroom.address)).to.eq(0);
           expect(await cash.balanceOf(mahaArthBoardroom.address)).to.eq(0);
           expect(await cash.balanceOf(mahaMahaBoardroom.address)).to.eq(0);
 
           // will be 0 for now
-          // expect(await share.balanceOf(mahaArthMahaswapLiquidityBoardroom.address)).to.eq(
-          //   expectedArthMahaswapLiqBoardRes
+          // expect(await share.balanceOf(mahaArthMLPBoardroom.address)).to.eq(
+          //   expectedArthMLPBoardRes
           // );
           // expect(await share.balanceOf(mahaArthBoardroom.address)).to.eq(
           //   expectedMahaBoardroomRes
@@ -561,10 +561,10 @@ describe.only('Treasury', () => {
 
           expect(await cash.balanceOf(arthArthBoardroom.address)).to.eq(0);
           expect(await cash.balanceOf(arthArthMLPBoardroom.address)).to.eq(0);
-          expect(await cash.balanceOf(arthMahaLiquidityBoardroom.address)).to.eq(0);
+          expect(await cash.balanceOf(arthMahaBoardroom.address)).to.eq(0);
           expect(await share.balanceOf(arthArthBoardroom.address)).to.eq(0);
           expect(await share.balanceOf(arthArthMLPBoardroom.address)).to.eq(0);
-          expect(await share.balanceOf(arthMahaLiquidityBoardroom.address)).to.eq(0);
+          expect(await share.balanceOf(arthMahaBoardroom.address)).to.eq(0);
         });
 
         it('should not fund expansion boardrooms if price < targetPrice and price < bondPurchasePrice', async () => {
@@ -579,7 +579,7 @@ describe.only('Treasury', () => {
 
           const expectedArthBoardroomReserve = rewardToGive.mul(BigNumber.from(20)).div(100);
           const expectedMahaBoardroomRes = rewardToGive.mul(BigNumber.from(10)).div(100);
-          const expectedArthMahaswapLiqBoardRes = rewardToGive.mul(BigNumber.from(70)).div(100);
+          const expectedArthMLPBoardRes = rewardToGive.mul(BigNumber.from(70)).div(100);
 
           const allocationResult = await treasury.connect(ant).allocateSeigniorage();
 
@@ -591,12 +591,12 @@ describe.only('Treasury', () => {
 
           expect(await cash.balanceOf(arthArthBoardroom.address)).to.eq(0);
           expect(await cash.balanceOf(arthArthMLPBoardroom.address)).to.eq(0);
-          expect(await cash.balanceOf(arthMahaLiquidityBoardroom.address)).to.eq(0);
+          expect(await cash.balanceOf(arthMahaBoardroom.address)).to.eq(0);
           expect(await share.balanceOf(arthArthBoardroom.address)).to.eq(0);
           expect(await share.balanceOf(arthArthMLPBoardroom.address)).to.eq(0);
-          expect(await share.balanceOf(arthMahaLiquidityBoardroom.address)).to.eq(0);
+          expect(await share.balanceOf(arthMahaBoardroom.address)).to.eq(0);
 
-          expect(await cash.balanceOf(mahaArthMahaswapLiquidityBoardroom.address)).to.eq(0);
+          expect(await cash.balanceOf(mahaArthMLPBoardroom.address)).to.eq(0);
           expect(await cash.balanceOf(mahaArthBoardroom.address)).to.eq(0);
           expect(await cash.balanceOf(mahaMahaBoardroom.address)).to.eq(0);
 
@@ -606,14 +606,14 @@ describe.only('Treasury', () => {
 
           await expect(new Promise((resolve) => resolve(allocationResult)))
             .to.emit(treasury, 'PoolFunded')
-            .withArgs(mahaArthMahaswapLiquidityBoardroom.address, share.address, expectedArthMahaswapLiqBoardRes)
+            .withArgs(mahaArthMLPBoardroom.address, share.address, expectedArthMLPBoardRes)
 
           await expect(new Promise((resolve) => resolve(allocationResult)))
             .to.emit(treasury, 'PoolFunded')
             .withArgs(mahaArthBoardroom.address, share.address, expectedArthBoardroomReserve)
         });
 
-        it.only('should fund all expansion boardrooms & funds if price > targetPrice and price > expansionpriceLimit', async () => {
+        it('should fund all expansion boardrooms & funds if price > targetPrice and price > expansionpriceLimit', async () => {
           const cashPrice = ETH.mul(200).div(100);
           await oracle.setPrice(cashPrice);
 
@@ -626,7 +626,7 @@ describe.only('Treasury', () => {
 
           const percentage = bigmin(
             cashPrice.sub(ETH).mul(ETH).div(ETH).div(100),
-            BigNumber.from((await treasury.state()).maxSupplyIncreasePerEpoch.toString())
+            BigNumber.from(5)
           );
 
           let expectedSeigniorage = cashSupply
@@ -635,34 +635,31 @@ describe.only('Treasury', () => {
           const mintedSeigniorage = expectedSeigniorage;
 
           // get all expected reserve
-          const expectedFundReserve = expectedSeigniorage
-            .mul(BigNumber.from((await treasury.boardroomState()).ecosystemFundAllocationRate.toString()))
-            .div(100);
+          const expectedFundReserve = mintedSeigniorage.mul(BigNumber.from(2)).div(100);
+          const expectedRainyDayReserve = mintedSeigniorage.mul(BigNumber.from(2)).div(100);
 
-          expectedSeigniorage = expectedSeigniorage.sub(expectedFundReserve)
-
-          const expectedRainyDayReserve = mintedSeigniorage
-            .mul(BigNumber.from((await treasury.boardroomState()).rainyDayFundAllocationRate.toString()))
-            .div(100);
-          expectedSeigniorage = expectedSeigniorage.sub(expectedRainyDayReserve)
+          expectedSeigniorage = expectedSeigniorage.sub(expectedRainyDayReserve).sub(expectedFundReserve)
 
           const expectedTreasuryReserve = bigmin(
-            expectedSeigniorage.mul(BigNumber.from((await treasury.state()).bondSeigniorageRate.toString())).div(100),
+            expectedSeigniorage.mul(BigNumber.from(90)).div(100),
             BigNumber.from((await bond.totalSupply()).sub(treasuryHoldings).toString())
           );
 
           expectedSeigniorage = expectedSeigniorage.sub(expectedTreasuryReserve);
 
-          const expectedArthBoardroomReserve = expectedSeigniorage.mul(BigNumber.from((await treasury.boardroomState()).arthAllocationRate.toString())).div(100);
-          const expectedMahaBoardroomRes = expectedSeigniorage.mul(BigNumber.from((await treasury.boardroomState()).mahaAllocationRate.toString())).div(100);
-          const expectedArthMahaswapLiqBoardRes = expectedSeigniorage.mul(BigNumber.from((await treasury.boardroomState()).arthLiquidityMlpAllocationRate.toString())).div(100);
+          const expectedArthBoardroomReserve = expectedSeigniorage.mul(BigNumber.from(20)).div(100);
+          const expectedMahaBoardroomRes = expectedSeigniorage.mul(BigNumber.from(10)).div(100);
+          const expectedArthMLPBoardRes = expectedSeigniorage.mul(BigNumber.from(70)).div(100);
 
           const allocationResult = await treasury.connect(ant).allocateSeigniorage();
-
 
           await expect(new Promise((resolve) => resolve(allocationResult)))
             .to.emit(treasury, 'SeigniorageMinted')
             .withArgs(mintedSeigniorage);
+
+          await expect(new Promise((resolve) => resolve(allocationResult)))
+            .to.emit(treasury, 'TreasuryFunded')
+            .withArgs(await latestBlocktime(provider), expectedTreasuryReserve);
 
           await expect(new Promise((resolve) => resolve(allocationResult)))
             .to.emit(treasury, 'PoolFunded')
@@ -673,54 +670,33 @@ describe.only('Treasury', () => {
             .withArgs(rainyDayFund.address, cash.address, expectedRainyDayReserve)
 
           await expect(new Promise((resolve) => resolve(allocationResult)))
-            .to.emit(treasury, 'TreasuryFunded')
-            .withArgs(
-              await latestBlocktime(provider),
-              expectedTreasuryReserve
-            );
+            .to.emit(treasury, 'PoolFunded')
+            .withArgs(arthArthBoardroom.address, cash.address, expectedArthBoardroomReserve)
 
-          if (expectedArthBoardroomReserve.gt(ZERO)) {
-            await expect(new Promise((resolve) => resolve(allocationResult)))
-              .to.emit(treasury, 'PoolFunded')
-              .withArgs(arthArthBoardroom.address, cash.address, expectedArthBoardroomReserve)
-          }
+          await expect(new Promise((resolve) => resolve(allocationResult)))
+            .to.emit(treasury, 'PoolFunded')
+            .withArgs(arthArthMLPBoardroom.address, cash.address, expectedArthMLPBoardRes)
 
-          if (expectedArthMahaswapLiqBoardRes.gt(ZERO)) {
-            await expect(new Promise((resolve) => resolve(allocationResult)))
-              .to.emit(treasury, 'PoolFunded')
-              .withArgs(arthArthMLPBoardroom.address, cash.address, expectedArthMahaswapLiqBoardRes)
-          }
+          await expect(new Promise((resolve) => resolve(allocationResult)))
+            .to.emit(treasury, 'PoolFunded')
+            .withArgs(arthMahaBoardroom.address, cash.address, expectedMahaBoardroomRes)
 
-          if (expectedMahaBoardroomRes.gt(ZERO)) {
-            await expect(new Promise((resolve) => resolve(allocationResult)))
-              .to.emit(treasury, 'PoolFunded')
-              .withArgs(arthArthBoardroom.address, cash.address, expectedMahaBoardroomRes)
-          }
           expect(await cash.balanceOf(developmentFund.address)).to.eq(expectedFundReserve);
-          expect(await cash.balanceOf(rainyDayFund.address)).to.eq(expectedFundReserve);
+          expect(await cash.balanceOf(rainyDayFund.address)).to.eq(expectedRainyDayReserve);
 
           expect(
             BigNumber.from((await treasury.state()).accumulatedSeigniorage.toString())
           ).to.eq(expectedTreasuryReserve);
 
-          expect(await cash.balanceOf(arthArthBoardroom.address)).to.eq(
-            expectedArthBoardroomReserve
-          );
-          expect(await cash.balanceOf(arthArthMLPBoardroom.address)).to.eq(
-            expectedArthMahaswapLiqBoardRes
-          );
-          expect(await cash.balanceOf(arthMahaLiquidityBoardroom.address)).to.eq(
-            expectedMahaBoardroomRes
-          );
           expect(await cash.balanceOf(ant.address)).to.eq(oldCashBalanceOfAnt.add(ETH.mul(300)));
 
           expect(await share.balanceOf(arthArthBoardroom.address)).to.eq(0);
           expect(await share.balanceOf(arthArthMLPBoardroom.address)).to.eq(0);
-          expect(await share.balanceOf(arthMahaLiquidityBoardroom.address)).to.eq(0);
-          expect(await cash.balanceOf(mahaArthMahaswapLiquidityBoardroom.address)).to.eq(0);
+          expect(await share.balanceOf(arthMahaBoardroom.address)).to.eq(0);
+          expect(await cash.balanceOf(mahaArthMLPBoardroom.address)).to.eq(0);
           expect(await cash.balanceOf(mahaArthBoardroom.address)).to.eq(0);
           expect(await cash.balanceOf(mahaMahaBoardroom.address)).to.eq(0);
-          expect(await share.balanceOf(mahaArthMahaswapLiquidityBoardroom.address)).to.eq(0);
+          expect(await share.balanceOf(mahaArthMLPBoardroom.address)).to.eq(0);
           expect(await share.balanceOf(mahaArthBoardroom.address)).to.eq(0);
           expect(await share.balanceOf(mahaMahaBoardroom.address)).to.eq(0);
         });
@@ -771,15 +747,15 @@ describe.only('Treasury', () => {
           expect(await cash.balanceOf(rainyDayFund.address)).to.eq(0);
           expect(await cash.balanceOf(arthArthBoardroom.address)).to.eq(0);
           expect(await cash.balanceOf(arthArthMLPBoardroom.address)).to.eq(0);
-          expect(await cash.balanceOf(arthMahaLiquidityBoardroom.address)).to.eq(0);
+          expect(await cash.balanceOf(arthMahaBoardroom.address)).to.eq(0);
 
           expect(await share.balanceOf(arthArthBoardroom.address)).to.eq(0);
           expect(await share.balanceOf(arthArthMLPBoardroom.address)).to.eq(0);
-          expect(await share.balanceOf(arthMahaLiquidityBoardroom.address)).to.eq(0);
-          expect(await cash.balanceOf(mahaArthMahaswapLiquidityBoardroom.address)).to.eq(0);
+          expect(await share.balanceOf(arthMahaBoardroom.address)).to.eq(0);
+          expect(await cash.balanceOf(mahaArthMLPBoardroom.address)).to.eq(0);
           expect(await cash.balanceOf(mahaArthBoardroom.address)).to.eq(0);
           expect(await cash.balanceOf(mahaMahaBoardroom.address)).to.eq(0);
-          expect(await share.balanceOf(mahaArthMahaswapLiquidityBoardroom.address)).to.eq(0);
+          expect(await share.balanceOf(mahaArthMLPBoardroom.address)).to.eq(0);
           expect(await share.balanceOf(mahaArthBoardroom.address)).to.eq(0);
           expect(await share.balanceOf(mahaMahaBoardroom.address)).to.eq(0);
         });
@@ -799,11 +775,13 @@ describe.only('Treasury', () => {
           // calculate with circulating supply without considering uniswap liq.
           const treasuryHoldings = BigNumber.from((await treasury.state()).accumulatedSeigniorage.toString());
           const cashSupply = (await cash.totalSupply()).sub(treasuryHoldings).add(ETH.mul(300));
+          expect(treasuryHoldings.eq(0))
 
           const percentage = bigmin(
             cashPrice.sub(ETH).mul(100).div(ETH),
-            BigNumber.from((await treasury.state()).maxSupplyIncreasePerEpoch.toString())
+            BigNumber.from(5)
           );
+          expect(percentage.eq(3))
 
           let seigniorageToMint = cashSupply
             .mul(percentage)
@@ -820,45 +798,51 @@ describe.only('Treasury', () => {
 
           const expectedTreasuryReserve = bigmin(
             finalSeigniorageToMint.mul(90).div(100),
-            (await bond.totalSupply()).sub(treasuryHoldings)
+            (await bond.totalSupply())
           );
           const expectedSeignorageForAllBoardrooms = finalSeigniorageToMint.mul(10).div(100);
 
           const expectedArthBoardroomReserve = expectedSeignorageForAllBoardrooms.mul(BigNumber.from((await treasury.boardroomState()).arthAllocationRate.toString())).div(100);
           const expectedMahaBoardroomRes = expectedSeignorageForAllBoardrooms.mul(BigNumber.from((await treasury.boardroomState()).mahaAllocationRate.toString())).div(100);
-          const expectedArthMahaswapLiqBoardRes = expectedSeignorageForAllBoardrooms.mul(BigNumber.from((await treasury.boardroomState()).arthLiquidityMlpAllocationRate.toString())).div(100);
+          const expectedArthMLPBoardRes = expectedSeignorageForAllBoardrooms.mul(BigNumber.from((await treasury.boardroomState()).arthLiquidityMlpAllocationRate.toString())).div(100);
 
           // TODO: check emit for all respective events.
           await expect(treasury.connect(ant).allocateSeigniorage())
             .to.emit(treasury, 'SeigniorageMinted')
             .to.emit(treasury, 'TreasuryFunded')
-            .withArgs(
-              await latestBlocktime(provider),
-              expectedTreasuryReserve
-            )
-            .to.emit(treasury, 'PoolFunded');
+            .withArgs(await latestBlocktime(provider), expectedTreasuryReserve)
+
+            .to.emit(treasury, 'PoolFunded')
+            .withArgs(arthArthBoardroom.address, cash.address, expectedArthBoardroomReserve)
+
+            .to.emit(treasury, 'PoolFunded')
+            .withArgs(arthArthMLPBoardroom.address, cash.address, expectedArthMLPBoardRes)
+
+            .to.emit(treasury, 'PoolFunded')
+            .withArgs(arthMahaBoardroom.address, cash.address, expectedMahaBoardroomRes)
 
           expect(await cash.balanceOf(developmentFund.address)).to.eq(0);
           expect(await cash.balanceOf(rainyDayFund.address)).to.eq(0);
           expect(await cash.totalSupply()).to.eq(oldCashSupply.add(ETH.mul(300).add(finalSeigniorageToMint)));
           expect(await cash.balanceOf(ant.address)).to.eq(ETH.mul(300)); // 200 ARTH bonus
-          expect(await cash.balanceOf(treasury.address)).to.eq(oldCashBalanceOfTreasury.add(expectedTreasuryReserve));
-          expect(await cash.balanceOf(arthArthBoardroom.address)).to.eq(
-            expectedArthBoardroomReserve
-          );
-          expect(await cash.balanceOf(arthArthMLPBoardroom.address)).to.eq(
-            expectedArthMahaswapLiqBoardRes
-          );
-          expect(await cash.balanceOf(arthMahaLiquidityBoardroom.address)).to.eq(
-            expectedMahaBoardroomRes
-          );
+          // expect(await cash.balanceOf(treasury.address)).to.eq(expectedTreasuryReserve);
+          // expect(await cash.balanceOf(arthArthBoardroom.address)).to.eq(
+          //   expectedArthBoardroomReserve
+          // );
+          // expect(await cash.balanceOf(arthArthMLPBoardroom.address)).to.eq(
+          //   expectedArthMLPBoardRes
+          // );
+          // expect(await cash.balanceOf(arthMahaBoardroom.address)).to.eq(
+          //   expectedMahaBoardroomRes
+          // );
           expect(await share.balanceOf(arthArthBoardroom.address)).to.eq(0);
           expect(await share.balanceOf(arthArthMLPBoardroom.address)).to.eq(0);
-          expect(await share.balanceOf(arthMahaLiquidityBoardroom.address)).to.eq(0);
-          expect(await cash.balanceOf(mahaArthMahaswapLiquidityBoardroom.address)).to.eq(0);
+          expect(await share.balanceOf(arthMahaBoardroom.address)).to.eq(0);
+
+          expect(await cash.balanceOf(mahaArthMLPBoardroom.address)).to.eq(0);
           expect(await cash.balanceOf(mahaArthBoardroom.address)).to.eq(0);
           expect(await cash.balanceOf(mahaMahaBoardroom.address)).to.eq(0);
-          expect(await share.balanceOf(mahaArthMahaswapLiquidityBoardroom.address)).to.eq(0);
+          expect(await share.balanceOf(mahaArthMLPBoardroom.address)).to.eq(0);
           expect(await share.balanceOf(mahaArthBoardroom.address)).to.eq(0);
           expect(await share.balanceOf(mahaMahaBoardroom.address)).to.eq(0);
         });
@@ -899,7 +883,7 @@ describe.only('Treasury', () => {
             await oracle.setPrice(cashPrice);
             await oracle.setEpoch(1);
 
-            for await (const target of [cash, bond, arthArthMLPBoardroom, arthArthBoardroom, mahaArthMahaswapLiquidityBoardroom, mahaArthBoardroom, mahaMahaBoardroom, arthMahaLiquidityBoardroom]) {
+            for await (const target of [arthArthMLPBoardroom, arthArthBoardroom, mahaArthMLPBoardroom, mahaArthBoardroom, mahaMahaBoardroom, arthMahaBoardroom]) {
               await target.connect(operator).transferOperator(ant.address);
               await expect(treasury.allocateSeigniorage()).to.revertedWith(
                 'Treasury: need more permission'
@@ -928,7 +912,7 @@ describe.only('Treasury', () => {
         await share.mint(operator.address, INITIAL_BAS_AMOUNT);
         for await (const contract of [
           cash, bond, arthArthMLPBoardroom,
-          mahaArthMahaswapLiquidityBoardroom, arthArthBoardroom, arthMahaLiquidityBoardroom,
+          mahaArthMLPBoardroom, arthArthBoardroom, arthMahaBoardroom,
           mahaArthBoardroom, mahaMahaBoardroom]) {
           await contract.connect(operator).transferOperator(treasury.address);
         }
@@ -1298,7 +1282,7 @@ describe.only('Treasury', () => {
     beforeEach('transfer permissions', async () => {
       // await cash.mint(operator.address, INITIAL_BAC_AMOUNT.mul(2));
       await bond.mint(operator.address, INITIAL_BAB_AMOUNT);
-      for await (const contract of [cash, bond, arthArthMLPBoardroom, arthArthBoardroom, mahaArthMahaswapLiquidityBoardroom, mahaArthBoardroom, mahaMahaBoardroom, arthMahaLiquidityBoardroom]) {
+      for await (const contract of [cash, bond, arthArthMLPBoardroom, arthArthBoardroom, mahaArthMLPBoardroom, mahaArthBoardroom, mahaMahaBoardroom, arthMahaBoardroom]) {
         await contract.connect(operator).transferOperator(treasury.address);
       }
     });
