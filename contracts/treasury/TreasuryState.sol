@@ -45,7 +45,7 @@ abstract contract TreasuryState is ContractGuard, Epoch {
         state.cashToBondConversionLimit = 0;
         state.contractionRewardPerEpoch = 0;
         state.maxDebtIncreasePerEpoch = 5;
-        state.maxSupplyIncreasePerEpoch = 10;
+        state.maxSupplyIncreasePerEpoch = 5;
         state.safetyRegion = 5;
 
         flags.migrated = false;

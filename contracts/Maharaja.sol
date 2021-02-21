@@ -21,6 +21,10 @@ contract Maharaja is AccessControl, Ownable {
     bool public migrated = false;
 
     constructor(IBasisAsset cash_, IBasisAsset bond_) {
+        _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
+        _setupRole(BOND_OPERATOR, _msgSender());
+        _setupRole(CASH_OPERATOR, _msgSender());
+
         cash = cash_;
         bond = bond_;
     }
@@ -40,6 +44,11 @@ contract Maharaja is AccessControl, Ownable {
         bond.transfer(target, bond.balanceOf(address(this)));
 
         migrated = true;
+    }
+
+    function grantOperator(address who) external onlyOwner {
+        grantRole(CASH_OPERATOR, who);
+        grantRole(BOND_OPERATOR, who);
     }
 
     function mintCash(address who, uint256 amount) external {

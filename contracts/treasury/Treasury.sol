@@ -300,7 +300,7 @@ contract Treasury is TreasurySetters {
         if (allocation > 0) {
             cash.approve(address(fund), allocation);
             fund.deposit(cash, allocation, 'Treasury: Fund Allocation');
-            emit PoolFunded(address(fund), allocation);
+            emit PoolFunded(address(fund), address(cash), allocation);
             return allocation;
         }
 
@@ -371,7 +371,7 @@ contract Treasury is TreasurySetters {
         if (reserve > 0) {
             token.approve(address(boardroom), reserve);
             boardroom.allocateSeigniorage(reserve);
-            emit PoolFunded(address(boardroom), reserve);
+            emit PoolFunded(address(boardroom), address(token), reserve);
         }
     }
 
@@ -438,7 +438,11 @@ contract Treasury is TreasurySetters {
     event TreasuryFunded(uint256 timestamp, uint256 seigniorage);
     event SeigniorageMinted(uint256 seigniorage);
     event BondsAllocated(uint256 limit);
-    event PoolFunded(address indexed pool, uint256 seigniorage);
+    event PoolFunded(
+        address indexed pool,
+        address indexed token,
+        uint256 seigniorage
+    );
     event StabilityFeesCharged(address indexed from, uint256 amount);
 
     event AdvanceEpoch(address indexed from);

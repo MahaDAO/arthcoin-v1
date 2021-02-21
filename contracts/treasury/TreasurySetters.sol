@@ -75,7 +75,7 @@ abstract contract TreasurySetters is TreasuryGetters {
         flags.enableSurprise = val;
     }
 
-    function setContractionRewardPerMonth(uint256 amount) public onlyOwner {
+    function setContractionRewardPerEpoch(uint256 amount) public onlyOwner {
         state.contractionRewardPerEpoch = amount;
     }
 
