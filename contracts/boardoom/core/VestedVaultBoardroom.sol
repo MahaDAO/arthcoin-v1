@@ -157,11 +157,13 @@ contract VestedVaultBoardroom is VaultBoardroom {
     function updateReward(address director) public onlyVault {
         BondingSnapshot storage snapshot = bondingHistory[director];
 
+        uint256 latestSnapshotIdx = latestSnapshotIndex();
+
         // This means, we are bonding for the first time.
         if (snapshot.firstOn == 0 && snapshot.snapshotIndex == 0) {
             snapshot.firstOn = block.timestamp;
             // NOTE: probably will revert/throw error in case not allocated yet.
-            snapshot.snapshotIndex = latestSnapshotIndex();
+            snapshot.snapshotIndex = latestSnapshotIdx;
         }
 
         // Anyways, the balanceWIthBonded would be 0 if we are withdrawing.
@@ -176,6 +178,10 @@ contract VestedVaultBoardroom is VaultBoardroom {
             snapshot.firstOn = 0;
             snapshot.snapshotIndex = 0;
         }
+
+        // Update the balance while recording this activity(whether withdraw of bond).
+        uint256 balance = vault.balanceWithoutBonded(director);
+        directorBalanceForEpoch[director][latestSnapshotIdx] = balance;
     }
 
     function _updateReward(address director) private {
