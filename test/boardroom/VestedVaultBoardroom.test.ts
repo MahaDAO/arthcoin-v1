@@ -591,8 +591,7 @@ describe('VestedVaultBoardroom', () => {
           );
 
           await expect(boardroom.connect(abuser).claimReward())
-            .to.emit(boardroom, 'RewardPaid')
-            .withArgs(abuser.address, ETH.mul(0))
+            .to.not.emit(boardroom, 'RewardPaid')
 
           expect(await cash.balanceOf(abuser.address)).to.eq(oldCashBalanceOfAbuser)
         });

@@ -46,6 +46,13 @@ contract VestedVaultBoardroom is VaultBoardroom {
                     : directors[director].rewardEarned
             );
 
+        // If storedRPS is 0, that means we are claiming rewards for the first time, hence we need
+        // to check when we bonded and accordingly calculate the final rps.
+        if (storedRPS == 0) {
+            uint256 snapshotIndex = bondingHistory[director].snapshotIndex;
+            storedRPS = boardHistory[snapshotIndex].rewardPerShare;
+        }
+
         return
             vault
                 .balanceWithoutBonded(director)
@@ -147,6 +154,15 @@ contract VestedVaultBoardroom is VaultBoardroom {
     }
 
     function updateReward(address director) public onlyVault {
+        BondingSnapshot storage snapshot = bondingHistory[director];
+
+        // This means, we are bonding for the first time.
+        if (snapshot.firstOn == 0 && snapshot.snapshotIndex == 0) {
+            snapshot.firstOn = block.timestamp;
+            // NOTE: probably will revert/throw error in case not allocated yet.
+            snapshot.snapshotIndex = latestSnapshotIndex();
+        }
+
         _updateReward(director);
     }
 
@@ -155,41 +171,41 @@ contract VestedVaultBoardroom is VaultBoardroom {
 
         // Set the default latest funding time to 0.
         // This represents that boardroom has not been allocated seigniorage yet.
-        uint256 latestFundingTime = 0;
+        uint256 latestFundingTime = boardHistory[boardHistory.length - 1].time;
 
-        // NOTE: the below if else is done because, currently vesting is working
-        // but epochly rewards and epoch claiming conditions aren't. Also the rewardPerShare
-        // are calculated only once during allocateSeigniorage. Hence the pool's supply may
-        // change after the allocation.
+        // // NOTE: the below if else is done because, currently vesting is working
+        // // but epochly rewards and epoch claiming conditions aren't. Also the rewardPerShare
+        // // are calculated only once during allocateSeigniorage. Hence the pool's supply may
+        // // change after the allocation.
 
-        // Check if seigniorage has been allocated more than once or not.
-        if (boardHistory.length == 1) {
-            // If only once, then we recalculate the reward per share depending on
-            // the reward that was received while allocating and current supply of
-            // the pool.
+        // // Check if seigniorage has been allocated more than once or not.
+        // if (boardHistory.length == 1) {
+        //     // If only once, then we recalculate the reward per share depending on
+        //     // the reward that was received while allocating and current supply of
+        //     // the pool.
 
-            boardHistory[0].rewardPerShare = boardHistory[0]
-                .rewardReceived
-                .mul(1e18)
-                .div(vault.totalSupply());
-        } else {
-            // If more than once, then we recalculate the reward per share depending on
-            // the rewad per share of the previous allocation(Refer: vaultBoardroom.sol, L: ~168) and the reward that was
-            // received while allocating and current supply of the pool.
-            uint256 oldRewardPerShare =
-                boardHistory[boardHistory.length - 2].rewardPerShare;
+        //     boardHistory[0].rewardPerShare = boardHistory[0]
+        //         .rewardReceived
+        //         .mul(1e18)
+        //         .div(vault.totalBondedSupply());
+        // } else {
+        //     // If more than once, then we recalculate the reward per share depending on
+        //     // the rewad per share of the previous allocation(Refer: vaultBoardroom.sol, L: ~168) and the reward that was
+        //     // received while allocating and current supply of the pool.
+        //     uint256 oldRewardPerShare =
+        //         boardHistory[boardHistory.length - 2].rewardPerShare;
 
-            boardHistory[boardHistory.length - 1].rewardPerShare = (
-                oldRewardPerShare.add(
-                    boardHistory[boardHistory.length - 1]
-                        .rewardReceived
-                        .mul(1e18)
-                        .div(vault.totalSupply())
-                )
-            );
+        //     boardHistory[boardHistory.length - 1].rewardPerShare = (
+        //         oldRewardPerShare.add(
+        //             boardHistory[boardHistory.length - 1]
+        //                 .rewardReceived
+        //                 .mul(1e18)
+        //                 .div(vault.totalBondedSupply())
+        //         )
+        //     );
 
-            latestFundingTime = boardHistory[boardHistory.length - 1].time;
-        }
+        //     latestFundingTime = boardHistory[boardHistory.length - 1].time;
+        // }
 
         // If rewards are updated before epoch start of the current,
         // then we mark claimable rewards as pending and set the

@@ -43,6 +43,13 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         uint256 rewardPerShare;
     }
 
+    struct BondingSnapshot {
+        // Time when first bonding was made.
+        uint256 firstOn;
+        // The snapshot index of when first bonded.
+        uint256 snapshotIndex;
+    }
+
     /**
      * State variables.
      */
@@ -53,6 +60,7 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
 
     BoardSnapshot[] internal boardHistory;
     mapping(address => Boardseat) internal directors;
+    mapping(address => BondingSnapshot) internal bondingHistory;
 
     /**
      * Modifier.
