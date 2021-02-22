@@ -12,7 +12,7 @@ import { TREASURY_START_DATE } from '../../deploy.config';
 chai.use(solidity);
 
 
-describe.only('VestedVaultBoardroom', () => {
+describe('VestedVaultBoardroom', () => {
   // const DAY = 86400;
 
   const REWARDS_VESTING = 8 * 3600
@@ -541,7 +541,7 @@ describe.only('VestedVaultBoardroom', () => {
         share.connect(abuser).approve(vault.address, STAKE_AMOUNT),
       ]);
 
-      // await vault.connect(whale).bond(STAKE_AMOUNT);
+      await vault.connect(whale).bond(STAKE_AMOUNT);
     });
 
     describe("allocateSeigniorage() is not yet called", async () => {
