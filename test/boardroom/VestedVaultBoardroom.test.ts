@@ -546,11 +546,24 @@ describe('VestedVaultBoardroom', () => {
 
     describe("allocateSeigniorage() is not yet called", async () => {
       it('should not earn anything if not bonded anything', async () => {
+        await expect(boardroom.connect(abuser).claimReward())
+          .to.revertedWith('Boardroom: The director does not exist')
+      });
 
+      it('should not earn anything even if bonded anything', async () => {
+        await expect(boardroom.connect(whale).claimReward())
+          .to.not.revertedWith('Boardroom: The director does not exist')
+          .to.not.emit(boardroom, 'RewardPaid');
       });
     })
 
     describe("I bond at the first epoch", async () => {
+      beforeEach('allocateSeigniorage()', async () => {
+        await cash.connect(operator).mint(operator.address, SEIGNIORAGE_AMOUNT);
+        await cash.connect(operator).approve(boardroom.address, SEIGNIORAGE_AMOUNT);
+        await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT)
+      });
+
       describe("allocateSeigniorage() allocates 100% of the supply once", async () => {
         it('should not earn anything if not bonded anything', async () => {
 
