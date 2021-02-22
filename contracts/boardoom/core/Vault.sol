@@ -9,6 +9,7 @@ import {
 import {Operator} from '../../owner/Operator.sol';
 import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
 import {StakingTimelock} from '../../timelock/StakingTimelock.sol';
+import {IBoardroom} from '../../interfaces/IBoardroom.sol';
 
 /**
  * A vault is a contract that handles only the bonding & unbonding of tokens;
@@ -34,6 +35,8 @@ contract Vault is AccessControl, StakingTimelock, Operator {
 
     // The staked token.
     IERC20 public token;
+    IBoardroom public expansionBoardroom;
+    IBoardroom public contractionBoardroom;
 
     uint256 internal _totalSupply;
     bool public enableDeposits = true;
@@ -42,9 +45,6 @@ contract Vault is AccessControl, StakingTimelock, Operator {
 
     // Mapping, to track the time at which bonding and it's previous bonding was done for a staker/bonder.
     mapping(address => BondingDetail) internal _bondingDetails;
-    // Mapping, maintaining, the total supply at different times(ideally during allocation of seigniorage
-    // for boardrooms).
-    mapping(uint256 => uint256) internal _totalSupplySnapshots;
 
     /**
      * Modifier.
@@ -90,6 +90,14 @@ contract Vault is AccessControl, StakingTimelock, Operator {
         enableDeposits = val;
     }
 
+    function setExpansionBoardroom(IBoardroom boardroom) public onlyOwner {
+        expansionBoardroom = boardroom;
+    }
+
+    function setContractionBoardroom(IBoardroom boardroom) public onlyOwner {
+        contractionBoardroom = boardroom;
+    }
+
     function bond(uint256 amount) external virtual {
         _bond(msg.sender, amount);
     }
@@ -101,15 +109,6 @@ contract Vault is AccessControl, StakingTimelock, Operator {
         );
 
         _bond(who, amount);
-    }
-
-    function addTotalSupplySnapshot() public {
-        require(
-            hasRole(BOARDROOM_ROLE, _msgSender()),
-            'Vault: must have boardroom role to access this'
-        );
-
-        _totalSupplySnapshots[block.timestamp] = totalSupply();
     }
 
     function getBondingDetail(address who)
@@ -125,13 +124,6 @@ contract Vault is AccessControl, StakingTimelock, Operator {
             _bondingDetails[who].latestBondedOn,
             _bondingDetails[who].previousBondedOn
         );
-    }
-
-    function getTotalSupplySnapshot(uint256 timestamp)
-        public
-        returns (uint256)
-    {
-        return _totalSupplySnapshots[timestamp];
     }
 
     function unbond(uint256 amount) external virtual {
@@ -170,6 +162,12 @@ contract Vault is AccessControl, StakingTimelock, Operator {
 
         // NOTE: has to be pre-approved.
         token.transferFrom(who, address(this), amount);
+
+        // if (address(expansionBoardroom) != address(0))
+        //     expansionBoardroom.updateRewards(who);
+
+        // if (address(contractionBoardroom) != address(0))
+        //     contractionBoardroom.updateRewards(who);
 
         emit Bonded(who, amount);
     }

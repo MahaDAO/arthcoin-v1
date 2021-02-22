@@ -62,6 +62,9 @@ describe('VestedVaultBoardroom', () => {
       vault.address,
       REWARDS_VESTING
     );
+
+    vault.setExpansionBoardroom(boardroom.address);
+    vault.setContractionBoardroom(boardroom.address);
   });
 
   describe('#Bond', () => {

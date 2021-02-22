@@ -32,49 +32,73 @@ contract VestedVaultBoardroom is VaultBoardroom {
      * Views/Getters.
      */
     function earned(address director) public view override returns (uint256) {
-        // Get the timestamp when user has last bonded on. Also get the bonding previous time previous to it.
-        uint256 lastBondedOn = 0;
-        uint256 firstBondedOn = 0;
-        uint256 previousBondedOn = 0;
-        (firstBondedOn, lastBondedOn, previousBondedOn) = vault
-            .getBondingDetail(director);
+        // // Get the timestamp when user has last bonded on. Also get the bonding previous time previous to it.
+        // uint256 lastBondedOn = 0;
+        // uint256 firstBondedOn = 0;
+        // uint256 previousBondedOn = 0;
+        // (firstBondedOn, lastBondedOn, previousBondedOn) = vault
+        //     .getBondingDetail(director);
 
-        uint256 lastClaimedSnapshotIndex =
-            directors[director].lastSnapshotIndex;
+        // uint256 lastClaimedSnapshotIndex =
+        //     directors[director].lastSnapshotIndex;
 
-        // Check if we've ever claimed rewards or not.
-        if (lastClaimedSnapshotIndex == 0) {
-            // Check if we have
-        } else {
-            // If we have, then we want to get rewards pending from that epoch if any.
-            // And also, all rewards from the next epoch to the current epoch.
+        // // Check if we've ever claimed rewards or not.
+        // if (lastClaimedSnapshotIndex == 0) {
+        //     // Check if we have
+        // } else {
+        //     // If we have, then we want to get rewards pending from that epoch if any.
+        //     // And also, all rewards from the next epoch to the current epoch.
 
-            uint256 rps = 0;
+        //     uint256 rps = 0;
 
-            if (lastClaimedSnapshotIndex < latestSnapshotIndex()) {
-                for (
-                    uint256 i = lastClaimedSnapshotIndex + 1; // +1 since we've already claimed at lastClaimedSnapshotIndex.
-                    i <= latestSnapshotIndex(); // include the latestSnapshotIndex;
-                    i++
-                ) {
-                    rps = rps.add(
-                        boardHistory[i].rewardReceived.mul(1e18).div(
-                            boardHistory[i].totalSupply
-                        )
-                    );
-                }
-            }
-        }
+        //     if (lastClaimedSnapshotIndex < latestSnapshotIndex()) {
+        //         for (
+        //             uint256 i = lastClaimedSnapshotIndex + 1; // +1 since we've already claimed at lastClaimedSnapshotIndex.
+        //             i <= latestSnapshotIndex(); // include the latestSnapshotIndex;
+        //             i++
+        //         ) {
+        //             rps = rps.add(
+        //                 boardHistory[i].rewardReceived.mul(1e18).div(
+        //                     boardHistory[i].totalSupply
+        //                 )
+        //             );
+        //         }
+        //     }
+        // }
+
+        // // If last time rewards claimed were less than the latest epoch start time,
+        // // then we don't consider those rewards in further calculations and mark them
+        // // as pending.
+        // uint256 latestFundingTime = boardHistory[boardHistory.length - 1].time;
+        // uint256 rewardEarned =
+        //     (
+        //         directors[director].lastClaimedOn < latestFundingTime
+        //             ? 0
+        //             : directors[director].rewardEarned
+        //     );
+
+        // return
+        //     vault
+        //         .balanceWithoutBonded(director)
+        //         .mul(latestRPS.sub(storedRPS))
+        //         .div(1e18)
+        //         .add(rewardEarned);
+
+        uint256 latestRPS = getLatestSnapshot().rewardPerShare;
+        uint256 storedRPS = getLastSnapshotOf(director).rewardPerShare;
+
+        uint256 latestFundingTime = boardHistory[boardHistory.length - 1].time;
 
         // If last time rewards claimed were less than the latest epoch start time,
         // then we don't consider those rewards in further calculations and mark them
         // as pending.
-        uint256 latestFundingTime = boardHistory[boardHistory.length - 1].time;
         uint256 rewardEarned =
             (
                 directors[director].lastClaimedOn < latestFundingTime
                     ? 0
-                    : directors[director].rewardEarned
+                    : directors[director].rewardEarned.sub(
+                        directors[director].rewardClaimedThisEpoch
+                    )
             );
 
         return
@@ -177,20 +201,24 @@ contract VestedVaultBoardroom is VaultBoardroom {
         vault.bondFor(msg.sender, reward);
     }
 
+    function updateReward(address director) public onlyVault {
+        _updateReward(director);
+    }
+
     function _updateReward(address director) private {
         Boardseat storage seat = directors[director];
         uint256 latestFundingTime = boardHistory[boardHistory.length - 1].time;
 
-        // Check if the user has last bonded on after the latest funding.
-        // Also check if that's the only time user has ever bonded,
-        if (
-            lastBondedOn == previousBondedOn && lastBondedOn > latestFundingTime
-        ) {
-            // If that's the case, user should not get any reward, hence return 0.
-            // Since user has bonded after the latest bonding, and that's the only
-            // time he has bonded, so shouldn't get any rewards.
-            return;
-        }
+        // // Check if the user has last bonded on after the latest funding.
+        // // Also check if that's the only time user has ever bonded,
+        // if (
+        //     lastBondedOn == previousBondedOn && lastBondedOn > latestFundingTime
+        // ) {
+        //     // If that's the case, user should not get any reward, hence return 0.
+        //     // Since user has bonded after the latest bonding, and that's the only
+        //     // time he has bonded, so shouldn't get any rewards.
+        //     return;
+        // }
 
         // If rewards are updated before epoch start of the current,
         // then we mark claimable rewards as pending and set the

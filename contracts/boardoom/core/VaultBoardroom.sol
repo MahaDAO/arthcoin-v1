@@ -67,6 +67,12 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         _;
     }
 
+    modifier onlyVault {
+        require(msg.sender == address(vault), 'Boardroom: not vault');
+
+        _;
+    }
+
     /**
      * Events.
      */
@@ -86,7 +92,8 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
                 number: block.number,
                 time: 0,
                 rewardReceived: 0,
-                rewardPerShare: 0
+                rewardPerShare: 0,
+                totalSupply: 0
             });
         boardHistory.push(genesisSnapshot);
     }
