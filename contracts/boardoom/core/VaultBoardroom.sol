@@ -41,6 +41,8 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         uint256 rewardReceived;
         // Equivalent amount per share staked.
         uint256 rewardPerShare;
+        // Vault's total supply at this point.
+        uint256 totalSupply;
     }
 
     /**
@@ -158,21 +160,22 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
     {
         require(amount > 0, 'Boardroom: Cannot allocate 0');
 
+        // Get the totalSupply of vault, when allocating.
         uint256 totalSupply = vault.totalSupply();
 
         // 'Boardroom: Cannot allocate when totalSupply is 0'
         if (totalSupply == 0) return;
 
-        // Create & add new snapshot
-        uint256 prevRPS = getLatestSnapshot().rewardPerShare;
-        uint256 nextRPS = prevRPS.add(amount.mul(1e18).div(totalSupply));
+        // Reward per share of the current epoch.
+        uint256 rps = amount.mul(1e18).div(totalSupply);
 
         BoardSnapshot memory newSnapshot =
             BoardSnapshot({
                 number: block.number,
                 time: block.timestamp,
                 rewardReceived: amount,
-                rewardPerShare: nextRPS
+                rewardPerShare: rps,
+                totalSupply: totalSupply
             });
         boardHistory.push(newSnapshot);
 

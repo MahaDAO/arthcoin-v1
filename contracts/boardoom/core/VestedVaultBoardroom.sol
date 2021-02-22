@@ -32,8 +32,39 @@ contract VestedVaultBoardroom is VaultBoardroom {
      * Views/Getters.
      */
     function earned(address director) public view override returns (uint256) {
-        uint256 latestRPS = getLatestSnapshot().rewardPerShare;
-        uint256 storedRPS = getLastSnapshotOf(director).rewardPerShare;
+        // Get the timestamp when user has last bonded on. Also get the bonding previous time previous to it.
+        uint256 lastBondedOn = 0;
+        uint256 firstBondedOn = 0;
+        uint256 previousBondedOn = 0;
+        (firstBondedOn, lastBondedOn, previousBondedOn) = vault
+            .getBondingDetail(director);
+
+        uint256 lastClaimedSnapshotIndex =
+            directors[director].lastSnapshotIndex;
+
+        // Check if we've ever claimed rewards or not.
+        if (lastClaimedSnapshotIndex == 0) {
+            // Check if we have
+        } else {
+            // If we have, then we want to get rewards pending from that epoch if any.
+            // And also, all rewards from the next epoch to the current epoch.
+
+            uint256 rps = 0;
+
+            if (lastClaimedSnapshotIndex < latestSnapshotIndex()) {
+                for (
+                    uint256 i = lastClaimedSnapshotIndex + 1; // +1 since we've already claimed at lastClaimedSnapshotIndex.
+                    i <= latestSnapshotIndex(); // include the latestSnapshotIndex;
+                    i++
+                ) {
+                    rps = rps.add(
+                        boardHistory[i].rewardReceived.mul(1e18).div(
+                            boardHistory[i].totalSupply
+                        )
+                    );
+                }
+            }
+        }
 
         // If last time rewards claimed were less than the latest epoch start time,
         // then we don't consider those rewards in further calculations and mark them
@@ -148,38 +179,17 @@ contract VestedVaultBoardroom is VaultBoardroom {
 
     function _updateReward(address director) private {
         Boardseat storage seat = directors[director];
+        uint256 latestFundingTime = boardHistory[boardHistory.length - 1].time;
 
-        // Set the default latest funding time to 0.
-        // This represents that boardroom has not been allocated seigniorage yet.
-        uint256 latestFundingTime = 0;
-
-        // Check if seigniorage has been allocated more than once or not.
-        if (boardHistory.length == 1) {
-            // If only once, then we recalculate the reward per share depending on
-            // the reward that was received while allocating and current supply of
-            // the pool.
-
-            boardHistory[0].rewardPerShare = boardHistory[0]
-                .rewardReceived
-                .mul(1e18)
-                .div(vault.totalSupply());
-        } else {
-            // If more than once, then we recalculate the reward per share depending on
-            // the rewad per share of the previous allocation(Refer: vaultBoardroom.sol, L: ~168) and the reward that was
-            // received while allocating and current supply of the pool.
-            uint256 oldRewardPerShare =
-                boardHistory[boardHistory.length - 2].rewardPerShare;
-
-            boardHistory[boardHistory.length - 1].rewardPerShare = (
-                oldRewardPerShare.add(
-                    boardHistory[boardHistory.length - 1]
-                        .rewardReceived
-                        .mul(1e18)
-                        .div(vault.totalSupply())
-                )
-            );
-
-            latestFundingTime = boardHistory[boardHistory.length - 1].time;
+        // Check if the user has last bonded on after the latest funding.
+        // Also check if that's the only time user has ever bonded,
+        if (
+            lastBondedOn == previousBondedOn && lastBondedOn > latestFundingTime
+        ) {
+            // If that's the case, user should not get any reward, hence return 0.
+            // Since user has bonded after the latest bonding, and that's the only
+            // time he has bonded, so shouldn't get any rewards.
+            return;
         }
 
         // If rewards are updated before epoch start of the current,

@@ -20,6 +20,15 @@ contract Vault is AccessControl, StakingTimelock, Operator {
     bytes32 public constant BOARDROOM_ROLE = keccak256('BOARDROOM_ROLE');
 
     /**
+     * Data structures.
+     */
+    struct BondingDetail {
+        uint256 firstBondedOn;
+        uint256 latestBondedOn;
+        uint256 previousBondedOn;
+    }
+
+    /**
      * State variables.
      */
 
@@ -30,6 +39,12 @@ contract Vault is AccessControl, StakingTimelock, Operator {
     bool public enableDeposits = true;
 
     mapping(address => uint256) internal _balances;
+
+    // Mapping, to track the time at which bonding and it's previous bonding was done for a staker/bonder.
+    mapping(address => BondingDetail) internal _bondingDetails;
+    // Mapping, maintaining, the total supply at different times(ideally during allocation of seigniorage
+    // for boardrooms).
+    mapping(uint256 => uint256) internal _totalSupplySnapshots;
 
     /**
      * Modifier.
@@ -88,6 +103,37 @@ contract Vault is AccessControl, StakingTimelock, Operator {
         _bond(who, amount);
     }
 
+    function addTotalSupplySnapshot() public {
+        require(
+            hasRole(BOARDROOM_ROLE, _msgSender()),
+            'Vault: must have boardroom role to access this'
+        );
+
+        _totalSupplySnapshots[block.timestamp] = totalSupply();
+    }
+
+    function getBondingDetail(address who)
+        public
+        returns (
+            uint256,
+            uint256,
+            uint256
+        )
+    {
+        return (
+            _bondingDetails[who].firstBondedOn,
+            _bondingDetails[who].latestBondedOn,
+            _bondingDetails[who].previousBondedOn
+        );
+    }
+
+    function getTotalSupplySnapshot(uint256 timestamp)
+        public
+        returns (uint256)
+    {
+        return _totalSupplySnapshots[timestamp];
+    }
+
     function unbond(uint256 amount) external virtual {
         _unbond(msg.sender, amount);
     }
@@ -99,6 +145,25 @@ contract Vault is AccessControl, StakingTimelock, Operator {
     function _bond(address who, uint256 amount) private {
         require(amount > 0, 'Boardroom: cannot bond 0');
         require(enableDeposits, 'Boardroom: deposits are disabled');
+
+        // Update the timestamp for bonding and it's previous one.
+        BondingDetail storage detail = _bondingDetails[who];
+        // Check if user has bonded before.
+        if (
+            detail.latestBondedOn == 0 &&
+            detail.previousBondedOn == 0 &&
+            detail.firstBondedOn == 0
+        ) {
+            // If he hasn't then mark current time as bonding time.
+            detail.firstBondedOn = block.timestamp;
+            detail.latestBondedOn = block.timestamp;
+            detail.previousBondedOn = block.timestamp;
+        } else {
+            // If he has then update the latest bond time,
+            // and also it's previous one.
+            detail.previousBondedOn = detail.latestBondedOn;
+            detail.latestBondedOn = block.timestamp;
+        }
 
         _totalSupply = _totalSupply.add(amount);
         _balances[who] = _balances[who].add(amount);
@@ -136,6 +201,12 @@ contract Vault is AccessControl, StakingTimelock, Operator {
             directorShare >= unbondingAmount,
             'Boardroom: withdraw request greater than unbonded amount'
         );
+
+        // Reset the bonding timestamp, as we are withdrawing the entire amount.
+        BondingDetail storage detail = _bondingDetails[who];
+        detail.latestBondedOn = 0;
+        detail.previousBondedOn = 0;
+        detail.firstBondedOn = 0;
 
         _totalSupply = _totalSupply.sub(unbondingAmount);
         _balances[who] = directorShare.sub(unbondingAmount);
