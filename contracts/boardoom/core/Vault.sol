@@ -9,7 +9,7 @@ import {
 import {Operator} from '../../owner/Operator.sol';
 import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
 import {StakingTimelock} from '../../timelock/StakingTimelock.sol';
-import {IBoardroom} from '../../interfaces/IBoardroom.sol';
+import {IVaultBoardroom} from '../../interfaces/IVaultBoardroom.sol';
 
 /**
  * A vault is a contract that handles only the bonding & unbonding of tokens;
@@ -35,8 +35,8 @@ contract Vault is AccessControl, StakingTimelock, Operator {
 
     // The staked token.
     IERC20 public token;
-    IBoardroom public expansionBoardroom;
-    IBoardroom public contractionBoardroom;
+    IVaultBoardroom public expansionBoardroom;
+    IVaultBoardroom public contractionBoardroom;
 
     uint256 internal _totalSupply;
     bool public enableDeposits = true;
@@ -68,7 +68,6 @@ contract Vault is AccessControl, StakingTimelock, Operator {
      */
     constructor(IERC20 token_, uint256 duration_) StakingTimelock(duration_) {
         token = token_;
-
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _setupRole(BOARDROOM_ROLE, _msgSender());
     }
@@ -90,12 +89,12 @@ contract Vault is AccessControl, StakingTimelock, Operator {
         enableDeposits = val;
     }
 
-    function setExpansionBoardroom(IBoardroom boardroom) public onlyOwner {
-        expansionBoardroom = boardroom;
-    }
-
-    function setContractionBoardroom(IBoardroom boardroom) public onlyOwner {
-        contractionBoardroom = boardroom;
+    function setBoardrooms(
+        IVaultBoardroom _expansionBoardroom,
+        IVaultBoardroom _contractionBoardroom
+    ) external onlyOwner {
+        expansionBoardroom = _expansionBoardroom;
+        contractionBoardroom = _contractionBoardroom;
     }
 
     function bond(uint256 amount) external virtual {
@@ -111,21 +110,6 @@ contract Vault is AccessControl, StakingTimelock, Operator {
         _bond(who, amount);
     }
 
-    function getBondingDetail(address who)
-        public
-        returns (
-            uint256,
-            uint256,
-            uint256
-        )
-    {
-        return (
-            _bondingDetails[who].firstBondedOn,
-            _bondingDetails[who].latestBondedOn,
-            _bondingDetails[who].previousBondedOn
-        );
-    }
-
     function unbond(uint256 amount) external virtual {
         _unbond(msg.sender, amount);
     }
@@ -138,36 +122,17 @@ contract Vault is AccessControl, StakingTimelock, Operator {
         require(amount > 0, 'Boardroom: cannot bond 0');
         require(enableDeposits, 'Boardroom: deposits are disabled');
 
-        // Update the timestamp for bonding and it's previous one.
-        BondingDetail storage detail = _bondingDetails[who];
-        // Check if user has bonded before.
-        if (
-            detail.latestBondedOn == 0 &&
-            detail.previousBondedOn == 0 &&
-            detail.firstBondedOn == 0
-        ) {
-            // If he hasn't then mark current time as bonding time.
-            detail.firstBondedOn = block.timestamp;
-            detail.latestBondedOn = block.timestamp;
-            detail.previousBondedOn = block.timestamp;
-        } else {
-            // If he has then update the latest bond time,
-            // and also it's previous one.
-            detail.previousBondedOn = detail.latestBondedOn;
-            detail.latestBondedOn = block.timestamp;
-        }
-
         _totalSupply = _totalSupply.add(amount);
         _balances[who] = _balances[who].add(amount);
 
         // NOTE: has to be pre-approved.
         token.transferFrom(who, address(this), amount);
 
-        // if (address(expansionBoardroom) != address(0))
-        //     expansionBoardroom.updateRewards(who);
+        if (address(expansionBoardroom) != address(0))
+            expansionBoardroom.updateRewards(who);
 
-        // if (address(contractionBoardroom) != address(0))
-        //     contractionBoardroom.updateRewards(who);
+        if (address(contractionBoardroom) != address(0))
+            contractionBoardroom.updateRewards(who);
 
         emit Bonded(who, amount);
     }
@@ -201,11 +166,6 @@ contract Vault is AccessControl, StakingTimelock, Operator {
         );
 
         // Reset the bonding timestamp, as we are withdrawing the entire amount.
-        BondingDetail storage detail = _bondingDetails[who];
-        detail.latestBondedOn = 0;
-        detail.previousBondedOn = 0;
-        detail.firstBondedOn = 0;
-
         _totalSupply = _totalSupply.sub(unbondingAmount);
         _balances[who] = directorShare.sub(unbondingAmount);
         token.transfer(who, unbondingAmount);
