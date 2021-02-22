@@ -26,6 +26,8 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         uint256 rewardEarned;
         // Last time reward was claimed(not bound by current epoch).
         uint256 lastClaimedOn;
+        // The reward claimed in vesting period of this epoch.
+        uint256 rewardClaimedThisEpoch;
         // Snapshot of boardroom state when last claimed(not bound by current epoch).
         uint256 lastSnapshotIndex;
     }

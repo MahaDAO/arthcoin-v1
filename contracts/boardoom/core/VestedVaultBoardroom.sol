@@ -73,11 +73,15 @@ contract VestedVaultBoardroom is VaultBoardroom {
         // If past the vesting period, then claim entire reward.
         if (block.timestamp >= latestFundingTime.add(vestFor)) {
             // If past latest funding time and vesting period then we claim entire 100%
-            // reward from both previous and current.
-            reward = reward.add(directors[msg.sender].rewardPending);
+            // reward from both previous and current and subtract the reward already claimed
+            // in this epoch.
+            reward = reward.add(directors[msg.sender].rewardPending).sub(
+                directors[msg.sender].rewardClaimedThisEpoch
+            );
 
             directors[msg.sender].rewardEarned = 0;
             directors[msg.sender].rewardPending = 0;
+            directors[msg.sender].rewardClaimedThisEpoch = 0;
         }
         // If not past the vesting period, then claim reward as per linear vesting.
         else {
@@ -86,7 +90,7 @@ contract VestedVaultBoardroom is VaultBoardroom {
 
             // Calculate reward to be given assuming msg.sender has not claimed in current
             // vesting cycle(8hr cycle).
-            // NOTE: here we are multiplying by 1e18 to get precise decimal values.
+            // NOTE: here we are multiplying by 1e3 to get precise decimal values.
             uint256 timelyRewardRatio =
                 timeSinceLastFunded.mul(1e3).div(vestFor);
 
@@ -107,21 +111,23 @@ contract VestedVaultBoardroom is VaultBoardroom {
                 uint256 timeSinceLastClaimed =
                     block.timestamp.sub(directors[msg.sender].lastClaimedOn);
 
-                // NOTE: here we are multiplying by 1e18 to get precise decimal values.
+                // NOTE: here we are multiplying by 1e3 to get precise decimal values.
                 timelyRewardRatio = timeSinceLastClaimed.mul(1e3).div(vestFor);
             }
 
             // Update reward as per vesting.
-            // NOTE: here we are nullyfying the multplication by 1e18 effect on the top.
+            // NOTE: here we are nullyfying the multplication by 1e3 effect on the top.
             reward = timelyRewardRatio.mul(reward).div(1e3);
 
-            directors[msg.sender].rewardEarned = (
-                directors[msg.sender].rewardEarned.sub(reward)
+            // We add the reward claimed in this epoch to the variables.
+            directors[msg.sender].rewardClaimedThisEpoch = (
+                directors[msg.sender].rewardClaimedThisEpoch.add(reward)
             );
 
             // If this is the first claim inside this vesting period, then we also
             // give away 100% of previous vesting period's pending rewards.
             if (directors[msg.sender].lastClaimedOn < latestFundingTime) {
+                // HERE since this is the first claim we don't need to subtract claim reward in this epoch variable.
                 reward = reward.add(directors[msg.sender].rewardPending);
                 directors[msg.sender].rewardPending = 0;
             }
@@ -144,19 +150,16 @@ contract VestedVaultBoardroom is VaultBoardroom {
         Boardseat storage seat = directors[director];
 
         uint256 latestFundingTime = boardHistory[boardHistory.length - 1].time;
-        // uint256 previousFundingTime =
-        //     (
-        //         boardHistory.length > 1
-        //             ? boardHistory[boardHistory.length - 2].time
-        //             : 0
-        //     );
 
         // If rewards are updated before epoch start of the current,
         // then we mark claimable rewards as pending and set the
         // current earned rewards to 0.
         if (seat.lastClaimedOn < latestFundingTime) {
-            seat.rewardPending = seat.rewardEarned;
+            seat.rewardPending = seat.rewardEarned.sub(
+                seat.rewardClaimedThisEpoch
+            );
             seat.rewardEarned = 0;
+            seat.rewardClaimedThisEpoch = 0;
         }
 
         seat.rewardEarned = earned(director);
