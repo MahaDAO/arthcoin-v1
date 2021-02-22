@@ -65,6 +65,12 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         _;
     }
 
+    modifier onlyVault {
+        require(msg.sender == address(vault), 'Boardroom: not vault');
+
+        _;
+    }
+
     /**
      * Events.
      */

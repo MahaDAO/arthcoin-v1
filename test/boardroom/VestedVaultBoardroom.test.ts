@@ -47,6 +47,7 @@ describe('VestedVaultBoardroom', () => {
   let cash: Contract;
   let share: Contract;
   let boardroom: Contract;
+  let conBoardroom: Contract;
   let vault: Contract;
 
   beforeEach('Deploy contracts', async () => {
@@ -62,6 +63,14 @@ describe('VestedVaultBoardroom', () => {
       vault.address,
       REWARDS_VESTING
     );
+
+    conBoardroom = await VestedBondedBoardroom.connect(operator).deploy(
+      cash.address,
+      vault.address,
+      REWARDS_VESTING
+    );
+
+    vault.setBoardrooms(boardroom.address, conBoardroom.address);
   });
 
   describe('#Bond', () => {

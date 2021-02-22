@@ -146,6 +146,10 @@ contract VestedVaultBoardroom is VaultBoardroom {
         vault.bondFor(msg.sender, reward);
     }
 
+    function updateReward(address director) public onlyVault {
+        _updateReward(director);
+    }
+
     function _updateReward(address director) private {
         Boardseat storage seat = directors[director];
 

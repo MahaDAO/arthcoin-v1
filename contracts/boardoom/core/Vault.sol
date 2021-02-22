@@ -9,6 +9,7 @@ import {
 import {Operator} from '../../owner/Operator.sol';
 import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
 import {StakingTimelock} from '../../timelock/StakingTimelock.sol';
+import {VestedVaultBoardroom} from './VestedVaultBoardroom.sol';
 
 /**
  * A vault is a contract that handles only the bonding & unbonding of tokens;
@@ -28,6 +29,9 @@ contract Vault is AccessControl, StakingTimelock, Operator {
 
     uint256 internal _totalSupply;
     bool public enableDeposits = true;
+
+    VestedVaultBoardroom expansionBoardroom;
+    VestedVaultBoardroom contractionBoardroom;
 
     mapping(address => uint256) internal _balances;
 
@@ -60,6 +64,14 @@ contract Vault is AccessControl, StakingTimelock, Operator {
 
     function totalSupply() public view returns (uint256) {
         return _totalSupply;
+    }
+
+    function setBoardrooms(
+        VestedVaultBoardroom expansionBoardroom_,
+        VestedVaultBoardroom contractionBoardroom_
+    ) public {
+        expansionBoardroom = expansionBoardroom_;
+        contractionBoardroom = contractionBoardroom_;
     }
 
     function balanceOf(address who) public view returns (uint256) {
