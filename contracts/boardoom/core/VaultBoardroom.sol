@@ -62,6 +62,9 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
     mapping(address => Boardseat) internal directors;
     mapping(address => BondingSnapshot) internal bondingHistory;
 
+    // address(director) => uint256(Epcoh) => uint256(balance)
+    mapping(address => mapping(uint256 => uint256)) directorBalanceForEpoch;
+
     /**
      * Modifier.
      */
