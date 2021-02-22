@@ -157,6 +157,11 @@ contract VestedVaultBoardroom is VaultBoardroom {
         // This represents that boardroom has not been allocated seigniorage yet.
         uint256 latestFundingTime = 0;
 
+        // NOTE: the below if else is done because, currently vesting is working
+        // but epochly rewards and epoch claiming conditions aren't. Also the rewardPerShare
+        // are calculated only once during allocateSeigniorage. Hence the pool's supply may
+        // change after the allocation.
+
         // Check if seigniorage has been allocated more than once or not.
         if (boardHistory.length == 1) {
             // If only once, then we recalculate the reward per share depending on
