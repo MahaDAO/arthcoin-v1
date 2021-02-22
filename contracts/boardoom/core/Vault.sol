@@ -163,11 +163,11 @@ contract Vault is AccessControl, StakingTimelock, Operator {
         // NOTE: has to be pre-approved.
         token.transferFrom(who, address(this), amount);
 
-        // if (address(expansionBoardroom) != address(0))
-        //     expansionBoardroom.updateRewards(who);
+        if (address(expansionBoardroom) != address(0))
+            expansionBoardroom.updateRewards(who);
 
-        // if (address(contractionBoardroom) != address(0))
-        //     contractionBoardroom.updateRewards(who);
+        if (address(contractionBoardroom) != address(0))
+            contractionBoardroom.updateRewards(who);
 
         emit Bonded(who, amount);
     }
