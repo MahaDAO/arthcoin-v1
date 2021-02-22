@@ -149,7 +149,38 @@ contract VestedVaultBoardroom is VaultBoardroom {
     function _updateReward(address director) private {
         Boardseat storage seat = directors[director];
 
-        uint256 latestFundingTime = boardHistory[boardHistory.length - 1].time;
+        // Set the default latest funding time to 0.
+        // This represents that boardroom has not been allocated seigniorage yet.
+        uint256 latestFundingTime = 0;
+
+        // Check if seigniorage has been allocated more than once or not.
+        if (boardHistory.length == 1) {
+            // If only once, then we recalculate the reward per share depending on
+            // the reward that was received while allocating and current supply of
+            // the pool.
+
+            boardHistory[0].rewardPerShare = boardHistory[0]
+                .rewardReceived
+                .mul(1e18)
+                .div(vault.totalSupply());
+        } else {
+            // If more than once, then we recalculate the reward per share depending on
+            // the rewad per share of the previous allocation(Refer: vaultBoardroom.sol, L: ~168) and the reward that was
+            // received while allocating and current supply of the pool.
+            uint256 oldRewardPerShare =
+                boardHistory[boardHistory.length - 2].rewardPerShare;
+
+            boardHistory[boardHistory.length - 1].rewardPerShare = (
+                oldRewardPerShare.add(
+                    boardHistory[boardHistory.length - 1]
+                        .rewardReceived
+                        .mul(1e18)
+                        .div(vault.totalSupply())
+                )
+            );
+
+            latestFundingTime = boardHistory[boardHistory.length - 1].time;
+        }
 
         // If rewards are updated before epoch start of the current,
         // then we mark claimable rewards as pending and set the
