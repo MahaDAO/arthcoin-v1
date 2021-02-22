@@ -164,7 +164,18 @@ contract VestedVaultBoardroom is VaultBoardroom {
             snapshot.snapshotIndex = latestSnapshotIndex();
         }
 
+        // Anyways, the balanceWIthBonded would be 0 if we are withdrawing.
         _updateReward(director);
+
+        // This means we are not the first time bonding, and withdrawing.
+        if (
+            snapshot.firstOn != 0 &&
+            snapshot.snapshotIndex != 0 &&
+            vault.balanceOf(director) == 0
+        ) {
+            snapshot.firstOn = 0;
+            snapshot.snapshotIndex = 0;
+        }
     }
 
     function _updateReward(address director) private {

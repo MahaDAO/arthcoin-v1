@@ -113,6 +113,14 @@ contract Vault is AccessControl, StakingTimelock, Operator {
         _withdraw(msg.sender);
     }
 
+    function _updateRewards(address who) private {
+        if (address(expansionBoardroom) != address(0))
+            expansionBoardroom.updateReward(who);
+
+        if (address(contractionBoardroom) != address(0))
+            contractionBoardroom.updateReward(who);
+    }
+
     function _bond(address who, uint256 amount) private {
         require(amount > 0, 'Boardroom: cannot bond 0');
         require(enableDeposits, 'Boardroom: deposits are disabled');
@@ -124,11 +132,7 @@ contract Vault is AccessControl, StakingTimelock, Operator {
         // NOTE: has to be pre-approved.
         token.transferFrom(who, address(this), amount);
 
-        if (address(expansionBoardroom) != address(0))
-            expansionBoardroom.updateReward(who);
-
-        if (address(contractionBoardroom) != address(0))
-            contractionBoardroom.updateReward(who);
+        _updateRewards(who);
 
         emit Bonded(who, amount);
     }
@@ -168,6 +172,9 @@ contract Vault is AccessControl, StakingTimelock, Operator {
         token.transfer(who, unbondingAmount);
 
         _updateStakerDetails(who, 0);
+
+        _updateRewards(who);
+
         emit Withdrawn(who, unbondingAmount);
     }
 }
