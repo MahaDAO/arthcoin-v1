@@ -164,7 +164,7 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
     {
         require(amount > 0, 'Boardroom: Cannot allocate 0');
 
-        uint256 totalSupply = vault.totalSupply();
+        uint256 totalSupply = vault.totalBondedSupply();
 
         // 'Boardroom: Cannot allocate when totalSupply is 0'
         if (totalSupply == 0) return;

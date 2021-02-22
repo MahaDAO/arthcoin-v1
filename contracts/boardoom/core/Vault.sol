@@ -29,6 +29,7 @@ contract Vault is AccessControl, StakingTimelock, Operator {
 
     uint256 internal _totalSupply;
     bool public enableDeposits = true;
+    uint256 internal _totalBondedSupply;
 
     VestedVaultBoardroom expansionBoardroom;
     VestedVaultBoardroom contractionBoardroom;
@@ -78,6 +79,10 @@ contract Vault is AccessControl, StakingTimelock, Operator {
         return _balances[who];
     }
 
+    function totalBondedSupply() public view returns (uint256) {
+        return _totalBondedSupply;
+    }
+
     function balanceWithoutBonded(address who) public view returns (uint256) {
         uint256 unbondingAmount = getStakedAmount(msg.sender);
         return _balances[who].sub(unbondingAmount);
@@ -114,9 +119,16 @@ contract Vault is AccessControl, StakingTimelock, Operator {
 
         _totalSupply = _totalSupply.add(amount);
         _balances[who] = _balances[who].add(amount);
+        _totalBondedSupply = _totalBondedSupply.add(amount);
 
         // NOTE: has to be pre-approved.
         token.transferFrom(who, address(this), amount);
+
+        if (address(expansionBoardroom) != address(0))
+            expansionBoardroom.updateReward(who);
+
+        if (address(contractionBoardroom) != address(0))
+            contractionBoardroom.updateReward(who);
 
         emit Bonded(who, amount);
     }
@@ -132,6 +144,8 @@ contract Vault is AccessControl, StakingTimelock, Operator {
         );
 
         _updateStakerDetails(who, amount);
+
+        _totalBondedSupply = _totalBondedSupply.sub(amount);
 
         emit Unbonded(who, amount);
     }
