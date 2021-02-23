@@ -42,13 +42,7 @@ contract Vault is AccessControl, StakingTimelock, Operator {
     bool public enableDeposits = true;
     uint256 internal _totalBondedSupply;
 
-    VestedVaultBoardroom expansionBoardroom;
-    VestedVaultBoardroom contractionBoardroom;
-
     mapping(address => uint256) internal _balances;
-
-    // Mapping, to track the time at which bonding and it's previous bonding was done for a staker/bonder.
-    mapping(address => BondingDetail) internal _bondingDetails;
 
     /**
      * Modifier.
@@ -81,8 +75,8 @@ contract Vault is AccessControl, StakingTimelock, Operator {
     }
 
     function setBoardrooms(
-        VestedVaultBoardroom expansionBoardroom_,
-        VestedVaultBoardroom contractionBoardroom_
+        IVaultBoardroom expansionBoardroom_,
+        IVaultBoardroom contractionBoardroom_
     ) public {
         expansionBoardroom = expansionBoardroom_;
         contractionBoardroom = contractionBoardroom_;
@@ -103,14 +97,6 @@ contract Vault is AccessControl, StakingTimelock, Operator {
 
     function toggleDeposits(bool val) external onlyOwner {
         enableDeposits = val;
-    }
-
-    function setBoardrooms(
-        IVaultBoardroom _expansionBoardroom,
-        IVaultBoardroom _contractionBoardroom
-    ) external onlyOwner {
-        expansionBoardroom = _expansionBoardroom;
-        contractionBoardroom = _contractionBoardroom;
     }
 
     function bond(uint256 amount) external virtual {
@@ -169,6 +155,7 @@ contract Vault is AccessControl, StakingTimelock, Operator {
         );
 
         _updateStakerDetails(who, amount);
+        _updateRewards(who);
 
         _totalBondedSupply = _totalBondedSupply.sub(amount);
 
@@ -194,7 +181,6 @@ contract Vault is AccessControl, StakingTimelock, Operator {
         token.transfer(who, unbondingAmount);
 
         _updateStakerDetails(who, 0);
-
         _updateRewards(who);
 
         emit Withdrawn(who, unbondingAmount);

@@ -241,7 +241,6 @@ contract VestedVaultBoardroom is VaultBoardroom {
 
     function _updateReward(address director) private {
         Boardseat storage seat = directors[director];
-        uint256 latestFundingTime = boardHistory[boardHistory.length - 1].time;
 
         // Set the default latest funding time to 0.
         // This represents that boardroom has not been allocated seigniorage yet.
