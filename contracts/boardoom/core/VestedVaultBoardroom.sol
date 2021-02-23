@@ -54,35 +54,22 @@ contract VestedVaultBoardroom is VaultBoardroom {
             uint256 firstBondedSnapshotIndex =
                 bondingHistory[director].snapshotIndex;
             storedRPS = boardHistory[firstBondedSnapshotIndex].rewardPerShare;
+        }
 
-            // if (latestSnapshotIndex() == 1) {
-            //     uint256 prevRewardEarned =
-            //         vault.balanceWithoutBonded(director).mul(storedRPS).div(
-            //             1e18
-            //         );
-
-            //     directors[director].rewardPending = directors[director]
-            //         .rewardPending
-            //         .add(prevRewardEarned);
-            // }
-        } else {
+        if (boardHistory.length > 2) {
             if (
-                latestSnapshotIndex().sub(
-                    directors[director].lastSnapshotIndex
-                ) >
-                1 &&
-                storedRPS != 0
+                bondingHistory[director].snapshotIndex < latestSnapshotIndex()
             ) {
-                // This means that, we have not claimed for some epochs in between.
-                // Hence, here we claim for those epochs.
                 uint256 lastRPS =
                     boardHistory[latestSnapshotIndex().sub(1)].rewardPerShare;
+
                 uint256 prevRewardEarned =
                     (
                         directors[director].lastClaimedOn < latestFundingTime
                             ? 0
                             : directors[director].rewardEarned
                     );
+
                 prevRewards = vault
                     .balanceWithoutBonded(director)
                     .mul(lastRPS.sub(storedRPS))
