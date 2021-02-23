@@ -183,8 +183,9 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         // 'Boardroom: Cannot allocate when totalSupply is 0'
         if (totalSupply == 0) return;
 
-        // Reward per share of the current epoch.
-        uint256 rps = amount.mul(1e18).div(totalSupply);
+        // Create & add new snapshot
+        uint256 prevRPS = getLatestSnapshot().rewardPerShare;
+        uint256 nextRPS = prevRPS.add(amount.mul(1e18).div(totalSupply));
 
         BoardSnapshot memory newSnapshot =
             BoardSnapshot({
