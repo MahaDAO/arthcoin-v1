@@ -1046,6 +1046,95 @@ describe('VestedVaultBoardroom', () => {
               );
           });
 
+          it('Should earn 250% after 3epochs, 4hrs in and if I own 100% of the pool', async () => {
+            const oldCashBalanceOfWhale = await cash.balanceOf(whale.address);
+            await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT)
+
+            await advanceTimeAndBlock(
+              provider,
+              12 * 60 * 60
+            );
+
+            await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT)
+
+            await advanceTimeAndBlock(
+              provider,
+              12 * 60 * 60
+            );
+
+            await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT)
+
+            await advanceTimeAndBlock(
+              provider,
+              4 * 60 * 60
+            );
+
+            await expect(boardroom.connect(whale).claimReward())
+              .to.emit(boardroom, 'RewardPaid')
+              .withArgs(whale.address, SEIGNIORAGE_AMOUNT
+                .add(SEIGNIORAGE_AMOUNT)
+                .add(SEIGNIORAGE_AMOUNT.div(2)))
+
+            expect(await share.balanceOf(whale.address)).to.eq(ZERO);
+            expect(await vault.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
+            expect(await cash.balanceOf(whale.address))
+              .to.eq(
+                oldCashBalanceOfWhale
+                  .add(SEIGNIORAGE_AMOUNT)
+                  .add(SEIGNIORAGE_AMOUNT)
+                  .add(SEIGNIORAGE_AMOUNT.div(2))
+              );
+          });
+
+          it('Should earn 350% after 4epochs, 4hrs in and if I own 100% of the pool', async () => {
+            const oldCashBalanceOfWhale = await cash.balanceOf(whale.address);
+            await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT)
+
+            await advanceTimeAndBlock(
+              provider,
+              12 * 60 * 60
+            );
+
+            await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT)
+
+            await advanceTimeAndBlock(
+              provider,
+              12 * 60 * 60
+            );
+
+            await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT)
+
+            await advanceTimeAndBlock(
+              provider,
+              12 * 60 * 60
+            );
+
+            await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT)
+
+            await advanceTimeAndBlock(
+              provider,
+              4 * 60 * 60
+            );
+
+            await expect(boardroom.connect(whale).claimReward())
+              .to.emit(boardroom, 'RewardPaid')
+              .withArgs(whale.address, SEIGNIORAGE_AMOUNT
+                .add(SEIGNIORAGE_AMOUNT)
+                .add(SEIGNIORAGE_AMOUNT)
+                .add(SEIGNIORAGE_AMOUNT.div(2)))
+
+            expect(await share.balanceOf(whale.address)).to.eq(ZERO);
+            expect(await vault.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
+            expect(await cash.balanceOf(whale.address))
+              .to.eq(
+                oldCashBalanceOfWhale
+                  .add(SEIGNIORAGE_AMOUNT)
+                  .add(SEIGNIORAGE_AMOUNT)
+                  .add(SEIGNIORAGE_AMOUNT)
+                  .add(SEIGNIORAGE_AMOUNT.div(2))
+              );
+          });
+
           it('Should earn 100%  percent after 8 hrs(epoch1), 150% after 3 epoch 4 hours if I own 100% of the pool', async () => {
             const oldCashBalanceOfWhale = await cash.balanceOf(whale.address);
             await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT)
@@ -1189,6 +1278,103 @@ describe('VestedVaultBoardroom', () => {
             expect(await cash.balanceOf(whale.address))
               .to.eq(
                 oldCashBalanceOfWhale
+                  .add(SEIGNIORAGE_AMOUNT)
+                  .add(
+                    SEIGNIORAGE_AMOUNT.sub(SEIGNIORAGE_AMOUNT.div(4))
+                  )
+              );
+          });
+
+          it('Should earn 275% after 3epochs 6 hrs in if I own 100% of the pool', async () => {
+            const oldCashBalanceOfWhale = await cash.balanceOf(whale.address);
+            await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT)
+
+            await advanceTimeAndBlock(
+              provider,
+              12 * 60 * 60
+            );
+
+            await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT)
+
+            await advanceTimeAndBlock(
+              provider,
+              12 * 60 * 60
+            );
+
+            await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT)
+
+            await advanceTimeAndBlock(
+              provider,
+              6 * 60 * 60
+            );
+
+            await expect(boardroom.connect(whale).claimReward())
+              .to.emit(boardroom, 'RewardPaid')
+              .withArgs(whale.address, SEIGNIORAGE_AMOUNT
+                .add(SEIGNIORAGE_AMOUNT)
+                .add(
+                  SEIGNIORAGE_AMOUNT.sub(SEIGNIORAGE_AMOUNT.div(4))
+                ))
+
+            expect(await share.balanceOf(whale.address)).to.eq(ZERO);
+            expect(await vault.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
+            expect(await cash.balanceOf(whale.address))
+              .to.eq(
+                oldCashBalanceOfWhale
+                  .add(SEIGNIORAGE_AMOUNT)
+                  .add(SEIGNIORAGE_AMOUNT)
+                  .add(
+                    SEIGNIORAGE_AMOUNT.sub(SEIGNIORAGE_AMOUNT.div(4))
+                  )
+              );
+          });
+
+          it('Should earn 375% after 4epochs 6 hrs in if I own 100% of the pool', async () => {
+            const oldCashBalanceOfWhale = await cash.balanceOf(whale.address);
+            await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT)
+
+            await advanceTimeAndBlock(
+              provider,
+              12 * 60 * 60
+            );
+
+            await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT)
+
+            await advanceTimeAndBlock(
+              provider,
+              12 * 60 * 60
+            );
+
+            await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT)
+
+            await advanceTimeAndBlock(
+              provider,
+              12 * 60 * 60
+            );
+
+            await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT)
+
+            await advanceTimeAndBlock(
+              provider,
+              6 * 60 * 60
+            );
+
+            await expect(boardroom.connect(whale).claimReward())
+              .to.emit(boardroom, 'RewardPaid')
+              .withArgs(whale.address, SEIGNIORAGE_AMOUNT
+                .add(SEIGNIORAGE_AMOUNT)
+                .add(SEIGNIORAGE_AMOUNT)
+                .add(
+                  SEIGNIORAGE_AMOUNT.sub(SEIGNIORAGE_AMOUNT.div(4))
+                ))
+
+            expect(await share.balanceOf(whale.address)).to.eq(ZERO);
+            expect(await vault.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
+            expect(await cash.balanceOf(whale.address))
+              .to.eq(
+                oldCashBalanceOfWhale
+                  .add(SEIGNIORAGE_AMOUNT)
+                  .add(SEIGNIORAGE_AMOUNT)
                   .add(SEIGNIORAGE_AMOUNT)
                   .add(
                     SEIGNIORAGE_AMOUNT.sub(SEIGNIORAGE_AMOUNT.div(4))
@@ -1457,6 +1643,79 @@ describe('VestedVaultBoardroom', () => {
             expect(await share.balanceOf(whale.address)).to.eq(ZERO);
             expect(await vault.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
             expect(await cash.balanceOf(whale.address)).to.eq(oldCashBalanceOfWhale.add(SEIGNIORAGE_AMOUNT));
+          });
+
+          it('Should earn 150% after 3epoch if I own 50% of the pool', async () => {
+            const oldCashBalanceOfWhale = await cash.balanceOf(whale.address);
+            await vault.connect(abuser).bond(STAKE_AMOUNT)
+            await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT)
+
+            await advanceTimeAndBlock(
+              provider,
+              12 * 60 * 61
+            );
+
+            await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT)
+
+            await advanceTimeAndBlock(
+              provider,
+              12 * 60 * 61
+            );
+
+            await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT);
+
+            await advanceTimeAndBlock(
+              provider,
+              9 * 60 * 61
+            );
+
+            await expect(boardroom.connect(whale).claimReward())
+              .to.emit(boardroom, 'RewardPaid')
+              .withArgs(whale.address, SEIGNIORAGE_AMOUNT.add(SEIGNIORAGE_AMOUNT.div(2)))
+
+            expect(await share.balanceOf(whale.address)).to.eq(ZERO);
+            expect(await vault.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
+            expect(await cash.balanceOf(whale.address)).to.eq(oldCashBalanceOfWhale.add(SEIGNIORAGE_AMOUNT).add(SEIGNIORAGE_AMOUNT.div(2)));
+          });
+
+          it('Should earn 200% after 3epoch if I own 50% of the pool', async () => {
+            const oldCashBalanceOfWhale = await cash.balanceOf(whale.address);
+            await vault.connect(abuser).bond(STAKE_AMOUNT)
+            await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT)
+
+            await advanceTimeAndBlock(
+              provider,
+              12 * 60 * 61
+            );
+
+            await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT)
+
+            await advanceTimeAndBlock(
+              provider,
+              12 * 60 * 61
+            );
+
+            await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT);
+
+            await advanceTimeAndBlock(
+              provider,
+              12 * 60 * 61
+            );
+
+            await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT);
+
+            await advanceTimeAndBlock(
+              provider,
+              10 * 60 * 61
+            );
+
+            await expect(boardroom.connect(whale).claimReward())
+              .to.emit(boardroom, 'RewardPaid')
+              .withArgs(whale.address, SEIGNIORAGE_AMOUNT.mul(2))
+
+            expect(await share.balanceOf(whale.address)).to.eq(ZERO);
+            expect(await vault.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
+            expect(await cash.balanceOf(whale.address)).to.eq(oldCashBalanceOfWhale.add(SEIGNIORAGE_AMOUNT.mul(2)));
           });
         })
 
