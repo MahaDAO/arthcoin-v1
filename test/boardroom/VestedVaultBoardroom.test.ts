@@ -1722,7 +1722,92 @@ describe('VestedVaultBoardroom', () => {
         expect(await cash.balanceOf(abuser.address)).to.eq(oldCashBalanceOfAbuser);
       });
 
+      it('should not earn anything from the 4 epochs if i bond after 4th allocation', async () => {
+        await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT)
+
+        await advanceTimeAndBlock(
+          provider,
+          12 * 60 * 60
+        );
+
+        await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT)
+
+        await advanceTimeAndBlock(
+          provider,
+          12 * 60 * 60
+        );
+
+        const oldCashBalanceOfAbuser = await cash.balanceOf(abuser.address);
+
+        await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT)
+
+        await advanceTimeAndBlock(
+          provider,
+          12 * 60 * 60
+        );
+
+        await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT)
+
+        await vault.connect(abuser).bond(STAKE_AMOUNT);
+
+        await advanceTimeAndBlock(
+          provider,
+          4 * 60 * 60
+        );
+
+        await expect(boardroom.connect(abuser).claimReward())
+          .to.not.emit(boardroom, 'RewardPaid')
+
+        expect(await share.balanceOf(abuser.address)).to.eq(ZERO);
+        expect(await vault.balanceOf(abuser.address)).to.eq(STAKE_AMOUNT);
+
+        expect(await cash.balanceOf(abuser.address)).to.eq(oldCashBalanceOfAbuser);
+      });
+
       it('should not earn anything from the 2 epochs if i bond before 3rd allocation', async () => {
+        await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT)
+
+        await advanceTimeAndBlock(
+          provider,
+          12 * 60 * 60
+        );
+
+        await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT)
+
+        await advanceTimeAndBlock(
+          provider,
+          12 * 60 * 60
+        );
+
+        const oldCashBalanceOfAbuser = await cash.balanceOf(abuser.address);
+
+        await vault.connect(abuser).bond(STAKE_AMOUNT);
+
+        await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT)
+
+        await advanceTimeAndBlock(
+          provider,
+          4 * 60 * 60
+        );
+
+        await expect(boardroom.connect(abuser).claimReward())
+          .to.emit(boardroom, 'RewardPaid')
+          .withArgs(abuser.address, SEIGNIORAGE_AMOUNT.div(2).div(2))
+
+        expect(await share.balanceOf(abuser.address)).to.eq(ZERO);
+        expect(await vault.balanceOf(abuser.address)).to.eq(STAKE_AMOUNT);
+
+        expect(await cash.balanceOf(abuser.address)).to.eq(oldCashBalanceOfAbuser.add(SEIGNIORAGE_AMOUNT.div(2).div(2)));
+      });
+
+      it('should not earn anything from the 3 epochs if i bond before 4th allocation', async () => {
+        await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT)
+
+        await advanceTimeAndBlock(
+          provider,
+          12 * 60 * 60
+        );
+
         await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT)
 
         await advanceTimeAndBlock(
@@ -1849,6 +1934,41 @@ describe('VestedVaultBoardroom', () => {
         expect(await share.balanceOf(abuser.address)).to.eq(ZERO);
         expect(await vault.balanceOf(abuser.address)).to.eq(STAKE_AMOUNT);
         expect(await cash.balanceOf(abuser.address)).to.eq(oldCashBalanceOfAbuser.add(SEIGNIORAGE_AMOUNT));
+      });
+
+      it('should earn 75% of the new rewards from the next epoch and 6hrs in owning 100% of the pool if only staker in both epoch', async () => {
+        await vault.connect(whale).unbond(STAKE_AMOUNT);
+        await advanceTimeAndBlock(
+          provider,
+          BOARDROOM_LOCK_PERIOD
+        )
+        await vault.connect(whale).withdraw();
+
+        await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT)
+
+
+        await advanceTimeAndBlock(
+          provider,
+          (12 * 60 * 60) - (BOARDROOM_LOCK_PERIOD)
+        );
+
+        const oldCashBalanceOfAbuser = await cash.balanceOf(abuser.address);
+
+        await vault.connect(abuser).bond(STAKE_AMOUNT);
+        await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT)
+
+        await advanceTimeAndBlock(
+          provider,
+          6 * 60 * 60
+        );
+
+        await expect(boardroom.connect(abuser).claimReward())
+          .to.emit(boardroom, 'RewardPaid')
+          .withArgs(abuser.address, SEIGNIORAGE_AMOUNT.sub(SEIGNIORAGE_AMOUNT.div(4)))
+
+        expect(await share.balanceOf(abuser.address)).to.eq(ZERO);
+        expect(await vault.balanceOf(abuser.address)).to.eq(STAKE_AMOUNT);
+        expect(await cash.balanceOf(abuser.address)).to.eq(oldCashBalanceOfAbuser.add(SEIGNIORAGE_AMOUNT.sub(SEIGNIORAGE_AMOUNT.div(4))));
       });
 
       it('should earn 100% of the new rewards from the next epoch owning 100% of the pool if only staker in curr epoch', async () => {
