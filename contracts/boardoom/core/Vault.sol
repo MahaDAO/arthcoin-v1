@@ -40,6 +40,10 @@ contract Vault is AccessControl, StakingTimelock, Operator {
 
     uint256 internal _totalSupply;
     bool public enableDeposits = true;
+    uint256 internal _totalBondedSupply;
+
+    VestedVaultBoardroom expansionBoardroom;
+    VestedVaultBoardroom contractionBoardroom;
 
     mapping(address => uint256) internal _balances;
 
@@ -76,8 +80,20 @@ contract Vault is AccessControl, StakingTimelock, Operator {
         return _totalSupply;
     }
 
+    function setBoardrooms(
+        VestedVaultBoardroom expansionBoardroom_,
+        VestedVaultBoardroom contractionBoardroom_
+    ) public {
+        expansionBoardroom = expansionBoardroom_;
+        contractionBoardroom = contractionBoardroom_;
+    }
+
     function balanceOf(address who) public view returns (uint256) {
         return _balances[who];
+    }
+
+    function totalBondedSupply() public view returns (uint256) {
+        return _totalBondedSupply;
     }
 
     function balanceWithoutBonded(address who) public view returns (uint256) {
@@ -118,21 +134,26 @@ contract Vault is AccessControl, StakingTimelock, Operator {
         _withdraw(msg.sender);
     }
 
+    function _updateRewards(address who) private {
+        if (address(expansionBoardroom) != address(0))
+            expansionBoardroom.updateReward(who);
+
+        if (address(contractionBoardroom) != address(0))
+            contractionBoardroom.updateReward(who);
+    }
+
     function _bond(address who, uint256 amount) private {
         require(amount > 0, 'Boardroom: cannot bond 0');
         require(enableDeposits, 'Boardroom: deposits are disabled');
 
         _totalSupply = _totalSupply.add(amount);
         _balances[who] = _balances[who].add(amount);
+        _totalBondedSupply = _totalBondedSupply.add(amount);
 
         // NOTE: has to be pre-approved.
         token.transferFrom(who, address(this), amount);
 
-        if (address(expansionBoardroom) != address(0))
-            expansionBoardroom.updateRewards(who);
-
-        if (address(contractionBoardroom) != address(0))
-            contractionBoardroom.updateRewards(who);
+        _updateRewards(who);
 
         emit Bonded(who, amount);
     }
@@ -148,6 +169,8 @@ contract Vault is AccessControl, StakingTimelock, Operator {
         );
 
         _updateStakerDetails(who, amount);
+
+        _totalBondedSupply = _totalBondedSupply.sub(amount);
 
         emit Unbonded(who, amount);
     }
@@ -171,6 +194,9 @@ contract Vault is AccessControl, StakingTimelock, Operator {
         token.transfer(who, unbondingAmount);
 
         _updateStakerDetails(who, 0);
+
+        _updateRewards(who);
+
         emit Withdrawn(who, unbondingAmount);
     }
 }

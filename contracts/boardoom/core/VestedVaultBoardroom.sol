@@ -101,6 +101,14 @@ contract VestedVaultBoardroom is VaultBoardroom {
                     )
             );
 
+        // If storedRPS is 0, that means we are claiming rewards for the first time, hence we need
+        // to check when we bonded and accordingly calculate the final rps.
+        if (storedRPS == 0) {
+            uint256 firstBondedSnapshotIndex =
+                bondingHistory[director].snapshotIndex;
+            storedRPS = boardHistory[firstBondedSnapshotIndex].rewardPerShare;
+        }
+
         return
             vault
                 .balanceWithoutBonded(director)
@@ -202,23 +210,42 @@ contract VestedVaultBoardroom is VaultBoardroom {
     }
 
     function updateReward(address director) public onlyVault {
+        BondingSnapshot storage snapshot = bondingHistory[director];
+
+        uint256 latestSnapshotIdx = latestSnapshotIndex();
+
+        // This means, we are bonding for the first time.
+        if (snapshot.firstOn == 0 && snapshot.snapshotIndex == 0) {
+            snapshot.firstOn = block.timestamp;
+            // NOTE: probably will revert/throw error in case not allocated yet.
+            snapshot.snapshotIndex = latestSnapshotIdx;
+        }
+
+        // Anyways, the balanceWIthBonded would be 0 if we are withdrawing.
         _updateReward(director);
+
+        // This means we are not the first time bonding, and withdrawing.
+        if (
+            snapshot.firstOn != 0 &&
+            snapshot.snapshotIndex != 0 &&
+            vault.balanceOf(director) == 0
+        ) {
+            snapshot.firstOn = 0;
+            snapshot.snapshotIndex = 0;
+        }
+
+        // Update the balance while recording this activity(whether withdraw of bond).
+        uint256 balance = vault.balanceWithoutBonded(director);
+        directorBalanceForEpoch[director][latestSnapshotIdx] = balance;
     }
 
     function _updateReward(address director) private {
         Boardseat storage seat = directors[director];
         uint256 latestFundingTime = boardHistory[boardHistory.length - 1].time;
 
-        // // Check if the user has last bonded on after the latest funding.
-        // // Also check if that's the only time user has ever bonded,
-        // if (
-        //     lastBondedOn == previousBondedOn && lastBondedOn > latestFundingTime
-        // ) {
-        //     // If that's the case, user should not get any reward, hence return 0.
-        //     // Since user has bonded after the latest bonding, and that's the only
-        //     // time he has bonded, so shouldn't get any rewards.
-        //     return;
-        // }
+        // Set the default latest funding time to 0.
+        // This represents that boardroom has not been allocated seigniorage yet.
+        uint256 latestFundingTime = boardHistory[boardHistory.length - 1].time;
 
         // If rewards are updated before epoch start of the current,
         // then we mark claimable rewards as pending and set the

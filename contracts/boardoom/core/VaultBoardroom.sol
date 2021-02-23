@@ -45,6 +45,13 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         uint256 totalSupply;
     }
 
+    struct BondingSnapshot {
+        // Time when first bonding was made.
+        uint256 firstOn;
+        // The snapshot index of when first bonded.
+        uint256 snapshotIndex;
+    }
+
     /**
      * State variables.
      */
@@ -55,6 +62,10 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
 
     BoardSnapshot[] internal boardHistory;
     mapping(address => Boardseat) internal directors;
+    mapping(address => BondingSnapshot) internal bondingHistory;
+
+    // address(director) => uint256(Epcoh) => uint256(balance)
+    mapping(address => mapping(uint256 => uint256)) directorBalanceForEpoch;
 
     /**
      * Modifier.
@@ -167,8 +178,7 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
     {
         require(amount > 0, 'Boardroom: Cannot allocate 0');
 
-        // Get the totalSupply of vault, when allocating.
-        uint256 totalSupply = vault.totalSupply();
+        uint256 totalSupply = vault.totalBondedSupply();
 
         // 'Boardroom: Cannot allocate when totalSupply is 0'
         if (totalSupply == 0) return;
