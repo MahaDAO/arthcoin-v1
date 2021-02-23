@@ -41,11 +41,11 @@ contract VestedVaultBoardroom is VaultBoardroom {
         // If last time rewards claimed were less than the latest epoch start time,
         // then we don't consider those rewards in further calculations and mark them
         // as pending.
-        uint256 rewardEarned =
+        uint256 rewardEarnedCurrEpoch =
             (
                 directors[director].lastClaimedOn < latestFundingTime
                     ? 0
-                    : directors[director].rewardEarned
+                    : directors[director].rewardEarnedCurrEpoch
             );
 
         // If storedRPS is 0, that means we are claiming rewards for the first time, hence we need
@@ -63,11 +63,11 @@ contract VestedVaultBoardroom is VaultBoardroom {
                 uint256 lastRPS =
                     boardHistory[latestSnapshotIndex().sub(1)].rewardPerShare;
 
-                uint256 prevRewardEarned =
+                uint256 prevToPrevEpochsRewardEarned =
                     (
                         directors[director].lastClaimedOn < latestFundingTime
                             ? 0
-                            : directors[director].rewardEarned
+                            : directors[director].rewardEarnedCurrEpoch
                     );
 
                 prevRewards = vault
@@ -75,7 +75,7 @@ contract VestedVaultBoardroom is VaultBoardroom {
                     .mul(lastRPS.sub(storedRPS))
                     .div(1e18);
 
-                prevRewards = prevRewards.add(prevRewardEarned);
+                prevRewards = prevRewards.add(prevToPrevEpochsRewardEarned);
 
                 directors[director].rewardPending = directors[director]
                     .rewardPending
@@ -88,7 +88,7 @@ contract VestedVaultBoardroom is VaultBoardroom {
                 .balanceWithoutBonded(director)
                 .mul(latestRPS.sub(storedRPS))
                 .div(1e18)
-                .add(rewardEarned);
+                .add(rewardEarnedCurrEpoch);
 
         return rewards.sub(prevRewards);
     }
@@ -104,7 +104,7 @@ contract VestedVaultBoardroom is VaultBoardroom {
     function claimReward() public override directorExists returns (uint256) {
         _updateReward(msg.sender);
 
-        uint256 reward = directors[msg.sender].rewardEarned;
+        uint256 reward = directors[msg.sender].rewardEarnedCurrEpoch;
         if (reward <= 0) return 0;
 
         uint256 latestFundingTime = boardHistory[boardHistory.length - 1].time;
@@ -115,12 +115,12 @@ contract VestedVaultBoardroom is VaultBoardroom {
             // reward from both previous and current and subtract the reward already claimed
             // in this epoch.
             reward = reward.add(directors[msg.sender].rewardPending).sub(
-                directors[msg.sender].rewardClaimedThisEpoch
+                directors[msg.sender].rewardClaimedCurrEpoch
             );
 
-            directors[msg.sender].rewardEarned = 0;
+            directors[msg.sender].rewardEarnedCurrEpoch = 0;
             directors[msg.sender].rewardPending = 0;
-            directors[msg.sender].rewardClaimedThisEpoch = 0;
+            directors[msg.sender].rewardClaimedCurrEpoch = 0;
         }
         // If not past the vesting period, then claim reward as per linear vesting.
         else {
@@ -159,8 +159,8 @@ contract VestedVaultBoardroom is VaultBoardroom {
             reward = timelyRewardRatio.mul(reward).div(1e3);
 
             // We add the reward claimed in this epoch to the variables.
-            directors[msg.sender].rewardClaimedThisEpoch = (
-                directors[msg.sender].rewardClaimedThisEpoch.add(reward)
+            directors[msg.sender].rewardClaimedCurrEpoch = (
+                directors[msg.sender].rewardClaimedCurrEpoch.add(reward)
             );
 
             // If this is the first claim inside this vesting period, then we also
@@ -191,6 +191,8 @@ contract VestedVaultBoardroom is VaultBoardroom {
         uint256 latestSnapshotIdx = latestSnapshotIndex();
 
         // This means, we are bonding for the first time.
+        // Hence we save the timestamp when, we first bond and the
+        // allocation index no. when we first bond.
         if (snapshot.firstOn == 0 && snapshot.snapshotIndex == 0) {
             snapshot.firstOn = block.timestamp;
             // NOTE: probably will revert/throw error in case not allocated yet.
@@ -226,14 +228,22 @@ contract VestedVaultBoardroom is VaultBoardroom {
         // then we mark claimable rewards as pending and set the
         // current earned rewards to 0.
         if (seat.lastClaimedOn < latestFundingTime) {
-            seat.rewardPending = seat.rewardEarned.sub(
-                seat.rewardClaimedThisEpoch
+            // This basically set's current reward's which are not claimed as pending.
+            // Since the user's last claim was before  the
+            // latestFundingTime(epoch timestamp when allocated latest).
+            seat.rewardPending = seat.rewardEarnedCurrEpoch.sub(
+                seat.rewardClaimedCurrEpoch
             );
-            seat.rewardEarned = 0;
-            seat.rewardClaimedThisEpoch = 0;
+            // Reset the counters for the latest epoch.
+            seat.rewardEarnedCurrEpoch = 0;
+            seat.rewardClaimedCurrEpoch = 0;
         }
 
-        seat.rewardEarned = earned(director);
+        // Generate fresh rewards for the current epoch.
+        // This should only include reward for curr epoch.
+        // If any remaining they are makred as pending.
+        seat.rewardEarnedCurrEpoch = earned(director);
+        // Update the last allocation index no. when claimed.
         seat.lastSnapshotIndex = latestSnapshotIndex();
     }
 }

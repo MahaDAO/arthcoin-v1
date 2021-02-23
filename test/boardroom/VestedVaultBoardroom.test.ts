@@ -1799,7 +1799,7 @@ describe('VestedVaultBoardroom', () => {
           it('Should earn 50% for the every epoch, if we claim 8 hrs after allocation(every epoch)', async () => {
             const oldCashBalanceOfWhale = await cash.balanceOf(whale.address);
 
-            await vault.connect(abuser).stake(SEIGNIORAGE_AMOUNT);
+            await vault.connect(abuser).bond(STAKE_AMOUNT);
             await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT)
 
             await advanceTimeAndBlock(
@@ -1829,7 +1829,7 @@ describe('VestedVaultBoardroom', () => {
 
             await expect(boardroom.connect(whale).claimReward())
               .to.emit(boardroom, 'RewardPaid')
-              .withArgs(whale.address, SEIGNIORAGE_AMOUNT)
+              .withArgs(whale.address, SEIGNIORAGE_AMOUNT.div(2))
 
             expect(await share.balanceOf(whale.address)).to.eq(ZERO);
             expect(await vault.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
@@ -1849,7 +1849,7 @@ describe('VestedVaultBoardroom', () => {
 
             await expect(boardroom.connect(whale).claimReward())
               .to.emit(boardroom, 'RewardPaid')
-              .withArgs(whale.address, SEIGNIORAGE_AMOUNT)
+              .withArgs(whale.address, SEIGNIORAGE_AMOUNT.div(2))
 
             expect(await share.balanceOf(whale.address)).to.eq(ZERO);
             expect(await vault.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
