@@ -32,58 +32,6 @@ contract VestedVaultBoardroom is VaultBoardroom {
      * Views/Getters.
      */
     function earned(address director) public view override returns (uint256) {
-        // // Get the timestamp when user has last bonded on. Also get the bonding previous time previous to it.
-        // uint256 lastBondedOn = 0;
-        // uint256 firstBondedOn = 0;
-        // uint256 previousBondedOn = 0;
-        // (firstBondedOn, lastBondedOn, previousBondedOn) = vault
-        //     .getBondingDetail(director);
-
-        // uint256 lastClaimedSnapshotIndex =
-        //     directors[director].lastSnapshotIndex;
-
-        // // Check if we've ever claimed rewards or not.
-        // if (lastClaimedSnapshotIndex == 0) {
-        //     // Check if we have
-        // } else {
-        //     // If we have, then we want to get rewards pending from that epoch if any.
-        //     // And also, all rewards from the next epoch to the current epoch.
-
-        //     uint256 rps = 0;
-
-        //     if (lastClaimedSnapshotIndex < latestSnapshotIndex()) {
-        //         for (
-        //             uint256 i = lastClaimedSnapshotIndex + 1; // +1 since we've already claimed at lastClaimedSnapshotIndex.
-        //             i <= latestSnapshotIndex(); // include the latestSnapshotIndex;
-        //             i++
-        //         ) {
-        //             rps = rps.add(
-        //                 boardHistory[i].rewardReceived.mul(1e18).div(
-        //                     boardHistory[i].totalSupply
-        //                 )
-        //             );
-        //         }
-        //     }
-        // }
-
-        // // If last time rewards claimed were less than the latest epoch start time,
-        // // then we don't consider those rewards in further calculations and mark them
-        // // as pending.
-        // uint256 latestFundingTime = boardHistory[boardHistory.length - 1].time;
-        // uint256 rewardEarned =
-        //     (
-        //         directors[director].lastClaimedOn < latestFundingTime
-        //             ? 0
-        //             : directors[director].rewardEarned
-        //     );
-
-        // return
-        //     vault
-        //         .balanceWithoutBonded(director)
-        //         .mul(latestRPS.sub(storedRPS))
-        //         .div(1e18)
-        //         .add(rewardEarned);
-
         uint256 latestRPS = getLatestSnapshot().rewardPerShare;
         uint256 storedRPS = getLastSnapshotOf(director).rewardPerShare;
 
@@ -96,9 +44,7 @@ contract VestedVaultBoardroom is VaultBoardroom {
             (
                 directors[director].lastClaimedOn < latestFundingTime
                     ? 0
-                    : directors[director].rewardEarned.sub(
-                        directors[director].rewardClaimedThisEpoch
-                    )
+                    : directors[director].rewardEarned
             );
 
         // If storedRPS is 0, that means we are claiming rewards for the first time, hence we need
