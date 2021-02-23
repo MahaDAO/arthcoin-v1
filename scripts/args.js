@@ -19,11 +19,11 @@
 
 const POOL_START_DATE = Math.floor(new Date("Feb 9 2021 15:00:10 GMT+0000").getTime() / 1000)
 const params = [
-  '0xb4d930279552397bba2ee473229f89ec245bc365',
-  '0x1c36d9e60cac6893652b74e357f3829a0f5095e0',
-  POOL_START_DATE
+  // 'VaultArth',
+  '0x0E3cC2c4FB9252d17d07C67135E48536071735D9',
+  86400 * 5
 ]
 
 module.exports = params
 
-// npx hardhat verify --constructor-args scripts/args.js 0xf2e9Eeb38c228c177176F44b0aFF91e4628D9c1B --network mainnet
+// npx hardhat verify --constructor-args scripts/args.js 0x44811EfF0f4dD2d7cB093A6d33bB6202Eb2eDF06 --network mainnet
