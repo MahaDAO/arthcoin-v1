@@ -14,9 +14,9 @@ async function main() {
 
   // Fetch contract factories.
 
-  const vaultName = 'VaultArth'
-  const vaultToken = '0x0E3cC2c4FB9252d17d07C67135E48536071735D9'
-  // const vaultToken = '0xb4d930279552397bba2ee473229f89ec245bc365'
+  const vaultName = 'VaultArthMlp'
+  // const vaultToken = '0x0E3cC2c4FB9252d17d07C67135E48536071735D9'
+  const vaultToken = '0x1c36d9e60cac6893652b74e357f3829a0f5095e0'
 
   const Vaults = await ethers.getContractFactory(vaultName);
 
@@ -26,7 +26,7 @@ async function main() {
   const day = 86400
   const params = [
     vaultToken,
-    day * 5
+    day
   ]
   const vault = await Vaults.connect(operator).deploy(...params);
 
