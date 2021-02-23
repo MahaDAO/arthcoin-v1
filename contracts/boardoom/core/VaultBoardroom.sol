@@ -41,8 +41,6 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         uint256 rewardReceived;
         // Equivalent amount per share staked.
         uint256 rewardPerShare;
-        // Vault's total supply at this point.
-        uint256 totalSupply;
     }
 
     struct BondingSnapshot {
@@ -103,8 +101,7 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
                 number: block.number,
                 time: 0,
                 rewardReceived: 0,
-                rewardPerShare: 0,
-                totalSupply: 0
+                rewardPerShare: 0
             });
         boardHistory.push(genesisSnapshot);
     }
@@ -183,16 +180,16 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         // 'Boardroom: Cannot allocate when totalSupply is 0'
         if (totalSupply == 0) return;
 
-        // Reward per share of the current epoch.
-        uint256 rps = amount.mul(1e18).div(totalSupply);
+        // Create & add new snapshot
+        uint256 prevRPS = getLatestSnapshot().rewardPerShare;
+        uint256 nextRPS = prevRPS.add(amount.mul(1e18).div(totalSupply));
 
         BoardSnapshot memory newSnapshot =
             BoardSnapshot({
                 number: block.number,
                 time: block.timestamp,
                 rewardReceived: amount,
-                rewardPerShare: rps,
-                totalSupply: totalSupply
+                rewardPerShare: nextRPS
             });
         boardHistory.push(newSnapshot);
 
