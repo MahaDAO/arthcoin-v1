@@ -138,7 +138,7 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         return getLatestSnapshot().rewardPerShare;
     }
 
-    function earned(address director) public view virtual returns (uint256) {
+    function earned(address director) internal virtual returns (uint256) {
         uint256 latestRPS = getLatestSnapshot().rewardPerShare;
         uint256 storedRPS = getLastSnapshotOf(director).rewardPerShare;
 

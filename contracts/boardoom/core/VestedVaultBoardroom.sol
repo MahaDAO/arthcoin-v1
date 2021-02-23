@@ -31,10 +31,11 @@ contract VestedVaultBoardroom is VaultBoardroom {
     /**
      * Views/Getters.
      */
-    function earned(address director) public view override returns (uint256) {
+    function earned(address director) internal override returns (uint256) {
         uint256 latestRPS = getLatestSnapshot().rewardPerShare;
         uint256 storedRPS = getLastSnapshotOf(director).rewardPerShare;
 
+        uint256 prevRewards = 0;
         uint256 latestFundingTime = boardHistory[boardHistory.length - 1].time;
 
         // If last time rewards claimed were less than the latest epoch start time,
@@ -53,14 +54,56 @@ contract VestedVaultBoardroom is VaultBoardroom {
             uint256 firstBondedSnapshotIndex =
                 bondingHistory[director].snapshotIndex;
             storedRPS = boardHistory[firstBondedSnapshotIndex].rewardPerShare;
+
+            // if (latestSnapshotIndex() == 1) {
+            //     uint256 prevRewardEarned =
+            //         vault.balanceWithoutBonded(director).mul(storedRPS).div(
+            //             1e18
+            //         );
+
+            //     directors[director].rewardPending = directors[director]
+            //         .rewardPending
+            //         .add(prevRewardEarned);
+            // }
+        } else {
+            if (
+                latestSnapshotIndex().sub(
+                    directors[director].lastSnapshotIndex
+                ) >
+                1 &&
+                storedRPS != 0
+            ) {
+                // This means that, we have not claimed for some epochs in between.
+                // Hence, here we claim for those epochs.
+                uint256 lastRPS =
+                    boardHistory[latestSnapshotIndex().sub(1)].rewardPerShare;
+                uint256 prevRewardEarned =
+                    (
+                        directors[director].lastClaimedOn < latestFundingTime
+                            ? 0
+                            : directors[director].rewardEarned
+                    );
+                prevRewards = vault
+                    .balanceWithoutBonded(director)
+                    .mul(lastRPS.sub(storedRPS))
+                    .div(1e18);
+
+                prevRewards = prevRewards.add(prevRewardEarned);
+
+                directors[director].rewardPending = directors[director]
+                    .rewardPending
+                    .add(prevRewards);
+            }
         }
 
-        return
+        uint256 rewards =
             vault
                 .balanceWithoutBonded(director)
                 .mul(latestRPS.sub(storedRPS))
                 .div(1e18)
                 .add(rewardEarned);
+
+        return rewards.sub(prevRewards);
     }
 
     /**
