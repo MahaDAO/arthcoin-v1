@@ -1799,7 +1799,7 @@ describe('VestedVaultBoardroom', () => {
           it('Should earn 50% for the every epoch, if we claim 8 hrs after allocation(every epoch)', async () => {
             const oldCashBalanceOfWhale = await cash.balanceOf(whale.address);
 
-            await boardroom.connect(abuser).stake(SEIGNIORAGE_AMOUNT);
+            await vault.connect(abuser).stake(SEIGNIORAGE_AMOUNT);
             await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT)
 
             await advanceTimeAndBlock(
