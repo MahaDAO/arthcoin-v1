@@ -32,10 +32,12 @@ contract VestedVaultBoardroom is VaultBoardroom {
      * Views/Getters.
      */
     function earned(address director) internal override returns (uint256) {
+        // Get the latest share per rewards i should get.
         uint256 latestRPS = getLatestSnapshot().rewardPerShare;
+        // Get the last share per rewards i have claimed.
         uint256 storedRPS = getLastSnapshotOf(director).rewardPerShare;
 
-        uint256 prevRewards = 0;
+        uint256 prevEpochRewards = 0;
         uint256 latestFundingTime = boardHistory[boardHistory.length - 1].time;
 
         // If last time rewards claimed were less than the latest epoch start time,
@@ -43,6 +45,11 @@ contract VestedVaultBoardroom is VaultBoardroom {
         // as pending.
         uint256 rewardEarnedCurrEpoch =
             (
+                // If i am have unclaimed amount from the previous epoch
+                // this `rewardEarnedCurrEpoch` should be set to 0
+                // because i just moved `rewardEarnedCurrEpoch` to  `rewardPending`
+                // in the _updateRewards func.
+                // Else it should be kept as it is.
                 directors[director].lastClaimedOn < latestFundingTime
                     ? 0
                     : directors[director].rewardEarnedCurrEpoch
@@ -52,17 +59,31 @@ contract VestedVaultBoardroom is VaultBoardroom {
         // to check when we bonded and accordingly calculate the final rps.
         if (storedRPS == 0) {
             uint256 firstBondedSnapshotIndex =
-                bondingHistory[director].snapshotIndex;
+                bondingHistory[director].snapshotIndexWhenFirstBonded;
+
+            // This gets the last epoch at which i bonded.
+            // if i bonded after 1st allocatin this would get rewardPerShare for 1st epoch.
+            // If i bonded after 2nd allocation would get rewardPerShare for 2nd epoch.
+            // and 0 if 1 bonded before 1st.
             storedRPS = boardHistory[firstBondedSnapshotIndex].rewardPerShare;
         }
 
+        // If the allocations are more than 2 the basically there's a possiblity
+        // that i have not claimed rewards for more than 1 epoch.
+        // this could have condition that i've not claimed at all or i have claimed 1st epoch
+        // but not 2nd and now claiming at 3rd(assuming curr epoch is 3rd)
+        // also we need to make sure that here, this code runs only if
+        // i've bonded before the latest epoch else, overfollow occurs in sub.
         if (boardHistory.length > 2) {
             if (
-                bondingHistory[director].snapshotIndex < latestSnapshotIndex()
+                bondingHistory[director].snapshotIndexWhenFirstBonded <
+                latestSnapshotIndex() // this condition is added as overflow issues were occuring in case where i bond after latestEpoch.
             ) {
+                // Get the last epohc's rewardPerShare.
                 uint256 lastRPS =
                     boardHistory[latestSnapshotIndex().sub(1)].rewardPerShare;
 
+                // Get the pending rewards from prev epochs.
                 uint256 prevToPrevEpochsRewardEarned =
                     (
                         directors[director].lastClaimedOn < latestFundingTime
@@ -70,19 +91,26 @@ contract VestedVaultBoardroom is VaultBoardroom {
                             : directors[director].rewardEarnedCurrEpoch
                     );
 
-                prevRewards = vault
+                // Get the reward i deserved from the last epoch to the last epoch i already claimed.
+                // if they are same this should be 0.
+                prevEpochRewards = vault
                     .balanceWithoutBonded(director)
                     .mul(lastRPS.sub(storedRPS))
                     .div(1e18);
 
-                prevRewards = prevRewards.add(prevToPrevEpochsRewardEarned);
+                // add the penidng rewards if any.
+                prevEpochRewards = prevEpochRewards.add(
+                    prevToPrevEpochsRewardEarned
+                );
 
+                // mark this as pending as these are till the last epoch.
                 directors[director].rewardPending = directors[director]
                     .rewardPending
-                    .add(prevRewards);
+                    .add(prevEpochRewards);
             }
         }
 
+        // calculate the reward from latest epoch to epoch i claimed last.
         uint256 rewards =
             vault
                 .balanceWithoutBonded(director)
@@ -90,7 +118,10 @@ contract VestedVaultBoardroom is VaultBoardroom {
                 .div(1e18)
                 .add(rewardEarnedCurrEpoch);
 
-        return rewards.sub(prevRewards);
+        // now we have done a duplication caluclation, as in we have calcuated rewards from latest to lastClaimed
+        // and from last to lastClaimed, i.e in case of 3 epoch lets say we claimed at 1.
+        // so we've done 3 - 1 && 2 - 1. both of this contain (2 - 1). hece we subtract that duplication here.
+        return rewards.sub(prevEpochRewards);
     }
 
     /**
@@ -104,6 +135,7 @@ contract VestedVaultBoardroom is VaultBoardroom {
     function claimReward() public override directorExists returns (uint256) {
         _updateReward(msg.sender);
 
+        // Get the current reward of the epoch.
         uint256 reward = directors[msg.sender].rewardEarnedCurrEpoch;
         if (reward <= 0) return 0;
 
@@ -118,6 +150,7 @@ contract VestedVaultBoardroom is VaultBoardroom {
                 directors[msg.sender].rewardClaimedCurrEpoch
             );
 
+            // Reset the counters to 0 as we claimed all.
             directors[msg.sender].rewardEarnedCurrEpoch = 0;
             directors[msg.sender].rewardPending = 0;
             directors[msg.sender].rewardClaimedCurrEpoch = 0;
@@ -159,6 +192,10 @@ contract VestedVaultBoardroom is VaultBoardroom {
             reward = timelyRewardRatio.mul(reward).div(1e3);
 
             // We add the reward claimed in this epoch to the variables.
+            // We basically do this to maintain a log of original reward, so we use that in
+            // vesting. and we use this counter to know how much from the original reward
+            // we have claimed in the current claim under the vesting period. Otherwise it becomes
+            // kind of curve vesting.
             directors[msg.sender].rewardClaimedCurrEpoch = (
                 directors[msg.sender].rewardClaimedCurrEpoch.add(reward)
             );
@@ -181,6 +218,7 @@ contract VestedVaultBoardroom is VaultBoardroom {
     }
 
     function claimAndReinvestReward() external virtual {
+        // NOTE: amount has to be approved from the frontend.
         uint256 reward = claimReward();
         vault.bondFor(msg.sender, reward);
     }
@@ -193,23 +231,29 @@ contract VestedVaultBoardroom is VaultBoardroom {
         // This means, we are bonding for the first time.
         // Hence we save the timestamp when, we first bond and the
         // allocation index no. when we first bond.
-        if (snapshot.firstOn == 0 && snapshot.snapshotIndex == 0) {
-            snapshot.firstOn = block.timestamp;
+        if (
+            snapshot.firstBondedOn == 0 &&
+            snapshot.snapshotIndexWhenFirstBonded == 0
+        ) {
+            snapshot.firstBondedOn = block.timestamp;
             // NOTE: probably will revert/throw error in case not allocated yet.
-            snapshot.snapshotIndex = latestSnapshotIdx;
+            snapshot.snapshotIndexWhenFirstBonded = latestSnapshotIdx;
         }
 
-        // Anyways, the balanceWIthBonded would be 0 if we are withdrawing.
+        // Update the rewards when bonding, unbonding and withdrawing.
+        // In case of withdrawing 100%, unbond and withdraw will both call this.
+        // However, the balanceWIthBonded would be 0 if we are unbonding, hence
+        // ideally effect should be same as withdrawing.
         _updateReward(director);
 
-        // This means we are not the first time bonding, and withdrawing.
+        // This means withdrawing, Hence reset the counters.
         if (
-            snapshot.firstOn != 0 &&
-            snapshot.snapshotIndex != 0 &&
+            snapshot.firstBondedOn != 0 &&
+            snapshot.snapshotIndexWhenFirstBonded != 0 &&
             vault.balanceOf(director) == 0
         ) {
-            snapshot.firstOn = 0;
-            snapshot.snapshotIndex = 0;
+            snapshot.firstBondedOn = 0;
+            snapshot.snapshotIndexWhenFirstBonded = 0;
         }
 
         // Update the balance while recording this activity(whether withdraw of bond).

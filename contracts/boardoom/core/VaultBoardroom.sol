@@ -45,9 +45,9 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
 
     struct BondingSnapshot {
         // Time when first bonding was made.
-        uint256 firstOn;
+        uint256 firstBondedOn;
         // The snapshot index of when first bonded.
-        uint256 snapshotIndex;
+        uint256 snapshotIndexWhenFirstBonded;
     }
 
     /**
