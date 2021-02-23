@@ -23,12 +23,12 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         // Pending reward from the previous epochs.
         uint256 rewardPending;
         // Total reward earned in this epoch.
-        uint256 rewardEarned;
+        uint256 rewardEarnedCurrEpoch;
         // Last time reward was claimed(not bound by current epoch).
         uint256 lastClaimedOn;
         // The reward claimed in vesting period of this epoch.
-        uint256 rewardClaimedThisEpoch;
-        // Snapshot of boardroom state when last claimed(not bound by current epoch).
+        uint256 rewardClaimedCurrEpoch;
+        // Snapshot of boardroom state when last epoch claimed.
         uint256 lastSnapshotIndex;
     }
 
@@ -45,9 +45,9 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
 
     struct BondingSnapshot {
         // Time when first bonding was made.
-        uint256 firstOn;
+        uint256 firstBondedOn;
         // The snapshot index of when first bonded.
-        uint256 snapshotIndex;
+        uint256 snapshotIndexWhenFirstBonded;
     }
 
     /**
@@ -138,7 +138,7 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         return getLatestSnapshot().rewardPerShare;
     }
 
-    function earned(address director) public view virtual returns (uint256) {
+    function earned(address director) internal virtual returns (uint256) {
         uint256 latestRPS = getLatestSnapshot().rewardPerShare;
         uint256 storedRPS = getLastSnapshotOf(director).rewardPerShare;
 
@@ -147,19 +147,19 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
                 .balanceWithoutBonded(director)
                 .mul(latestRPS.sub(storedRPS))
                 .div(1e18)
-                .add(directors[director].rewardEarned);
+                .add(directors[director].rewardEarnedCurrEpoch);
     }
 
     function claimReward() external virtual directorExists returns (uint256) {
         Boardseat memory seat = directors[msg.sender];
-        seat.rewardEarned = earned(msg.sender);
+        seat.rewardEarnedCurrEpoch = earned(msg.sender);
         seat.lastSnapshotIndex = latestSnapshotIndex();
         directors[msg.sender] = seat;
 
-        uint256 reward = directors[msg.sender].rewardEarned;
+        uint256 reward = directors[msg.sender].rewardEarnedCurrEpoch;
 
         if (reward > 0) {
-            directors[msg.sender].rewardEarned = 0;
+            directors[msg.sender].rewardEarnedCurrEpoch = 0;
             token.transfer(msg.sender, reward);
             emit RewardPaid(msg.sender, reward);
         }
