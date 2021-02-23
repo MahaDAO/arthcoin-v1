@@ -41,8 +41,6 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         uint256 rewardReceived;
         // Equivalent amount per share staked.
         uint256 rewardPerShare;
-        // Vault's total supply at this point.
-        uint256 totalSupply;
     }
 
     struct BondingSnapshot {
@@ -103,8 +101,7 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
                 number: block.number,
                 time: 0,
                 rewardReceived: 0,
-                rewardPerShare: 0,
-                totalSupply: 0
+                rewardPerShare: 0
             });
         boardHistory.push(genesisSnapshot);
     }
@@ -192,8 +189,7 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
                 number: block.number,
                 time: block.timestamp,
                 rewardReceived: amount,
-                rewardPerShare: rps,
-                totalSupply: totalSupply
+                rewardPerShare: nextRPS
             });
         boardHistory.push(newSnapshot);
 
