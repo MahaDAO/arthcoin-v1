@@ -58,9 +58,9 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
     Vault public vault;
     IERC20 public token;
 
-    BoardSnapshot[] internal boardHistory;
-    mapping(address => Boardseat) internal directors;
-    mapping(address => BondingSnapshot) internal bondingHistory;
+    BoardSnapshot[] public boardHistory;
+    mapping(address => Boardseat) public directors;
+    mapping(address => BondingSnapshot) public bondingHistory;
 
     // address(director) => uint256(Epcoh) => uint256(balance)
     mapping(address => mapping(uint256 => uint256)) directorBalanceForEpoch;
