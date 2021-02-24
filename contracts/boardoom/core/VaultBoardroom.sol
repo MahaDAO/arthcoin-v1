@@ -114,18 +114,22 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         return boardHistory.length.sub(1);
     }
 
-    function getDirector(address who) public view returns (Boardseat) {
+    function getDirector(address who) public view returns (Boardseat memory) {
         return directors[who];
     }
 
-    function getBoardhistory(uint256 i) public view returns (BoardSnapshot) {
+    function getBoardhistory(uint256 i)
+        public
+        view
+        returns (BoardSnapshot memory)
+    {
         return boardHistory[i];
     }
 
     function getBondingHistory(address who)
         public
         view
-        returns (BondingSnapshot)
+        returns (BondingSnapshot memory)
     {
         return bondingHistory[who];
     }
