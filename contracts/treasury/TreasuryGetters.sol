@@ -17,10 +17,11 @@ abstract contract TreasuryGetters is TreasuryState {
         returns (
             TreasuryLibrary.State memory s,
             TreasuryLibrary.OracleState memory o,
-            TreasuryLibrary.BoardroomState memory b
+            TreasuryLibrary.BoardroomState memory b,
+            TreasuryLibrary.Flags memory f
         )
     {
-        return (state, oracleState, boardroomState);
+        return (state, oracleState, boardroomState, flags);
     }
 
     function getGMUOraclePrice() public view returns (uint256) {
