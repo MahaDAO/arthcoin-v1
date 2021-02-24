@@ -24,11 +24,12 @@ async function migration(deployer, network, accounts) {
   accounts[0] = process.env.WALLET_KEY;
 
   const DAY = 86400;
-  const HOUR = 3600;
+  const MIN = 60;
+  const HOUR = 60 * MIN;
 
-  const REWARDS_VESTING = network === 'mainnet' ? 8 * HOUR : HOUR;
-  const TOKEN_LOCK_DURATION = network === 'mainnet' ? 5 * DAY : 60 * 5;
-  const LIQUIDITY_LOCK_DURATION = network === 'mainnet' ? 1 * DAY : 60 * 5;
+  const REWARDS_VESTING = network === 'mainnet' ? 8 * HOUR : MIN * 10;
+  const TOKEN_LOCK_DURATION = network === 'mainnet' ? 5 * DAY : MIN * 5;
+  const LIQUIDITY_LOCK_DURATION = network === 'mainnet' ? 1 * DAY : MIN * 5;
 
   // Deploy dai or fetch deployed dai.
   const dai = await getDAI(network, deployer, artifacts);
