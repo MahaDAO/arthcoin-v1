@@ -77,4 +77,4 @@ module.exports = async (deployer, network, accounts) => {
   }
 
   console.log(`Transferred the operator role from the deployer (${accounts[0]}) to Treasury (${Treasury.address})`);
-}
+};

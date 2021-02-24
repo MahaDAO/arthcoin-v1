@@ -39,6 +39,9 @@ async function migration(deployer, network, accounts) {
   const lpToken = await getPairAddress(dai.address, ARTH.address, network, deployer, artifacts);
   const mahaToken = await getMahaToken(network, deployer, artifacts);
 
+  const maharaja = await Maharaja.deployed();
+
+
   console.log('Deploying treasury library.');
 
   await deployer.deploy(TreasuryLibrary);
@@ -61,7 +64,10 @@ async function migration(deployer, network, accounts) {
 
   const treasury = await Treasury.deployed();
 
-  console.log('set all funds')
+  console.log('granting operator access');
+  await maharaja.grantOperator(treasury.address);
+
+  console.log('set all funds');
   await treasury.setAllFunds(
     ArthArthMlpLiquidityBoardroomV2.address,
     ArthMahaBoardroomV2.address,
