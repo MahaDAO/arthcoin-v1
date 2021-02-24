@@ -94,6 +94,7 @@ module.exports = {
       provider: function () {
         return new HDWalletProvider(
           [process.env.METAMASK_WALLET_SECRET],
+          // `https://ropsten.infura.io/v3/${process.env.INFURA_PROJECT_ID}`
           `https://weathered-young-wave.quiknode.io/75809a67-435c-4d8b-a287-649990316295/IHZHq4dJhpdQq85_QIA5Uidl_btMGwikH8tF3VNPZsgoFhaetWDXXdmkavW1TaTf5JrVwFWnMsx8aJ-fR01pTg==/`
         )
       },
