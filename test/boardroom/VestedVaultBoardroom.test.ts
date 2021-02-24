@@ -540,7 +540,7 @@ describe('VestedVaultBoardroom', () => {
     });
   });
 
-  describe.only('#earned', () => {
+  describe('#earned', () => {
     beforeEach('Should be able to stake', async () => {
       await Promise.all([
         share.connect(operator).mint(whale.address, STAKE_AMOUNT),
