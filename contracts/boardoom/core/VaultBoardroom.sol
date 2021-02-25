@@ -30,6 +30,8 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         uint256 rewardClaimedCurrEpoch;
         // Snapshot of boardroom state when last epoch claimed.
         uint256 lastSnapshotIndex;
+        // Rewards claimable now in the current/next claim.
+        uint256 rewardClaimableNow;
     }
 
     struct BoardSnapshot {

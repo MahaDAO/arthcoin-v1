@@ -27,28 +27,23 @@ contract VestedVaultBoardroom is VaultBoardroom {
         vestFor = vestFor_;
     }
 
-    // function claimed(address director) view return (uint256, uint256) {
-    //     return (claimedThisEpoch, claimedSoFarInTotal)
-    // }
-
-    // function claimRewardsV2() {
-    //     (rewardsEarnedThisEpoch, rewardsAccumulatedFromPrevEpochs) = earnedV2(msg.sender);
-
-    //     // send rewardsAccumulatedFromPrevEpochs - claimedSoFarInTotal
-
-    //     // vest rewardsEarnedThisEpoch - claimedThisEpoch
-
-    //     // updated claimed state
-    //     // claimedThisEpoch += (rewardsEarnedThisEpoch - claimedThisEpoch)
-    //     // claimedSoFarInTotal += (rewardsAccumulatedFromPrevEpochs - claimedSoFarInTotal) + claimedThisEpoch
-    // }
-
     /**
      * Views/Getters.
      */
 
-    function earnedV2(address director) public view returns (uint256, uint256) {
+    function earnedV2(address director)
+        public
+        view
+        returns (
+            uint256,
+            uint256,
+            uint256,
+            uint256
+        )
+    {
+        uint256 rewardsClaimableNow = 0;
         uint256 rewardsEarnedThisEpoch = 0;
+        uint256 rewardsClaimedThisEpoch = 0;
         uint256 rewardsAccumulatedFromPrevEpochs = 0;
 
         uint256 latestRPS = getLatestSnapshot().rewardPerShare;
@@ -129,40 +124,57 @@ contract VestedVaultBoardroom is VaultBoardroom {
         }
 
         // Check if there's some reward already earned in curr epoch and add to curr epoch rewards.
-        if (rewardAlreadyEarnedInCurrEpoch > 0)
+        if (rewardsAccumulatedFromPrevEpochs > 0)
             rewardsEarnedThisEpoch = rewardsEarnedThisEpoch.add(
                 rewardAlreadyEarnedInCurrEpoch
             );
 
-        return (rewardsEarnedThisEpoch, rewardsAccumulatedFromPrevEpochs);
+        (
+            rewardsEarnedThisEpoch,
+            rewardsClaimableNow,
+            rewardsClaimedThisEpoch,
+            rewardsAccumulatedFromPrevEpochs
+        ) = getRewardsClaimableNow(
+            director,
+            rewardsEarnedThisEpoch,
+            rewardsAccumulatedFromPrevEpochs
+        );
+
+        return (
+            rewardsEarnedThisEpoch,
+            rewardsClaimableNow,
+            rewardsClaimedThisEpoch,
+            rewardsAccumulatedFromPrevEpochs
+        );
     }
 
     /**
      * Setters.
      */
 
-    function estimateEarned(address director) public view returns (uint256) {
-        uint256 rewardsEarnedThisEpoch = 0;
-        uint256 rewardsAccumulatedFromPrevEpochs = 0;
-
-        (rewardsEarnedThisEpoch, rewardsAccumulatedFromPrevEpochs) = earnedV2(
-            director
-        );
-
-        return rewardsEarnedThisEpoch.add(rewardsAccumulatedFromPrevEpochs);
-    }
-
-    function setVestFor(uint256 period) public onlyOwner {
-        emit VestingPeriodChanged(vestFor, period);
-        vestFor = period;
-    }
-
-    function claimReward() public override directorExists returns (uint256) {
-        _updateReward(msg.sender);
-
+    function getRewardsClaimableNow(
+        address director,
+        uint256 rewardEarnedThisEpoch,
+        uint256 rewardAccumulatedFromPrevEpochs
+    )
+        public
+        view
+        returns (
+            uint256,
+            uint256,
+            uint256,
+            uint256
+        )
+    {
         // Get the current reward of the epoch.
-        uint256 reward = directors[msg.sender].rewardEarnedCurrEpoch;
-        if (reward <= 0) return 0;
+        uint256 rewardClaimableNow = rewardEarnedThisEpoch;
+        if (rewardClaimableNow <= 0)
+            return (
+                0,
+                directors[director].rewardClaimableNow,
+                directors[director].rewardClaimedCurrEpoch,
+                rewardAccumulatedFromPrevEpochs
+            );
 
         uint256 latestFundingTime = boardHistory[boardHistory.length - 1].time;
 
@@ -171,14 +183,12 @@ contract VestedVaultBoardroom is VaultBoardroom {
             // If past latest funding time and vesting period then we claim entire 100%
             // reward from both previous and current(and subtract the reward already claimed
             // in this epoch).
-            reward = reward.add(directors[msg.sender].rewardPending).sub(
-                directors[msg.sender].rewardClaimedCurrEpoch
+            rewardClaimableNow = rewardClaimableNow.add(
+                rewardAccumulatedFromPrevEpochs
             );
 
-            // Reset the counters to 0 as we claimed all.
-            directors[msg.sender].rewardEarnedCurrEpoch = 0;
-            directors[msg.sender].rewardPending = 0;
-            directors[msg.sender].rewardClaimedCurrEpoch = 0;
+            // Return (rewardEarnedThisEpoch, rewardClaimableNow, rewardClaimedCurrEpoch, rewardPending)
+            return (0, rewardClaimableNow, 0, 0);
         }
         // If not past the vesting period, then claim reward as per linear vesting.
         else {
@@ -214,27 +224,60 @@ contract VestedVaultBoardroom is VaultBoardroom {
 
             // Update reward as per vesting.
             // NOTE: here we are nullyfying the multplication by 1e3 effect on the top.
-            reward = timelyRewardRatio.mul(reward).div(1e3);
-
-            // We add the reward claimed in this epoch to the variables.
-            // We basically do this to maintain a log of original reward, so we use that in
-            // vesting. and we use this counter to know how much from the original reward
-            // we have claimed in the current claim under the vesting period. Otherwise it becomes
-            // kind of curve vesting.
-            directors[msg.sender].rewardClaimedCurrEpoch = (
-                directors[msg.sender].rewardClaimedCurrEpoch.add(reward)
-            );
+            rewardClaimableNow = timelyRewardRatio
+                .mul(rewardEarnedThisEpoch)
+                .div(1e3);
 
             // If this is the first claim inside this vesting period, then we also
             // give away 100% of previous vesting period's pending rewards.
             if (directors[msg.sender].lastClaimedOn < latestFundingTime) {
                 // HERE since this is the first claim we don't need to subtract claim reward in this epoch variable.
-                reward = reward.add(directors[msg.sender].rewardPending);
-                directors[msg.sender].rewardPending = 0;
+                rewardClaimableNow = rewardClaimableNow.add(
+                    rewardAccumulatedFromPrevEpochs
+                );
+                rewardAccumulatedFromPrevEpochs = 0;
             }
         }
 
+        return (
+            rewardEarnedThisEpoch,
+            rewardClaimableNow,
+            directors[director].rewardClaimedCurrEpoch,
+            rewardAccumulatedFromPrevEpochs
+        );
+    }
+
+    function estimateEarned(address director) public view returns (uint256) {
+        uint256 rewardsEarnedThisEpoch = 0;
+        uint256 rewardClaimableNow = 0;
+        uint256 rewardClaimedInThisEpoch = 0;
+        uint256 rewardsAccumulatedFromPrevEpochs = 0;
+
+        (
+            rewardsEarnedThisEpoch,
+            rewardClaimableNow,
+            rewardClaimedInThisEpoch,
+            rewardsAccumulatedFromPrevEpochs
+        ) = earnedV2(director);
+
+        return rewardClaimableNow;
+    }
+
+    function setVestFor(uint256 period) public onlyOwner {
+        emit VestingPeriodChanged(vestFor, period);
+        vestFor = period;
+    }
+
+    function claimReward() public override directorExists returns (uint256) {
+        _updateReward(msg.sender);
+
+        uint256 reward = directors[msg.sender].rewardClaimableNow;
+
+        directors[msg.sender].rewardClaimableNow = 0;
         directors[msg.sender].lastClaimedOn = block.timestamp;
+        directors[msg.sender].rewardClaimedCurrEpoch = directors[msg.sender]
+            .rewardClaimedCurrEpoch
+            .add(reward);
 
         token.transfer(msg.sender, reward);
         emit RewardPaid(msg.sender, reward);
@@ -288,24 +331,33 @@ contract VestedVaultBoardroom is VaultBoardroom {
         if (seat.lastClaimedOn < latestFundingTime) {
             // If we are then we mark the overall reward of the current epoch minus
             // the reward already claimed in curr epoch as pending.
-            seat.rewardPending = seat.rewardEarnedCurrEpoch.sub(
-                seat.rewardClaimedCurrEpoch
-            );
+            seat.rewardPending = seat
+                .rewardEarnedCurrEpoch
+                .sub(seat.rewardClaimedCurrEpoch)
+                .sub(seat.rewardClaimableNow);
 
             // Reset the counters for the latest epoch.
             seat.rewardEarnedCurrEpoch = 0;
             seat.rewardClaimedCurrEpoch = 0;
         }
 
+        uint256 rewardsClaimableNow = 0;
         uint256 rewardsEarnedThisEpoch = 0;
+        uint256 rewardClaimedThisEpoch = 0;
         uint256 rewardsAccumulatedFromPrevEpochs = 0;
         // Get the fresh rewards of this epoch.
-        (rewardsEarnedThisEpoch, rewardsAccumulatedFromPrevEpochs) = earnedV2(
-            director
-        );
+        (
+            rewardsEarnedThisEpoch,
+            rewardsClaimableNow,
+            rewardClaimedThisEpoch,
+            rewardsAccumulatedFromPrevEpochs
+        ) = earnedV2(director);
 
+        // Update the state.
         seat.rewardPending = rewardsAccumulatedFromPrevEpochs;
         seat.rewardEarnedCurrEpoch = rewardsEarnedThisEpoch;
+        seat.rewardClaimedCurrEpoch = rewardClaimedThisEpoch;
+        seat.rewardClaimableNow = rewardsClaimableNow;
         seat.lastSnapshotIndex = latestSnapshotIndex();
     }
 }
