@@ -224,9 +224,9 @@ contract VestedVaultBoardroom is VaultBoardroom {
 
             // Update reward as per vesting.
             // NOTE: here we are nullyfying the multplication by 1e3 effect on the top.
-            rewardClaimableNow = timelyRewardRatio
-                .mul(rewardEarnedThisEpoch)
-                .div(1e3);
+            rewardClaimableNow = directors[director].rewardClaimableNow.add(
+                timelyRewardRatio.mul(rewardEarnedThisEpoch).div(1e3)
+            );
 
             // If this is the first claim inside this vesting period, then we also
             // give away 100% of previous vesting period's pending rewards.
