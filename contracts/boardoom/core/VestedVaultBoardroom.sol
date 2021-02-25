@@ -183,9 +183,9 @@ contract VestedVaultBoardroom is VaultBoardroom {
             // If past latest funding time and vesting period then we claim entire 100%
             // reward from both previous and current(and subtract the reward already claimed
             // in this epoch).
-            rewardClaimableNow = rewardClaimableNow.add(
-                rewardAccumulatedFromPrevEpochs
-            );
+            rewardClaimableNow = rewardClaimableNow
+                .add(rewardAccumulatedFromPrevEpochs)
+                .sub(directors[director].rewardClaimedCurrEpoch);
 
             // Return (rewardEarnedThisEpoch, rewardClaimableNow, rewardClaimedCurrEpoch, rewardPending)
             return (0, rewardClaimableNow, 0, 0);
@@ -331,14 +331,14 @@ contract VestedVaultBoardroom is VaultBoardroom {
         if (seat.lastClaimedOn < latestFundingTime) {
             // If we are then we mark the overall reward of the current epoch minus
             // the reward already claimed in curr epoch as pending.
-            seat.rewardPending = seat
-                .rewardEarnedCurrEpoch
-                .sub(seat.rewardClaimedCurrEpoch)
-                .sub(seat.rewardClaimableNow);
+            seat.rewardPending = seat.rewardEarnedCurrEpoch.sub(
+                seat.rewardClaimedCurrEpoch
+            );
 
             // Reset the counters for the latest epoch.
             seat.rewardEarnedCurrEpoch = 0;
             seat.rewardClaimedCurrEpoch = 0;
+            seat.rewardClaimableNow = 0;
         }
 
         uint256 rewardsClaimableNow = 0;
