@@ -4,15 +4,13 @@ import { solidity } from 'ethereum-waffle';
 import { Contract, ContractFactory, BigNumber, utils } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address';
 
-import { advanceTimeAndBlock, latestBlocktime } from '../shared/utilities';
-import { TREASURY_START_DATE } from '../../deploy.config';
-// import { TREASURY_START_DATE } from '../../deploy.config';
+import { advanceTimeAndBlock, latestBlocktime } from '../../shared/utilities';
 
 
 chai.use(solidity);
 
 
-describe.only('VestedVaultBoardroom', () => {
+describe('VestedVaultBoardroom with same amounts', () => {
   // const DAY = 86400;
 
   const REWARDS_VESTING = 8 * 3600
