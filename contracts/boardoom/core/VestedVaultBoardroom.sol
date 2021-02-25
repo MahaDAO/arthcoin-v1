@@ -87,20 +87,23 @@ contract VestedVaultBoardroom is VaultBoardroom {
                 // Calculate the rewards from the 2nd last allocation point to the
                 // point where director last claimed(or first bonded)
                 // and mark them as pending, since they are from prev epochs.
-                rewardsAccumulatedFromPrevEpochs = vault
-                    .balanceWithoutBonded(director)
-                    .mul(lastRPS.sub(claimedRPS))
-                    .div(1e18);
+                rewardsAccumulatedFromPrevEpochs = lastRPS.sub(claimedRPS).div(
+                    1e18
+                );
+
+                rewardsAccumulatedFromPrevEpochs = rewardsAccumulatedFromPrevEpochs
+                    .mul(vault.balanceWithoutBonded(director));
             }
         }
 
         // Calcuate the reward earned from the current allocation to
         // the last allocation. If boardroom has been allocated only once,
         // then this will calculate the rewards till the start.
-        rewardsEarnedThisEpoch = vault
-            .balanceWithoutBonded(director)
-            .mul(latestRPS.sub(lastRPS))
-            .div(1e18);
+        rewardsEarnedThisEpoch = latestRPS.sub(lastRPS).div(1e18);
+
+        rewardsEarnedThisEpoch = rewardsEarnedThisEpoch.mul(
+            vault.balanceWithoutBonded(director)
+        );
 
         // Check if the last time we claimed was before the latest seigniorage allocations.
         if (
@@ -115,11 +118,10 @@ contract VestedVaultBoardroom is VaultBoardroom {
                     .add(directors[director].rewardPending);
             else {
                 rewardsAccumulatedFromPrevEpochs = rewardsAccumulatedFromPrevEpochs
-                    .add(
-                    directors[director].rewardEarnedCurrEpoch.sub(
-                        directors[director].rewardClaimedCurrEpoch
-                    )
-                );
+                    .add(directors[director].rewardEarnedCurrEpoch);
+
+                rewardsAccumulatedFromPrevEpochs = rewardsAccumulatedFromPrevEpochs
+                    .sub(directors[director].rewardClaimedCurrEpoch);
             }
         }
 
@@ -273,11 +275,21 @@ contract VestedVaultBoardroom is VaultBoardroom {
 
         uint256 reward = directors[msg.sender].rewardClaimableNow;
 
+        if (reward == 0) return 0;
+
         directors[msg.sender].rewardClaimableNow = 0;
         directors[msg.sender].lastClaimedOn = block.timestamp;
-        directors[msg.sender].rewardClaimedCurrEpoch = directors[msg.sender]
-            .rewardClaimedCurrEpoch
-            .add(reward);
+
+        if (
+            block.timestamp >=
+            boardHistory[latestSnapshotIndex()].time.add(vestFor)
+        ) {
+            directors[msg.sender].rewardClaimedCurrEpoch = 0;
+        } else {
+            directors[msg.sender].rewardClaimedCurrEpoch = directors[msg.sender]
+                .rewardClaimedCurrEpoch
+                .add(reward);
+        }
 
         token.transfer(msg.sender, reward);
         emit RewardPaid(msg.sender, reward);
