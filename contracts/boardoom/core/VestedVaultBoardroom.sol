@@ -75,7 +75,7 @@ contract VestedVaultBoardroom is VaultBoardroom {
         if (boardHistory.length > 2) {
             if (
                 // Makes sure that we have bonded before the latest allocation, only then run this code.
-                // If check removed, we won't be able to bond for the newest allocation.
+                // If check removed, we won't be able to bond before the upcoming allocation.
                 bondingHistory[director].snapshotIndexWhenFirstBonded <
                 latestSnapshotIndex() &&
                 // Makes sure that we have not claimed in the same epoch or that
@@ -169,8 +169,8 @@ contract VestedVaultBoardroom is VaultBoardroom {
         // If past the vesting period, then claim entire reward.
         if (block.timestamp >= latestFundingTime.add(vestFor)) {
             // If past latest funding time and vesting period then we claim entire 100%
-            // reward from both previous and current and subtract the reward already claimed
-            // in this epoch.
+            // reward from both previous and current(and subtract the reward already claimed
+            // in this epoch).
             reward = reward.add(directors[msg.sender].rewardPending).sub(
                 directors[msg.sender].rewardClaimedCurrEpoch
             );
