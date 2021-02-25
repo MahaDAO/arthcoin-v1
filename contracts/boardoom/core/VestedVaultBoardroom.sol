@@ -28,6 +28,26 @@ contract VestedVaultBoardroom is VaultBoardroom {
         vestFor = vestFor_;
     }
 
+    // function claimed(address director) view return (uint256, uint256) {
+    //     return (claimedThisEpoch, claimedSoFarInTotal)
+    // }
+
+    // function claimRewardsV2() {
+    //     (rewardsEarnedThisEpoch, rewardsAccumulatedFromPrevEpochs) = earnedV2(msg.sender);
+
+    //     // send rewardsAccumulatedFromPrevEpochs - claimedSoFarInTotal
+
+    //     // vest rewardsEarnedThisEpoch - claimedThisEpoch
+
+    //     // updated claimed state
+    //     // claimedThisEpoch += (rewardsEarnedThisEpoch - claimedThisEpoch)
+    //     // claimedSoFarInTotal += (rewardsAccumulatedFromPrevEpochs - claimedSoFarInTotal) + claimedThisEpoch
+    // }
+
+    /**
+     * Views/Getters.
+     */
+
     function earnedV2(address director) public view returns (uint256, uint256) {
         uint256 rewardsEarnedThisEpoch = 0;
         uint256 rewardsAccumulatedFromPrevEpochs = 0;
@@ -100,25 +120,14 @@ contract VestedVaultBoardroom is VaultBoardroom {
         return (rewardsEarnedThisEpoch, rewardsAccumulatedFromPrevEpochs);
     }
 
-    // function claimed(address director) view return (uint256, uint256) {
-    //     return (claimedThisEpoch, claimedSoFarInTotal)
-    // }
-
-    // function claimRewardsV2() {
-    //     (rewardsEarnedThisEpoch, rewardsAccumulatedFromPrevEpochs) = earnedV2(msg.sender);
-
-    //     // send rewardsAccumulatedFromPrevEpochs - claimedSoFarInTotal
-
-    //     // vest rewardsEarnedThisEpoch - claimedThisEpoch
-
-    //     // updated claimed state
-    //     // claimedThisEpoch += (rewardsEarnedThisEpoch - claimedThisEpoch)
-    //     // claimedSoFarInTotal += (rewardsAccumulatedFromPrevEpochs - claimedSoFarInTotal) + claimedThisEpoch
-    // }
-
     /**
-     * Views/Getters.
+     * Setters.
      */
+    function setVestFor(uint256 period) public onlyOwner {
+        emit VestingPeriodChanged(vestFor, period);
+        vestFor = period;
+    }
+
     function earned(address director) internal override returns (uint256) {
         // Get the latest share per rewards i should get.
         uint256 latestRPS = getLatestSnapshot().rewardPerShare;
@@ -210,67 +219,6 @@ contract VestedVaultBoardroom is VaultBoardroom {
         // and from last to lastClaimed, i.e in case of 3 epoch lets say we claimed at 1.
         // so we've done 3 - 1 && 2 - 1. both of this contain (2 - 1). hece we subtract that duplication here.
         return rewards.sub(prevEpochRewards);
-    }
-
-    function estimateEarned(address director) public view returns (uint256) {
-        // a snapshot of estimate earned without the comments and state mutations
-        uint256 latestRPS = getLatestSnapshot().rewardPerShare;
-        uint256 storedRPS = getLastSnapshotOf(director).rewardPerShare;
-
-        uint256 prevEpochRewards = 0;
-        uint256 latestFundingTime = boardHistory[boardHistory.length - 1].time;
-
-        uint256 rewardEarnedCurrEpoch =
-            (
-                directors[director].lastClaimedOn < latestFundingTime
-                    ? 0
-                    : directors[director].rewardEarnedCurrEpoch
-            );
-
-        if (storedRPS == 0) {
-            uint256 firstBondedSnapshotIndex =
-                bondingHistory[director].snapshotIndexWhenFirstBonded;
-            storedRPS = boardHistory[firstBondedSnapshotIndex].rewardPerShare;
-        }
-
-        if (boardHistory.length > 2) {
-            if (
-                bondingHistory[director].snapshotIndexWhenFirstBonded <
-                latestSnapshotIndex()
-            ) {
-                uint256 lastRPS =
-                    boardHistory[latestSnapshotIndex().sub(1)].rewardPerShare;
-                uint256 prevToPrevEpochsRewardEarned =
-                    (
-                        directors[director].lastClaimedOn < latestFundingTime
-                            ? 0
-                            : directors[director].rewardEarnedCurrEpoch
-                    );
-                prevEpochRewards = vault
-                    .balanceWithoutBonded(director)
-                    .mul(lastRPS.sub(storedRPS))
-                    .div(1e18);
-                prevEpochRewards = prevEpochRewards.add(
-                    prevToPrevEpochsRewardEarned
-                );
-            }
-        }
-
-        uint256 rewards =
-            vault
-                .balanceWithoutBonded(director)
-                .mul(latestRPS.sub(storedRPS))
-                .div(1e18)
-                .add(rewardEarnedCurrEpoch);
-        return rewards.sub(prevEpochRewards);
-    }
-
-    /**
-     * Setters.
-     */
-    function setVestFor(uint256 period) public onlyOwner {
-        emit VestingPeriodChanged(vestFor, period);
-        vestFor = period;
     }
 
     function claimReward() public override directorExists returns (uint256) {
@@ -405,7 +353,6 @@ contract VestedVaultBoardroom is VaultBoardroom {
     function _updateReward(address director) private {
         Boardseat storage seat = directors[director];
 
-        // Set the default latest funding time to 0.
         // This represents that boardroom has not been allocated seigniorage yet.
         uint256 latestFundingTime = boardHistory[boardHistory.length - 1].time;
 
