@@ -60,16 +60,15 @@ contract VestedVaultBoardroom is VaultBoardroom {
 
         // Check if stored reward per share is 0 or not.
         if (storedRPS == 0) {
-            // If it's 0 that would mean, that the director has not claimed his rewards.
-            // Hence, we take the storedRPS as the reward per share, when the director
+            // If it's 0 that would mean, that the director has not even once claimed the rewards.
+            // Hence, we take the storedRPS as the reward per share that was availabel when the director
             // first bonded and the boardroom was live.
             uint256 firstBondedSnapshotIndex =
                 bondingHistory[director].snapshotIndexWhenFirstBonded;
             storedRPS = boardHistory[firstBondedSnapshotIndex].rewardPerShare;
         }
 
-        // Use storedRPS as the lastRPS.
-        // This either will be the last time director claimed or first time director bonded
+        // This either will be based on the last time director claimed or first time director bonded
         // with this boardroom.
         uint256 lastRPS = storedRPS;
 
@@ -85,9 +84,9 @@ contract VestedVaultBoardroom is VaultBoardroom {
                 lastRPS = boardHistory[latestSnapshotIndex().sub(1)]
                     .rewardPerShare;
 
-                // Calculate the rewards from this point to the
-                // point where we last claimed(or started bonding)
-                // and mark them as pending.
+                // Calculate the rewards from the 2nd last allocation point to the
+                // point where director last claimed(or first bonded)
+                // and mark them as pending, since they are from prev epochs.
                 rewardsAccumulatedFromPrevEpochs = vault
                     .balanceWithoutBonded(director)
                     .mul(lastRPS.sub(storedRPS))
@@ -95,23 +94,25 @@ contract VestedVaultBoardroom is VaultBoardroom {
             }
         }
 
-        if (
-            directors[director].lastClaimedOn <
-            boardHistory[latestSnapshotIndex()].time
-        )
-            rewardsAccumulatedFromPrevEpochs = rewardsAccumulatedFromPrevEpochs
-                .add(directors[director].rewardPending);
-
-        // Calcuate the reward earned from the latest current epoch to
-        // the last epoch.
-        // If boardroom has been allocated only once, then this will calculate the
-        // rewards till the start.
+        // Calcuate the reward earned from the current allocation to
+        // the last allocation. If boardroom has been allocated only once,
+        // then this will calculate the rewards till the start.
         rewardsEarnedThisEpoch = vault
             .balanceWithoutBonded(director)
             .mul(latestRPS.sub(lastRPS))
             .div(1e18);
 
-        // Check if reward earn
+        // Check if the last time we claimed was before the latest seigniorage allocations.
+        if (
+            directors[director].lastClaimedOn <
+            boardHistory[latestSnapshotIndex()].time
+        )
+            // If it was then we add the pending rewards here
+            // NOTE: directors[director].rewardPending is updated in the _updateRewards func.
+            rewardsAccumulatedFromPrevEpochs = rewardsAccumulatedFromPrevEpochs
+                .add(directors[director].rewardPending);
+
+        // Check if there's some reward already earned in curr epoch and add to curr epoch rewards.
         if (rewardAlreadyEarnedInCurrEpoch > 0)
             rewardsEarnedThisEpoch = rewardsEarnedThisEpoch.add(
                 rewardAlreadyEarnedInCurrEpoch
@@ -317,25 +318,19 @@ contract VestedVaultBoardroom is VaultBoardroom {
 
         uint256 latestSnapshotIdx = latestSnapshotIndex();
 
-        // This means, we are bonding for the first time.
-        // Hence we save the timestamp when, we first bond and the
-        // allocation index no. when we first bond.
+        // Check if we are bonding for the first time in this boardroom and update the state if
+        // we are.
         if (
             snapshot.firstBondedOn == 0 &&
             snapshot.snapshotIndexWhenFirstBonded == 0
         ) {
             snapshot.firstBondedOn = block.timestamp;
-            // NOTE: probably will revert/throw error in case not allocated yet.
             snapshot.snapshotIndexWhenFirstBonded = latestSnapshotIdx;
         }
 
-        // Update the rewards when bonding, unbonding and withdrawing.
-        // In case of withdrawing 100%, unbond and withdraw will both call this.
-        // However, the balanceWIthBonded would be 0 if we are unbonding, hence
-        // ideally effect should be same as withdrawing.
         _updateReward(director);
 
-        // This means withdrawing, Hence reset the counters.
+        // Check if we are withdrawing.
         if (
             snapshot.firstBondedOn != 0 &&
             snapshot.snapshotIndexWhenFirstBonded != 0 &&
@@ -352,39 +347,30 @@ contract VestedVaultBoardroom is VaultBoardroom {
 
     function _updateReward(address director) private {
         Boardseat storage seat = directors[director];
-
-        // This represents that boardroom has not been allocated seigniorage yet.
         uint256 latestFundingTime = boardHistory[boardHistory.length - 1].time;
 
-        // If rewards are updated before epoch start of the current,
-        // then we mark claimable rewards as pending and set the
-        // current earned rewards to 0.
+        // Check if we are claiming for the first time in the latest epoch.
         if (seat.lastClaimedOn < latestFundingTime) {
-            // This basically set's current reward's which are not claimed as pending.
-            // Since the user's last claim was before  the
-            // latestFundingTime(epoch timestamp when allocated latest).
+            // If we are then we mark the overall reward of the current epoch minus
+            // the reward already claimed in curr epoch as pending.
             seat.rewardPending = seat.rewardEarnedCurrEpoch.sub(
                 seat.rewardClaimedCurrEpoch
             );
+
             // Reset the counters for the latest epoch.
             seat.rewardEarnedCurrEpoch = 0;
             seat.rewardClaimedCurrEpoch = 0;
         }
 
-        // Generate fresh rewards for the current epoch.
-        // This should only include reward for curr epoch.
-        // If any remaining they are makred as pending.
         uint256 rewardsEarnedThisEpoch = 0;
         uint256 rewardsAccumulatedFromPrevEpochs = 0;
-
+        // Get the fresh rewards of this epoch.
         (rewardsEarnedThisEpoch, rewardsAccumulatedFromPrevEpochs) = earnedV2(
             director
         );
 
         seat.rewardPending = rewardsAccumulatedFromPrevEpochs;
         seat.rewardEarnedCurrEpoch = rewardsEarnedThisEpoch;
-
-        // Update the last allocation index no. when claimed.
         seat.lastSnapshotIndex = latestSnapshotIndex();
     }
 }
