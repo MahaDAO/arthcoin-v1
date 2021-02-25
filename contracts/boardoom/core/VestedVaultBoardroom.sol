@@ -12,14 +12,6 @@ contract VestedVaultBoardroom is VaultBoardroom {
     uint256 public vestFor;
     using SafeMath for uint256;
 
-    // struct ClaimHistory {
-    //     uint256 epochNumber
-    //     uint256 amountClaimed
-    //     address who
-    // }
-
-    // mapping(address => ClaimHistory) claimHistory;
-
     /**
      * Event.
      */
@@ -55,6 +47,7 @@ contract VestedVaultBoardroom is VaultBoardroom {
                 bondingHistory[director].snapshotIndexWhenFirstBonded;
             storedRPS = boardHistory[firstBondedSnapshotIndex].rewardPerShare;
         }
+
         // Use storedRPS as the lastRPS.
         // This either will be the last time director claimed or first time director bonded
         // with this boardroom.
@@ -81,6 +74,13 @@ contract VestedVaultBoardroom is VaultBoardroom {
                     .div(1e18);
             }
         }
+
+        if (
+            directors[director].lastClaimedOn <
+            boardHistory[latestSnapshotIndex()].time
+        )
+            rewardsAccumulatedFromPrevEpochs = rewardsAccumulatedFromPrevEpochs
+                .add(directors[director].rewardPending);
 
         // Calcuate the reward earned from the latest current epoch to
         // the last epoch.
@@ -434,10 +434,8 @@ contract VestedVaultBoardroom is VaultBoardroom {
             director
         );
 
+        seat.rewardPending = rewardsAccumulatedFromPrevEpochs;
         seat.rewardEarnedCurrEpoch = rewardsEarnedThisEpoch;
-        seat.rewardPending = seat.rewardPending.add(
-            rewardsAccumulatedFromPrevEpochs
-        );
 
         // Update the last allocation index no. when claimed.
         seat.lastSnapshotIndex = latestSnapshotIndex();
