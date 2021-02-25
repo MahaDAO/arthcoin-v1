@@ -145,7 +145,6 @@ contract VestedVaultBoardroom is VaultBoardroom {
         uint256 rewardsEarnedThisEpoch = 0;
         uint256 rewardsAccumulatedFromPrevEpochs = 0;
 
-        // Get the fresh rewards of this epoch.
         (rewardsEarnedThisEpoch, rewardsAccumulatedFromPrevEpochs) = earnedV2(
             director
         );
