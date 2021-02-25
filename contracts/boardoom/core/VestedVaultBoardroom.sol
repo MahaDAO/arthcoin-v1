@@ -12,6 +12,14 @@ contract VestedVaultBoardroom is VaultBoardroom {
     uint256 public vestFor;
     using SafeMath for uint256;
 
+    struct ClaimHistory {
+        uint256 epochNumber
+        uint256 amountClaimed
+        address who
+    }
+
+    mapping(address => ClaimHistory) claimHisotyr;
+
     /**
      * Event.
      */
@@ -26,6 +34,29 @@ contract VestedVaultBoardroom is VaultBoardroom {
         uint256 vestFor_
     ) VaultBoardroom(token_, vault_) {
         vestFor = vestFor_;
+    }
+
+    function earnedV2(address director) view return (uint256, uint256) {
+        uint256 rewardsEarnedThisEpoch = 0;
+        uint256 rewardsAccumulatedFromPrevEpochs = 0;
+
+        return (rewardsEarnedThisEpoch, rewardsAccumulatedFromPrevEpochs);
+    }
+
+    function claimed(address director) view return (uint256, uint256) {
+        return (claimedThisEpoch, claimedSoFarInTotal)
+    }
+
+    function claimRewardsV2() {
+        (rewardsEarnedThisEpoch, rewardsAccumulatedFromPrevEpochs) = earnedV2(msg.sender);
+
+        // send rewardsAccumulatedFromPrevEpochs - claimedSoFarInTotal
+
+        // vest rewardsEarnedThisEpoch - claimedThisEpoch
+
+        // updated claimed state
+        // claimedThisEpoch += (rewardsEarnedThisEpoch - claimedThisEpoch)
+        // claimedSoFarInTotal += (rewardsAccumulatedFromPrevEpochs - claimedSoFarInTotal) + claimedThisEpoch
     }
 
     /**
@@ -167,6 +198,7 @@ contract VestedVaultBoardroom is VaultBoardroom {
                 );
             }
         }
+
         uint256 rewards =
             vault
                 .balanceWithoutBonded(director)
