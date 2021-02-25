@@ -11,8 +11,6 @@ chai.use(solidity);
 
 
 describe('VestedVaultBoardroom with same amounts', () => {
-  // const DAY = 86400;
-
   const REWARDS_VESTING = 8 * 3600
   const BOARDROOM_LOCK_PERIOD = 5 * 60;
   const ETH = utils.parseEther('1');
