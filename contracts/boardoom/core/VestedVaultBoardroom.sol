@@ -277,9 +277,6 @@ contract VestedVaultBoardroom is VaultBoardroom {
 
         if (reward == 0) return 0;
 
-        directors[msg.sender].rewardClaimableNow = 0;
-        directors[msg.sender].lastClaimedOn = block.timestamp;
-
         if (
             block.timestamp >=
             boardHistory[latestSnapshotIndex()].time.add(vestFor)
@@ -290,6 +287,9 @@ contract VestedVaultBoardroom is VaultBoardroom {
                 .rewardClaimedCurrEpoch
                 .add(reward);
         }
+
+        directors[msg.sender].rewardClaimableNow = 0;
+        directors[msg.sender].lastClaimedOn = block.timestamp;
 
         token.transfer(msg.sender, reward);
         emit RewardPaid(msg.sender, reward);
