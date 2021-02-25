@@ -8,7 +8,6 @@ import {Vault} from './Vault.sol';
 import {VaultBoardroom} from './VaultBoardroom.sol';
 
 contract VestedVaultBoardroom is VaultBoardroom {
-    // For how much time should vesting take place.
     uint256 public vestFor;
     using SafeMath for uint256;
 
@@ -48,35 +47,39 @@ contract VestedVaultBoardroom is VaultBoardroom {
      * Views/Getters.
      */
 
-    function earned(address director) public view returns (uint256, uint256) {
+    function earnedV2(address director) public view returns (uint256, uint256) {
         uint256 rewardsEarnedThisEpoch = 0;
         uint256 rewardsAccumulatedFromPrevEpochs = 0;
 
         uint256 latestRPS = getLatestSnapshot().rewardPerShare;
-        uint256 storedRPS = getLastSnapshotOf(director).rewardPerShare;
+        uint256 claimedRPS = getLastSnapshotOf(director).rewardPerShare;
 
         uint256 rewardAlreadyEarnedInCurrEpoch =
             directors[director].rewardEarnedCurrEpoch;
 
         // Check if stored reward per share is 0 or not.
-        if (storedRPS == 0) {
+        if (claimedRPS == 0) {
             // If it's 0 that would mean, that the director has not even once claimed the rewards.
             // Hence, we take the storedRPS as the reward per share that was availabel when the director
             // first bonded and the boardroom was live.
             uint256 firstBondedSnapshotIndex =
                 bondingHistory[director].snapshotIndexWhenFirstBonded;
-            storedRPS = boardHistory[firstBondedSnapshotIndex].rewardPerShare;
+            claimedRPS = boardHistory[firstBondedSnapshotIndex].rewardPerShare;
         }
 
         // This either will be based on the last time director claimed or first time director bonded
         // with this boardroom.
-        uint256 lastRPS = storedRPS;
+        uint256 lastRPS = claimedRPS;
 
         // Check if the boardroom has been allocated more than twice.
         if (boardHistory.length > 2) {
             if (
+                // Makes sure that we have bonded before the latest allocation, only then run this code.
                 bondingHistory[director].snapshotIndexWhenFirstBonded <
-                latestSnapshotIndex()
+                latestSnapshotIndex() &&
+                // Makes sure that we have not claimed in the same epoch.
+                directors[director].lastSnapshotIndex <
+                latestSnapshotIndex().sub(1)
             ) {
                 // If it is, then there's a possibility that the director has claimed once before.
                 // Hence, update the last allocation for reward per share,
@@ -89,7 +92,7 @@ contract VestedVaultBoardroom is VaultBoardroom {
                 // and mark them as pending, since they are from prev epochs.
                 rewardsAccumulatedFromPrevEpochs = vault
                     .balanceWithoutBonded(director)
-                    .mul(lastRPS.sub(storedRPS))
+                    .mul(lastRPS.sub(claimedRPS))
                     .div(1e18);
             }
         }
@@ -135,12 +138,25 @@ contract VestedVaultBoardroom is VaultBoardroom {
     /**
      * Setters.
      */
+
+    function estimateEarned(address director) public view returns (uint256) {
+        uint256 rewardsEarnedThisEpoch = 0;
+        uint256 rewardsAccumulatedFromPrevEpochs = 0;
+
+        // Get the fresh rewards of this epoch.
+        (rewardsEarnedThisEpoch, rewardsAccumulatedFromPrevEpochs) = earnedV2(
+            director
+        );
+
+        return rewardsEarnedThisEpoch.add(rewardsAccumulatedFromPrevEpochs);
+    }
+
     function setVestFor(uint256 period) public onlyOwner {
         emit VestingPeriodChanged(vestFor, period);
         vestFor = period;
     }
 
-    function claimReward() public directorExists returns (uint256) {
+    function claimReward() public override directorExists returns (uint256) {
         _updateReward(msg.sender);
 
         // Get the current reward of the epoch.
@@ -226,7 +242,7 @@ contract VestedVaultBoardroom is VaultBoardroom {
     }
 
     function claimAndReinvestReward() external virtual {
-        uint256 reward = claimRewardV2();
+        uint256 reward = claimReward();
         // NOTE: amount has to be approved from the frontend.
         vault.bondFor(msg.sender, reward);
     }
@@ -246,7 +262,7 @@ contract VestedVaultBoardroom is VaultBoardroom {
             snapshot.snapshotIndexWhenFirstBonded = latestSnapshotIdx;
         }
 
-        _updateRewardV2(director);
+        _updateReward(director);
 
         // Check if we are withdrawing.
         if (
