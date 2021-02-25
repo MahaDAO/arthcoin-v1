@@ -27,6 +27,7 @@
     "@truffle/artifactor": "^4.0.84",
     "@truffle/contract": "^4.2.25",
     "@truffle/hdwallet-provider": "^1.1.0",
+    "@types/bluebird": "^3.5.33",
     "@types/chai": "^4.2.14",
     "@types/ethereumjs-util": "^6.1.0",
     "@types/mocha": "^8.0.4",

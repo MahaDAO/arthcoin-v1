@@ -14,10 +14,10 @@ async function main() {
 
   // Fetch contract factories.
 
-  const boardroomName = 'ArthMahaBoardroomV2'
-  // const vaultToken = '0x0E3cC2c4FB9252d17d07C67135E48536071735D9'
-  const vaultAddr = '0xa0B708358CDC1bA16214a382547c166314135302'
-  const rweardToken = '0x0e3cc2c4fb9252d17d07c67135e48536071735d9'
+  const boardroomName = 'ArthArthMlpLiquidityBoardroomV2'
+
+  const rewardToken = '0x0e3cc2c4fb9252d17d07c67135e48536071735d9'
+  const vaultAddr = '0xbc2199f9e42239c1003ada698571b181aea09f64'
 
   const Vaults = await ethers.getContractFactory(boardroomName);
 
@@ -26,13 +26,13 @@ async function main() {
 
   const hour = 3600
   const params = [
-    rweardToken,
+    rewardToken,
     vaultAddr,
     hour * 8
   ]
   const vault = await Vaults.connect(operator).deploy(...params);
 
-  console.log(`\n Vault details: `)
+  console.log(`\n Vault details: `, boardroomName)
   console.log(` - New boardroom at address(${vault.address})`)
   console.log(` - New vault params: ${JSON.stringify(params)}`)
 }
