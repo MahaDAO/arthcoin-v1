@@ -75,6 +75,7 @@ contract VestedVaultBoardroom is VaultBoardroom {
         if (boardHistory.length > 2) {
             if (
                 // Makes sure that we have bonded before the latest allocation, only then run this code.
+                // If check removed, we won't be able to bond for the newest allocation.
                 bondingHistory[director].snapshotIndexWhenFirstBonded <
                 latestSnapshotIndex() &&
                 // Makes sure that we have not claimed in the same epoch or that
