@@ -77,7 +77,8 @@ contract VestedVaultBoardroom is VaultBoardroom {
                 // Makes sure that we have bonded before the latest allocation, only then run this code.
                 bondingHistory[director].snapshotIndexWhenFirstBonded <
                 latestSnapshotIndex() &&
-                // Makes sure that we have not claimed in the same epoch.
+                // Makes sure that we have not claimed in the same epoch or that
+                // the latestEpoch > the one which we claim in.
                 directors[director].lastSnapshotIndex <
                 latestSnapshotIndex().sub(1)
             ) {
@@ -110,7 +111,7 @@ contract VestedVaultBoardroom is VaultBoardroom {
             directors[director].lastClaimedOn <
             boardHistory[latestSnapshotIndex()].time
         ) {
-            // If it was then we add the pending rewards here
+            // If it was then we add the pending rewards here.
 
             if (directors[director].rewardPending != 0)
                 // NOTE: directors[director].rewardPending is updated in the _updateRewards func.
