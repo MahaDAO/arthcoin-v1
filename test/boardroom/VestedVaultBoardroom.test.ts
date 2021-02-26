@@ -365,10 +365,11 @@ describe.only('VestedVaultBoardroom with same amounts', () => {
       );
 
       await expect(boardroom.connect(whale).claimReward())
-        .to.emit(boardroom, 'RewardPaid');
+        .to.emit(boardroom, 'RewardPaid')
+        .withArgs(whale.address, ethers.utils.parseEther('10000'))
 
       expect(await share.balanceOf(whale.address)).to.eq(ZERO);
-      expect(await cash.balanceOf(whale.address)).to.eq(SEIGNIORAGE_AMOUNT);
+      expect(await cash.balanceOf(whale.address)).to.eq(ethers.utils.parseEther('10000'));
       expect(await vault.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
     });
 
@@ -417,12 +418,12 @@ describe.only('VestedVaultBoardroom with same amounts', () => {
 
       await expect(boardroom.connect(whale).claimReward())
         .to.emit(boardroom, 'RewardPaid')
-        .withArgs(whale.address, SEIGNIORAGE_AMOUNT);
+        .withArgs(whale.address, ethers.utils.parseEther('10000'));
 
       expect(await share.balanceOf(whale.address)).to.eq(ZERO);
       expect(await cash.balanceOf(abuser.address)).to.eq(ZERO);
       expect(await share.balanceOf(abuser.address)).to.eq(ZERO);
-      expect(await cash.balanceOf(whale.address)).to.eq(SEIGNIORAGE_AMOUNT);
+      expect(await cash.balanceOf(whale.address)).to.eq(ethers.utils.parseEther('10000'));
       expect(await vault.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
       expect(await vault.balanceOf(abuser.address)).to.eq(STAKE_AMOUNT);
     });
@@ -526,11 +527,11 @@ describe.only('VestedVaultBoardroom with same amounts', () => {
 
             await expect(boardroom.connect(whale).claimReward())
               .to.emit(boardroom, 'RewardPaid')
-              .withArgs(whale.address, SEIGNIORAGE_AMOUNT)
+              .withArgs(whale.address, ethers.utils.parseEther('10000'))
 
             expect(await share.balanceOf(whale.address)).to.eq(ZERO);
             expect(await vault.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
-            expect(await cash.balanceOf(whale.address)).to.eq(oldCashBalanceOfWhale.add(SEIGNIORAGE_AMOUNT));
+            expect(await cash.balanceOf(whale.address)).to.eq(oldCashBalanceOfWhale.add(ethers.utils.parseEther('10000')));
           });
 
           it('Should earn 50% after 4 hrs if I own 100% of the pool', async () => {
@@ -565,11 +566,11 @@ describe.only('VestedVaultBoardroom with same amounts', () => {
 
             await expect(boardroom.connect(whale).claimReward())
               .to.emit(boardroom, 'RewardPaid')
-              .withArgs(whale.address, SEIGNIORAGE_AMOUNT.div(2))
+              .withArgs(whale.address, ethers.utils.parseEther('10000').div(2))
 
             expect(await share.balanceOf(whale.address)).to.eq(ZERO);
             expect(await vault.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
-            expect(await cash.balanceOf(whale.address)).to.eq(oldCashBalanceOfWhale.add(SEIGNIORAGE_AMOUNT.div(2)));
+            expect(await cash.balanceOf(whale.address)).to.eq(oldCashBalanceOfWhale.add(ethers.utils.parseEther('10000').div(2)))
           });
 
           it('Should earn 25% after 4 hrs if I own 50% of the pool', async () => {
@@ -606,11 +607,11 @@ describe.only('VestedVaultBoardroom with same amounts', () => {
 
             await expect(boardroom.connect(whale).claimReward())
               .to.emit(boardroom, 'RewardPaid')
-              .withArgs(whale.address, SEIGNIORAGE_AMOUNT)
+              .withArgs(whale.address, ethers.utils.parseEther('10000'))
 
             expect(await share.balanceOf(whale.address)).to.eq(ZERO);
             expect(await vault.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
-            expect(await cash.balanceOf(whale.address)).to.eq(oldCashBalanceOfWhale.add(SEIGNIORAGE_AMOUNT));
+            expect(await cash.balanceOf(whale.address)).to.eq(oldCashBalanceOfWhale.add(ethers.utils.parseEther('10000')));
 
             const newCashBalance = await cash.balanceOf(whale.address);
 
@@ -621,11 +622,12 @@ describe.only('VestedVaultBoardroom with same amounts', () => {
 
             await expect(boardroom.connect(whale).claimReward())
               .to.not.emit(boardroom, 'RewardPaid')
+              .withArgs(whale.address, ethers.utils.parseEther('10000'))
 
             expect(await share.balanceOf(whale.address)).to.eq(ZERO);
             expect(await vault.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
             expect(await cash.balanceOf(whale.address)).to.eq(newCashBalance);
-            expect(await cash.balanceOf(whale.address)).to.eq(oldCashBalanceOfWhale.add(SEIGNIORAGE_AMOUNT));
+            expect(await cash.balanceOf(whale.address)).to.eq(oldCashBalanceOfWhale.add(ethers.utils.parseEther('10000')));
           });
 
           it('Should earn 50% after 4 hrs and then 25% after 2 hrs', async () => {
@@ -660,7 +662,6 @@ describe.only('VestedVaultBoardroom with same amounts', () => {
 
             expect(await share.balanceOf(whale.address)).to.eq(ZERO);
             expect(await vault.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
-            expect(await cash.balanceOf(whale.address)).to.eq(newCashBalance.add(SEIGNIORAGE_AMOUNT.div(4)));
             expect(await cash.balanceOf(whale.address)).to.eq(
               oldCashBalanceOfWhale.add(BigNumber.from('5000347222222222222222')).add(BigNumber.from('2500347222222222222222'))
             );
@@ -793,11 +794,11 @@ describe.only('VestedVaultBoardroom with same amounts', () => {
 
             await expect(boardroom.connect(whale).claimReward())
               .to.emit(boardroom, 'RewardPaid')
-              .withArgs(whale.address, BigNumber.from('2500347222222222222222'))
+              .withArgs(whale.address, BigNumber.from('2500694444444444444444'))
 
             expect(await share.balanceOf(whale.address)).to.eq(ZERO);
             expect(await vault.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
-            expect(await cash.balanceOf(whale.address)).to.eq(oldCashBalanceOfWhale.add(BigNumber.from('2500347222222222222222')));
+            expect(await cash.balanceOf(whale.address)).to.eq(oldCashBalanceOfWhale.add(BigNumber.from('2500694444444444444444')));
 
             const newCashBalance = await cash.balanceOf(whale.address);
 
@@ -813,7 +814,7 @@ describe.only('VestedVaultBoardroom with same amounts', () => {
             expect(await share.balanceOf(whale.address)).to.eq(ZERO);
             expect(await vault.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
             expect(await cash.balanceOf(whale.address)).to.eq(
-              oldCashBalanceOfWhale.add(BigNumber.from('2500347222222222222222')).add(BigNumber.from('7499652777777777777778'))
+              oldCashBalanceOfWhale.add(BigNumber.from('2500694444444444444444')).add(BigNumber.from('7499652777777777777778'))
             );
           });
         })
@@ -1756,11 +1757,11 @@ describe.only('VestedVaultBoardroom with same amounts', () => {
 
             await expect(boardroom.connect(whale).claimReward())
               .to.emit(boardroom, 'RewardPaid')
-              .withArgs(whale.address, SEIGNIORAGE_AMOUNT)
+              .withArgs(whale.address, BigNumber.from('10000000000000000000000'))
 
             expect(await share.balanceOf(whale.address)).to.eq(ZERO);
             expect(await vault.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
-            expect(await cash.balanceOf(whale.address)).to.eq(oldCashBalanceOfWhale.add(SEIGNIORAGE_AMOUNT));
+            expect(await cash.balanceOf(whale.address)).to.eq(oldCashBalanceOfWhale.add(BigNumber.from('10000000000000000000000')));
 
             let newCashBalaceOfWhale = await cash.balanceOf(whale.address);
 
@@ -1778,12 +1779,11 @@ describe.only('VestedVaultBoardroom with same amounts', () => {
 
             await expect(boardroom.connect(whale).claimReward())
               .to.emit(boardroom, 'RewardPaid')
-              .withArgs(whale.address, SEIGNIORAGE_AMOUNT)
+              .withArgs(whale.address, BigNumber.from('10000000000000000000000'))
 
             expect(await share.balanceOf(whale.address)).to.eq(ZERO);
             expect(await vault.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
-            expect(await cash.balanceOf(whale.address)).to.eq(oldCashBalanceOfWhale.add(SEIGNIORAGE_AMOUNT.mul(2)));
-            expect(await cash.balanceOf(whale.address)).to.eq(newCashBalaceOfWhale.add(SEIGNIORAGE_AMOUNT));
+            expect(await cash.balanceOf(whale.address)).to.eq(newCashBalaceOfWhale.add(BigNumber.from('10000000000000000000000')));
           });
 
           it('Should earn 50% for the first claim in 4 hrs and then 150% for the second claim in 8 + 8 hrs', async () => {
@@ -1819,21 +1819,20 @@ describe.only('VestedVaultBoardroom with same amounts', () => {
 
             await expect(boardroom.connect(whale).claimReward())
               .to.emit(boardroom, 'RewardPaid')
-              .withArgs(whale.address, SEIGNIORAGE_AMOUNT.add(SEIGNIORAGE_AMOUNT.div(2)))
+              .withArgs(whale.address, BigNumber.from('14999652777777777777778'))
 
             expect(await share.balanceOf(whale.address)).to.eq(ZERO);
             expect(await vault.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
-            expect(await cash.balanceOf(whale.address))
-              .to.eq(oldCashBalanceOfWhale.add(SEIGNIORAGE_AMOUNT.mul(2)));
-            expect(await cash.balanceOf(whale.address))
-              .to.eq(newCashBalaceOfWhale.add(SEIGNIORAGE_AMOUNT).add(SEIGNIORAGE_AMOUNT.div(2)));
+            expect(await cash.balanceOf(whale.address)).to.eq(
+              newCashBalaceOfWhale.add(SEIGNIORAGE_AMOUNT).add(BigNumber.from('14999652777777777777778'))
+            );
           });
 
           it('Should earn 0% for the first claim in 0 hrs and then 200% for the second claim in 12 + 8 hrs', async () => {
             const oldCashBalanceOfWhale = await cash.balanceOf(whale.address);
 
             await expect(boardroom.connect(whale).claimReward())
-              .to.not.emit(boardroom, 'RewardPaid')
+              .to.reverted;
 
             expect(await share.balanceOf(whale.address)).to.eq(ZERO);
             expect(await vault.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
@@ -1855,18 +1854,18 @@ describe.only('VestedVaultBoardroom with same amounts', () => {
 
             await expect(boardroom.connect(whale).claimReward())
               .to.emit(boardroom, 'RewardPaid')
-              .withArgs(whale.address, SEIGNIORAGE_AMOUNT.mul(2))
+              .withArgs(whale.address, BigNumber.from('20000000000000000000000'))
 
             expect(await share.balanceOf(whale.address)).to.eq(ZERO);
             expect(await vault.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
-            expect(await cash.balanceOf(whale.address)).to.eq(oldCashBalanceOfWhale.add(SEIGNIORAGE_AMOUNT.mul(2)));
+            expect(await cash.balanceOf(whale.address)).to.eq(oldCashBalanceOfWhale.add(BigNumber.from('20000000000000000000000')));
           });
 
           it('Should earn 0% for the first claim in 0 hrs and then 100% for the second claim in 8 + 1 hrs', async () => {
             const oldCashBalanceOfWhale = await cash.balanceOf(whale.address);
 
             await expect(boardroom.connect(whale).claimReward())
-              .to.not.emit(boardroom, 'RewardPaid')
+              .to.reverted;
 
             expect(await share.balanceOf(whale.address)).to.eq(ZERO);
             expect(await vault.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
@@ -1881,11 +1880,11 @@ describe.only('VestedVaultBoardroom with same amounts', () => {
 
             await expect(boardroom.connect(whale).claimReward())
               .to.emit(boardroom, 'RewardPaid')
-              .withArgs(whale.address, SEIGNIORAGE_AMOUNT)
+              .withArgs(whale.address, BigNumber.from('10000000000000000000000'))
 
             expect(await share.balanceOf(whale.address)).to.eq(ZERO);
             expect(await vault.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
-            expect(await cash.balanceOf(whale.address)).to.eq(oldCashBalanceOfWhale.add(SEIGNIORAGE_AMOUNT));
+            expect(await cash.balanceOf(whale.address)).to.eq(oldCashBalanceOfWhale.add(BigNumber.from('10000000000000000000000')));
           });
 
           it('Should earn 100% for the first claim in 8 hrs and then 0% for the second claim in 8 + 1 hrs', async () => {
@@ -1932,11 +1931,11 @@ describe.only('VestedVaultBoardroom with same amounts', () => {
 
             await expect(boardroom.connect(whale).claimReward())
               .to.emit(boardroom, 'RewardPaid')
-              .withArgs(whale.address, SEIGNIORAGE_AMOUNT)
+              .withArgs(whale.address, BigNumber.from('10000000000000000000000'))
 
             expect(await share.balanceOf(whale.address)).to.eq(ZERO);
             expect(await vault.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
-            expect(await cash.balanceOf(whale.address)).to.eq(oldCashBalanceOfWhale.add(SEIGNIORAGE_AMOUNT));
+            expect(await cash.balanceOf(whale.address)).to.eq(oldCashBalanceOfWhale.add(BigNumber.from('10000000000000000000000')));
 
             let newCashBalaceOfWhale = await cash.balanceOf(whale.address);
 
@@ -1954,12 +1953,11 @@ describe.only('VestedVaultBoardroom with same amounts', () => {
 
             await expect(boardroom.connect(whale).claimReward())
               .to.emit(boardroom, 'RewardPaid')
-              .withArgs(whale.address, SEIGNIORAGE_AMOUNT.div(2))
+              .withArgs(whale.address, BigNumber.from('5000347222222222222222'))
 
             expect(await share.balanceOf(whale.address)).to.eq(ZERO);
             expect(await vault.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
-            expect(await cash.balanceOf(whale.address)).to.eq(oldCashBalanceOfWhale.add(SEIGNIORAGE_AMOUNT).add(SEIGNIORAGE_AMOUNT.div(2)));
-            expect(await cash.balanceOf(whale.address)).to.eq(newCashBalaceOfWhale.add(SEIGNIORAGE_AMOUNT.div(2)));
+            expect(await cash.balanceOf(whale.address)).to.eq(newCashBalaceOfWhale.add(BigNumber.from('5000347222222222222222')));
           });
         });
       });
@@ -2175,14 +2173,12 @@ describe.only('VestedVaultBoardroom with same amounts', () => {
 
         await expect(boardroom.connect(abuser).claimReward())
           .to.emit(boardroom, 'RewardPaid')
-          .withArgs(abuser.address, SEIGNIORAGE_AMOUNT.div(2).div(4))
+          .withArgs(abuser.address, BigNumber.from('12500173611111111111111'))
 
         expect(await share.balanceOf(abuser.address)).to.eq(ZERO);
         expect(await vault.balanceOf(abuser.address)).to.eq(STAKE_AMOUNT);
 
-        // First divide by 2 since there's whale and abuser in the staknig poool.
-        // Second divide by 2 since, we should be claiming for 1epoch only.
-        expect(await cash.balanceOf(abuser.address)).to.eq(oldCashBalanceOfAbuser.add(SEIGNIORAGE_AMOUNT.div(2).div(2)));
+        expect(await cash.balanceOf(abuser.address)).to.eq(oldCashBalanceOfAbuser.add(BigNumber.from('12500173611111111111111')))
       });
 
       it('should earn 100% of the new rewards from the next epoch owning 100% of the pool if only staker in both epoch', async () => {
@@ -2339,11 +2335,11 @@ describe.only('VestedVaultBoardroom with same amounts', () => {
 
         await expect(boardroom.connect(abuser).claimReward())
           .to.emit(boardroom, 'RewardPaid')
-          .withArgs(abuser.address, SEIGNIORAGE_AMOUNT.sub(SEIGNIORAGE_AMOUNT.div(4)))
+          .withArgs(abuser.address, BigNumber.from('7500347222222222222222'))
 
         expect(await share.balanceOf(abuser.address)).to.eq(ZERO);
         expect(await vault.balanceOf(abuser.address)).to.eq(STAKE_AMOUNT);
-        expect(await cash.balanceOf(abuser.address)).to.eq(oldCashBalanceOfAbuser.add(SEIGNIORAGE_AMOUNT.sub(SEIGNIORAGE_AMOUNT.div(4))));
+        expect(await cash.balanceOf(abuser.address)).to.eq(oldCashBalanceOfAbuser.add(BigNumber.from('7500347222222222222222')));
       });
 
       it('should earn 175% of the new rewards from the next epoch, after 3epoch and 6hrs in owning 100% of the pool if only staker in both epoch', async () => {
@@ -2381,11 +2377,11 @@ describe.only('VestedVaultBoardroom with same amounts', () => {
 
         await expect(boardroom.connect(abuser).claimReward())
           .to.emit(boardroom, 'RewardPaid')
-          .withArgs(abuser.address, SEIGNIORAGE_AMOUNT.mul(2).sub(SEIGNIORAGE_AMOUNT.div(4)))
+          .withArgs(abuser.address, BigNumber.from('17500347222222222222222'))
 
         expect(await share.balanceOf(abuser.address)).to.eq(ZERO);
         expect(await vault.balanceOf(abuser.address)).to.eq(STAKE_AMOUNT);
-        expect(await cash.balanceOf(abuser.address)).to.eq(oldCashBalanceOfAbuser.add(SEIGNIORAGE_AMOUNT.mul(2).sub(SEIGNIORAGE_AMOUNT.div(4))));
+        expect(await cash.balanceOf(abuser.address)).to.eq(oldCashBalanceOfAbuser.add(BigNumber.from('17500347222222222222222')));
       });
 
       it('should earn 275% of the new rewards from the next epoch, after 4epoch and 6hrs in owning 100% of the pool if only staker in both epoch', async () => {
@@ -2431,11 +2427,11 @@ describe.only('VestedVaultBoardroom with same amounts', () => {
 
         await expect(boardroom.connect(abuser).claimReward())
           .to.emit(boardroom, 'RewardPaid')
-          .withArgs(abuser.address, SEIGNIORAGE_AMOUNT.mul(3).sub(SEIGNIORAGE_AMOUNT.div(4)))
+          .withArgs(abuser.address, BigNumber.from('27500347222222222222222'))
 
         expect(await share.balanceOf(abuser.address)).to.eq(ZERO);
         expect(await vault.balanceOf(abuser.address)).to.eq(STAKE_AMOUNT);
-        expect(await cash.balanceOf(abuser.address)).to.eq(oldCashBalanceOfAbuser.add(SEIGNIORAGE_AMOUNT.mul(3).sub(SEIGNIORAGE_AMOUNT.div(4))));
+        expect(await cash.balanceOf(abuser.address)).to.eq(oldCashBalanceOfAbuser.add(BigNumber.from('27500347222222222222222')));
       });
 
       it('should earn 100% of the new rewards from the next epoch owning 100% of the pool if only staker in curr epoch', async () => {
