@@ -16,55 +16,6 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
     using Safe112 for uint112;
     using SafeMath for uint256;
 
-    /**
-     * Data structures.
-     */
-
-    struct Boardseat {
-        uint256 rewardClaimed;
-        uint256 lastRPS;
-        uint256 firstRPS;
-        uint256 lastBoardSnapshotIndex;
-        // // Pending reward from the previous epochs.
-        // uint256 rewardPending;
-        // Total reward earned in this epoch.
-        uint256 rewardEarnedCurrEpoch;
-        // Last time reward was claimed(not bound by current epoch).
-        uint256 lastClaimedOn;
-        // // The reward claimed in vesting period of this epoch.
-        // uint256 rewardClaimedCurrEpoch;
-        // // Snapshot of boardroom state when last epoch claimed.
-        uint256 lastSnapshotIndex;
-        // // Rewards claimable now in the current/next claim.
-        // uint256 rewardClaimableNow;
-        // // keep track of the current rps
-        // uint256 claimedRPS;
-    }
-
-    struct BoardSnapshot {
-        // Block number when recording a snapshot.
-        uint256 number;
-        // Block timestamp when recording a snapshot.
-        uint256 time;
-        // Amount of funds received.
-        uint256 rewardReceived;
-        // Equivalent amount per share staked.
-        uint256 rewardPerShare;
-    }
-
-    struct BondingSnapshot {
-        uint256 epoch;
-        // Time when first bonding was made.
-        uint256 when;
-        // The snapshot index of when first bonded.
-        uint256 balance;
-        uint256 valid;
-    }
-
-    /**
-     * State variables.
-     */
-
     // The vault which has state of the stakes.
     Vault public vault;
     IERC20 public token;
@@ -128,7 +79,12 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         return boardHistory.length.sub(1);
     }
 
-    function getDirector(address who) public view returns (Boardseat memory) {
+    function getDirector(address who)
+        external
+        view
+        override
+        returns (Boardseat memory)
+    {
         return directors[who];
     }
 
@@ -153,8 +109,9 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
     }
 
     function getLastSnapshotIndexOf(address director)
-        public
+        external
         view
+        override
         returns (uint256)
     {
         return directors[director].lastSnapshotIndex;
@@ -165,7 +122,7 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         view
         returns (BoardSnapshot memory)
     {
-        return boardHistory[getLastSnapshotIndexOf(director)];
+        return boardHistory[directors[director].lastSnapshotIndex];
     }
 
     function rewardPerShare() public view returns (uint256) {

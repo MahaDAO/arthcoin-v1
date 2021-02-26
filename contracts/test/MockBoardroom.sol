@@ -10,6 +10,7 @@ contract MockBoardroom is IBoardroom, Operator {
     /* ========== STATE VARIABLES ========== */
 
     IERC20 public cash;
+    mapping(address => Boardseat) public directors;
 
     /* ========== CONSTRUCTOR ========== */
 
@@ -30,6 +31,24 @@ contract MockBoardroom is IBoardroom, Operator {
     }
 
     /* ========== EVENTS ========== */
+
+    function getDirector(address who)
+        external
+        view
+        override
+        returns (Boardseat memory)
+    {
+        return directors[who];
+    }
+
+    function getLastSnapshotIndexOf(address director)
+        external
+        view
+        override
+        returns (uint256)
+    {
+        return 0;
+    }
 
     event RewardAdded(address indexed user, uint256 reward);
 }

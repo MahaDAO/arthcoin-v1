@@ -6,11 +6,15 @@ import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
 import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
 import {Vault} from './Vault.sol';
 import {VaultBoardroom} from './VaultBoardroom.sol';
+import {IBoardroom} from '../../interfaces/IBoardroom.sol';
+
 import 'hardhat/console.sol';
 
 contract VestedVaultBoardroom is VaultBoardroom {
     uint256 public vestFor;
     using SafeMath for uint256;
+
+    IBoardroom public oldBoardroom;
 
     /**
      * Event.
@@ -172,8 +176,12 @@ contract VestedVaultBoardroom is VaultBoardroom {
         uint256 lastBondedEpoch = directorBalanceLastEpoch[director];
 
         if (lastBondedEpoch == 0) {
-            uint256 latestRPS = getLatestSnapshot().rewardPerShare;
-            seat.firstRPS = latestRPS;
+            if (isOldDirector(director)) {
+                seat.firstRPS = 0;
+            } else {
+                uint256 latestRPS = getLatestSnapshot().rewardPerShare;
+                seat.firstRPS = latestRPS;
+            }
         }
 
         // just update the user balance at this epoch
@@ -200,63 +208,22 @@ contract VestedVaultBoardroom is VaultBoardroom {
         seat.lastSnapshotIndex = latestSnapshotIndex();
     }
 
-    function _updateReward(address director) private {
-        // Boardseat storage seat = directors[director];
-        // uint256 latestFundingTime = boardHistory[boardHistory.length - 1].time;
-        // // // Check if we are claiming for the first time in the latest epoch.
-        // // console.log('updateReward: seat.lastClaimedOn %s', seat.lastClaimedOn);
-        // // console.log('updateReward: seat.rewardPending %s', seat.rewardPending);
-        // // console.log(
-        // //     'updateReward: seat.rewardEarnedCurrEpoch %s',
-        // //     seat.rewardEarnedCurrEpoch
-        // // );
-        // // console.log(
-        // //     'updateReward: seat.rewardClaimedCurrEpoch %s',
-        // //     seat.rewardClaimedCurrEpoch
-        // // );
-        // // console.log(
-        // //     'updateReward: seat.rewardClaimableNow %s',
-        // //     seat.rewardClaimableNow
-        // // );
-        // // console.log(
-        // //     'updateReward: if condition 1 %s',
-        // //     seat.lastClaimedOn < latestFundingTime
-        // // );
-        // // console.log(
-        // //     'updateReward: if condition 2 %s',
-        // //     seat.lastClaimedOn < latestFundingTime.add(vestFor)
-        // // );
-        // if (seat.lastClaimedOn < latestFundingTime) {
-        //     // If we are then we mark the overall reward of the current epoch minus
-        //     // the reward already claimed in curr epoch as pending.
-        //     seat.rewardPending = seat.rewardEarnedCurrEpoch.sub(
-        //         seat.rewardClaimedCurrEpoch
-        //     );
-        //     // Reset the counters for the latest epoch.
-        //     // seat.rewardEarnedCurrEpoch = 0;
-        //     // seat.rewardClaimedCurrEpoch = 0;
-        //     seat.rewardClaimableNow = 0;
-        // }
-        // uint256 rewardsClaimableNow = 0;
-        // uint256 rewardsEarnedThisEpoch = 0;
-        // uint256 rewardClaimedThisEpoch = 0;
-        // uint256 rewardsAccumulatedFromPrevEpochs = 0;
-        // uint256 claimedRPS = 0;
-        // // Get the fresh rewards of this epoch.
-        // // (
-        // //     rewardsEarnedThisEpoch,
-        // //     rewardsClaimableNow,
-        // //     rewardClaimedThisEpoch,
-        // //     rewardsAccumulatedFromPrevEpochs,
-        // //     claimedRPS
-        // // ) = earnedVested(director);
-        // // Update the state.
-        // seat.rewardPending = rewardsAccumulatedFromPrevEpochs;
-        // seat.rewardEarnedCurrEpoch = rewardsEarnedThisEpoch;
-        // seat.rewardClaimedCurrEpoch = rewardClaimedThisEpoch;
-        // seat.rewardClaimableNow = rewardsClaimableNow;
-        // seat.claimedRPS = claimedRPS;
-        // if (latestSnapshotIndex() > 0)
-        //     seat.lastSnapshotIndex = latestSnapshotIndex().sub(1);
+    function isOldDirector(address who) public view returns (bool) {
+        if (address(oldBoardroom) == address(0)) return false;
+        return oldBoardroom.getLastSnapshotIndexOf(who) >= 0;
+    }
+
+    function setOldBoardroom(address room) public onlyOwner {
+        oldBoardroom = IBoardroom(room);
+    }
+
+    function resinstateDirectorTo(
+        address who,
+        uint256 epoch,
+        uint256 rps
+    ) public onlyOwner {
+        directorBalanceLastEpoch[who] = epoch;
+        directors[who].lastSnapshotIndex = latestSnapshotIndex();
+        directors[who].lastRPS = rps;
     }
 }
