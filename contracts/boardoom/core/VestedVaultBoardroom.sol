@@ -69,15 +69,15 @@ contract VestedVaultBoardroom is VaultBoardroom {
     // returns the balance as per the last epoch; if the user deposits/withdraws
     // in the current epoch, this value will not change unless another epoch passes
     function getLastEpochBalance(address who) public view returns (uint256) {
-        // console.log('getLastEpochBalance who %s', who);
-        // console.log('getLastEpochBalance currentEpoch %s', currentEpoch);
+        console.log('getLastEpochBalance who %s', who);
+        console.log('getLastEpochBalance currentEpoch %s', currentEpoch);
 
         uint256 validEpoch =
             directorBalanceLastEpoch[who] < currentEpoch.sub(1)
                 ? directorBalanceLastEpoch[who]
                 : currentEpoch.sub(1);
 
-        // console.log('getLastEpochBalance validEpoch %s', validEpoch);
+        console.log('getLastEpochBalance validEpoch %s', validEpoch);
 
         if (getBondingHistory(who, validEpoch).valid == 1)
             return getBondingHistory(who, validEpoch).balance;
@@ -94,9 +94,9 @@ contract VestedVaultBoardroom is VaultBoardroom {
         uint256 storedRPS =
             boardHistory[latestSnapshotIndex().sub(1)].rewardPerShare;
 
-        // console.log('getRewardsEarnedThisEpoch latestRPS %s', latestRPS);
-        // console.log('getRewardsEarnedThisEpoch storedRPS %s', storedRPS);
-        // console.log('getLastEpochBalance val %s', getLastEpochBalance(who));
+        console.log('getRewardsEarnedThisEpoch latestRPS %s', latestRPS);
+        console.log('getRewardsEarnedThisEpoch storedRPS %s', storedRPS);
+        console.log('getLastEpochBalance val %s', getLastEpochBalance(who));
 
         return getLastEpochBalance(who).mul(latestRPS.sub(storedRPS)).div(1e18);
     }
@@ -126,19 +126,19 @@ contract VestedVaultBoardroom is VaultBoardroom {
         uint256 amtVested = getVestedAmount(amtEarned, latestFundingTime);
         uint256 amtPending = getRewardsEarnedPrevEpoch(who);
 
-        // console.log(
-        //     'getClaimableRewards: latestFundingTime %s',
-        //     latestFundingTime
-        // );
-        // console.log('getClaimableRewards: amtEarned %s', amtEarned);
-        // console.log('getClaimableRewards: amtVested %s', amtVested);
-        // console.log('getClaimableRewards: amtPending %s', amtPending);
-        // console.log('getClaimableRewards: claimed %s', seat.rewardClaimed);
+        console.log(
+            'getClaimableRewards: latestFundingTime %s',
+            latestFundingTime
+        );
+        console.log('getClaimableRewards: amtEarned %s', amtEarned);
+        console.log('getClaimableRewards: amtVested %s', amtVested);
+        console.log('getClaimableRewards: amtPending %s', amtPending);
+        console.log('getClaimableRewards: claimed %s', seat.rewardClaimed);
 
-        // console.log(
-        //     'getClaimableRewards: token.balanceOf %s',
-        //     token.balanceOf(address(this))
-        // );
+        console.log(
+            'getClaimableRewards: token.balanceOf %s',
+            token.balanceOf(address(this))
+        );
 
         return amtPending.add(amtVested).sub(seat.rewardClaimed);
     }
@@ -149,7 +149,7 @@ contract VestedVaultBoardroom is VaultBoardroom {
     }
 
     function claimReward() public override directorExists returns (uint256) {
-        // console.log('claimReward called at: %s', block.timestamp);
+        console.log('claimReward called at: %s', block.timestamp);
 
         Boardseat storage seat = directors[msg.sender];
 
@@ -194,11 +194,11 @@ contract VestedVaultBoardroom is VaultBoardroom {
                 balance: vault.balanceWithoutBonded(director)
             });
 
-        // console.log(
-        //     'vault updated balance %s',
-        //     vault.balanceWithoutBonded(director)
-        // );
-        // console.log('vault updated epoch %s', currentEpoch);
+        console.log(
+            'vault updated balance %s',
+            vault.balanceWithoutBonded(director)
+        );
+        console.log('vault updated epoch %s', currentEpoch);
 
         bondingHistory[director][currentEpoch] = snap;
         directorBalanceLastEpoch[director] = currentEpoch;
