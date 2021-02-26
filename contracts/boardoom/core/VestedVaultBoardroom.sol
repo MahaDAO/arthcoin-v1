@@ -240,7 +240,7 @@ contract VestedVaultBoardroom is VaultBoardroom {
         uint256 rps
     ) public onlyOwner {
         for (uint256 i = 0; i < who.length; i++) {
-            resinstateDirectorTo(who[i], epoch, lastSnapshotIndexrps, rps);
+            resinstateDirectorTo(who[i], epoch, lastSnapshotIndex, rps);
         }
     }
 }
