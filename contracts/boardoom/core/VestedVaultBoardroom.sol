@@ -234,7 +234,7 @@ contract VestedVaultBoardroom is VaultBoardroom {
     }
 
     function resinstateDirectorsTo(
-        address[] who,
+        address[] memory who,
         uint256 epoch,
         uint256 lastSnapshotIndex,
         uint256 rps
