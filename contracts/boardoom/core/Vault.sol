@@ -133,8 +133,8 @@ contract Vault is AccessControl, StakingTimelock, Operator {
         require(amount > 0, 'Boardroom: cannot bond 0');
         require(enableDeposits, 'Boardroom: deposits are disabled');
 
-        console.log('vault bonding for %s', who);
-        console.log('vault bonding amount %s', amount);
+        // console.log('vault bonding for %s', who);
+        // console.log('vault bonding amount %s', amount);
 
         _totalSupply = _totalSupply.add(amount);
         _balances[who] = _balances[who].add(amount);

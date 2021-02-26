@@ -184,10 +184,10 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
             });
         boardHistory.push(snap);
 
-        console.log('allocateSeigniorage totalSupply: %s', totalSupply);
-        console.log('allocateSeigniorage time: %s', block.timestamp);
-        console.log('allocateSeigniorage rewardReceived: %s', amount);
-        console.log('allocateSeigniorage rewardPerShare: %s', nextRPS);
+        // console.log('allocateSeigniorage totalSupply: %s', totalSupply);
+        // console.log('allocateSeigniorage time: %s', block.timestamp);
+        // console.log('allocateSeigniorage rewardReceived: %s', amount);
+        // console.log('allocateSeigniorage rewardPerShare: %s', nextRPS);
 
         token.transferFrom(msg.sender, address(this), amount);
         currentEpoch = currentEpoch.add(1);
