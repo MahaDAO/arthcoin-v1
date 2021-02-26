@@ -46,6 +46,8 @@ interface IBoardroom is IOperator {
         uint256 valid;
     }
 
+    // function updateReward(address director) external;
+
     function allocateSeigniorage(uint256 amount) external;
 
     function getDirector(address who) external view returns (Boardseat memory);

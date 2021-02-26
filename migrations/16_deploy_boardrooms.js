@@ -50,13 +50,13 @@ async function migration(deployer, network, accounts) {
   const mahaVault = await VaultMaha.deployed();
   const arthLpVault = await VaultArthMlp.deployed();
 
-  await deployer.deploy(ArthArthBoardroomV2, cash.address, arthVault.address, REWARDS_VESTING);
-  await deployer.deploy(ArthMahaBoardroomV2, cash.address, mahaVault.address, REWARDS_VESTING);
-  await deployer.deploy(ArthArthMlpLiquidityBoardroomV2, cash.address, arthLpVault.address, REWARDS_VESTING);
+  await deployer.deploy(ArthArthBoardroomV2, cash.address, arthVault.address);
+  await deployer.deploy(ArthMahaBoardroomV2, cash.address, mahaVault.address);
+  await deployer.deploy(ArthArthMlpLiquidityBoardroomV2, cash.address, arthLpVault.address);
 
-  await deployer.deploy(MahaArthBoardroomV2, share.address, arthVault.address, REWARDS_VESTING);
-  await deployer.deploy(MahaMahaBoardroomV2, share.address, mahaVault.address, REWARDS_VESTING);
-  await deployer.deploy(MahaArthMlpLiquidityBoardroomV2, share.address, arthLpVault.address, REWARDS_VESTING);
+  await deployer.deploy(MahaArthBoardroomV2, share.address, arthVault.address);
+  await deployer.deploy(MahaMahaBoardroomV2, share.address, mahaVault.address);
+  await deployer.deploy(MahaArthMlpLiquidityBoardroomV2, share.address, arthLpVault.address);
 
   // if (!isMainnet(network)) {
   //   // Deploy ARTH-DAI liquidity boardroom.

@@ -47,7 +47,7 @@ contract MockBoardroom is IBoardroom, Operator {
         override
         returns (uint256)
     {
-        return 0;
+        return directors[director].lastSnapshotIndex;
     }
 
     event RewardAdded(address indexed user, uint256 reward);

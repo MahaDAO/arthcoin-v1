@@ -10,7 +10,8 @@ import {ContractGuard} from '../../utils/ContractGuard.sol';
 import {Operator} from '../../owner/Operator.sol';
 import {IBoardroom} from '../../interfaces/IBoardroom.sol';
 import {IBasisAsset} from '../../interfaces/IBasisAsset.sol';
-import 'hardhat/console.sol';
+
+// import 'hardhat/console.sol';
 
 contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
     using Safe112 for uint112;
@@ -26,13 +27,9 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
     mapping(address => mapping(uint256 => BondingSnapshot))
         public bondingHistory;
 
-    // address(director) => uint256(Epcoh) => uint256(balance)
     mapping(address => mapping(uint256 => uint256)) directorBalanceForEpoch;
     mapping(address => uint256) directorBalanceLastEpoch;
 
-    /**
-     * Modifier.
-     */
     modifier directorExists {
         require(
             vault.balanceOf(msg.sender) > 0,
@@ -47,16 +44,9 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         _;
     }
 
-    /**
-     * Events.
-     */
-
     event RewardPaid(address indexed user, uint256 reward);
     event RewardAdded(address indexed user, uint256 reward);
 
-    /**
-     * Constructor.
-     */
     constructor(IERC20 token_, Vault vault_) {
         token = token_;
         vault = vault_;
@@ -70,10 +60,6 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
             });
         boardHistory.push(genesisSnapshot);
     }
-
-    /**
-     * Views/Getters.
-     */
 
     function latestSnapshotIndex() public view returns (uint256) {
         return boardHistory.length.sub(1);
@@ -142,10 +128,7 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
     }
 
     function claimReward() external virtual directorExists returns (uint256) {
-        Boardseat memory seat = directors[msg.sender];
-        seat.rewardEarnedCurrEpoch = earned(msg.sender);
-        seat.lastSnapshotIndex = latestSnapshotIndex();
-        directors[msg.sender] = seat;
+        _updateReward(msg.sender);
 
         uint256 reward = directors[msg.sender].rewardEarnedCurrEpoch;
 
@@ -184,17 +167,28 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
             });
         boardHistory.push(snap);
 
-        console.log('allocateSeigniorage totalSupply: %s', totalSupply);
-        console.log('allocateSeigniorage time: %s', block.timestamp);
-        console.log('allocateSeigniorage rewardReceived: %s', amount);
-        console.log('allocateSeigniorage rewardPerShare: %s', nextRPS);
+        // console.log('allocateSeigniorage totalSupply: %s', totalSupply);
+        // console.log('allocateSeigniorage time: %s', block.timestamp);
+        // console.log('allocateSeigniorage rewardReceived: %s', amount);
+        // console.log('allocateSeigniorage rewardPerShare: %s', nextRPS);
 
         token.transferFrom(msg.sender, address(this), amount);
         currentEpoch = currentEpoch.add(1);
         emit RewardAdded(msg.sender, amount);
     }
 
+    function updateReward(address director) external virtual onlyVault {
+        _updateReward(director);
+    }
+
     function refundReward() external onlyOwner {
         token.transfer(msg.sender, token.balanceOf(address(this)));
+    }
+
+    function _updateReward(address director) internal {
+        Boardseat memory seat = directors[director];
+        seat.rewardEarnedCurrEpoch = earned(director);
+        seat.lastSnapshotIndex = latestSnapshotIndex();
+        directors[director] = seat;
     }
 }
