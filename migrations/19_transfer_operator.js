@@ -29,7 +29,7 @@ module.exports = async (deployer, network, accounts) => {
   const mahaArthMlpLiquidityBoardroomV2 = await MahaArthMlpLiquidityBoardroomV2.deployed();
   const mahaMahaBoardroomV2 = await MahaMahaBoardroomV2.deployed();
 
-  console.log('transferring operator for boardrooms')
+  console.log('transferring operator for boardrooms');
 
   await arthArthBoardroomV2.transferOperator(treasury.address);
   await arthArthMlpLiquidityBoardroomV2.transferOperator(treasury.address);
@@ -44,6 +44,7 @@ module.exports = async (deployer, network, accounts) => {
   const newOwner = network === 'mainnet' ? process.env.HARDWARE_WALLET : process.env.METAMASK_WALLET;
 
   if (newOwner) {
+    console.log('transferinf ownership to', newOwner);
     await arthArthBoardroomV2.transferOwnership(newOwner);
     await arthArthMlpLiquidityBoardroomV2.transferOwnership(newOwner);
     await arthMahaBoardroomV2.transferOwnership(newOwner);

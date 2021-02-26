@@ -77,12 +77,12 @@ module.exports = async (callback) => {
     { abi: 'UniswapOracle', contract: 'TWAP1hrOracle' },
 
     // boardroom stuff
-    { abi: 'VestedVaultBoardroom', contract: 'ArthArthBoardroomV2' },
-    { abi: 'VestedVaultBoardroom', contract: 'ArthArthMlpLiquidityBoardroomV2' },
-    { abi: 'VestedVaultBoardroom', contract: 'ArthMahaBoardroomV2' },
-    { abi: 'VestedVaultBoardroom', contract: 'MahaArthBoardroomV2' },
-    { abi: 'VestedVaultBoardroom', contract: 'MahaArthMlpLiquidityBoardroomV2' },
-    { abi: 'VestedVaultBoardroom', contract: 'MahaMahaBoardroomV2' },
+    { abi: 'VaultBoardroom', contract: 'ArthArthBoardroomV2' },
+    { abi: 'VaultBoardroom', contract: 'ArthArthMlpLiquidityBoardroomV2' },
+    { abi: 'VaultBoardroom', contract: 'ArthMahaBoardroomV2' },
+    { abi: 'VaultBoardroom', contract: 'MahaArthBoardroomV2' },
+    { abi: 'VaultBoardroom', contract: 'MahaArthMlpLiquidityBoardroomV2' },
+    { abi: 'VaultBoardroom', contract: 'MahaMahaBoardroomV2' },
     { abi: 'Vault', contract: 'VaultArth' },
     { abi: 'Vault', contract: 'VaultArthMlp' },
     { abi: 'Vault', contract: 'VaultMaha' },
@@ -116,7 +116,7 @@ module.exports = async (callback) => {
     contracts.push({ contract: 'Multicall', address: multicall, abi: 'Multicall' });
 
     // add LP tokens
-    contracts.push({ contract: 'ArthDaiLP', address: arthDaiLP, abi: 'IUniswapV2Pair' });
+    contracts.push({ contract: 'ArthDaiMLP', address: arthDaiLP, abi: 'IUniswapV2Pair' });
     contracts.push({ contract: 'MahaEthLP', address: mahaEthLP, abi: 'IUniswapV2Pair' });
 
     const abiDir = path.resolve(__dirname, `../output/abi`);
