@@ -10,6 +10,7 @@ import {ContractGuard} from '../../utils/ContractGuard.sol';
 import {Operator} from '../../owner/Operator.sol';
 import {IBoardroom} from '../../interfaces/IBoardroom.sol';
 import {IBasisAsset} from '../../interfaces/IBasisAsset.sol';
+import 'hardhat/console.sol';
 
 contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
     using Safe112 for uint112;
@@ -20,18 +21,23 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
      */
 
     struct Boardseat {
-        // Pending reward from the previous epochs.
-        uint256 rewardPending;
+        uint256 rewardClaimed;
+        uint256 lastRPS;
+        uint256 lastBoardSnapshotIndex;
+        // // Pending reward from the previous epochs.
+        // uint256 rewardPending;
         // Total reward earned in this epoch.
         uint256 rewardEarnedCurrEpoch;
         // Last time reward was claimed(not bound by current epoch).
         uint256 lastClaimedOn;
-        // The reward claimed in vesting period of this epoch.
-        uint256 rewardClaimedCurrEpoch;
-        // Snapshot of boardroom state when last epoch claimed.
+        // // The reward claimed in vesting period of this epoch.
+        // uint256 rewardClaimedCurrEpoch;
+        // // Snapshot of boardroom state when last epoch claimed.
         uint256 lastSnapshotIndex;
-        // Rewards claimable now in the current/next claim.
-        uint256 rewardClaimableNow;
+        // // Rewards claimable now in the current/next claim.
+        // uint256 rewardClaimableNow;
+        // // keep track of the current rps
+        // uint256 claimedRPS;
     }
 
     struct BoardSnapshot {
@@ -46,10 +52,12 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
     }
 
     struct BondingSnapshot {
+        uint256 epoch;
         // Time when first bonding was made.
-        uint256 firstBondedOn;
+        uint256 when;
         // The snapshot index of when first bonded.
-        uint256 snapshotIndexWhenFirstBonded;
+        uint256 balance;
+        uint256 valid;
     }
 
     /**
@@ -59,13 +67,16 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
     // The vault which has state of the stakes.
     Vault public vault;
     IERC20 public token;
+    uint256 public currentEpoch = 1;
 
     BoardSnapshot[] public boardHistory;
     mapping(address => Boardseat) public directors;
-    mapping(address => BondingSnapshot) public bondingHistory;
+    mapping(address => mapping(uint256 => BondingSnapshot))
+        public bondingHistory;
 
     // address(director) => uint256(Epcoh) => uint256(balance)
     mapping(address => mapping(uint256 => uint256)) directorBalanceForEpoch;
+    mapping(address => uint256) directorBalanceLastEpoch;
 
     /**
      * Modifier.
@@ -128,15 +139,15 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         return boardHistory[i];
     }
 
-    function getBondingHistory(address who)
+    function getBondingHistory(address who, uint256 epoch)
         public
         view
         returns (BondingSnapshot memory)
     {
-        return bondingHistory[who];
+        return bondingHistory[who][epoch];
     }
 
-    function getLatestSnapshot() internal view returns (BoardSnapshot memory) {
+    function getLatestSnapshot() public view returns (BoardSnapshot memory) {
         return boardHistory[latestSnapshotIndex()];
     }
 
@@ -149,7 +160,7 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
     }
 
     function getLastSnapshotOf(address director)
-        internal
+        public
         view
         returns (BoardSnapshot memory)
     {
@@ -160,7 +171,7 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         return getLatestSnapshot().rewardPerShare;
     }
 
-    function earned(address director) internal virtual returns (uint256) {
+    function earned(address director) public view virtual returns (uint256) {
         uint256 latestRPS = getLatestSnapshot().rewardPerShare;
         uint256 storedRPS = getLastSnapshotOf(director).rewardPerShare;
 
@@ -206,16 +217,22 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         uint256 prevRPS = getLatestSnapshot().rewardPerShare;
         uint256 nextRPS = prevRPS.add(amount.mul(1e18).div(totalSupply));
 
-        BoardSnapshot memory newSnapshot =
+        BoardSnapshot memory snap =
             BoardSnapshot({
                 number: block.number,
                 time: block.timestamp,
                 rewardReceived: amount,
                 rewardPerShare: nextRPS
             });
-        boardHistory.push(newSnapshot);
+        boardHistory.push(snap);
+
+        console.log('allocateSeigniorage totalSupply: %s', totalSupply);
+        console.log('allocateSeigniorage time: %s', block.timestamp);
+        console.log('allocateSeigniorage rewardReceived: %s', amount);
+        console.log('allocateSeigniorage rewardPerShare: %s', nextRPS);
 
         token.transferFrom(msg.sender, address(this), amount);
+        currentEpoch = currentEpoch.add(1);
         emit RewardAdded(msg.sender, amount);
     }
 

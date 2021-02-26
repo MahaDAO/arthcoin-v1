@@ -258,7 +258,7 @@ describe('VestedVaultBoardroom with different amounts', () => {
       await vault.connect(whale).bond(STAKE_AMOUNT);
     });
 
-    it('Should allocate seigniorage to stakers', async () => {
+    it.skip('Should allocate seigniorage to stakers', async () => {
       await cash.connect(operator).mint(operator.address, SEIGNIORAGE_AMOUNT);
       await cash
         .connect(operator)
