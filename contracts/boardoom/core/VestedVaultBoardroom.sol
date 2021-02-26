@@ -167,12 +167,6 @@ contract VestedVaultBoardroom is VaultBoardroom {
         return reward;
     }
 
-    function claimAndReinvestReward() external virtual {
-        uint256 reward = claimReward();
-        // NOTE: amount has to be approved from the frontend.
-        vault.bondFor(msg.sender, reward);
-    }
-
     // this fn is called by the vault
     function updateReward(address director) external override onlyVault {
         Boardseat storage seat = directors[director];
