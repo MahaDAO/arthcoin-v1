@@ -15,6 +15,7 @@ contract VestedVaultBoardroom is VaultBoardroom {
     using SafeMath for uint256;
 
     IBoardroom public oldBoardroom;
+    bool public everyoneNewDirector = true;
 
     /**
      * Event.
@@ -173,10 +174,10 @@ contract VestedVaultBoardroom is VaultBoardroom {
     function updateReward(address director) public onlyVault {
         Boardseat storage seat = directors[director];
 
+        // first time bonding; set firstRPS properly
         uint256 lastBondedEpoch = directorBalanceLastEpoch[director];
-
         if (lastBondedEpoch == 0) {
-            if (isOldDirector(director)) {
+            if (everyoneNewDirector || isOldDirector(director)) {
                 seat.firstRPS = 0;
             } else {
                 uint256 latestRPS = getLatestSnapshot().rewardPerShare;
@@ -217,13 +218,29 @@ contract VestedVaultBoardroom is VaultBoardroom {
         oldBoardroom = IBoardroom(room);
     }
 
+    function setEveryoneNewDirector(bool val) public onlyOwner {
+        everyoneNewDirector = val;
+    }
+
     function resinstateDirectorTo(
         address who,
         uint256 epoch,
+        uint256 lastSnapshotIndex,
         uint256 rps
     ) public onlyOwner {
         directorBalanceLastEpoch[who] = epoch;
-        directors[who].lastSnapshotIndex = latestSnapshotIndex();
+        directors[who].lastSnapshotIndex = lastSnapshotIndex;
         directors[who].lastRPS = rps;
+    }
+
+    function resinstateDirectorsTo(
+        address[] who,
+        uint256 epoch,
+        uint256 lastSnapshotIndex,
+        uint256 rps
+    ) public onlyOwner {
+        for (uint256 i = 0; i < who.length; i++) {
+            resinstateDirectorTo(who[i], epoch, lastSnapshotIndexrps, rps);
+        }
     }
 }
