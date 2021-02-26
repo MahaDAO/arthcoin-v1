@@ -2290,7 +2290,7 @@ describe.only('VestedVaultBoardroom with same amounts', () => {
         expect(await cash.balanceOf(abuser.address)).to.eq(oldCashBalanceOfAbuser);
       });
 
-      it('should not earn anything from the previous epoch', async () => {
+      it('should not earn anything from the previous epoch and owns 50% of the pool', async () => {
         await boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT)
 
         await advanceTimeAndBlock(
@@ -2310,7 +2310,7 @@ describe.only('VestedVaultBoardroom with same amounts', () => {
 
         await expect(boardroom.connect(abuser).claimReward())
           .to.emit(boardroom, 'RewardPaid')
-          .withArgs(abuser.address, SEIGNIORAGE_AMOUNT.div(2).div(2))
+          .withArgs(abuser.address, SEIGNIORAGE_AMOUNT.div(2).div(4))
 
         expect(await share.balanceOf(abuser.address)).to.eq(ZERO);
         expect(await vault.balanceOf(abuser.address)).to.eq(STAKE_AMOUNT);

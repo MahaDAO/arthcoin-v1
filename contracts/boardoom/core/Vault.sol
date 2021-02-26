@@ -10,6 +10,7 @@ import {Operator} from '../../owner/Operator.sol';
 import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
 import {StakingTimelock} from '../../timelock/StakingTimelock.sol';
 import {IVaultBoardroom} from '../../interfaces/IVaultBoardroom.sol';
+import 'hardhat/console.sol';
 
 /**
  * A vault is a contract that handles only the bonding & unbonding of tokens;
@@ -131,6 +132,9 @@ contract Vault is AccessControl, StakingTimelock, Operator {
     function _bond(address who, uint256 amount) private {
         require(amount > 0, 'Boardroom: cannot bond 0');
         require(enableDeposits, 'Boardroom: deposits are disabled');
+
+        console.log('vault bonding for %s', who);
+        console.log('vault bonding amount %s', amount);
 
         _totalSupply = _totalSupply.add(amount);
         _balances[who] = _balances[who].add(amount);

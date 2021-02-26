@@ -96,6 +96,10 @@ contract VestedVaultBoardroom is VaultBoardroom {
         return getLastEpochBalance(who).mul(latestRPS.sub(storedRPS)).div(1e18);
     }
 
+    function getStartingRPSof(address who) public view returns (uint256) {
+        return directors[who].firstRPS;
+    }
+
     function getRewardsEarnedPrevEpoch(address who)
         public
         view
@@ -104,7 +108,9 @@ contract VestedVaultBoardroom is VaultBoardroom {
         if (latestSnapshotIndex() < 1) return 0;
         uint256 latestRPS =
             boardHistory[latestSnapshotIndex().sub(1)].rewardPerShare;
-        return getLastEpochBalance(who).mul(latestRPS).div(1e18);
+        uint256 startingRPS = getStartingRPSof(who);
+        return
+            getLastEpochBalance(who).mul(latestRPS.sub(startingRPS)).div(1e18);
     }
 
     function getClaimableRewards(address who) public view returns (uint256) {
@@ -161,6 +167,15 @@ contract VestedVaultBoardroom is VaultBoardroom {
 
     // this fn is called by the vault
     function updateReward(address director) public onlyVault {
+        Boardseat storage seat = directors[director];
+
+        uint256 lastBondedEpoch = directorBalanceLastEpoch[director];
+
+        if (lastBondedEpoch == 0) {
+            uint256 latestRPS = getLatestSnapshot().rewardPerShare;
+            seat.firstRPS = latestRPS;
+        }
+
         // just update the user balance at this epoch
         BondingSnapshot memory snap =
             BondingSnapshot({
@@ -170,14 +185,18 @@ contract VestedVaultBoardroom is VaultBoardroom {
                 balance: vault.balanceWithoutBonded(director)
             });
 
-        console.log('vault updated balance %s', currentEpoch);
+        console.log(
+            'vault updated balance %s',
+            vault.balanceWithoutBonded(director)
+        );
+        console.log('vault updated epoch %s', currentEpoch);
+
         bondingHistory[director][currentEpoch] = snap;
         directorBalanceLastEpoch[director] = currentEpoch;
 
         // claim rewards?
 
-        Boardseat storage seat = directors[director];
-        uint256 latestFundingTime = boardHistory[boardHistory.length - 1].time;
+        // uint256 latestFundingTime = boardHistory[boardHistory.length - 1].time;
         seat.lastSnapshotIndex = latestSnapshotIndex();
     }
 

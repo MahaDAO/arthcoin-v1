@@ -23,6 +23,7 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
     struct Boardseat {
         uint256 rewardClaimed;
         uint256 lastRPS;
+        uint256 firstRPS;
         uint256 lastBoardSnapshotIndex;
         // // Pending reward from the previous epochs.
         // uint256 rewardPending;
