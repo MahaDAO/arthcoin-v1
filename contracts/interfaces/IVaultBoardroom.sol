@@ -6,4 +6,11 @@ import {IBoardroom} from './IBoardroom.sol';
 
 interface IVaultBoardroom is IBoardroom {
     function updateReward(address who) external;
+
+    function bondingHistory(address who, uint256 epoch)
+        external
+        view
+        returns (BondingSnapshot memory);
+
+    function directors(address who) external view returns (Boardseat memory);
 }

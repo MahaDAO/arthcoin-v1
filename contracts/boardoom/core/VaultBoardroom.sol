@@ -10,6 +10,10 @@ import {ContractGuard} from '../../utils/ContractGuard.sol';
 import {Operator} from '../../owner/Operator.sol';
 import {IBoardroom} from '../../interfaces/IBoardroom.sol';
 import {IBasisAsset} from '../../interfaces/IBasisAsset.sol';
+import {IVaultBoardroom} from '../../interfaces/IVaultBoardroom.sol';
+import {
+    IVestedVaultBoardroom
+} from '../../interfaces/IVestedVaultBoardroom.sol';
 
 // import 'hardhat/console.sol';
 
@@ -17,10 +21,33 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
     using Safe112 for uint112;
     using SafeMath for uint256;
 
+    struct VestedBondingSnapshot {
+        // Time when first bonding was made.
+        uint256 firstBondedOn;
+        // The snapshot index of when first bonded.
+        uint256 snapshotIndexWhenFirstBonded;
+    }
+
+    struct VestedBoardseat {
+        // Pending reward from the previous epochs.
+        uint256 rewardPending;
+        // Total reward earned in this epoch.
+        uint256 rewardEarnedCurrEpoch;
+        // Last time reward was claimed(not bound by current epoch).
+        uint256 lastClaimedOn;
+        // The reward claimed in vesting period of this epoch.
+        uint256 rewardClaimedCurrEpoch;
+        // Snapshot of boardroom state when last epoch claimed.
+        uint256 lastSnapshotIndex;
+    }
+
     // The vault which has state of the stakes.
     Vault public vault;
     IERC20 public token;
     uint256 public currentEpoch = 1;
+
+    IVaultBoardroom prevVaultBoardroom;
+    IVestedVaultBoardroom vestedVaultBoardroom;
 
     BoardSnapshot[] public boardHistory;
     mapping(address => Boardseat) public directors;
@@ -119,6 +146,21 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         uint256 latestRPS = getLatestSnapshot().rewardPerShare;
         uint256 storedRPS = getLastSnapshotOf(director).rewardPerShare;
 
+        // If this is 0, that means we are claiming for the first time.
+        // That could mean a couple of things.
+        // 1. We had bonded before this boardroom was live and are claiming in this boardroom for the firstime.
+        // 2. We have bonded after this boardroom was live and are claiming in this boardroom for the firsttime.
+        // 3. We had bonded before this boardroom was live and are claiming for the first time ever.
+        if (storedRPS == 0) {
+            IVestedVaultBoardroom.Boardseat memory vestedBoardseat =
+                vestedVaultBoardroom.directors(director);
+            Boardseat memory prevSeat = prevVaultBoardroom.directors(director);
+
+            if (vestedBoardseat.lastSnapshotIndex != 0) storedRPS = 0;
+            else if (prevSeat.lastSnapshotIndex != 0) storedRPS = 0;
+            else storedRPS = latestRPS;
+        }
+
         return
             vault
                 .balanceWithoutBonded(director)
@@ -183,6 +225,14 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
 
     function refundReward() external onlyOwner {
         token.transfer(msg.sender, token.balanceOf(address(this)));
+    }
+
+    function setPrevBoardrooms(
+        IVestedVaultBoardroom vestedBoardroom,
+        IVaultBoardroom boardroom
+    ) public onlyOwner {
+        prevVaultBoardroom = boardroom;
+        vestedVaultBoardroom = vestedBoardroom;
     }
 
     function _updateReward(address director) internal {
