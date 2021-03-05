@@ -24,6 +24,8 @@ interface IBoardroom is IOperator {
         // uint256 rewardClaimableNow;
         // // keep track of the current rps
         // uint256 claimedRPS;
+        bool isFirstVaultActivityBeforeFirstEpoch;
+        uint256 firstEpochWhenDoingVaultActivity;
     }
 
     struct BoardSnapshot {
