@@ -50,5 +50,22 @@ contract MockBoardroom is IBoardroom, Operator {
         return directors[director].lastSnapshotIndex;
     }
 
+    function updateReward(address director) external virtual override {}
+
+    function claimReward() public pure override returns (uint256) {
+        return 0;
+    }
+
+    function earned(address director)
+        public
+        view
+        virtual
+        override
+        returns (uint256)
+    {
+        require(director != address(0));
+        return 0;
+    }
+
     event RewardAdded(address indexed user, uint256 reward);
 }

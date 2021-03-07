@@ -2,10 +2,10 @@
 
 pragma solidity ^0.8.0;
 
-import '../core/SimpleBoardroom.sol';
+// import '../core/SimpleBoardroom.sol';
 
-contract ArthBoardroomV1 is SimpleBoardroom {
-    constructor(IERC20 _cash, uint256 _duration)
-        SimpleBoardroom(_cash, _cash, _duration)
-    {}
+contract ArthBoardroomV1 {
+    // constructor(IERC20 _cash, uint256 _duration)
+    // SimpleBoardroom(_cash, _cash, _duration)
+    // {}
 }

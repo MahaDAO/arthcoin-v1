@@ -5,8 +5,6 @@ pragma solidity ^0.8.0;
 import {IBoardroom} from './IBoardroom.sol';
 
 interface IVaultBoardroom is IBoardroom {
-    function updateReward(address who) external;
-
     function bondingHistory(address who, uint256 epoch)
         external
         view

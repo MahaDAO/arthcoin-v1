@@ -146,7 +146,13 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         return getLatestSnapshot().rewardPerShare;
     }
 
-    function earned(address director) public view virtual returns (uint256) {
+    function earned(address director)
+        public
+        view
+        virtual
+        override
+        returns (uint256)
+    {
         uint256 latestRPS = getLatestSnapshot().rewardPerShare;
         uint256 storedRPS = getLastSnapshotOf(director).rewardPerShare;
 
@@ -157,7 +163,13 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
                 .add(directors[director].rewardEarnedCurrEpoch);
     }
 
-    function claimReward() public virtual directorExists returns (uint256) {
+    function claimReward()
+        public
+        virtual
+        override
+        directorExists
+        returns (uint256)
+    {
         return _claimReward(msg.sender);
     }
 
@@ -197,7 +209,12 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         emit RewardAdded(msg.sender, amount);
     }
 
-    function updateReward(address director) external virtual onlyVault {
+    function updateReward(address director)
+        external
+        virtual
+        override
+        onlyVault
+    {
         _updateBalance(director);
     }
 
@@ -219,6 +236,10 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         token.transfer(msg.sender, token.balanceOf(address(this)));
     }
 
+    function setVault(IVault _vault) external onlyOwner {
+        vault = _vault;
+    }
+
     function _updateReward(address director) internal {
         Boardseat memory seat = directors[director];
         seat.rewardEarnedCurrEpoch = earned(director);
@@ -236,7 +257,6 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
 
         bondingHistory[director][currentEpoch] = snap;
         directorsLastEpoch[director] = currentEpoch;
-
         _updateReward(director);
     }
 }

@@ -2,38 +2,74 @@
 
 pragma solidity ^0.8.0;
 
-import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
 import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
+import {IVault} from '../../interfaces/IVault.sol';
+import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
+import {Safe112} from '../../lib/Safe112.sol';
+import {ContractGuard} from '../../utils/ContractGuard.sol';
 import {Operator} from '../../owner/Operator.sol';
-import {StakingTimelock} from '../../timelock/StakingTimelock.sol';
+import {IBoardroom} from '../../interfaces/IBoardroom.sol';
+import {IBasisAsset} from '../../interfaces/IBasisAsset.sol';
+import {IVaultBoardroom} from '../../interfaces/IVaultBoardroom.sol';
 
-abstract contract BaseBoardroom is StakingTimelock, Operator {
+abstract contract BaseBoardroom is Operator, IBoardroom {
+    using Safe112 for uint112;
     using SafeMath for uint256;
 
-    IERC20 public share;
+    IERC20 public token;
 
-    bool public enableDeposits = true;
-    uint256 internal _totalSupply;
-    mapping(address => uint256) internal _balances;
+    BoardSnapshot[] public boardHistory;
+    mapping(address => Boardseat) public directors;
 
-    modifier depositsEnabled() {
-        require(enableDeposits, 'boardroom: deposits are disabled');
-        _;
+    event RewardPaid(address indexed user, uint256 reward);
+    event RewardAdded(address indexed user, uint256 reward);
+
+    constructor(IERC20 token_) {
+        token = token_;
     }
 
-    function totalSupply() public view returns (uint256) {
-        return _totalSupply;
+    function getDirector(address who)
+        external
+        view
+        override
+        returns (Boardseat memory)
+    {
+        return directors[who];
     }
 
-    function balanceOf(address account) public view returns (uint256) {
-        return _balances[account];
+    // returns the balance as per the last epoch; if the user deposits/withdraws
+    // in the current epoch, this value will not change unless another epoch passes
+
+    function getLastSnapshotIndexOf(address director)
+        external
+        view
+        override
+        returns (uint256)
+    {
+        return directors[director].lastSnapshotIndex;
     }
 
-    function toggleDeposits(bool val) external onlyOwner {
-        enableDeposits = val;
+    function getLastSnapshotOf(address director)
+        public
+        view
+        returns (BoardSnapshot memory)
+    {
+        return boardHistory[directors[director].lastSnapshotIndex];
     }
 
-    function refund() external onlyOwner {
-        share.transfer(msg.sender, share.balanceOf(address(this)));
+    function latestSnapshotIndex() public view returns (uint256) {
+        return boardHistory.length.sub(1);
+    }
+
+    function getLatestSnapshot() public view returns (BoardSnapshot memory) {
+        return boardHistory[latestSnapshotIndex()];
+    }
+
+    function rewardPerShare() public view returns (uint256) {
+        return getLatestSnapshot().rewardPerShare;
+    }
+
+    function refundReward() external onlyOwner {
+        token.transfer(msg.sender, token.balanceOf(address(this)));
     }
 }

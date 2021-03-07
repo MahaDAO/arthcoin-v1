@@ -57,4 +57,10 @@ interface IBoardroom is IOperator {
         external
         view
         returns (uint256);
+
+    function earned(address director) external view returns (uint256);
+
+    function claimReward() external returns (uint256);
+
+    function updateReward(address director) external;
 }
