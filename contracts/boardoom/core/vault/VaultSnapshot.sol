@@ -60,4 +60,14 @@ contract VaultSnapshot is Operator, IVault {
     function unbond(uint256 amount) external virtual override {}
 
     function withdraw() external virtual override {}
+
+    function getStakedAmount(address who)
+        external
+        view
+        override
+        returns (uint256)
+    {
+        require(who != address(0));
+        return _totalSupply;
+    }
 }

@@ -66,7 +66,11 @@ abstract contract StakingTimelock is Ownable {
         );
     }
 
-    function getStakedAmount(address who) public view returns (uint256) {
+    function getStakedAmount(address who) external view returns (uint256) {
+        return _getStakedAmount(who);
+    }
+
+    function _getStakedAmount(address who) internal view returns (uint256) {
         StakingDetails storage _stakerDetails = stakingDetails[who];
         return _stakerDetails.amount;
     }

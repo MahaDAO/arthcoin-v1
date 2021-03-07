@@ -95,7 +95,7 @@ contract Vault is AccessControl, StakingTimelock, Operator {
     }
 
     function balanceWithoutBonded(address who) public view returns (uint256) {
-        uint256 unbondingAmount = getStakedAmount(msg.sender);
+        uint256 unbondingAmount = _getStakedAmount(who);
         return _balances[who].sub(unbondingAmount);
     }
 
@@ -175,7 +175,7 @@ contract Vault is AccessControl, StakingTimelock, Operator {
         checkLockDurationFor(who)
     {
         uint256 directorShare = _balances[who];
-        uint256 unbondingAmount = getStakedAmount(who);
+        uint256 unbondingAmount = _getStakedAmount(who);
 
         require(
             directorShare >= unbondingAmount,

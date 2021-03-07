@@ -10,7 +10,7 @@ import { advanceTimeAndBlock, latestBlocktime } from '../../shared/utilities';
 chai.use(solidity);
 
 
-describe.only('VestedVaultBoardroom with same amounts', () => {
+describe('VestedVaultBoardroom with same amounts', () => {
   const REWARDS_VESTING = 8 * 3600
   const BOARDROOM_LOCK_PERIOD = 5 * 60;
   const ETH = utils.parseEther('1');

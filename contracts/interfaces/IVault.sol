@@ -18,4 +18,6 @@ interface IVault {
     function unbond(uint256 amount) external;
 
     function withdraw() external;
+
+    function getStakedAmount(address who) external view returns (uint256);
 }

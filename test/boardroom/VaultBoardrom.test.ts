@@ -11,7 +11,7 @@ import { advanceTimeAndBlock, latestBlocktime } from '../shared/utilities';
 chai.use(solidity);
 
 
-describe('VaultBoardroom', () => {
+describe.only('VaultBoardroom', () => {
   // const DAY = 86400;
 
   const BOARDROOM_LOCK_PERIOD = 5 * 60;
@@ -20,6 +20,7 @@ describe('VaultBoardroom', () => {
   const STAKE_AMOUNT = ETH.mul(5000);
   const SEIGNIORAGE_AMOUNT = ETH.mul(10000);
 
+  const zeroAddr = '0x0000000000000000000000000000000000000000'
   const { provider } = ethers;
 
   let operator: SignerWithAddress;
@@ -31,7 +32,7 @@ describe('VaultBoardroom', () => {
   });
 
   let ARTH: ContractFactory;
-  let BondedBoardroom: ContractFactory;
+  let VaultBoardroom: ContractFactory;
   let SHARE: ContractFactory;
   let Vault: ContractFactory;
 
@@ -39,7 +40,7 @@ describe('VaultBoardroom', () => {
     ARTH = await ethers.getContractFactory('ARTH');
     SHARE = await ethers.getContractFactory('MahaToken');
     Vault = await ethers.getContractFactory('Vault');
-    BondedBoardroom = await ethers.getContractFactory('VaultBoardroom');
+    VaultBoardroom = await ethers.getContractFactory('VaultBoardroom');
   });
 
   let cash: Contract;
@@ -54,11 +55,208 @@ describe('VaultBoardroom', () => {
       share.address,
       BOARDROOM_LOCK_PERIOD,
     )
-    boardroom = await BondedBoardroom.connect(operator).deploy(
+    boardroom = await VaultBoardroom.connect(operator).deploy(
       cash.address,
       vault.address,
     );
+
+    vault.connect(operator).setBoardrooms(boardroom.address, zeroAddr)
   });
+
+  describe.only("#GetBalanceFromLastEpoch", () => {
+    beforeEach('give test amounts', async () => {
+      await share.connect(operator).mint(abuser.address, STAKE_AMOUNT.mul(3)),
+      await share.connect(operator).mint(whale.address, STAKE_AMOUNT.mul(3)),
+      await share.connect(operator).mint(operator.address, SEIGNIORAGE_AMOUNT.mul(3));
+      await cash.connect(operator).mint(operator.address, SEIGNIORAGE_AMOUNT.mul(3));
+      await cash.connect(operator).approve(boardroom.address, SEIGNIORAGE_AMOUNT.mul(3));
+
+      await share.connect(abuser).approve(vault.address, STAKE_AMOUNT.mul(3))
+      await share.connect(whale).approve(vault.address, STAKE_AMOUNT.mul(3))
+
+      await vault.connect(abuser).bond(STAKE_AMOUNT);
+    })
+
+    it('for epoch 1, with no deposits; return 0', async () => {
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(0)
+    })
+
+    it('for epoch 2, with no deposits; return 0', async () => {
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(0)
+
+      expect(await boardroom.currentEpoch()).to.eq(1)
+      await expect(boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT))
+        .to.emit(boardroom, 'RewardAdded')
+        .withArgs(operator.address, SEIGNIORAGE_AMOUNT);
+      expect(await boardroom.currentEpoch()).to.eq(2)
+
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(0)
+    })
+
+    it('for epoch 3, with a deposit on epoch 2; return the deposit', async () => {
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(0)
+      await vault.connect(whale).bond(STAKE_AMOUNT);
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(0)
+
+      expect(await boardroom.currentEpoch()).to.eq(1)
+      await expect(boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT))
+        .to.emit(boardroom, 'RewardAdded')
+        .withArgs(operator.address, SEIGNIORAGE_AMOUNT);
+      expect(await boardroom.currentEpoch()).to.eq(2);
+
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(STAKE_AMOUNT)
+      await vault.connect(whale).bond(STAKE_AMOUNT);
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(STAKE_AMOUNT)
+    })
+
+    it('for epoch 3, and with two deposits on two epochs; return the right amounts', async () => {
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(0);
+      await vault.connect(whale).bond(STAKE_AMOUNT);
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(0);
+
+      expect(await boardroom.currentEpoch()).to.eq(1)
+      await expect(boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT))
+        .to.emit(boardroom, 'RewardAdded')
+        .withArgs(operator.address, SEIGNIORAGE_AMOUNT);
+      expect(await boardroom.currentEpoch()).to.eq(2)
+
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(STAKE_AMOUNT);
+      await vault.connect(whale).bond(STAKE_AMOUNT);
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(STAKE_AMOUNT);
+
+      await expect(boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT))
+        .to.emit(boardroom, 'RewardAdded')
+        .withArgs(operator.address, SEIGNIORAGE_AMOUNT);
+
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(STAKE_AMOUNT.mul(2))
+    })
+
+    it('for epoch 1, dont give rewards if we deposit on epoch 1', async () => {
+      expect(await boardroom.currentEpoch()).to.eq(1)
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(0);
+
+      await expect(boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT))
+        .to.emit(boardroom, 'RewardAdded')
+        .withArgs(operator.address, SEIGNIORAGE_AMOUNT);
+      expect(await boardroom.currentEpoch()).to.eq(2)
+
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(0);
+      await vault.connect(whale).bond(STAKE_AMOUNT);
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(0);
+
+      await expect(boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT))
+        .to.emit(boardroom, 'RewardAdded')
+        .withArgs(operator.address, SEIGNIORAGE_AMOUNT);
+
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(STAKE_AMOUNT);
+    })
+
+    it('should stay the same if we deposit between epoch 1 and 2 after epoch 1 has passed', async () => {
+      expect(await boardroom.currentEpoch()).to.eq(1)
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(0);
+
+      await expect(boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT))
+        .to.emit(boardroom, 'RewardAdded')
+        .withArgs(operator.address, SEIGNIORAGE_AMOUNT);
+      expect(await boardroom.currentEpoch()).to.eq(2)
+
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(0);
+      await vault.connect(whale).bond(STAKE_AMOUNT);
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(0);
+
+      await expect(boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT))
+        .to.emit(boardroom, 'RewardAdded')
+        .withArgs(operator.address, SEIGNIORAGE_AMOUNT);
+
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(STAKE_AMOUNT);
+    })
+
+    it('should increase if we deposit between epoch 1 and 2 after epoch 2 has passed', async () => {
+      expect(await boardroom.currentEpoch()).to.eq(1)
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(0);
+
+      await vault.connect(whale).bond(STAKE_AMOUNT);
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(0);
+
+      await expect(boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT))
+        .to.emit(boardroom, 'RewardAdded')
+        .withArgs(operator.address, SEIGNIORAGE_AMOUNT);
+      expect(await boardroom.currentEpoch()).to.eq(2)
+
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(STAKE_AMOUNT);
+      await vault.connect(whale).bond(STAKE_AMOUNT);
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(STAKE_AMOUNT);
+
+      await expect(boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT))
+        .to.emit(boardroom, 'RewardAdded')
+        .withArgs(operator.address, SEIGNIORAGE_AMOUNT);
+      expect(await boardroom.currentEpoch()).to.eq(3)
+
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(STAKE_AMOUNT.mul(2));
+      await vault.connect(whale).bond(STAKE_AMOUNT);
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(STAKE_AMOUNT.mul(2));
+
+      await expect(boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT))
+        .to.emit(boardroom, 'RewardAdded')
+        .withArgs(operator.address, SEIGNIORAGE_AMOUNT);
+      expect(await boardroom.currentEpoch()).to.eq(4)
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(STAKE_AMOUNT.mul(3));
+    })
+
+    it('should decrease if we withdraw between epoch 1 and 2 after epoch 2 has passed', async () => {
+      expect(await boardroom.currentEpoch()).to.eq(1)
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(0);
+
+      await vault.connect(whale).bond(STAKE_AMOUNT);
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(0);
+
+      await expect(boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT))
+        .to.emit(boardroom, 'RewardAdded')
+        .withArgs(operator.address, SEIGNIORAGE_AMOUNT);
+      expect(await boardroom.currentEpoch()).to.eq(2)
+
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(STAKE_AMOUNT);
+      await vault.connect(whale).unbond(STAKE_AMOUNT);
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(STAKE_AMOUNT);
+
+      await expect(boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT))
+        .to.emit(boardroom, 'RewardAdded')
+        .withArgs(operator.address, SEIGNIORAGE_AMOUNT);
+      expect(await boardroom.currentEpoch()).to.eq(3)
+
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(0);
+      await vault.connect(whale).bond(STAKE_AMOUNT);
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(0);
+    })
+
+    it.only('should decrease if we withdraw between epoch 1 and 2 after epoch 2 has passed', async () => {
+      expect(await boardroom.currentEpoch()).to.eq(1)
+
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(0);
+      await vault.connect(whale).bond(STAKE_AMOUNT);
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(0);
+
+      await expect(boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT))
+        .to.emit(boardroom, 'RewardAdded')
+        .withArgs(operator.address, SEIGNIORAGE_AMOUNT);
+      expect(await boardroom.currentEpoch()).to.eq(2)
+
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(STAKE_AMOUNT);
+      expect(await vault.balanceWithoutBonded(whale.address)).to.eq(STAKE_AMOUNT);
+      await vault.connect(whale).unbond(STAKE_AMOUNT);
+      expect(await vault.balanceWithoutBonded(whale.address)).to.eq(0);
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(STAKE_AMOUNT);
+
+      await expect(boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT))
+        .to.emit(boardroom, 'RewardAdded')
+        .withArgs(operator.address, SEIGNIORAGE_AMOUNT);
+      expect(await boardroom.currentEpoch()).to.eq(3)
+
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(0);
+      await vault.connect(whale).bond(STAKE_AMOUNT);
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(0);
+    })
+  })
 
   describe('#Bond', () => {
     it('Should work correctly', async () => {

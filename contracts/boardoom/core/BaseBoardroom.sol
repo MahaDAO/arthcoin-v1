@@ -37,9 +37,6 @@ abstract contract BaseBoardroom is Operator, IBoardroom {
         return directors[who];
     }
 
-    // returns the balance as per the last epoch; if the user deposits/withdraws
-    // in the current epoch, this value will not change unless another epoch passes
-
     function getLastSnapshotIndexOf(address director)
         external
         view
