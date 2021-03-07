@@ -16,7 +16,7 @@ async function main() {
 
   const vaultName = 'VaultArthMlp'
   // const vaultToken = '0x0E3cC2c4FB9252d17d07C67135E48536071735D9'
-  const vaultToken = '0x1c36d9e60cac6893652b74e357f3829a0f5095e0'
+  const vaultToken = '0xe207492fad13324b3b80b1a4324a203b61fc11a6'
 
   const Vaults = await ethers.getContractFactory(vaultName);
 

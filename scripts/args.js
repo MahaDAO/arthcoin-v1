@@ -1,9 +1,9 @@
 module.exports = [
   '0x0e3cc2c4fb9252d17d07c67135e48536071735d9',
-  '0x44811eff0f4dd2d7cb093a6d33bb6202eb2edf06',
-  28800
+  '0x4A3201A61a998E8f43C942532a72B9c80708Aa58',
+  // 86400
 ];
 
 
-// npx hardhat verify --constructor-args scripts/args.js 0x0daeC081773e4Df0731165198E3446C471542a19 --network mainnet
-// npx hardhat verify --contract contracts/boardoom/v2/ArthArthBoardroomV2.sol:ArthArthBoardroomV2 --constructor-args scripts/args.js 0x0daeC081773e4Df0731165198E3446C471542a19  --network mainnet
+// npx hardhat verify --constructor-args scripts/args.js 0x4A3201A61a998E8f43C942532a72B9c80708Aa58 --network mainnet
+// npx hardhat verify --contract contracts/boardoom/v2/ArthArthMlpLiquidityBoardroomV2.sol:ArthArthMlpLiquidityBoardroomV2 --constructor-args scripts/args.js 0xc7B70b9a5D1BcBf3623e02E33c7C4A672DdCb995  --network mainnet
