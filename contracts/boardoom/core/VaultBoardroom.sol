@@ -21,25 +21,8 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
     using Safe112 for uint112;
     using SafeMath for uint256;
 
-    struct VestedBondingSnapshot {
-        // Time when first bonding was made.
-        uint256 firstBondedOn;
-        // The snapshot index of when first bonded.
-        uint256 snapshotIndexWhenFirstBonded;
-    }
-
-    struct VestedBoardseat {
-        // Pending reward from the previous epochs.
-        uint256 rewardPending;
-        // Total reward earned in this epoch.
-        uint256 rewardEarnedCurrEpoch;
-        // Last time reward was claimed(not bound by current epoch).
-        uint256 lastClaimedOn;
-        // The reward claimed in vesting period of this epoch.
-        uint256 rewardClaimedCurrEpoch;
-        // Snapshot of boardroom state when last epoch claimed.
-        uint256 lastSnapshotIndex;
-    }
+    IBoardroom public oldBoardroom;
+    bool public everyoneNewDirector = true;
 
     // The vault which has state of the stakes.
     Vault public vault;
@@ -55,7 +38,7 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         public bondingHistory;
 
     mapping(address => mapping(uint256 => uint256)) directorBalanceForEpoch;
-    mapping(address => uint256) directorBalanceLastEpoch;
+    mapping(address => uint256) directorsLastEpoch;
 
     modifier directorExists {
         require(
@@ -115,6 +98,34 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         returns (BondingSnapshot memory)
     {
         return bondingHistory[who][epoch];
+    }
+
+    // returns the balance as per the last epoch; if the user deposits/withdraws
+    // in the current epoch, this value will not change unless another epoch passes
+    function getLastEpochBalance(address who) public view returns (uint256) {
+        // console.log('getLastEpochBalance who %s', who);
+        // console.log('getLastEpochBalance currentEpoch %s', currentEpoch);
+
+        if (directorsLastEpoch[who] == 0) {
+            // check old contract
+            // take balance from snaphot
+            return 0;
+        }
+
+        // uint256 validEpoch =
+        //     directorsLastEpoch[who] < currentEpoch.sub(1)
+        //         ? directorsLastEpoch[who]
+        //         : currentEpoch.sub(1);
+
+        // // console.log('getLastEpochBalance validEpoch %s', validEpoch);
+
+        // if (getBondingHistory(who, validEpoch).valid == 1)
+        //     return getBondingHistory(who, validEpoch).balance;
+
+        // if (getBondingHistory(who, validEpoch).valid == 1)
+        return getBondingHistory(who, directorsLastEpoch[who]).balance;
+
+        // return 0;
     }
 
     function getLatestSnapshot() public view returns (BoardSnapshot memory) {
@@ -189,8 +200,7 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         }
 
         return
-            vault
-                .balanceWithoutBonded(director)
+            getLastEpochBalance(director)
                 .mul(latestRPS.sub(storedRPS))
                 .div(1e18)
                 .add(directors[director].rewardEarnedCurrEpoch);
@@ -285,10 +295,45 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         vestedVaultBoardroom = vestedBoardroom;
     }
 
+    function isOldDirector(address who) public view returns (bool) {
+        if (address(oldBoardroom) == address(0)) return false;
+        return oldBoardroom.getLastSnapshotIndexOf(who) >= 0;
+    }
+
+    function setOldBoardroom(address room) public onlyOwner {
+        oldBoardroom = IBoardroom(room);
+    }
+
+    function setEveryoneNewDirector(bool val) public onlyOwner {
+        everyoneNewDirector = val;
+    }
+
     function _updateReward(address director) internal {
         Boardseat memory seat = directors[director];
         seat.rewardEarnedCurrEpoch = earned(director);
         seat.lastSnapshotIndex = latestSnapshotIndex();
         directors[director] = seat;
+
+        // first time bonding; set firstRPS properly
+        uint256 lastBondedEpoch = directorsLastEpoch[director];
+        if (lastBondedEpoch == 0) {
+            if (everyoneNewDirector || isOldDirector(director)) {
+                seat.firstRPS = 0;
+            } else {
+                uint256 latestRPS = getLatestSnapshot().rewardPerShare;
+                seat.firstRPS = latestRPS;
+            }
+        }
+
+        BondingSnapshot memory snap =
+            BondingSnapshot({
+                epoch: currentEpoch,
+                when: block.timestamp,
+                valid: 1,
+                balance: vault.balanceWithoutBonded(director)
+            });
+
+        bondingHistory[director][currentEpoch] = snap;
+        directorsLastEpoch[director] = currentEpoch;
     }
 }
