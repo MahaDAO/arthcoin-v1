@@ -7,6 +7,7 @@ import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
 import {Vault} from './Vault.sol';
 import {VaultBoardroom} from './VaultBoardroom.sol';
 import {IBoardroom} from '../../interfaces/IBoardroom.sol';
+import {IVault} from '../../interfaces/IVault.sol';
 
 // import 'hardhat/console.sol';
 
@@ -44,7 +45,7 @@ contract VestedVaultBoardroom is VaultBoardroom {
      */
     constructor(
         IERC20 token_,
-        Vault vault_,
+        IVault vault_,
         uint256 vestFor_
     ) VaultBoardroom(token_, vault_) {
         vestFor = vestFor_;
@@ -96,7 +97,10 @@ contract VestedVaultBoardroom is VaultBoardroom {
         // console.log('getRewardsEarnedThisEpoch storedRPS %s', storedRPS);
         // console.log('getLastEpochBalance val %s', getLastEpochBalance(who));
 
-        return getLastEpochBalance(who).mul(latestRPS.sub(storedRPS)).div(1e18);
+        return
+            getBalanceFromLastEpoch(who).mul(latestRPS.sub(storedRPS)).div(
+                1e18
+            );
     }
 
     function getStartingRPSof(address who) public view returns (uint256) {
@@ -113,7 +117,9 @@ contract VestedVaultBoardroom is VaultBoardroom {
             boardHistory[latestSnapshotIndex().sub(1)].rewardPerShare;
         uint256 startingRPS = getStartingRPSof(who);
         return
-            getLastEpochBalance(who).mul(latestRPS.sub(startingRPS)).div(1e18);
+            getBalanceFromLastEpoch(who).mul(latestRPS.sub(startingRPS)).div(
+                1e18
+            );
     }
 
     function getClaimableRewards(address who) public view returns (uint256) {
