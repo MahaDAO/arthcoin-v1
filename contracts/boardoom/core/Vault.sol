@@ -42,6 +42,8 @@ contract Vault is AccessControl, StakingTimelock, Operator {
 
     uint256 internal _totalSupply;
     bool public enableDeposits = true;
+    // bool public updateSnapshot = true;
+
     uint256 internal _totalBondedSupply;
 
     mapping(address => uint256) internal _balances;

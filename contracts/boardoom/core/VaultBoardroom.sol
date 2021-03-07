@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 
 import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
-import {Vault} from './Vault.sol';
+import {IVault} from '../../interfaces/IVault.sol';
 import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
 import {Safe112} from '../../lib/Safe112.sol';
 import {ContractGuard} from '../../utils/ContractGuard.sol';
@@ -25,7 +25,7 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
     bool public everyoneNewDirector = true;
 
     // The vault which has state of the stakes.
-    Vault public vault;
+    IVault public vault;
     IERC20 public token;
     uint256 public currentEpoch = 1;
 
@@ -57,7 +57,7 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
     event RewardPaid(address indexed user, uint256 reward);
     event RewardAdded(address indexed user, uint256 reward);
 
-    constructor(IERC20 token_, Vault vault_) {
+    constructor(IERC20 token_, IVault vault_) {
         token = token_;
         vault = vault_;
 
@@ -149,7 +149,7 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         return boardHistory[directors[director].lastSnapshotIndex];
     }
 
-    function claimAndReinvestReward(Vault _vault) external virtual {
+    function claimAndReinvestReward(IVault _vault) external virtual {
         uint256 reward = _claimReward(msg.sender);
         // NOTE: amount has to be approved from the frontend.
         _vault.bondFor(msg.sender, reward);
@@ -163,41 +163,41 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         uint256 latestRPS = getLatestSnapshot().rewardPerShare;
         uint256 storedRPS = getLastSnapshotOf(director).rewardPerShare;
 
-        // If this is 0, that means we are claiming for the first time.
-        // That could mean a couple of things:
-        //  - 1. We had bonded before this boardroom was live and are claiming in this boardroom for the firstime.
-        //  - 2. We have bonded after this boardroom was live and are claiming in this boardroom for the firsttime.
-        //  - 3. We had bonded before this boardroom was live and are claiming for the first time ever.
-        if (storedRPS == 0) {
-            // Get the lastSnapshot user has done any activity from
-            // the previous boardrooms(one was vested, other wasn't).
-            IVestedVaultBoardroom.Boardseat memory vestedBoardseat =
-                vestedVaultBoardroom.directors(director);
-            Boardseat memory prevSeat = prevVaultBoardroom.directors(director);
+        // // If this is 0, that means we are claiming for the first time.
+        // // That could mean a couple of things:
+        // //  - 1. We had bonded before this boardroom was live and are claiming in this boardroom for the firstime.
+        // //  - 2. We have bonded after this boardroom was live and are claiming in this boardroom for the firsttime.
+        // //  - 3. We had bonded before this boardroom was live and are claiming for the first time ever.
+        // if (storedRPS == 0) {
+        //     // Get the lastSnapshot user has done any activity from
+        //     // the previous boardrooms(one was vested, other wasn't).
+        //     IVestedVaultBoardroom.Boardseat memory vestedBoardseat =
+        //         vestedVaultBoardroom.directors(director);
+        //     Boardseat memory prevSeat = prevVaultBoardroom.directors(director);
 
-            // If the snapshot index is 0, that means we haven't done any activity
-            // in these boardrooms.
-            // NOTE: this won't detect the case wherein user has bonded before 1st epoch
-            // and not done anything after that as the lastSnapshotIndex would be 0 for
-            // this case.
-            if (vestedBoardseat.lastSnapshotIndex != 0) storedRPS = 0;
-            else if (prevSeat.lastSnapshotIndex != 0) storedRPS = 0;
-            else {
-                // If we have done any activity in the vault before the first epoch
-                // then we claim rewards from all the epoch.
-                // NOTE: ideally the activity should be bonding only.
-                if (directors[director].isFirstVaultActivityBeforeFirstEpoch) {
-                    storedRPS = 0;
-                } else {
-                    uint256 firstActivityEpoch =
-                        directors[director].firstEpochWhenDoingVaultActivity;
+        //     // If the snapshot index is 0, that means we haven't done any activity
+        //     // in these boardrooms.
+        //     // NOTE: this won't detect the case wherein user has bonded before 1st epoch
+        //     // and not done anything after that as the lastSnapshotIndex would be 0 for
+        //     // this case.
+        //     if (vestedBoardseat.lastSnapshotIndex != 0) storedRPS = 0;
+        //     else if (prevSeat.lastSnapshotIndex != 0) storedRPS = 0;
+        //     else {
+        //         // If we have done any activity in the vault before the first epoch
+        //         // then we claim rewards from all the epoch.
+        //         // NOTE: ideally the activity should be bonding only.
+        //         if (directors[director].isFirstVaultActivityBeforeFirstEpoch) {
+        //             storedRPS = 0;
+        //         } else {
+        //             uint256 firstActivityEpoch =
+        //                 directors[director].firstEpochWhenDoingVaultActivity;
 
-                    // Get the epoch at which this activity was done.
-                    // claim rewards till that epoch only.
-                    storedRPS = boardHistory[firstActivityEpoch].rewardPerShare;
-                }
-            }
-        }
+        //             // Get the epoch at which this activity was done.
+        //             // claim rewards till that epoch only.
+        //             storedRPS = boardHistory[firstActivityEpoch].rewardPerShare;
+        //         }
+        //     }
+        // }
 
         return
             getLastEpochBalance(director)
