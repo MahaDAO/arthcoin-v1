@@ -11,18 +11,16 @@ import {Operator} from '../../owner/Operator.sol';
 import {IBoardroom} from '../../interfaces/IBoardroom.sol';
 import {IBasisAsset} from '../../interfaces/IBasisAsset.sol';
 import {IVaultBoardroom} from '../../interfaces/IVaultBoardroom.sol';
+import {BaseBoardroom} from './BaseBoardroom.sol';
 
-contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
+contract VaultBoardroom is ContractGuard, BaseBoardroom {
     using Safe112 for uint112;
     using SafeMath for uint256;
 
     // The vault which has state of the stakes.
     IVault public vault;
-    IERC20 public token;
     uint256 public currentEpoch = 1;
 
-    BoardSnapshot[] public boardHistory;
-    mapping(address => Boardseat) public directors;
     mapping(address => mapping(uint256 => BondingSnapshot))
         public bondingHistory;
 
@@ -42,11 +40,7 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         _;
     }
 
-    event RewardPaid(address indexed user, uint256 reward);
-    event RewardAdded(address indexed user, uint256 reward);
-
-    constructor(IERC20 token_, IVault vault_) {
-        token = token_;
+    constructor(IERC20 token_, IVault vault_) BaseBoardroom(token_) {
         vault = vault_;
 
         BoardSnapshot memory genesisSnapshot =
@@ -57,19 +51,6 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
                 rewardPerShare: 0
             });
         boardHistory.push(genesisSnapshot);
-    }
-
-    function latestSnapshotIndex() public view returns (uint256) {
-        return boardHistory.length.sub(1);
-    }
-
-    function getDirector(address who)
-        external
-        view
-        override
-        returns (Boardseat memory)
-    {
-        return directors[who];
     }
 
     function getBoardhistory(uint256 i)
@@ -116,33 +97,12 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         return getBondingHistory(who, validEpoch).balance;
     }
 
-    function getLatestSnapshot() public view returns (BoardSnapshot memory) {
-        return boardHistory[latestSnapshotIndex()];
-    }
-
-    function getLastSnapshotIndexOf(address director)
-        external
-        view
-        override
-        returns (uint256)
-    {
-        return directors[director].lastSnapshotIndex;
-    }
-
-    function getLastSnapshotOf(address director)
-        public
-        view
-        returns (BoardSnapshot memory)
-    {
-        return boardHistory[directors[director].lastSnapshotIndex];
-    }
-
     function claimAndReinvestReward(IVault _vault) external virtual {
         uint256 reward = _claimReward(msg.sender);
         _vault.bondFor(msg.sender, reward);
     }
 
-    function rewardPerShare() public view returns (uint256) {
+    function rewardPerShare() public view override returns (uint256) {
         return getLatestSnapshot().rewardPerShare;
     }
 
@@ -230,10 +190,6 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         }
 
         return reward;
-    }
-
-    function refundReward() external onlyOwner {
-        token.transfer(msg.sender, token.balanceOf(address(this)));
     }
 
     function setVault(IVault _vault) external onlyOwner {

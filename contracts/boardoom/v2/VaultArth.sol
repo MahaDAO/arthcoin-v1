@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import {Vault} from '../core/Vault.sol';
+import {Vault} from '../core/vault/Vault.sol';
 import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
 
 contract VaultArth is Vault {

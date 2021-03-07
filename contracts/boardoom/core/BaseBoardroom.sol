@@ -65,7 +65,7 @@ abstract contract BaseBoardroom is Operator, IBoardroom {
         return boardHistory[latestSnapshotIndex()];
     }
 
-    function rewardPerShare() public view returns (uint256) {
+    function rewardPerShare() public view virtual returns (uint256) {
         return getLatestSnapshot().rewardPerShare;
     }
 

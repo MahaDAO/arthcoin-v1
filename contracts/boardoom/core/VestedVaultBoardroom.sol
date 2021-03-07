@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 
 import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
 import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
-import {Vault} from './Vault.sol';
 import {VaultBoardroom} from './VaultBoardroom.sol';
 import {IBoardroom} from '../../interfaces/IBoardroom.sol';
 import {IVault} from '../../interfaces/IVault.sol';

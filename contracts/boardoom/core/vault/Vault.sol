@@ -6,10 +6,10 @@ import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
 import {
     AccessControl
 } from '@openzeppelin/contracts/contracts/access/AccessControl.sol';
-import {Operator} from '../../owner/Operator.sol';
+import {Operator} from '../../../owner/Operator.sol';
 import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
-import {StakingTimelock} from '../../timelock/StakingTimelock.sol';
-import {IVaultBoardroom} from '../../interfaces/IVaultBoardroom.sol';
+import {StakingTimelock} from '../../../timelock/StakingTimelock.sol';
+import {IVaultBoardroom} from '../../../interfaces/IVaultBoardroom.sol';
 
 // import 'hardhat/console.sol';
 
