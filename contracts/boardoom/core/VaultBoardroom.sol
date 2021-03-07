@@ -16,9 +16,6 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
     using Safe112 for uint112;
     using SafeMath for uint256;
 
-    IBoardroom public oldBoardroom;
-    bool public everyoneNewDirector = true;
-
     // The vault which has state of the stakes.
     IVault public vault;
     IERC20 public token;
@@ -42,7 +39,6 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
 
     modifier onlyVault {
         require(msg.sender == address(vault), 'Boardroom: not vault');
-
         _;
     }
 
@@ -100,8 +96,8 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         view
         returns (uint256)
     {
-        // console.log('getLastEpochBalance who %s', who);
-        // console.log('getLastEpochBalance currentEpoch %s', currentEpoch);
+        // console.log('getBalanceFromLastEpoch who %s', who);
+        // console.log('getBalanceFromLastEpoch currentEpoch %s', currentEpoch);
 
         if (directorsLastEpoch[who] == 0) {
             // check old contract
@@ -114,13 +110,10 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
                 ? directorsLastEpoch[who]
                 : currentEpoch.sub(1);
 
-        // // console.log('getLastEpochBalance validEpoch %s', validEpoch);
+        // // console.log('getBalanceFromLastEpoch validEpoch %s', validEpoch);
 
         // if (getBondingHistory(who, validEpoch).valid == 1)
         return getBondingHistory(who, validEpoch).balance;
-
-        // if (getBondingHistory(who, validEpoch).valid == 1)
-        // return getBondingHistory(who, directorsLastEpoch[who]).balance;
     }
 
     function getLatestSnapshot() public view returns (BoardSnapshot memory) {
@@ -146,7 +139,6 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
 
     function claimAndReinvestReward(IVault _vault) external virtual {
         uint256 reward = _claimReward(msg.sender);
-        // NOTE: amount has to be approved from the frontend.
         _vault.bondFor(msg.sender, reward);
     }
 
@@ -227,19 +219,6 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         token.transfer(msg.sender, token.balanceOf(address(this)));
     }
 
-    function isOldDirector(address who) public view returns (bool) {
-        if (address(oldBoardroom) == address(0)) return false;
-        return oldBoardroom.getLastSnapshotIndexOf(who) > 0;
-    }
-
-    function setOldBoardroom(IBoardroom room) public onlyOwner {
-        oldBoardroom = room;
-    }
-
-    function setEveryoneNewDirector(bool val) public onlyOwner {
-        everyoneNewDirector = val;
-    }
-
     function _updateReward(address director) internal {
         Boardseat memory seat = directors[director];
         seat.rewardEarnedCurrEpoch = earned(director);
@@ -252,7 +231,6 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
             BondingSnapshot({
                 epoch: currentEpoch,
                 when: block.timestamp,
-                valid: 1,
                 balance: vault.balanceWithoutBonded(director)
             });
 

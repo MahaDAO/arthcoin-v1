@@ -45,7 +45,6 @@ interface IBoardroom is IOperator {
         uint256 when;
         // The snapshot index of when first bonded.
         uint256 balance;
-        uint256 valid;
     }
 
     // function updateReward(address director) external;
