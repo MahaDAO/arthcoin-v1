@@ -13,13 +13,13 @@ async function main() {
   const dest = '0x2806e2e25480856432edb151e2975b6a49a5e079'
 
   const boardrooms = [
-    '0x3178fcCeA39C32983750C6C5b9B9E41BDB72F466',
-    '0xDd15E72441F3C28fb5528E62640DC233C5a0439D',
-    '0x6A7cd1CeF2D28512779ad81A53d2Ab74F08AcF6b',
+    // '0x40436065DFed8eb07F8ea26E2a47114a82B58d80',
+    // '0x5b0C55212b77617Bb50bd7F832Df2c72a0e46Bb7',
+    '0x4A3201A61a998E8f43C942532a72B9c80708Aa58',
   ]
 
   await Bluebird.mapSeries(boardrooms, async b => {
-    const boardroom = await ethers.getContractAt('VestedVaultBoardroom', b);
+    const boardroom = await ethers.getContractAt('Operator', b);
     await boardroom.transferOperator(dest);
     console.log(` - operator for ${b} migrated to: ${dest}`);
   });

@@ -138,6 +138,12 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         return boardHistory[directors[director].lastSnapshotIndex];
     }
 
+    function claimAndReinvestReward(Vault _vault) external virtual {
+        uint256 reward = _claimReward(msg.sender);
+        // NOTE: amount has to be approved from the frontend.
+        _vault.bondFor(msg.sender, reward);
+    }
+
     function rewardPerShare() public view returns (uint256) {
         return getLatestSnapshot().rewardPerShare;
     }
@@ -190,18 +196,8 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
                 .add(directors[director].rewardEarnedCurrEpoch);
     }
 
-    function claimReward() external virtual directorExists returns (uint256) {
-        _updateReward(msg.sender);
-
-        uint256 reward = directors[msg.sender].rewardEarnedCurrEpoch;
-
-        if (reward > 0) {
-            directors[msg.sender].rewardEarnedCurrEpoch = 0;
-            token.transfer(msg.sender, reward);
-            emit RewardPaid(msg.sender, reward);
-        }
-
-        return reward;
+    function claimReward() public virtual directorExists returns (uint256) {
+        return _claimReward(msg.sender);
     }
 
     function allocateSeigniorage(uint256 amount)
@@ -261,6 +257,20 @@ contract VaultBoardroom is ContractGuard, Operator, IBoardroom {
         }
 
         _updateReward(director);
+    }
+
+    function _claimReward(address who) internal returns (uint256) {
+        _updateReward(who);
+
+        uint256 reward = directors[who].rewardEarnedCurrEpoch;
+
+        if (reward > 0) {
+            directors[who].rewardEarnedCurrEpoch = 0;
+            token.transfer(who, reward);
+            emit RewardPaid(who, reward);
+        }
+
+        return reward;
     }
 
     function refundReward() external onlyOwner {
