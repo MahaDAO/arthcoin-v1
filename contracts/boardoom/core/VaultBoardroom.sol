@@ -8,7 +8,7 @@ import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
 import {ContractGuard} from '../../utils/ContractGuard.sol';
 import {BaseBoardroom} from './BaseBoardroom.sol';
 
-import 'hardhat/console.sol';
+// import 'hardhat/console.sol';
 
 contract VaultBoardroom is ContractGuard, BaseBoardroom {
     using SafeMath for uint256;
@@ -74,24 +74,24 @@ contract VaultBoardroom is ContractGuard, BaseBoardroom {
         view
         returns (uint256)
     {
-        console.log('getBalanceFromLastEpoch who %s', who);
-        console.log('getBalanceFromLastEpoch currentEpoch %s', currentEpoch);
+        // console.log('getBalanceFromLastEpoch who %s', who);
+        // console.log('getBalanceFromLastEpoch currentEpoch %s', currentEpoch);
         if (currentEpoch == 1) return 0;
 
-        console.log(
-            'getBalanceFromLastEpoch balanceLastEpoch[who] %s',
-            balanceLastEpoch[who]
-        );
-        console.log(
-            'getBalanceFromLastEpoch balanceCurrentEpoch[who] %s',
-            balanceCurrentEpoch[who]
-        );
+        // console.log(
+        //     'getBalanceFromLastEpoch balanceLastEpoch[who] %s',
+        //     balanceLastEpoch[who]
+        // );
+        // console.log(
+        //     'getBalanceFromLastEpoch balanceCurrentEpoch[who] %s',
+        //     balanceCurrentEpoch[who]
+        // );
 
         if (balanceCurrentEpoch[who] == 0) {
-            console.log(
-                'getBalanceFromLastEpoch balanceOf(who) %s',
-                balanceOf(who)
-            );
+            // console.log(
+            //     'getBalanceFromLastEpoch balanceOf(who) %s',
+            //     balanceOf(who)
+            // );
             return balanceOf(who);
         }
 
@@ -227,9 +227,8 @@ contract VaultBoardroom is ContractGuard, BaseBoardroom {
     }
 
     function _updateBalance(address who) internal {
-        console.log('curr epoch: %s', currentEpoch);
+        // console.log('updating balance for director at epoch: %s', currentEpoch);
 
-        console.log('updating balance for director at epoch: %s', currentEpoch);
         BondingSnapshot memory snap =
             BondingSnapshot({
                 epoch: currentEpoch,
