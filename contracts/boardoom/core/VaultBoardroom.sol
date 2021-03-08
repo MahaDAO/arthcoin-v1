@@ -8,6 +8,8 @@ import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
 import {ContractGuard} from '../../utils/ContractGuard.sol';
 import {BaseBoardroom} from './BaseBoardroom.sol';
 
+import 'hardhat/console.sol';
+
 contract VaultBoardroom is ContractGuard, BaseBoardroom {
     using SafeMath for uint256;
 
@@ -19,7 +21,9 @@ contract VaultBoardroom is ContractGuard, BaseBoardroom {
         public bondingHistory;
 
     mapping(address => mapping(uint256 => uint256)) directorBalanceForEpoch;
-    mapping(address => uint256) directorsLastEpoch;
+    mapping(address => uint256) balanceCurrentEpoch;
+    mapping(address => uint256) balanceLastEpoch;
+    mapping(address => uint256) balanceBeforeLaunch;
 
     modifier directorExists {
         require(
@@ -70,20 +74,41 @@ contract VaultBoardroom is ContractGuard, BaseBoardroom {
         view
         returns (uint256)
     {
-        // console.log('getBalanceFromLastEpoch who %s', who);
-        // console.log('getBalanceFromLastEpoch currentEpoch %s', currentEpoch);
+        console.log('getBalanceFromLastEpoch who %s', who);
+        console.log('getBalanceFromLastEpoch currentEpoch %s', currentEpoch);
         if (currentEpoch == 1) return 0;
 
-        if (directorsLastEpoch[who] == 0) {
+        console.log(
+            'getBalanceFromLastEpoch balanceLastEpoch[who] %s',
+            balanceLastEpoch[who]
+        );
+        console.log(
+            'getBalanceFromLastEpoch balanceCurrentEpoch[who] %s',
+            balanceCurrentEpoch[who]
+        );
+
+        if (balanceCurrentEpoch[who] == 0) {
+            console.log(
+                'getBalanceFromLastEpoch balanceOf(who) %s',
+                balanceOf(who)
+            );
             return balanceOf(who);
         }
 
-        uint256 validEpoch =
-            directorsLastEpoch[who] < currentEpoch.sub(1)
-                ? directorsLastEpoch[who]
-                : currentEpoch.sub(1);
+        uint256 currentBalance =
+            getBondingHistory(who, balanceCurrentEpoch[who]).balance;
 
-        return getBondingHistory(who, validEpoch).balance;
+        if (balanceCurrentEpoch[who] == currentEpoch) {
+            // if boardroom was disconnected before then just return the old balance
+            if (balanceLastEpoch[who] == 0) return balanceBeforeLaunch[who];
+            return getBondingHistory(who, balanceLastEpoch[who]).balance;
+        }
+
+        if (balanceCurrentEpoch[who] < currentEpoch) {
+            return currentBalance;
+        }
+
+        return 0;
     }
 
     function claimAndReinvestReward(IVault _vault) external virtual {
@@ -181,6 +206,10 @@ contract VaultBoardroom is ContractGuard, BaseBoardroom {
             directors[who].rewardEarnedCurrEpoch = 0;
             token.transfer(who, reward);
             emit RewardPaid(who, reward);
+
+            if (balanceLastEpoch[who] == 0) {
+                balanceBeforeLaunch[who] = balanceOf(who);
+            }
         }
 
         return reward;
@@ -197,16 +226,36 @@ contract VaultBoardroom is ContractGuard, BaseBoardroom {
         directors[director] = seat;
     }
 
-    function _updateBalance(address director) internal {
+    function _updateBalance(address who) internal {
+        console.log('curr epoch: %s', currentEpoch);
+
+        console.log('updating balance for director at epoch: %s', currentEpoch);
         BondingSnapshot memory snap =
             BondingSnapshot({
                 epoch: currentEpoch,
                 when: block.timestamp,
-                balance: balanceOf(director)
+                balance: balanceOf(who)
             });
 
-        bondingHistory[director][currentEpoch] = snap;
-        directorsLastEpoch[director] = currentEpoch;
-        _updateReward(director);
+        bondingHistory[who][currentEpoch] = snap;
+
+        // update epoch counters if they need updating
+        if (balanceCurrentEpoch[who] != currentEpoch) {
+            balanceLastEpoch[who] = balanceCurrentEpoch[who];
+            balanceCurrentEpoch[who] = currentEpoch;
+        }
+
+        // if (balanceLastEpoch[who] == 0) {
+        //     require(
+        //         earned(who) == 0,
+        //         'Claim rewards once before depositing again'
+        //     );
+        // }
+
+        if (balanceLastEpoch[who] == 0) {
+            balanceLastEpoch[who] = 1;
+        }
+
+        _updateReward(who);
     }
 }

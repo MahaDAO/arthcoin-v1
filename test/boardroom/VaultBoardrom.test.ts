@@ -63,7 +63,7 @@ describe.only('VaultBoardroom', () => {
     vault.connect(operator).setBoardrooms(boardroom.address, zeroAddr)
   });
 
-  describe.only("#GetBalanceFromLastEpoch", () => {
+  describe("#GetBalanceFromLastEpoch", () => {
     beforeEach('give test amounts', async () => {
       await share.connect(operator).mint(abuser.address, STAKE_AMOUNT.mul(3)),
       await share.connect(operator).mint(whale.address, STAKE_AMOUNT.mul(3)),
@@ -203,11 +203,12 @@ describe.only('VaultBoardroom', () => {
       expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(STAKE_AMOUNT.mul(3));
     })
 
-    it('should decrease if we withdraw between epoch 1 and 2 after epoch 2 has passed', async () => {
+    it('should decrease if we withdraw between epoch 1 and 2 before epoch 1 has passed', async () => {
       expect(await boardroom.currentEpoch()).to.eq(1)
       expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(0);
 
       await vault.connect(whale).bond(STAKE_AMOUNT);
+      await vault.connect(whale).unbond(STAKE_AMOUNT);
       expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(0);
 
       await expect(boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT))
@@ -215,21 +216,10 @@ describe.only('VaultBoardroom', () => {
         .withArgs(operator.address, SEIGNIORAGE_AMOUNT);
       expect(await boardroom.currentEpoch()).to.eq(2)
 
-      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(STAKE_AMOUNT);
-      await vault.connect(whale).unbond(STAKE_AMOUNT);
-      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(STAKE_AMOUNT);
-
-      await expect(boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT))
-        .to.emit(boardroom, 'RewardAdded')
-        .withArgs(operator.address, SEIGNIORAGE_AMOUNT);
-      expect(await boardroom.currentEpoch()).to.eq(3)
-
-      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(0);
-      await vault.connect(whale).bond(STAKE_AMOUNT);
       expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(0);
     })
 
-    it.only('should decrease if we withdraw between epoch 1 and 2 after epoch 2 has passed', async () => {
+    it('should decrease if we withdraw between epoch 1 and 2 after epoch 2 has passed', async () => {
       expect(await boardroom.currentEpoch()).to.eq(1)
 
       expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(0);
@@ -256,182 +246,98 @@ describe.only('VaultBoardroom', () => {
       await vault.connect(whale).bond(STAKE_AMOUNT);
       expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(0);
     })
+
+    it('should maintain balance after multiple epochs', async () => {
+      expect(await boardroom.currentEpoch()).to.eq(1)
+
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(0);
+
+      await expect(boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT))
+        .to.emit(boardroom, 'RewardAdded')
+        .withArgs(operator.address, SEIGNIORAGE_AMOUNT);
+      expect(await boardroom.currentEpoch()).to.eq(2)
+
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(0);
+      await vault.connect(whale).bond(STAKE_AMOUNT);
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(0);
+
+      await expect(boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT))
+        .to.emit(boardroom, 'RewardAdded')
+        .withArgs(operator.address, SEIGNIORAGE_AMOUNT);
+      expect(await boardroom.currentEpoch()).to.eq(3)
+
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(STAKE_AMOUNT);
+
+      await expect(boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT))
+        .to.emit(boardroom, 'RewardAdded')
+        .withArgs(operator.address, SEIGNIORAGE_AMOUNT);
+      expect(await boardroom.currentEpoch()).to.eq(4)
+
+      expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(STAKE_AMOUNT);
+    })
+
+    describe('if deposited before boardroom was connected', () => {
+      beforeEach(async () => {
+        vault.connect(operator).setBoardrooms(zeroAddr, zeroAddr) // disconnect the boardroom
+        await vault.connect(whale).bond(STAKE_AMOUNT);
+        vault.connect(operator).setBoardrooms(boardroom.address, zeroAddr) // coonect the boardroom
+      })
+
+      it('should return the current balance after epoch 1 & 2 and no deposits in between', async () => {
+        expect(await boardroom.currentEpoch()).to.eq(1)
+        expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(0);
+
+        await expect(boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT))
+          .to.emit(boardroom, 'RewardAdded')
+          .withArgs(operator.address, SEIGNIORAGE_AMOUNT);
+        expect(await boardroom.currentEpoch()).to.eq(2)
+
+        expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(STAKE_AMOUNT);
+
+        await expect(boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT))
+          .to.emit(boardroom, 'RewardAdded')
+          .withArgs(operator.address, SEIGNIORAGE_AMOUNT);
+        expect(await boardroom.currentEpoch()).to.eq(3)
+
+        expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(STAKE_AMOUNT);
+      })
+
+      it('should return the current balance after epoch 1 & 2 and deposits on epoch 2 should revert until rewards are claimed once', async () => {
+        expect(await boardroom.currentEpoch()).to.eq(1)
+        expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(0);
+
+        await expect(boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT))
+          .to.emit(boardroom, 'RewardAdded')
+          .withArgs(operator.address, SEIGNIORAGE_AMOUNT);
+        expect(await boardroom.currentEpoch()).to.eq(2)
+
+        expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(STAKE_AMOUNT);
+
+        await expect(boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT))
+          .to.emit(boardroom, 'RewardAdded')
+          .withArgs(operator.address, SEIGNIORAGE_AMOUNT);
+        expect(await boardroom.currentEpoch()).to.eq(3)
+
+        expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(STAKE_AMOUNT);
+
+        // await expect(vault.connect(whale).bond(STAKE_AMOUNT))
+        //   .to.revertedWith('Claim rewards once before depositing again');
+
+        await boardroom.connect(whale).claimReward();
+        await vault.connect(whale).bond(STAKE_AMOUNT)
+
+        expect(await boardroom.earned(whale.address)).to.eq(0);
+        expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(0);
+
+        await expect(boardroom.connect(operator).allocateSeigniorage(SEIGNIORAGE_AMOUNT))
+          .to.emit(boardroom, 'RewardAdded')
+          .withArgs(operator.address, SEIGNIORAGE_AMOUNT);
+        expect(await boardroom.currentEpoch()).to.eq(4)
+
+        expect(await boardroom.getBalanceFromLastEpoch(whale.address)).to.eq(STAKE_AMOUNT.mul(2));
+      })
+    })
   })
-
-  describe('#Bond', () => {
-    it('Should work correctly', async () => {
-      await Promise.all([
-        share.connect(operator).mint(whale.address, STAKE_AMOUNT),
-        share.connect(whale).approve(vault.address, STAKE_AMOUNT),
-      ]);
-
-      await expect(vault.connect(whale).bond(STAKE_AMOUNT))
-        .to.emit(vault, 'Bonded')
-        .withArgs(whale.address, STAKE_AMOUNT);
-
-      expect(await vault.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
-    });
-
-    it('Should fail when user tries to bond with zero amount', async () => {
-      await expect(vault.connect(whale).bond(ZERO)).to.revertedWith(
-        'Boardroom: cannot bond 0'
-      );
-    });
-
-    it('Should fail when deposits are disabled', async () => {
-      await vault.connect(operator).toggleDeposits(false);
-
-      await expect(vault.connect(whale).bond(STAKE_AMOUNT)).to.revertedWith(
-        'Boardroom: deposits are disabled'
-      );
-    });
-  });
-
-  describe('#Unbond', async () => {
-    beforeEach('Should be able to stake', async () => {
-      await Promise.all([
-        share.connect(operator).mint(whale.address, STAKE_AMOUNT),
-        share.connect(whale).approve(vault.address, STAKE_AMOUNT),
-      ]);
-
-      await vault.connect(whale).bond(STAKE_AMOUNT);
-    });
-
-    it('Should work', async () => {
-      await expect(vault.connect(whale).unbond(STAKE_AMOUNT))
-        .to.emit(vault, 'Unbonded')
-        .withArgs(whale.address, STAKE_AMOUNT);
-
-      expect(await share.balanceOf(whale.address)).to.eq(ZERO);
-      expect(await vault.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
-    });
-
-    it('Should fail when user tries to ubond with zero amount', async () => {
-      await advanceTimeAndBlock(
-        provider,
-        (await latestBlocktime(provider)) + BOARDROOM_LOCK_PERIOD
-      );
-
-      await expect(vault.connect(whale).unbond(ZERO)).to.revertedWith(
-        'Boardroom: cannot unbond 0'
-      );
-    });
-
-    it('Should fail when user tries to unbond more than staked amount', async () => {
-      await advanceTimeAndBlock(
-        provider,
-        (await latestBlocktime(provider)) + BOARDROOM_LOCK_PERIOD
-      );
-
-      await expect(
-        vault.connect(whale).unbond(STAKE_AMOUNT.add(1))
-      ).to.revertedWith(
-        'Boardroom: unbond request greater than staked amount'
-      );
-    });
-
-    it('Should fail when non-director tries to withdraw', async () => {
-      await advanceTimeAndBlock(
-        provider,
-        BOARDROOM_LOCK_PERIOD
-      );
-
-      await expect(vault.connect(abuser).unbond(ZERO)).to.revertedWith(
-        'Boardroom: The director does not exist'
-      );
-    });
-  });
-
-  describe('#Withdraw', async () => {
-    beforeEach('Should be able to stake', async () => {
-      await Promise.all([
-        share.connect(operator).mint(whale.address, STAKE_AMOUNT),
-        share.connect(whale).approve(vault.address, STAKE_AMOUNT),
-      ]);
-
-      await vault.connect(whale).bond(STAKE_AMOUNT);
-    });
-
-    it('Should not be able to withdraw without unbonding and time < boardroomLockPeriod', async () => {
-      await expect(vault.connect(whale).withdraw()).revertedWith('')
-
-      expect(await share.balanceOf(whale.address)).to.eq(ZERO);
-      expect(await vault.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
-    });
-
-    it('Should not be able to withdraw without unbonding and time > boardroomLockPeriod', async () => {
-      await advanceTimeAndBlock(
-        provider,
-        (await latestBlocktime(provider)) + BOARDROOM_LOCK_PERIOD
-      );
-
-      await expect(vault.connect(whale).withdraw()).revertedWith('')
-
-      expect(await share.balanceOf(whale.address)).to.eq(ZERO);
-      expect(await vault.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
-    });
-
-    it('Should not be able to withdraw with unbonding and time < boardroomLockPeriod', async () => {
-      await vault.connect(whale).unbond(STAKE_AMOUNT);
-
-      await expect(vault.connect(whale).withdraw()).revertedWith('')
-
-      expect(await share.balanceOf(whale.address)).to.eq(ZERO);
-      expect(await vault.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
-    });
-
-    it('Should be able to withdraw with unbonding and time > boardroomLockPeriod', async () => {
-      await vault.connect(whale).unbond(STAKE_AMOUNT);
-
-      await advanceTimeAndBlock(
-        provider,
-        (await latestBlocktime(provider)) + BOARDROOM_LOCK_PERIOD
-      );
-
-      await expect(vault.connect(whale).withdraw())
-        .to.emit(vault, 'Withdrawn')
-        .withArgs(whale.address, STAKE_AMOUNT);
-
-      expect(await share.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
-      expect(await vault.balanceOf(whale.address)).to.eq(ZERO);
-    });
-
-    it('Should fail when non-director tries to withdraw', async () => {
-      await advanceTimeAndBlock(
-        provider,
-        (await latestBlocktime(provider)) + BOARDROOM_LOCK_PERIOD
-      );
-
-      await expect(vault.connect(abuser).withdraw()).to.revertedWith(
-        'Boardroom: The director does not exist'
-      );
-    });
-
-    it('Should not be able to withdraw twice if only unbonded once', async () => {
-      await vault.connect(whale).unbond(STAKE_AMOUNT);
-
-      await advanceTimeAndBlock(
-        provider,
-        (await latestBlocktime(provider)) + BOARDROOM_LOCK_PERIOD
-      );
-
-      await expect(vault.connect(whale).withdraw())
-        .to.emit(vault, 'Withdrawn')
-        .withArgs(whale.address, STAKE_AMOUNT);
-
-      expect(await share.balanceOf(whale.address)).to.eq(STAKE_AMOUNT);
-      expect(await vault.balanceOf(whale.address)).to.eq(ZERO);
-
-      await advanceTimeAndBlock(
-        provider,
-        (await latestBlocktime(provider)) + BOARDROOM_LOCK_PERIOD
-      );
-
-      await expect(vault.connect(whale).withdraw()).to.revertedWith(
-        'Boardroom: The director does not exist'
-      );
-    });
-  });
 
   describe('#AllocateSeigniorage', () => {
     beforeEach('Should be able to stake', async () => {
