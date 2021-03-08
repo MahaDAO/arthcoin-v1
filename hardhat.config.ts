@@ -14,6 +14,7 @@ export default {
       url: `https://mainnet.infura.io/v3/69666afe933b4175afe4999170158a5f`,
       accounts: [`0x${process.env.METAMASK_WALLET_SECRET}`],
       gasMultiplier: 1.2,
+      gasPrice: 120000000000
     },
     ropsten: {
       url: `https://ropsten.infura.io/v3/69666afe933b4175afe4999170158a5f`,

@@ -43,10 +43,12 @@ contract VestedVaultBoardroom is VaultBoardroom {
      * Constructor.
      */
     constructor(
-        IERC20 token_,
-        IVault vault_,
+        IERC20 cash_,
+        IVault vault,
+        address owner,
+        address operator,
         uint256 vestFor_
-    ) VaultBoardroom(token_, vault_) {
+    ) VaultBoardroom(cash_, vault, owner, operator) {
         vestFor = vestFor_;
     }
 
