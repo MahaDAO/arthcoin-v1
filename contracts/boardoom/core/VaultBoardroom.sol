@@ -38,7 +38,12 @@ contract VaultBoardroom is ContractGuard, BaseBoardroom {
         _;
     }
 
-    constructor(IERC20 token_, IVault vault_) BaseBoardroom(token_) {
+    constructor(
+        IERC20 token_,
+        IVault vault_,
+        address owner,
+        address operator
+    ) BaseBoardroom(token_) {
         vault = vault_;
 
         BoardSnapshot memory genesisSnapshot =
@@ -49,6 +54,9 @@ contract VaultBoardroom is ContractGuard, BaseBoardroom {
                 rewardPerShare: 0
             });
         boardHistory.push(genesisSnapshot);
+
+        transferOperator(operator);
+        transferOwnership(owner);
     }
 
     function getBoardhistory(uint256 i)

@@ -7,7 +7,10 @@ import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
 import {VaultBoardroom} from '../core/VaultBoardroom.sol';
 
 contract MahaMahaBoardroomV2 is VaultBoardroom {
-    constructor(IERC20 cash_, IVault mahaVault_)
-        VaultBoardroom(cash_, mahaVault_)
-    {}
+    constructor(
+        IERC20 cash_,
+        IVault vault,
+        address owner,
+        address operator
+    ) VaultBoardroom(cash_, vault, owner, operator) {}
 }
