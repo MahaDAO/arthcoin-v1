@@ -6,14 +6,23 @@ import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
 import {IVault} from '../../interfaces/IVault.sol';
 import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
 
-import {BaseBoardroom} from './BaseBoardroom.sol';
+import {Operator} from '../../owner/Operator.sol';
+import {IBoardroom} from '../../interfaces/IBoardroom.sol';
 
-contract SnapshotBoardroom is BaseBoardroom {
+contract SnapshotBoardroom is IBoardroom, Operator {
     using SafeMath for uint256;
-
+    IERC20 public token;
     mapping(address => uint256) public pendingRewards;
 
-    constructor(IERC20 token_) BaseBoardroom(token_) {}
+    event RewardPaid(address indexed user, uint256 reward);
+    event RewardAdded(address indexed user, uint256 reward);
+
+    Boardseat private dummySeat;
+
+    constructor(IERC20 token_, address operator) {
+        token = token_;
+        transferOperator(operator);
+    }
 
     function claimAndReinvestReward(IVault _vault) external virtual {
         uint256 reward = _claimReward(msg.sender);
@@ -34,7 +43,15 @@ contract SnapshotBoardroom is BaseBoardroom {
         return _claimReward(msg.sender);
     }
 
-    function allocateSeigniorage(uint256 amount) external override {}
+    function allocateSeigniorage(uint256 amount)
+        external
+        override
+        onlyOperator
+    {
+        require(amount > 0, 'Boardroom: Cannot allocate 0');
+        token.transferFrom(msg.sender, address(this), amount);
+        emit RewardAdded(msg.sender, amount);
+    }
 
     function updateReward(address director) external virtual override {}
 
@@ -57,5 +74,24 @@ contract SnapshotBoardroom is BaseBoardroom {
         for (uint256 i = 0; i < who.length; i++) {
             pendingRewards[who[i]] = amt[i];
         }
+    }
+
+    function getDirector(address who)
+        external
+        view
+        override
+        returns (Boardseat memory)
+    {
+        require(who != address(0));
+        return dummySeat;
+    }
+
+    function getLastSnapshotIndexOf(address who)
+        external
+        view
+        override
+        returns (uint256)
+    {
+        return pendingRewards[who];
     }
 }
