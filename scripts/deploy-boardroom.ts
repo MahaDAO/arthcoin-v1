@@ -25,21 +25,18 @@ async function main() {
 
   const boardroomName = 'VaultBoardroom'
 
-  const rewardToken = '0x0e3cc2c4fb9252d17d07c67135e48536071735d9'
+  const arthToken = '0x0e3cc2c4fb9252d17d07c67135e48536071735d9'
   const vaultAddr = vaults.arth
 
   const Boardroom = await ethers.getContractFactory(boardroomName);
 
   // Fetch existing contracts.
-  // Deploy new treasury.
 
-  const hour = 3600
   const params = [
-    rewardToken,
+    arthToken,
     vaultAddr,
     '0xeccE08c2636820a81FC0c805dBDC7D846636bbc4',
     '0x2806e2e25480856432edb151e2975b6a49a5e079'
-    // hour * 8
   ]
   const boardroom = await Boardroom.connect(operator).deploy(...params);
 
