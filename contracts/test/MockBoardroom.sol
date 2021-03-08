@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
 import {Operator} from '../owner/Operator.sol';
 import {IBoardroom} from '../interfaces/IBoardroom.sol';
+import {IVault} from '../interfaces/IVault.sol';
 
 contract MockBoardroom is IBoardroom, Operator {
     /* ========== STATE VARIABLES ========== */
@@ -54,6 +55,10 @@ contract MockBoardroom is IBoardroom, Operator {
 
     function claimReward() public pure override returns (uint256) {
         return 0;
+    }
+
+    function claimAndReinvestReward(IVault vault) public pure override {
+        require(address(vault) != address(0));
     }
 
     function earned(address director)

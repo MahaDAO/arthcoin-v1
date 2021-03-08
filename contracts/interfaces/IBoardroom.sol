@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.0;
 
+import {IVault} from './IVault.sol';
 import {IOperator} from './IOperator.sol';
 
 interface IBoardroom is IOperator {
@@ -63,4 +64,6 @@ interface IBoardroom is IOperator {
     function claimReward() external returns (uint256);
 
     function updateReward(address director) external;
+
+    function claimAndReinvestReward(IVault _vault) external;
 }

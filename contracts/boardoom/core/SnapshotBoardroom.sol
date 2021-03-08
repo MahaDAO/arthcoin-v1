@@ -24,7 +24,7 @@ contract SnapshotBoardroom is IBoardroom, Operator {
         transferOperator(operator);
     }
 
-    function claimAndReinvestReward(IVault _vault) external virtual {
+    function claimAndReinvestReward(IVault _vault) external virtual override {
         uint256 reward = _claimReward(msg.sender);
         _vault.bondFor(msg.sender, reward);
     }

@@ -1,6 +1,6 @@
 import { ethers } from 'hardhat';
 
-const snapshot: any[] = require('./snapshots/maha.json')
+const snapshot: any[] = require('./snapshots/arthDai.json')
 
 async function main() {
   // Fetch the provider.
@@ -15,16 +15,19 @@ async function main() {
 
   // Fetch contract factories.
 
-  const address = '0x79Fe0ac571cf3C1c1d7ffFFd4AaeB868F406acCc'
+  const address = '0xcBa6Ef8DF713BD427a44D27dBcF05C4c9d6E7Fbb'
 
   const boardroom = await ethers.getContractAt('SnapshotBoardroom', address);
 
-  console.log(`uploading ${snapshot.length} addresses`)
 
-  const directors = snapshot.map(s => s.addr)
-  const balances = snapshot.map(s => s.balance)
-  console.log(balances, directors)
-  // await boardroom.methods.setBalances()
+  const filtered = snapshot.filter(d => Number(d.balance) > 0)
+  console.log(`uploading ${filtered.length} addresses`)
+
+  const directors = filtered.map(s => s.addr)
+  const balances = filtered.map(s => s.balance)
+  await boardroom.setBalances(directors, balances)
+
+  console.log('uploading done')
 }
 
 

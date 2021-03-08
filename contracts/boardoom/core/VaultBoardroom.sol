@@ -119,7 +119,7 @@ contract VaultBoardroom is ContractGuard, BaseBoardroom {
         return 0;
     }
 
-    function claimAndReinvestReward(IVault _vault) external virtual {
+    function claimAndReinvestReward(IVault _vault) external virtual override {
         uint256 reward = _claimReward(msg.sender);
         _vault.bondFor(msg.sender, reward);
     }
