@@ -5,15 +5,10 @@ pragma solidity ^0.8.0;
 import {IERC20} from '@openzeppelin/contracts/contracts/token/ERC20/IERC20.sol';
 import {IVault} from '../../interfaces/IVault.sol';
 import {SafeMath} from '@openzeppelin/contracts/contracts/math/SafeMath.sol';
-import {Safe112} from '../../lib/Safe112.sol';
-import {ContractGuard} from '../../utils/ContractGuard.sol';
 import {Operator} from '../../owner/Operator.sol';
 import {IBoardroom} from '../../interfaces/IBoardroom.sol';
-import {IBasisAsset} from '../../interfaces/IBasisAsset.sol';
-import {IVaultBoardroom} from '../../interfaces/IVaultBoardroom.sol';
 
 abstract contract BaseBoardroom is Operator, IBoardroom {
-    using Safe112 for uint112;
     using SafeMath for uint256;
 
     IERC20 public token;
