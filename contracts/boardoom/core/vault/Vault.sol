@@ -81,7 +81,7 @@ contract Vault is AccessControl, StakingTimelock, Operator {
     function setBoardrooms(
         IVaultBoardroom expansionBoardroom_,
         IVaultBoardroom contractionBoardroom_
-    ) public {
+    ) public onlyOwner {
         expansionBoardroom = expansionBoardroom_;
         contractionBoardroom = contractionBoardroom_;
     }

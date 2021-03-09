@@ -11,7 +11,7 @@ import { advanceTimeAndBlock, latestBlocktime } from '../shared/utilities';
 chai.use(solidity);
 
 
-describe.only('VaultBoardroom', () => {
+describe('VaultBoardroom', () => {
   // const DAY = 86400;
 
   const BOARDROOM_LOCK_PERIOD = 5 * 60;
@@ -66,8 +66,8 @@ describe.only('VaultBoardroom', () => {
   describe("#GetBalanceFromLastEpoch", () => {
     beforeEach('give test amounts', async () => {
       await share.connect(operator).mint(abuser.address, STAKE_AMOUNT.mul(3)),
-      await share.connect(operator).mint(whale.address, STAKE_AMOUNT.mul(3)),
-      await share.connect(operator).mint(operator.address, SEIGNIORAGE_AMOUNT.mul(3));
+        await share.connect(operator).mint(whale.address, STAKE_AMOUNT.mul(3)),
+        await share.connect(operator).mint(operator.address, SEIGNIORAGE_AMOUNT.mul(3));
       await cash.connect(operator).mint(operator.address, SEIGNIORAGE_AMOUNT.mul(3));
       await cash.connect(operator).approve(boardroom.address, SEIGNIORAGE_AMOUNT.mul(3));
 

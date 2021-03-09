@@ -27,9 +27,11 @@ describe('Vault', () => {
   let operator: SignerWithAddress;
   let whale: SignerWithAddress;
   let abuser: SignerWithAddress;
+  let testBoardroom1: SignerWithAddress;
+  let testBoardroom2: SignerWithAddress;
 
   before('Provider & accounts setting', async () => {
-    [operator, whale, abuser] = await ethers.getSigners();
+    [operator, whale, abuser, testBoardroom1, testBoardroom2] = await ethers.getSigners();
   });
 
   let ARTH: ContractFactory;
@@ -53,6 +55,18 @@ describe('Vault', () => {
       share.address,
       BOARDROOM_LOCK_PERIOD
     );
+  });
+
+  describe('#setBoardrooms', () => {
+    it('Should not work if not owner', async () => {
+      await expect(vault.connect(whale).setBoardrooms(testBoardroom1.address, testBoardroom2.address)).to.revertedWith(
+        'Ownable: caller is not the owner'
+      );
+    });
+
+    it('Should work if owner', async () => {
+      await expect(vault.connect(operator).setBoardrooms(testBoardroom1.address, testBoardroom2.address)).to.not.reverted;
+    });
   });
 
   describe('#Bond', () => {
